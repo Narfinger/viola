@@ -1,5 +1,5 @@
-extern crate id3;
 extern crate gtk;
+extern crate taglib;
 extern crate walkdir;
 use gtk::prelude::*;
 use gtk::{Button, ListBox, Layout, Label, Grid, Orientation, ScrolledWindow, Window, WindowType};
@@ -12,10 +12,19 @@ fn parse_folder(w: &Window) -> ScrolledWindow {
     for i in  WalkDir::new(folder) {
         if let Ok(f) = i {
             if f.file_type().is_file() {
-                let st:String = format!("{}", f.path().display());
+                
+                let fpath = f.path().to_str();
+                let taglibfile = taglib::File::new(fpath.unwrap());
+                if let Err(e) = taglibfile {
+                    println!("Error {:?}", e);
+                } else {
+                let ataglib = taglibfile.unwrap();
+                let tags = ataglib.tag().unwrap();
+                let st:String = format!("{} - {} - {}", tags.title(), tags.artist(), tags.album());
                 let stt:&str = &st;
                 let label = Label::new(Some(stt));
                 b.add(&label);
+                }
             }
         }
     }

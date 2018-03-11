@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 
 [dependencies]
-id3 = "0.2.2"
+taglib = {git = "https://github.com/ebassi/taglib-rust.git", rev="513dabf"}        # Rust bindings for TagLib    
 walkdir = "2"
 
 [dependencies.gtk]
