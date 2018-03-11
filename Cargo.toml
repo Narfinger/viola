@@ -1,0 +1,12 @@
+[package]
+name = "viola"
+version = "0.1.0"
+authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
+
+[dependencies]
+id3 = "0.2.2"
+walkdir = "2"
+
+[dependencies.gtk]
+version = "0.3.0"
+features = ["v3_10"]
