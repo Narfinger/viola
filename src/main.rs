@@ -22,7 +22,13 @@ fn parse_folder(w: &mut Grid) {
                 let st:String = format!("{} - {} - {}", tags.title(), tags.artist(), tags.album());
                 let stt:&str = &st;
                 let label = Label::new(Some(stt));
-                w.attach(&label, 0,row,1,1);
+
+                let title = Label::new(Some(tags.title().as_str()));
+                let artist = Label::new(Some(tags.artist().as_str()));
+                let album = Label::new(Some(tags.album().as_str()));
+                w.attach(&title,  0, row, 1, 1);
+                w.attach(&artist, 1, row, 1, 1);
+                w.attach(&album,  2, row, 1, 1);
                 row += 1;
 
                 }
