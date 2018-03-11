@@ -2,22 +2,25 @@ extern crate id3;
 extern crate gtk;
 extern crate walkdir;
 use gtk::prelude::*;
-use gtk::{Button, ListBox, Layout, Label, Grid, Orientation, Window, WindowType};
+use gtk::{Button, ListBox, Layout, Label, Grid, Orientation, ScrolledWindow, Window, WindowType};
 use walkdir::WalkDir;
 
-fn parse_folder(w: &Window) -> Layout {
+fn parse_folder(w: &Window) -> ScrolledWindow {
     let b = ListBox::new();
 
     let folder = "/mnt/ssd-media/Musik/1rest";
     for i in  WalkDir::new(folder) {
-        let st:String = format!("{}", i.unwrap().path().display());
-        let stt = &st;
-        let label = Label::new(Some("test"));
-        b.add(&label);
+        if let Ok(f) = i {
+            if f.file_type().is_file() {
+                let st:String = format!("{}", f.path().display());
+                let stt:&str = &st;
+                let label = Label::new(Some(stt));
+                b.add(&label);
+            }
+        }
     }
-    let l = Layout::new(None, None);
+    let l = ScrolledWindow::new(None, None);
     l.add(&b);
-    l.set_size(600,600);
     l
 }
 
@@ -40,6 +43,7 @@ fn main() {
     window.add(&b);
     window.show_all();
 
+    window.set_default_size(500,500);
     window.connect_delete_event(|_, _| {
         gtk::main_quit();
         Inhibit(false)
