@@ -2,13 +2,12 @@ extern crate gtk;
 extern crate taglib;
 extern crate walkdir;
 use gtk::prelude::*;
-use gtk::{Button, ListBox, Layout, Label, Grid, Orientation, ScrolledWindow, Window, WindowType};
+use gtk::{Button, ListBox, Layout, Label, Grid, Orientation, PositionType, ScrolledWindow, Window, WindowType};
 use walkdir::WalkDir;
 
-fn parse_folder(w: &Window) -> ScrolledWindow {
-    let b = ListBox::new();
-
+fn parse_folder(w: &mut Grid) {
     let folder = "/mnt/ssd-media/Musik/1rest";
+    let mut row = 0;
     for i in  WalkDir::new(folder) {
         if let Ok(f) = i {
             if f.file_type().is_file() {
@@ -23,14 +22,13 @@ fn parse_folder(w: &Window) -> ScrolledWindow {
                 let st:String = format!("{} - {} - {}", tags.title(), tags.artist(), tags.album());
                 let stt:&str = &st;
                 let label = Label::new(Some(stt));
-                b.add(&label);
+                w.attach(&label, 0,row,1,1);
+                row += 1;
+
                 }
             }
         }
     }
-    let l = ScrolledWindow::new(None, None);
-    l.add(&b);
-    l
 }
 
 fn main() {
@@ -39,29 +37,21 @@ fn main() {
         return;
     }
 
-    let window = Window::new(WindowType::Toplevel);
-    window.set_title("First GTK+ Program");
-    window.set_default_size(350, 70);
-   
+    let glade_src = include_str!("../ui/main.glade");
+    let builder = gtk::Builder::new_from_string(glade_src);
+
+    let mut grid: gtk::Grid = builder.get_object("playlist").unwrap();
     println!("Building list");
-    let b = parse_folder(&window);
+    parse_folder(&mut grid);
     println!("Done building list");
+    
 
-    let button = Button::new_with_label("Click me!");
-    b.add(&button);
-    window.add(&b);
-    window.show_all();
-
-    window.set_default_size(500,500);
+    let window: gtk::Window = builder.get_object("mainwindow").unwrap();
     window.connect_delete_event(|_, _| {
         gtk::main_quit();
         Inhibit(false)
     });
-    
-/* 
-    button.connect_clicked(|_| {
-        println!("Clicked!");
-    }); */
-    
+
+    window.show_all();
     gtk::main();
 }
