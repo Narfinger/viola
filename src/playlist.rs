@@ -1,16 +1,5 @@
-use std::io::BufReader;
-use std::thread;
-use std::time::Duration;
-use std;
-use std::error::Error;
-use std::rc::Rc;
-use std::sync::Mutex;
-use std::sync::Arc;
-
 use gtk::prelude::*;
-use gtk::{Button, ListBox, Layout, Label, Grid, Orientation, PositionType, ScrolledWindow, Window, WindowType};
-use gstreamer;
-use gstreamer::ElementExt;
+use gtk::{Label, Grid};
 use taglib;
 use walkdir;
 use walkdir::{DirEntry, WalkDir};

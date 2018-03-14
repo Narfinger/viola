@@ -3,19 +3,14 @@ pub mod playlist;
 #[macro_use] extern crate error_chain;
 extern crate gtk;
 extern crate gstreamer;
-extern crate rodio;
 extern crate taglib;
 extern crate walkdir;
 
 use std::sync::Mutex;
 use std::sync::Arc;
-use std::sync::mpsc::channel;
-use std::rc::Rc;
 use gstreamer::ElementExt;
 
 use gtk::prelude::*;
-use gtk::{Button, ListBox, Layout, Label, Grid, Orientation, PositionType, ScrolledWindow, Window, WindowType};
-use walkdir::WalkDir;
 
 error_chain! {
     foreign_links {
@@ -62,7 +57,7 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
             },
             MessageView::Eos(..) => {
                 let mut p = current_playlist.lock().unwrap();
-                (*p).current_position = ((*p).current_position +1);
+                (*p).current_position = (*p).current_position +1;
                 if (*p).current_position >= (*p).items.len() as i64{
                     (*p).current_position = 0;
                 } else {
@@ -102,7 +97,7 @@ fn main() {
     let glade_src = include_str!("../ui/main.glade");
     let builder = gtk::Builder::new_from_string(glade_src);
 
-    let mut grid: gtk::Viewport = builder.get_object("playlistviewport").unwrap();
+    let grid: gtk::Viewport = builder.get_object("playlistviewport").unwrap();
     println!("Building list");
     let  (playlist, current_playlist_grid) = playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest");
     let current_playlist = Arc::new(Mutex::new(playlist));
@@ -116,7 +111,7 @@ fn main() {
     { // Play Button
         let button: gtk::Button = builder.get_object("playButton").unwrap();
         button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
-            let mut p = pipeline.lock().unwrap();
+            let p = pipeline.lock().unwrap();
             let pl = current_playlist.lock().unwrap();
             (*p).set_property("uri", &playlist::get_current_uri(&pl));
             p.set_state(gstreamer::State::Playing);
@@ -125,7 +120,7 @@ fn main() {
     { // Pause Button
         let button: gtk::Button = builder.get_object("pauseButton").unwrap();
         button.connect_clicked(clone!(pipeline => move |_| {
-            let mut p = pipeline.lock().unwrap();      
+            let p = pipeline.lock().unwrap();      
             match p.get_state(gstreamer::ClockTime(Some(1000))) {
                 (_, gstreamer::State::Paused, _) =>  { (*p).set_state(gstreamer::State::Playing); },
                 (_, gstreamer::State::Playing, _) => { (*p).set_state(gstreamer::State::Paused);  },
@@ -136,7 +131,7 @@ fn main() {
     {  // Previous button
         let button: gtk::Button = builder.get_object("prevButton").unwrap();
         button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
-            let mut p = pipeline.lock().unwrap();
+            let p = pipeline.lock().unwrap();
             let mut pl = current_playlist.lock().unwrap();
             (*p).set_state(gstreamer::State::Paused);
             (*p).set_state(gstreamer::State::Ready);
@@ -148,7 +143,7 @@ fn main() {
     {  // Next button
         let button: gtk::Button = builder.get_object("nextButton").unwrap();
         button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
-            let mut p = pipeline.lock().unwrap();
+            let p = pipeline.lock().unwrap();
             let mut pl = current_playlist.lock().unwrap();
             (*p).set_state(gstreamer::State::Paused);
             (*p).set_state(gstreamer::State::Ready);
@@ -164,12 +159,13 @@ fn main() {
 
     
     window.connect_delete_event(clone!(pipeline => move |_, _| {
-        let mut p = pipeline.lock().unwrap();
+        let p = pipeline.lock().unwrap();
         (*p).set_state(gstreamer::State::Null);
         gtk::main_quit();
         Inhibit(false)
     }));
 
+    println!("SOMETHING IS WRONG, NOT ALL FILES ARE IN PLAYLIST");
     window.show_all();
     gtk::main();
 }
