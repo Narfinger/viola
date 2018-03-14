@@ -1,5 +1,3 @@
-
-pub mod errors;
 pub mod playlist;
 
 #[macro_use] extern crate error_chain;
@@ -25,8 +23,6 @@ error_chain! {
     }
 }
 
-use errors::*;
-
 macro_rules! clone {
     (@param _) => ( _ );
     (@param $x:ident) => ( $x );
@@ -44,11 +40,12 @@ macro_rules! clone {
     );
 }
 
-fn gstreamer_init() -> Result<Arc<Mutex<gstreamer::Element>>> {
+fn gstreamer_init(current_playlist: Arc<Mutex<playlist::Playlist>>) -> Result<Arc<Mutex<gstreamer::Element>>> {
     gstreamer::init().unwrap();
     let pipeline = gstreamer::parse_launch("playbin")?;
     let bus = pipeline.get_bus();
     let p = Arc::new(Mutex::new(pipeline));
+
     Ok(p)
 }
 
@@ -63,7 +60,7 @@ fn main() {
 
     let mut grid: gtk::Viewport = builder.get_object("playlistviewport").unwrap();
     println!("Building list");
-    let playlist = Rc::new(playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest"));
+    let current_playlist = Arc::new(Mutex::new(playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest")));
     println!("Done building list");
     
     let window: gtk::Window = builder.get_object("mainwindow").unwrap();
@@ -72,16 +69,15 @@ fn main() {
         Inhibit(false)
     });
     
-    let pipeline = gstreamer_init().unwrap();
+    let pipeline = gstreamer_init(current_playlist.clone()).unwrap();
 
     /// TODO: make all this use the bus instead?
     {
         let button: gtk::Button = builder.get_object("playButton").unwrap();
-        button.connect_clicked(clone!(playlist, pipeline => move |_| {
+        button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
             let mut p = pipeline.lock().unwrap();
-            (*p).set_property("uri", &playlist::get_current_uri(&playlist));
+            (*p).set_property("uri", &playlist::get_current_uri(current_playlist.clone()));
             p.set_state(gstreamer::State::Playing);
-            println!("Doing");
         }));
     }
     {
@@ -96,7 +92,10 @@ fn main() {
         }));
     }
  
-    grid.add(&playlist.grid);
+    {
+        let cp = current_playlist.lock().unwrap();
+        grid.add(&(*cp).grid);
+    }
 
     window.show_all();
     gtk::main();

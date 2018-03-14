@@ -4,6 +4,8 @@ use std::time::Duration;
 use std;
 use std::error::Error;
 use std::rc::Rc;
+use std::sync::Mutex;
+use std::sync::Arc;
 
 use gtk::prelude::*;
 use gtk::{Button, ListBox, Layout, Label, Grid, Orientation, PositionType, ScrolledWindow, Window, WindowType};
@@ -59,24 +61,7 @@ fn build_widget(p: &Vec<String>, w: &mut Grid) {
     }
 }
 
-pub fn play(p: Rc<Playlist>) -> Option<gstreamer::Element> {
-    // Build the pipeline
-    let uri = &p.items[p.current_position as usize].replace(" ", "%20");
-    println!("{}", uri);
-    let pipeline = gstreamer::parse_launch(&format!("playbin uri=file:////{}", uri));
-    match pipeline {
-        Err(e) => { 
-            println!("{:?}, {}", e.cause(), e.description());
-                    None 
-            },
-        Ok(p)  => { 
-            p.set_state(gstreamer::State::Playing);
-            println!("PLaying");
-            Some(p)
-            } 
-    }
-}
-
-pub fn get_current_uri(p: &Rc<Playlist>) -> String {
-    format!("file:////{}", p.items[p.current_position as usize].replace(" ", "%20"))
+pub fn get_current_uri(p: Arc<Mutex<Playlist>>) -> String {
+    let pl = p.lock().unwrap();
+    format!("file:////{}", (*pl).items[(*pl).current_position as usize].replace(" ", "%20"))
 }
