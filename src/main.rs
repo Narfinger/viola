@@ -68,11 +68,11 @@ fn main() {
         button.connect_clicked(clone!(pipeline => move |_| {
             let mut state = pipeline.lock().expect("Mutex wrong");
             if let Some(ref s) = *state {
-                /* match s.get_state(true) {
-                    gstreamer::State::Paused => s.set_state(gstreamer::State::Playing),
-                    gstreamer::State::Playing => s.set_state(gstreamer::State::Paused),
-                }; */
-                s.set_state(gstreamer::State::Paused);
+                match s.get_state(gstreamer::ClockTime(Some(1000))) {
+                    (_, gstreamer::State::Paused, _) =>  { s.set_state(gstreamer::State::Playing); },
+                    (_, gstreamer::State::Playing, _) => { s.set_state(gstreamer::State::Paused);  },
+                    (_, _, _) => {}
+                };
             }
         }));
     }    
