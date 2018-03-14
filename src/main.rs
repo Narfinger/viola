@@ -105,7 +105,7 @@ fn gstreamer_init(current_playlist: CurrentPlaylist, builder: Gui) -> Result<Pip
 
 /// General purpose function to update the gui on any change
 fn update_gui(pipeline: Pipeline, playlist: CurrentPlaylist, gui: Gui) {
-    /* let (_, state, _) = pipeline.lock().unwrap().get_state(gstreamer::ClockTime(Some(1000)));  
+    let (_, state, _) = pipeline.lock().unwrap().get_state(gstreamer::ClockTime(Some(1000)));  
     let treeview: gtk::TreeView = gui.lock().unwrap().get_object("listview").unwrap();
     let treeselection = treeview.get_selection();
     if state == gstreamer::State::Paused || state == gstreamer::State::Playing {
@@ -116,7 +116,7 @@ fn update_gui(pipeline: Pipeline, playlist: CurrentPlaylist, gui: Gui) {
     } else {
         println!("Not playing");
         treeselection.unselect_all();
-    } */
+    }
 }
 
 fn main() {
@@ -214,7 +214,8 @@ fn main() {
             column.add_attribute(&cell, "text", id);
             treeview.append_column(&column);
         }
-       /*  treeview.connect_button_press_event(clone!(pipeline, current_playlist => move |tv, eventbutton| {
+        //not quite working yet
+        treeview.connect_button_press_event(clone!(pipeline, current_playlist => move |tv, eventbutton| {
             if eventbutton.get_event_type() == gdk::EventType::DoubleButtonPress {
                 let (vec, tv2) = tv.get_selection().get_selected_rows();
                 if vec.len() == 1 {
@@ -230,7 +231,7 @@ fn main() {
             } else {
                 gtk::Inhibit(false)
             }
-        })); */
+        }));
         treeview.get_selection().connect_changed(move |ts| {
             println!("selecting");
         });
