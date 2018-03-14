@@ -59,27 +59,20 @@ fn build_widget(p: &Vec<String>, w: &mut Grid) {
     }
 }
 
-pub fn play(p: Rc<Playlist>) {
-    gstreamer::init().unwrap();
-
+pub fn play(p: Rc<Playlist>) -> Option<gstreamer::Element> {
     // Build the pipeline
     let uri = &p.items[p.current_position as usize].replace(" ", "%20");
     println!("{}", uri);
     let pipeline = gstreamer::parse_launch(&format!("playbin uri=file:////{}", uri));
-    if let Err(e) = pipeline {
-        println!("{:?}, {}", e.cause(), e.description());
-
-    } else {
-        let ret = pipeline.unwrap().set_state(gstreamer::State::Playing);
+    match pipeline {
+        Err(e) => { 
+            println!("{:?}, {}", e.cause(), e.description());
+                    None 
+            },
+        Ok(p)  => { 
+            p.set_state(gstreamer::State::Playing);
+            println!("PLaying");
+            Some(p)
+            } 
     }
-    // Start playing
-    
-/*
-    let endpoint = rodio::default_endpoint().unwrap();
-
-    let filepath = &p.items[p.current_position as usize];
-    let file = std::fs::File::open(filepath).unwrap();
-    println!("{}", filepath);
-    let mut play = rodio::play_once(&endpoint, BufReader::new(file)).unwrap();
-*/
 }

@@ -7,7 +7,11 @@ extern crate rodio;
 extern crate taglib;
 extern crate walkdir;
 
+use std::sync::Mutex;
+use std::sync::Arc;
 use std::rc::Rc;
+use gstreamer::ElementExt;
+
 use gtk::prelude::*;
 use gtk::{Button, ListBox, Layout, Label, Grid, Orientation, PositionType, ScrolledWindow, Window, WindowType};
 use walkdir::WalkDir;
@@ -49,13 +53,29 @@ fn main() {
         Inhibit(false)
     });
     
+    gstreamer::init().unwrap();
+    let mut pipeline: Arc<Mutex<Option<gstreamer::Element>>> = Arc::new(Mutex::new(None));
     
-
-    let button: gtk::Button = builder.get_object("playButton").unwrap();
-    button.connect_clicked(clone!(playlist => move |_| {
-        playlist::play(playlist.clone());
-    }));
-    
+    {
+        let button: gtk::Button = builder.get_object("playButton").unwrap();
+        button.connect_clicked(clone!(playlist, pipeline => move |_| {
+            let mut state = pipeline.lock().expect("Mutex wrong");
+            *state = playlist::play(playlist.clone());
+        }));
+    }
+    {
+        let button: gtk::Button = builder.get_object("pauseButton").unwrap();
+        button.connect_clicked(clone!(pipeline => move |_| {
+            let mut state = pipeline.lock().expect("Mutex wrong");
+            if let Some(ref s) = *state {
+                /* match s.get_state(true) {
+                    gstreamer::State::Paused => s.set_state(gstreamer::State::Playing),
+                    gstreamer::State::Playing => s.set_state(gstreamer::State::Paused),
+                }; */
+                s.set_state(gstreamer::State::Paused);
+            }
+        }));
+    }    
 
     grid.add(&playlist.grid);
 
