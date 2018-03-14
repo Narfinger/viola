@@ -60,7 +60,6 @@ fn build_widget(p: &Vec<String>, w: &mut Grid) {
     }
 }
 
-pub fn get_current_uri(p: Arc<Mutex<Playlist>>) -> String {
-    let pl = p.lock().unwrap();
-    format!("file:////{}", (*pl).items[(*pl).current_position as usize].replace(" ", "%20"))
+pub fn get_current_uri(p: &Playlist) -> String {
+    format!("file:////{}", p.items[p.current_position as usize].replace(" ", "%20"))
 }

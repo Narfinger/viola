@@ -61,12 +61,16 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
                         state_changed.get_current());
             },
             MessageView::Eos(..) => {
-                let p = current_playlist.lock().unwrap();
+                let mut p = current_playlist.lock().unwrap();
                 (*p).current_position = ((*p).current_position +1);
                 if (*p).current_position >= (*p).items.len() as i64{
                     (*p).current_position = 0;
                 } else {
-                    
+                    println!("Next should play");
+                    let pl = pipeline.lock().unwrap();
+                    (*pl).set_property("uri", &playlist::get_current_uri(&p));
+                    (*pl).set_state(gstreamer::State::Playing);
+                    println!("Next one now playing is: {}", &playlist::get_current_uri(&p));
                 }
                 println!("Eos found");
             },
@@ -112,7 +116,8 @@ fn main() {
         let button: gtk::Button = builder.get_object("playButton").unwrap();
         button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
             let mut p = pipeline.lock().unwrap();
-            (*p).set_property("uri", &playlist::get_current_uri(current_playlist.clone()));
+            let pl = current_playlist.lock().unwrap();
+            (*p).set_property("uri", &playlist::get_current_uri(&pl));
             p.set_state(gstreamer::State::Playing);
         }));
     }
