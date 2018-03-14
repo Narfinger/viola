@@ -41,10 +41,11 @@ type Gui = Arc<Mutex<gtk::Builder>>;
 
 /// poll the message bus and on eos start new
 fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlaylist, builder: Gui) -> gtk::Continue {
+    println!("gstreamer handling");
     let bus = {
         pipeline.lock().unwrap().get_bus().unwrap()
     };
-    if let Some(msg) = bus.timed_pop(gstreamer::CLOCK_TIME_NONE) {
+    if let Some(msg) = bus.pop() {
         use gstreamer::MessageView;
         match msg.view() {
             MessageView::Error(err) => {
@@ -55,6 +56,7 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
                 println!("Pipeline state changed from {:?} to {:?}",
                         state_changed.get_old(),
                         state_changed.get_current());
+                println!("Should update");
                 update_gui(pipeline.clone(), current_playlist.clone(), builder.clone());
             },
             MessageView::Eos(..) => {
@@ -83,24 +85,25 @@ fn gstreamer_init(current_playlist: CurrentPlaylist, builder: Gui) -> Result<Pip
     let pipeline = gstreamer::parse_launch("playbin")?;
     let p = Arc::new(Mutex::new(pipeline));
     
-    {
+    
     let pc = p.clone();
-    let cpc = current_playlist.clone();
-    let bc = builder.clone();
-    gtk::timeout_add(1000, || {
+    //let cpc = current_playlist.clone();
+    //let bc = builder.clone();
+    gtk::timeout_add(1000, move || {
+        let pc = p.clone();
+        let cpc = current_playlist.clone();
+        let bc = builder.clone();
         gstreamer_message_handler(pc, cpc, bc)
     });
-    }
+    
     //std::thread::spawn(clone!(p, current_playlist, builder => move || {
     //    gstreamer_message_handler(p, current_playlist, builder);
     //}));
-    Ok(p)
+    Ok(pc)
 }
 
 /// General purpose function to update the gui on any change
 fn update_gui(pipeline: Pipeline, playlist: CurrentPlaylist, gui: Gui) {
-    //std::thread::sleep(std::time::Duration::from_millis(250));  /// gstreamer needs a bit to start playing
-    
     let (_, state, _) = pipeline.lock().unwrap().get_state(gstreamer::ClockTime(Some(1000)));  
     let treeview: gtk::TreeView = gui.lock().unwrap().get_object("listview").unwrap();
     let treeselection = treeview.get_selection();
@@ -144,7 +147,6 @@ fn main() {
                 (*p).set_property("uri", &playlist::get_current_uri(&pl));
                 p.set_state(gstreamer::State::Playing); 
             }
-            update_gui(pipeline.clone(), current_playlist.clone(), builder.clone());
         }));
     }
     { // Pause Button
@@ -158,7 +160,6 @@ fn main() {
                     (_, _, _) => {}
                 }
             }
-            update_gui(pipeline.clone(), current_playlist.clone(), builder.clone());
         }));
     }
     {  // Previous button
@@ -173,7 +174,6 @@ fn main() {
                 (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
                 (*p).set_state(gstreamer::State::Playing);
             }
-            update_gui(pipeline.clone(), current_playlist.clone(), builder.clone());
         }));
     }
     {  // Next button
@@ -188,7 +188,6 @@ fn main() {
                 (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
                 (*p).set_state(gstreamer::State::Playing);
             }
-            update_gui(pipeline.clone(), current_playlist.clone(), builder.clone());
         }));
     }
 
