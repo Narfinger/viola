@@ -214,16 +214,17 @@ fn main() {
             column.add_attribute(&cell, "text", id);
             treeview.append_column(&column);
         }
-        //not quite working yet
         treeview.connect_button_press_event(clone!(pipeline, current_playlist => move |tv, eventbutton| {
             if eventbutton.get_event_type() == gdk::EventType::DoubleButtonPress {
                 let (vec, tv2) = tv.get_selection().get_selected_rows();
                 if vec.len() == 1 {
                     println!("we should work");
+                    let p = pipeline.lock().unwrap();
+                    p.set_state(gstreamer::State::Paused);
+                    p.set_state(gstreamer::State::Ready);
                     let pos = vec[0].get_indices()[0];
                     let mut cp = current_playlist.lock().unwrap();
                     (*cp).current_position = pos as i64;
-                    let p = pipeline.lock().unwrap();
                     (*p).set_property("uri", &playlist::get_current_uri(&cp));
                     p.set_state(gstreamer::State::Playing);
                 }
