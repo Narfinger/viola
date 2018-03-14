@@ -98,7 +98,6 @@ fn update_gui(pipeline: Pipeline, playlist: CurrentPlaylist, gui: Gui) {
         let index = playlist.lock().unwrap().current_position;
         let mut ipath = gtk::TreePath::new();
         ipath.append_index(index as i32);
-        //let index = gtk::TreePath::new_from_indicesv([index]);
         treeselection.select_path(&ipath);
     } else {
         treeselection.unselect_all();
