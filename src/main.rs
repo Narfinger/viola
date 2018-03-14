@@ -40,11 +40,11 @@ type Pipeline = Arc<Mutex<gstreamer::Element>>;
 type Gui = Arc<Mutex<gtk::Builder>>;
 
 /// poll the message bus and on eos start new
-fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlaylist) {
+fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlaylist, builder: Gui) -> gtk::Continue {
     let bus = {
         pipeline.lock().unwrap().get_bus().unwrap()
     };
-    while let Some(msg) = bus.timed_pop(gstreamer::CLOCK_TIME_NONE) {
+    if let Some(msg) = bus.timed_pop(gstreamer::CLOCK_TIME_NONE) {
         use gstreamer::MessageView;
         match msg.view() {
             MessageView::Error(err) => {
@@ -52,9 +52,10 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
                 eprintln!("Debugging information: {:?}", err.get_debug());
             }
             MessageView::StateChanged(state_changed) => {
-            println!("Pipeline state changed from {:?} to {:?}",
+                println!("Pipeline state changed from {:?} to {:?}",
                         state_changed.get_old(),
                         state_changed.get_current());
+                update_gui(pipeline.clone(), current_playlist.clone(), builder.clone());
             },
             MessageView::Eos(..) => {
                 let mut p = current_playlist.lock().unwrap();
@@ -74,23 +75,32 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
             _ => (),
         }
     }
+    gtk::Continue(true)
 }
 
-fn gstreamer_init(current_playlist: CurrentPlaylist) -> Result<Pipeline> {
+fn gstreamer_init(current_playlist: CurrentPlaylist, builder: Gui) -> Result<Pipeline> {
     gstreamer::init().unwrap();
     let pipeline = gstreamer::parse_launch("playbin")?;
     let p = Arc::new(Mutex::new(pipeline));
-
-    let pp = p.clone();
-    let cp = current_playlist.clone();
-    std::thread::spawn(|| {
-        gstreamer_message_handler(pp, cp);
+    
+    {
+    let pc = p.clone();
+    let cpc = current_playlist.clone();
+    let bc = builder.clone();
+    gtk::timeout_add(1000, || {
+        gstreamer_message_handler(pc, cpc, bc)
     });
+    }
+    //std::thread::spawn(clone!(p, current_playlist, builder => move || {
+    //    gstreamer_message_handler(p, current_playlist, builder);
+    //}));
     Ok(p)
 }
 
 /// General purpose function to update the gui on any change
 fn update_gui(pipeline: Pipeline, playlist: CurrentPlaylist, gui: Gui) {
+    //std::thread::sleep(std::time::Duration::from_millis(250));  /// gstreamer needs a bit to start playing
+    
     let (_, state, _) = pipeline.lock().unwrap().get_state(gstreamer::ClockTime(Some(1000)));  
     let treeview: gtk::TreeView = gui.lock().unwrap().get_object("listview").unwrap();
     let treeselection = treeview.get_selection();
@@ -100,6 +110,7 @@ fn update_gui(pipeline: Pipeline, playlist: CurrentPlaylist, gui: Gui) {
         ipath.append_index(index as i32);
         treeselection.select_path(&ipath);
     } else {
+        println!("Not playing");
         treeselection.unselect_all();
     }
 }
@@ -121,7 +132,7 @@ fn main() {
     let window: gtk::Window = builder.lock().unwrap().get_object("mainwindow").unwrap();
     let treeview: gtk::TreeView = builder.lock().unwrap().get_object("listview").unwrap();
 
-    let pipeline = gstreamer_init(current_playlist.clone()).unwrap();
+    let pipeline = gstreamer_init(current_playlist.clone(), builder.clone()).unwrap();
 
     
     { // Play Button
