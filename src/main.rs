@@ -41,7 +41,6 @@ type Gui = Arc<Mutex<gtk::Builder>>;
 
 /// poll the message bus and on eos start new
 fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlaylist, builder: Gui) -> gtk::Continue {
-    println!("gstreamer handling");
     let bus = {
         pipeline.lock().unwrap().get_bus().unwrap()
     };
@@ -56,7 +55,6 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
                 println!("Pipeline state changed from {:?} to {:?}",
                         state_changed.get_old(),
                         state_changed.get_current());
-                println!("Should update");
                 update_gui(pipeline.clone(), current_playlist.clone(), builder.clone());
             },
             MessageView::Eos(..) => {
@@ -89,7 +87,7 @@ fn gstreamer_init(current_playlist: CurrentPlaylist, builder: Gui) -> Result<Pip
     let pc = p.clone();
     //let cpc = current_playlist.clone();
     //let bc = builder.clone();
-    gtk::timeout_add(1000, move || {
+    gtk::timeout_add(500, move || {
         let pc = p.clone();
         let cpc = current_playlist.clone();
         let bc = builder.clone();
