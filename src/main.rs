@@ -68,6 +68,7 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
                 } else {
                     println!("Next should play");
                     let pl = pipeline.lock().unwrap();
+                    (*pl).set_state(gstreamer::State::Ready);
                     (*pl).set_property("uri", &playlist::get_current_uri(&p));
                     (*pl).set_state(gstreamer::State::Playing);
                     println!("Next one now playing is: {}", &playlist::get_current_uri(&p));
@@ -111,8 +112,8 @@ fn main() {
     
     let pipeline = gstreamer_init(current_playlist.clone()).unwrap();
 
-    /// TODO: make all this use the bus instead?
-    {
+    
+    { // Play Button
         let button: gtk::Button = builder.get_object("playButton").unwrap();
         button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
             let mut p = pipeline.lock().unwrap();
@@ -121,7 +122,7 @@ fn main() {
             p.set_state(gstreamer::State::Playing);
         }));
     }
-    {
+    { // Pause Button
         let button: gtk::Button = builder.get_object("pauseButton").unwrap();
         button.connect_clicked(clone!(pipeline => move |_| {
             let mut p = pipeline.lock().unwrap();      
@@ -130,6 +131,30 @@ fn main() {
                 (_, gstreamer::State::Playing, _) => { (*p).set_state(gstreamer::State::Paused);  },
                 (_, _, _) => {}
             }
+        }));
+    }
+    {  // Previous button
+        let button: gtk::Button = builder.get_object("prevButton").unwrap();
+        button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
+            let mut p = pipeline.lock().unwrap();
+            let mut pl = current_playlist.lock().unwrap();
+            (*p).set_state(gstreamer::State::Paused);
+            (*p).set_state(gstreamer::State::Ready);
+            (*pl).current_position = ((*pl).current_position -1) % (*pl).items.len() as i64;
+            (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
+            (*p).set_state(gstreamer::State::Playing);
+        }));
+    }
+    {  // Next button
+        let button: gtk::Button = builder.get_object("nextButton").unwrap();
+        button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
+            let mut p = pipeline.lock().unwrap();
+            let mut pl = current_playlist.lock().unwrap();
+            (*p).set_state(gstreamer::State::Paused);
+            (*p).set_state(gstreamer::State::Ready);
+            (*pl).current_position = ((*pl).current_position +1) % (*pl).items.len() as i64;
+            (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
+            (*p).set_state(gstreamer::State::Playing);
         }));
     }
  
