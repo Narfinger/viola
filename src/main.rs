@@ -40,12 +40,51 @@ macro_rules! clone {
     );
 }
 
-fn gstreamer_init(current_playlist: Arc<Mutex<playlist::Playlist>>) -> Result<Arc<Mutex<gstreamer::Element>>> {
+type CurrentPlaylist = Arc<Mutex<playlist::Playlist>>;
+type Pipeline = Arc<Mutex<gstreamer::Element>>; 
+
+/// poll the message bus and on eos start new
+fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlaylist) {
+    let bus = {
+        pipeline.lock().unwrap().get_bus().unwrap()
+    };
+    while let Some(msg) = bus.timed_pop(gstreamer::CLOCK_TIME_NONE) {
+        use gstreamer::MessageView;
+        match msg.view() {
+            MessageView::Error(err) => {
+                eprintln!("Error received {}", err.get_error());
+                eprintln!("Debugging information: {:?}", err.get_debug());
+            }
+            MessageView::StateChanged(state_changed) => {
+            println!("Pipeline state changed from {:?} to {:?}",
+                        state_changed.get_old(),
+                        state_changed.get_current());
+            },
+            MessageView::Eos(..) => {
+                let p = current_playlist.lock().unwrap();
+                (*p).current_position = ((*p).current_position +1);
+                if (*p).current_position >= (*p).items.len() as i64{
+                    (*p).current_position = 0;
+                } else {
+                    
+                }
+                println!("Eos found");
+            },
+            _ => (),
+        }
+    }
+}
+
+fn gstreamer_init(current_playlist: CurrentPlaylist) -> Result<Arc<Mutex<gstreamer::Element>>> {
     gstreamer::init().unwrap();
     let pipeline = gstreamer::parse_launch("playbin")?;
-    let bus = pipeline.get_bus();
     let p = Arc::new(Mutex::new(pipeline));
 
+    let pp = p.clone();
+    let cp = current_playlist.clone();
+    std::thread::spawn(|| {
+        gstreamer_message_handler(pp, cp);
+    });
     Ok(p)
 }
 
@@ -60,14 +99,11 @@ fn main() {
 
     let mut grid: gtk::Viewport = builder.get_object("playlistviewport").unwrap();
     println!("Building list");
-    let current_playlist = Arc::new(Mutex::new(playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest")));
+    let  (playlist, current_playlist_grid) = playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest");
+    let current_playlist = Arc::new(Mutex::new(playlist));
     println!("Done building list");
     
     let window: gtk::Window = builder.get_object("mainwindow").unwrap();
-    window.connect_delete_event(|_, _| {
-        gtk::main_quit();
-        Inhibit(false)
-    });
     
     let pipeline = gstreamer_init(current_playlist.clone()).unwrap();
 
@@ -93,9 +129,16 @@ fn main() {
     }
  
     {
-        let cp = current_playlist.lock().unwrap();
-        grid.add(&(*cp).grid);
+        grid.add(&current_playlist_grid);
     }
+
+    
+    window.connect_delete_event(clone!(pipeline => move |_, _| {
+        let mut p = pipeline.lock().unwrap();
+        (*p).set_state(gstreamer::State::Null);
+        gtk::main_quit();
+        Inhibit(false)
+    }));
 
     window.show_all();
     gtk::main();

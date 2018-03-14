@@ -18,14 +18,13 @@ use walkdir::{DirEntry, WalkDir};
 pub struct Playlist {
     pub items: Vec<String>,
     pub current_position: i64,
-    pub grid: Grid,
 }
 
-pub fn playlist_from_directory(folder: &str) -> Playlist {
+pub fn playlist_from_directory(folder: &str) -> (Playlist, Grid) {
     let mut grid = Grid::new();
     let strings = parse_folder(folder);
     build_widget(&strings, &mut grid);
-    Playlist { items: strings, current_position: 0, grid: grid }
+    (Playlist { items: strings, current_position: 0}, grid)
 }
 
 fn check_dir(s: &Result<DirEntry, walkdir::Error>) -> bool {
