@@ -26,7 +26,9 @@ fn check_dir(s: &Result<DirEntry, walkdir::Error>) -> bool {
 
 fn parse_folder(folder: &str) -> Vec<String> {
     // TODO this currently also has folders in it 
-    WalkDir::new(folder).into_iter().filter(check_dir).map(|i| String::from(i.unwrap().path().to_str().unwrap())).collect::<Vec<String>>()
+    let mut files = WalkDir::new(folder).into_iter().filter(check_dir).map(|i| String::from(i.unwrap().path().to_str().unwrap())).collect::<Vec<String>>();
+    files.sort();
+    files
 }
 
 fn build_widget(p: &Vec<String>, w: &mut Grid) {

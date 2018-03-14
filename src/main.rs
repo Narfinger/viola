@@ -75,7 +75,7 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
     }
 }
 
-fn gstreamer_init(current_playlist: CurrentPlaylist) -> Result<Arc<Mutex<gstreamer::Element>>> {
+fn gstreamer_init(current_playlist: CurrentPlaylist) -> Result<Pipeline> {
     gstreamer::init().unwrap();
     let pipeline = gstreamer::parse_launch("playbin")?;
     let p = Arc::new(Mutex::new(pipeline));
@@ -99,7 +99,7 @@ fn main() {
 
     let grid: gtk::Viewport = builder.get_object("playlistviewport").unwrap();
     println!("Building list");
-    let  (playlist, current_playlist_grid) = playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest");
+    let  (playlist, current_playlist_grid) = playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest/");
     let current_playlist = Arc::new(Mutex::new(playlist));
     println!("Done building list");
     
@@ -153,10 +153,7 @@ fn main() {
         }));
     }
  
-    {
-        grid.add(&current_playlist_grid);
-    }
-
+    grid.add(&current_playlist_grid);
     
     window.connect_delete_event(clone!(pipeline => move |_, _| {
         let p = pipeline.lock().unwrap();
@@ -165,7 +162,6 @@ fn main() {
         Inhibit(false)
     }));
 
-    println!("SOMETHING IS WRONG, NOT ALL FILES ARE IN PLAYLIST");
     window.show_all();
     gtk::main();
 }
