@@ -1,13 +1,33 @@
+
+pub mod playlist;
+
 extern crate gtk;
+extern crate gstreamer;
+extern crate rodio;
 extern crate taglib;
 extern crate walkdir;
+
+use std::rc::Rc;
 use gtk::prelude::*;
 use gtk::{Button, ListBox, Layout, Label, Grid, Orientation, PositionType, ScrolledWindow, Window, WindowType};
 use walkdir::WalkDir;
 
-use playlist::Playlist;
-pub mod playlist;
-
+macro_rules! clone {
+    (@param _) => ( _ );
+    (@param $x:ident) => ( $x );
+    ($($n:ident),+ => move || $body:expr) => (
+        {
+            $( let $n = $n.clone(); )+
+            move || $body
+        }
+    );
+    ($($n:ident),+ => move |$($p:tt),+| $body:expr) => (
+        {
+            $( let $n = $n.clone(); )+
+            move |$(clone!(@param $p),)+| $body
+        }
+    );
+}
 
 fn main() {
     if gtk::init().is_err() {
@@ -20,7 +40,7 @@ fn main() {
 
     let mut grid: gtk::Viewport = builder.get_object("playlistviewport").unwrap();
     println!("Building list");
-    let playlist = playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest");
+    let playlist = Rc::new(playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest"));
     println!("Done building list");
     
     let window: gtk::Window = builder.get_object("mainwindow").unwrap();
@@ -28,6 +48,15 @@ fn main() {
         gtk::main_quit();
         Inhibit(false)
     });
+    
+    
+
+    let button: gtk::Button = builder.get_object("playButton").unwrap();
+    button.connect_clicked(clone!(playlist => move |_| {
+        playlist::play(playlist.clone());
+    }));
+    
+
     grid.add(&playlist.grid);
 
     window.show_all();

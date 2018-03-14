@@ -5,6 +5,8 @@ authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 
 [dependencies]
 taglib = {git = "https://github.com/ebassi/taglib-rust.git", rev="513dabf"}        # Rust bindings for TagLib    
+rodio = "0.6.0"          # Audio playback library 
+gstreamer = "0.10.2"               # Rust bindings for GStreamer      
 walkdir = "2"
 
 [dependencies.gtk]
