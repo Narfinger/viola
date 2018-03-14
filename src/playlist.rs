@@ -76,3 +76,7 @@ pub fn play(p: Rc<Playlist>) -> Option<gstreamer::Element> {
             } 
     }
 }
+
+pub fn get_current_uri(p: &Rc<Playlist>) -> String {
+    format!("file:////{}", p.items[p.current_position as usize].replace(" ", "%20"))
+}
