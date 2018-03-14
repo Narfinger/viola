@@ -1,6 +1,7 @@
 pub mod playlist;
 
 #[macro_use] extern crate error_chain;
+extern crate gdk;
 extern crate gtk;
 extern crate gstreamer;
 extern crate taglib;
@@ -55,7 +56,9 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
                 println!("Pipeline state changed from {:?} to {:?}",
                         state_changed.get_old(),
                         state_changed.get_current());
-                update_gui(pipeline.clone(), current_playlist.clone(), builder.clone());
+                if (state_changed.get_current() == gstreamer::State::Playing) {
+                    update_gui(pipeline.clone(), current_playlist.clone(), builder.clone());
+                }
             },
             MessageView::Eos(..) => {
                 let mut p = current_playlist.lock().unwrap();
@@ -102,7 +105,7 @@ fn gstreamer_init(current_playlist: CurrentPlaylist, builder: Gui) -> Result<Pip
 
 /// General purpose function to update the gui on any change
 fn update_gui(pipeline: Pipeline, playlist: CurrentPlaylist, gui: Gui) {
-    let (_, state, _) = pipeline.lock().unwrap().get_state(gstreamer::ClockTime(Some(1000)));  
+    /* let (_, state, _) = pipeline.lock().unwrap().get_state(gstreamer::ClockTime(Some(1000)));  
     let treeview: gtk::TreeView = gui.lock().unwrap().get_object("listview").unwrap();
     let treeselection = treeview.get_selection();
     if state == gstreamer::State::Paused || state == gstreamer::State::Playing {
@@ -113,7 +116,7 @@ fn update_gui(pipeline: Pipeline, playlist: CurrentPlaylist, gui: Gui) {
     } else {
         println!("Not playing");
         treeselection.unselect_all();
-    }
+    } */
 }
 
 fn main() {
@@ -138,7 +141,7 @@ fn main() {
     
     { // Play Button
         let button: gtk::Button = builder.lock().unwrap().get_object("playButton").unwrap();
-        button.connect_clicked(clone!(current_playlist, pipeline, builder => move |_| {
+        button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
             {
                 let p = pipeline.lock().unwrap();
                 let pl = current_playlist.lock().unwrap();
@@ -149,7 +152,7 @@ fn main() {
     }
     { // Pause Button
         let button: gtk::Button = builder.lock().unwrap().get_object("pauseButton").unwrap();
-        button.connect_clicked(clone!(current_playlist, pipeline, builder  => move |_| {
+        button.connect_clicked(clone!(current_playlist, pipeline  => move |_| {
             {
                 let p = pipeline.lock().unwrap();      
                 match p.get_state(gstreamer::ClockTime(Some(1000))) {
@@ -162,7 +165,7 @@ fn main() {
     }
     {  // Previous button
         let button: gtk::Button = builder.lock().unwrap().get_object("prevButton").unwrap();
-        button.connect_clicked(clone!(current_playlist, pipeline, builder => move |_| {
+        button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
             {
                 let p = pipeline.lock().unwrap();
                 let mut pl = current_playlist.lock().unwrap();
@@ -176,7 +179,7 @@ fn main() {
     }
     {  // Next button
         let button: gtk::Button = builder.lock().unwrap().get_object("nextButton").unwrap();
-        button.connect_clicked(clone!(current_playlist, pipeline, builder => move |_| {
+        button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
             {
                 let p = pipeline.lock().unwrap();
                 let mut pl = current_playlist.lock().unwrap();
@@ -211,6 +214,26 @@ fn main() {
             column.add_attribute(&cell, "text", id);
             treeview.append_column(&column);
         }
+       /*  treeview.connect_button_press_event(clone!(pipeline, current_playlist => move |tv, eventbutton| {
+            if eventbutton.get_event_type() == gdk::EventType::DoubleButtonPress {
+                let (vec, tv2) = tv.get_selection().get_selected_rows();
+                if vec.len() == 1 {
+                    println!("we should work");
+                    let pos = vec[0].get_indices()[0];
+                    let mut cp = current_playlist.lock().unwrap();
+                    (*cp).current_position = pos as i64;
+                    let p = pipeline.lock().unwrap();
+                    (*p).set_property("uri", &playlist::get_current_uri(&cp));
+                    p.set_state(gstreamer::State::Playing);
+                }
+                gtk::Inhibit(true)
+            } else {
+                gtk::Inhibit(false)
+            }
+        })); */
+        treeview.get_selection().connect_changed(move |ts| {
+            println!("selecting");
+        });
         treeview.set_model(Some(&model));
     }
     

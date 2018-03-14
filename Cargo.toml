@@ -8,6 +8,7 @@ error-chain = "0.11"
 taglib = {git = "https://github.com/ebassi/taglib-rust.git", rev="513dabf"}        # Rust bindings for TagLib    
 gstreamer = "0.10.2"               # Rust bindings for GStreamer      
 walkdir = "2"
+gdk = "0.7.0"               # Rust bindings for the GDK 3 library   
 
 [dependencies.gtk]
 version = "0.3.0"
