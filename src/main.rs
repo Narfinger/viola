@@ -97,9 +97,8 @@ fn main() {
     let glade_src = include_str!("../ui/main.glade");
     let builder = gtk::Builder::new_from_string(glade_src);
 
-    let grid: gtk::Viewport = builder.get_object("playlistviewport").unwrap();
     println!("Building list");
-    let  (playlist, current_playlist_grid) = playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest/");
+    let playlist = playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest/");
     let current_playlist = Arc::new(Mutex::new(playlist));
     println!("Done building list");
     
@@ -152,8 +151,32 @@ fn main() {
             (*p).set_state(gstreamer::State::Playing);
         }));
     }
- 
-    grid.add(&current_playlist_grid);
+
+    let model = gtk::ListStore::new(&[u32::static_type(), String::static_type(), String::static_type(), String::static_type()]);
+    
+        let p = current_playlist.lock().unwrap();
+        for (i, entry) in p.items.iter().enumerate() {
+            let taglibfile = taglib::File::new(entry);
+                if let Err(e) = taglibfile {
+                    println!("Error {:?}", e);
+                } else {
+                    let ataglib = taglibfile.unwrap();
+                    let tags = ataglib.tag().unwrap();
+                    model.insert_with_values(None, &[0,1,2,3], &[&(i as u32 + 1), &tags.title(), &tags.artist(), &tags.album()]);
+                }
+        }
+        let treeview: gtk::TreeView = builder.get_object("listview").unwrap();
+        for id in vec![0,1,2,3] {
+            let column = gtk::TreeViewColumn::new();
+            let cell = gtk::CellRendererText::new();
+            column.pack_start(&cell, true);
+            // Association of the view's column with the model's `id` column.
+            column.add_attribute(&cell, "text", id);
+            treeview.append_column(&column);
+        }
+        treeview.set_model(Some(&model));
+
+    
     
     window.connect_delete_event(clone!(pipeline => move |_, _| {
         let p = pipeline.lock().unwrap();

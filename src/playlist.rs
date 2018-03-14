@@ -9,11 +9,11 @@ pub struct Playlist {
     pub current_position: i64,
 }
 
-pub fn playlist_from_directory(folder: &str) -> (Playlist, Grid) {
+pub fn playlist_from_directory(folder: &str) -> Playlist {
     let mut grid = Grid::new();
     let strings = parse_folder(folder);
-    build_widget(&strings, &mut grid);
-    (Playlist { items: strings, current_position: 0}, grid)
+   // build_widget(&strings, &mut grid);
+    Playlist { items: strings, current_position: 0}
 }
 
 fn check_dir(s: &Result<DirEntry, walkdir::Error>) -> bool {
@@ -30,7 +30,7 @@ fn parse_folder(folder: &str) -> Vec<String> {
     files.sort();
     files
 }
-
+/* 
 fn build_widget(p: &Vec<String>, w: &mut Grid) {
     for (i, val) in p.iter().enumerate() {
         let fpath = &val;
@@ -49,7 +49,7 @@ fn build_widget(p: &Vec<String>, w: &mut Grid) {
             w.attach(&album,  2, i as i32, 1, 1);
         }
     }
-}
+} */
 
 pub fn get_current_uri(p: &Playlist) -> String {
     format!("file:////{}", p.items[p.current_position as usize].replace(" ", "%20"))
