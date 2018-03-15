@@ -206,12 +206,14 @@ fn main() {
                     model.insert_with_values(None, &[0,1,2,3], &[&(i as u32 + 1), &tags.title(), &tags.artist(), &tags.album()]);
                 }
         }
-        for id in vec![0,1,2,3] {
+        for (id, title) in vec![(0,"#"), (1, "Title"), (2, "Artist"), (3, "Album")] {
             let column = gtk::TreeViewColumn::new();
             let cell = gtk::CellRendererText::new();
             column.pack_start(&cell, true);
             // Association of the view's column with the model's `id` column.
             column.add_attribute(&cell, "text", id);
+            column.set_title(title);
+            column.set_resizable(id>0);
             treeview.append_column(&column);
         }
         treeview.connect_button_press_event(clone!(pipeline, current_playlist => move |tv, eventbutton| {
@@ -247,6 +249,7 @@ fn main() {
         Inhibit(false)
     }));
 
+    println!("TODO: change to rwlock where I can");
     window.show_all();
     gtk::main();
 }
