@@ -1,9 +1,16 @@
+pub mod db;
 pub mod playlist;
+pub mod schema;
+pub mod types;
 
+#[macro_use]
+extern crate diesel;
 #[macro_use] extern crate error_chain;
 extern crate gdk;
 extern crate gtk;
 extern crate gstreamer;
+extern crate r2d2;
+extern crate r2d2_diesel;
 extern crate taglib;
 extern crate walkdir;
 
@@ -40,6 +47,12 @@ macro_rules! clone {
 type CurrentPlaylist = Arc<RwLock<playlist::Playlist>>;
 type Pipeline = Arc<RwLock<gstreamer::Element>>;
 type Gui = Arc<RwLock<gtk::Builder>>;
+type DBPool = r2d2::Pool<r2d2_diesel::ConnectionManager<diesel::SqliteConnection>>;
+
+fn setup_db_connection() -> DBPool {
+    let manager = r2d2_diesel::ConnectionManager::<diesel::SqliteConnection>::new("sqlite://music.db");
+    r2d2::Pool::builder().build(manager).expect("Failed to create pool.")
+}
 
 /// poll the message bus and on eos start new
 fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlaylist, builder: Gui) -> gtk::Continue {
@@ -125,6 +138,8 @@ fn main() {
         println!("Failed to initialize GTK.");
         return;
     }
+
+    let pool = setup_db_connection();
 
     let glade_src = include_str!("../ui/main.glade");
     let builder: Gui = Arc::new(RwLock::new(gtk::Builder::new_from_string(glade_src)));
