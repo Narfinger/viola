@@ -9,6 +9,7 @@ extern crate walkdir;
 
 use std::sync::Mutex;
 use std::sync::Arc;
+use std::sync::RwLock;
 use gstreamer::ElementExt;
 
 use gtk::prelude::*;
@@ -36,14 +37,14 @@ macro_rules! clone {
     );
 }
 
-type CurrentPlaylist = Arc<Mutex<playlist::Playlist>>;
-type Pipeline = Arc<Mutex<gstreamer::Element>>;
-type Gui = Arc<Mutex<gtk::Builder>>;
+type CurrentPlaylist = Arc<RwLock<playlist::Playlist>>;
+type Pipeline = Arc<RwLock<gstreamer::Element>>;
+type Gui = Arc<RwLock<gtk::Builder>>;
 
 /// poll the message bus and on eos start new
 fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlaylist, builder: Gui) -> gtk::Continue {
     let bus = {
-        pipeline.lock().unwrap().get_bus().unwrap()
+        pipeline.read().unwrap().get_bus().unwrap()
     };
     if let Some(msg) = bus.pop() {
         use gstreamer::MessageView;
@@ -61,13 +62,13 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
                 }
             },
             MessageView::Eos(..) => {
-                let mut p = current_playlist.lock().unwrap();
+                let mut p = current_playlist.write().unwrap();
                 (*p).current_position = (*p).current_position +1;
                 if (*p).current_position >= (*p).items.len() as i64{
                     (*p).current_position = 0;
                 } else {
                     println!("Next should play");
-                    let pl = pipeline.lock().unwrap();
+                    let pl = pipeline.read().unwrap();
                     (*pl).set_state(gstreamer::State::Ready);
                     (*pl).set_property("uri", &playlist::get_current_uri(&p));
                     (*pl).set_state(gstreamer::State::Playing);
@@ -84,7 +85,7 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
 fn gstreamer_init(current_playlist: CurrentPlaylist, builder: Gui) -> Result<Pipeline> {
     gstreamer::init().unwrap();
     let pipeline = gstreamer::parse_launch("playbin")?;
-    let p = Arc::new(Mutex::new(pipeline));
+    let p = Arc::new(RwLock::new(pipeline));
     
     
     let pc = p.clone();
@@ -105,11 +106,11 @@ fn gstreamer_init(current_playlist: CurrentPlaylist, builder: Gui) -> Result<Pip
 
 /// General purpose function to update the gui on any change
 fn update_gui(pipeline: Pipeline, playlist: CurrentPlaylist, gui: Gui) {
-    let (_, state, _) = pipeline.lock().unwrap().get_state(gstreamer::ClockTime(Some(1000)));  
-    let treeview: gtk::TreeView = gui.lock().unwrap().get_object("listview").unwrap();
+    let (_, state, _) = pipeline.read().unwrap().get_state(gstreamer::ClockTime(Some(1000)));  
+    let treeview: gtk::TreeView = gui.read().unwrap().get_object("listview").unwrap();
     let treeselection = treeview.get_selection();
     if state == gstreamer::State::Paused || state == gstreamer::State::Playing {
-        let index = playlist.lock().unwrap().current_position;
+        let index = playlist.read().unwrap().current_position;
         let mut ipath = gtk::TreePath::new();
         ipath.append_index(index as i32);
         treeselection.select_path(&ipath);
@@ -126,35 +127,35 @@ fn main() {
     }
 
     let glade_src = include_str!("../ui/main.glade");
-    let builder: Gui = Arc::new(Mutex::new(gtk::Builder::new_from_string(glade_src)));
+    let builder: Gui = Arc::new(RwLock::new(gtk::Builder::new_from_string(glade_src)));
 
     println!("Building list");
     let playlist = playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest/");
-    let current_playlist = Arc::new(Mutex::new(playlist));
+    let current_playlist = Arc::new(RwLock::new(playlist));
     println!("Done building list");
     
-    let window: gtk::Window = builder.lock().unwrap().get_object("mainwindow").unwrap();
-    let treeview: gtk::TreeView = builder.lock().unwrap().get_object("listview").unwrap();
+    let window: gtk::Window = builder.read().unwrap().get_object("mainwindow").unwrap();
+    let treeview: gtk::TreeView = builder.read().unwrap().get_object("listview").unwrap();
 
     let pipeline = gstreamer_init(current_playlist.clone(), builder.clone()).unwrap();
 
     
     { // Play Button
-        let button: gtk::Button = builder.lock().unwrap().get_object("playButton").unwrap();
+        let button: gtk::Button = builder.read().unwrap().get_object("playButton").unwrap();
         button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
             {
-                let p = pipeline.lock().unwrap();
-                let pl = current_playlist.lock().unwrap();
+                let p = pipeline.read().unwrap();
+                let pl = current_playlist.read().unwrap();
                 (*p).set_property("uri", &playlist::get_current_uri(&pl));
                 p.set_state(gstreamer::State::Playing); 
             }
         }));
     }
     { // Pause Button
-        let button: gtk::Button = builder.lock().unwrap().get_object("pauseButton").unwrap();
+        let button: gtk::Button = builder.read().unwrap().get_object("pauseButton").unwrap();
         button.connect_clicked(clone!(current_playlist, pipeline  => move |_| {
             {
-                let p = pipeline.lock().unwrap();      
+                let p = pipeline.read().unwrap();      
                 match p.get_state(gstreamer::ClockTime(Some(1000))) {
                     (_, gstreamer::State::Paused, _) =>  { (*p).set_state(gstreamer::State::Playing); },
                     (_, gstreamer::State::Playing, _) => { (*p).set_state(gstreamer::State::Paused);  },
@@ -164,11 +165,11 @@ fn main() {
         }));
     }
     {  // Previous button
-        let button: gtk::Button = builder.lock().unwrap().get_object("prevButton").unwrap();
+        let button: gtk::Button = builder.read().unwrap().get_object("prevButton").unwrap();
         button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
             {
-                let p = pipeline.lock().unwrap();
-                let mut pl = current_playlist.lock().unwrap();
+                let p = pipeline.read().unwrap();
+                let mut pl = current_playlist.write().unwrap();
                 (*p).set_state(gstreamer::State::Paused);
                 (*p).set_state(gstreamer::State::Ready);
                 (*pl).current_position = ((*pl).current_position -1) % (*pl).items.len() as i64;
@@ -178,11 +179,11 @@ fn main() {
         }));
     }
     {  // Next button
-        let button: gtk::Button = builder.lock().unwrap().get_object("nextButton").unwrap();
+        let button: gtk::Button = builder.read().unwrap().get_object("nextButton").unwrap();
         button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
             {
-                let p = pipeline.lock().unwrap();
-                let mut pl = current_playlist.lock().unwrap();
+                let p = pipeline.read().unwrap();
+                let mut pl = current_playlist.write().unwrap();
                 (*p).set_state(gstreamer::State::Paused);
                 (*p).set_state(gstreamer::State::Ready);
                 (*pl).current_position = ((*pl).current_position +1) % (*pl).items.len() as i64;
@@ -195,7 +196,7 @@ fn main() {
     let model = gtk::ListStore::new(&[u32::static_type(), String::static_type(), String::static_type(), String::static_type()]);
     
     {
-        let p = current_playlist.lock().unwrap();
+        let p = current_playlist.read().unwrap();
         for (i, entry) in p.items.iter().enumerate() {
             let taglibfile = taglib::File::new(entry);
                 if let Err(e) = taglibfile {
@@ -221,11 +222,11 @@ fn main() {
                 let (vec, tv2) = tv.get_selection().get_selected_rows();
                 if vec.len() == 1 {
                     println!("we should work");
-                    let p = pipeline.lock().unwrap();
+                    let p = pipeline.read().unwrap();
                     p.set_state(gstreamer::State::Paused);
                     p.set_state(gstreamer::State::Ready);
                     let pos = vec[0].get_indices()[0];
-                    let mut cp = current_playlist.lock().unwrap();
+                    let mut cp = current_playlist.write().unwrap();
                     (*cp).current_position = pos as i64;
                     (*p).set_property("uri", &playlist::get_current_uri(&cp));
                     p.set_state(gstreamer::State::Playing);
@@ -243,7 +244,7 @@ fn main() {
     
     
     window.connect_delete_event(clone!(pipeline => move |_, _| {
-        let p = pipeline.lock().unwrap();
+        let p = pipeline.read().unwrap();
         (*p).set_state(gstreamer::State::Null);
         gtk::main_quit();
         Inhibit(false)
