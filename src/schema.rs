@@ -5,7 +5,8 @@ table! {
         artist -> Nullable<Text>,
         album -> Nullable<Text>,
         year -> Nullable<Integer>,
-        path -> Nullable<Text>,
+        path -> Text,
         duration -> Nullable<Integer>,
+        albumpath -> Nullable<Text>,
     }
 }

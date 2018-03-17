@@ -9,7 +9,8 @@ dotenv = "0.11"
 error-chain = "0.11"
 taglib = {git = "https://github.com/ebassi/taglib-rust.git", rev="513dabf"}        # Rust bindings for TagLib    
 gdk = "0.7.0"               # Rust bindings for the GDK 3 library   
-gstreamer = "0.10.2"               # Rust bindings for GStreamer      
+gstreamer = "0.10.2"               # Rust bindings for GStreamer     
+rayon = "1.0"               # Simple work-stealing parallelism for Rust   
 r2d2 = "0.8"                # A generic connection pool
 r2d2-diesel = "1.0"      # r2d2 support for Diesel
 walkdir = "2"

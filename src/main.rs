@@ -1,31 +1,25 @@
-pub mod db;
-pub mod playlist;
-pub mod schema;
-pub mod types;
-
-#[macro_use]
-extern crate diesel;
-#[macro_use] extern crate error_chain;
+#[macro_use] extern crate diesel;
 extern crate gdk;
 extern crate gtk;
 extern crate gstreamer;
+extern crate rayon;
 extern crate r2d2;
 extern crate r2d2_diesel;
 extern crate taglib;
 extern crate walkdir;
 
+pub mod db;
+pub mod playlist;
+pub mod schema;
+pub mod types;
+
 use std::sync::Mutex;
 use std::sync::Arc;
 use std::sync::RwLock;
 use gstreamer::ElementExt;
-
 use gtk::prelude::*;
 
-error_chain! {
-    foreign_links {
-        GTK(gtk::Error);
-    }
-}
+use types::*;
 
 macro_rules! clone {
     (@param _) => ( _ );
@@ -42,16 +36,6 @@ macro_rules! clone {
             move |$(clone!(@param $p),)+| $body
         }
     );
-}
-
-type CurrentPlaylist = Arc<RwLock<playlist::Playlist>>;
-type Pipeline = Arc<RwLock<gstreamer::Element>>;
-type Gui = Arc<RwLock<gtk::Builder>>;
-type DBPool = r2d2::Pool<r2d2_diesel::ConnectionManager<diesel::SqliteConnection>>;
-
-fn setup_db_connection() -> DBPool {
-    let manager = r2d2_diesel::ConnectionManager::<diesel::SqliteConnection>::new("sqlite://music.db");
-    r2d2::Pool::builder().build(manager).expect("Failed to create pool.")
 }
 
 /// poll the message bus and on eos start new
@@ -95,9 +79,9 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
     gtk::Continue(true)
 }
 
-fn gstreamer_init(current_playlist: CurrentPlaylist, builder: Gui) -> Result<Pipeline> {
+fn gstreamer_init(current_playlist: CurrentPlaylist, builder: Gui) -> Result<Pipeline, String> {
     gstreamer::init().unwrap();
-    let pipeline = gstreamer::parse_launch("playbin")?;
+    let pipeline = gstreamer::parse_launch("playbin").map_err(|_| String::from("Cannot do gstreamer"))?;
     let p = Arc::new(RwLock::new(pipeline));
     
     
@@ -139,13 +123,14 @@ fn main() {
         return;
     }
 
-    let pool = setup_db_connection();
+    let pool = db::setup_db_connection();
 
+    //db::build_db("/mnt/ssd-media/Musik/1rest/".into(), pool.clone()).unwrap();
     let glade_src = include_str!("../ui/main.glade");
     let builder: Gui = Arc::new(RwLock::new(gtk::Builder::new_from_string(glade_src)));
 
     println!("Building list");
-    let playlist = playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest/");
+    let playlist = playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest/", pool.clone());
     let current_playlist = Arc::new(RwLock::new(playlist));
     println!("Done building list");
     
@@ -213,14 +198,7 @@ fn main() {
     {
         let p = current_playlist.read().unwrap();
         for (i, entry) in p.items.iter().enumerate() {
-            let taglibfile = taglib::File::new(entry);
-                if let Err(e) = taglibfile {
-                    println!("Error {:?}", e);
-                } else {
-                    let ataglib = taglibfile.unwrap();
-                    let tags = ataglib.tag().unwrap();
-                    model.insert_with_values(None, &[0,1,2,3], &[&(i as u32 + 1), &tags.title(), &tags.artist(), &tags.album()]);
-                }
+             model.insert_with_values(None, &[0,1,2,3], &[&(i as u32 + 1), &entry.title, &entry.artist, &entry.album]);
         }
         for (id, title) in vec![(0,"#"), (1, "Title"), (2, "Artist"), (3, "Album")] {
             let column = gtk::TreeViewColumn::new();
