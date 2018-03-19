@@ -1,9 +1,5 @@
 use gtk::prelude::*;
-use gtk::{Label, Grid};
 use std::ops::Deref;
-use taglib;
-use walkdir;
-use walkdir::{DirEntry, WalkDir};
 
 use db::Track;
 use types::DBPool;
@@ -13,7 +9,7 @@ pub struct Playlist {
     pub current_position: i64,
 }
 
-pub fn playlist_from_directory(folder: &str, pool: DBPool) -> Playlist {
+pub fn playlist_from_directory(folder: &str, pool: &DBPool) -> Playlist {
     use schema::tracks::dsl::*;
     use diesel::QueryDsl;
     use diesel::RunQueryDsl;use diesel::TextExpressionMethods;

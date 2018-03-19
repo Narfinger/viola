@@ -39,7 +39,7 @@ pub fn setup_db_connection() -> DBPool {
 }
 
 fn check_dir(s: &Result<walkdir::DirEntry, walkdir::Error>) -> bool {
-    if let &Ok(ref sp) = s {
+    if let Ok(ref sp) = *s {
         sp.file_type().is_file()
     } else {
         false
@@ -66,7 +66,7 @@ fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
     }
 }
 
-fn insert_track(s: String, pool: DBPool) -> Result<(), String> {
+fn insert_track(s: String, pool: &DBPool) -> Result<(), String> {
     return Err(String::from("Not yet checking for new version"));
     use schema::tracks;
     use diesel::RunQueryDsl;
@@ -80,7 +80,7 @@ fn insert_track(s: String, pool: DBPool) -> Result<(), String> {
         .map_err(|e| "Insertion Error".into())
 }
 
-pub fn build_db(path: String, pool: DBPool) -> Result<(), String> {
+pub fn build_db(path: String, pool: &DBPool) -> Result<(), String> {
     let db = pool.get();
     let files = walkdir::WalkDir::new(path)
                 .into_iter()
@@ -88,5 +88,5 @@ pub fn build_db(path: String, pool: DBPool) -> Result<(), String> {
                 .map(|i| String::from(i.unwrap().path().to_str().unwrap()));
     
     /// TODO switch this to par_iter or something
-    files.into_iter().map(|s| insert_track(s, pool.clone())).collect::<Result<(), String>>()
+    files.into_iter().map(|s| insert_track(s, &pool)).collect::<Result<(), String>>()
 }

@@ -54,13 +54,13 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
                 println!("Pipeline state changed from {:?} to {:?}",
                         state_changed.get_old(),
                         state_changed.get_current());
-                if (state_changed.get_current() == gstreamer::State::Playing) {
-                    update_gui(pipeline.clone(), current_playlist.clone(), builder.clone());
+                if state_changed.get_current() == gstreamer::State::Playing {
+                    update_gui(&pipeline, &current_playlist, &builder);
                 }
             },
             MessageView::Eos(..) => {
                 let mut p = current_playlist.write().unwrap();
-                (*p).current_position = (*p).current_position +1;
+                (*p).current_position += 1;
                 if (*p).current_position >= (*p).items.len() as i64{
                     (*p).current_position = 0;
                 } else {
@@ -83,26 +83,20 @@ fn gstreamer_init(current_playlist: CurrentPlaylist, builder: Gui) -> Result<Pip
     gstreamer::init().unwrap();
     let pipeline = gstreamer::parse_launch("playbin").map_err(|_| String::from("Cannot do gstreamer"))?;
     let p = Arc::new(RwLock::new(pipeline));
-    
-    
+
     let pc = p.clone();
-    //let cpc = current_playlist.clone();
-    //let bc = builder.clone();
     gtk::timeout_add(500, move || {
         let pc = p.clone();
         let cpc = current_playlist.clone();
         let bc = builder.clone();
         gstreamer_message_handler(pc, cpc, bc)
     });
-    
-    //std::thread::spawn(clone!(p, current_playlist, builder => move || {
-    //    gstreamer_message_handler(p, current_playlist, builder);
-    //}));
-    Ok(pc)
+ 
+     Ok(pc)
 }
 
 /// General purpose function to update the gui on any change
-fn update_gui(pipeline: Pipeline, playlist: CurrentPlaylist, gui: Gui) {
+fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, gui: &Gui) {
     let (_, state, _) = pipeline.read().unwrap().get_state(gstreamer::ClockTime(Some(1000)));  
     let treeview: gtk::TreeView = gui.read().unwrap().get_object("listview").unwrap();
     let treeselection = treeview.get_selection();
@@ -130,7 +124,7 @@ fn main() {
     let builder: Gui = Arc::new(RwLock::new(gtk::Builder::new_from_string(glade_src)));
 
     println!("Building list");
-    let playlist = playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest/", pool.clone());
+    let playlist = playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest/", &pool);
     let current_playlist = Arc::new(RwLock::new(playlist));
     println!("Done building list");
     
@@ -220,7 +214,7 @@ fn main() {
                     p.set_state(gstreamer::State::Ready);
                     let pos = vec[0].get_indices()[0];
                     let mut cp = current_playlist.write().unwrap();
-                    (*cp).current_position = pos as i64;
+                    (*cp).current_position = i64::from(pos);
                     (*p).set_property("uri", &playlist::get_current_uri(&cp));
                     p.set_state(gstreamer::State::Playing);
                 }
