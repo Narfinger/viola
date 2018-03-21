@@ -105,6 +105,22 @@ fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, gui: &Gui) {
         let mut ipath = gtk::TreePath::new();
         ipath.append_index(index as i32);
         treeselection.select_path(&ipath);
+
+        //update track display
+        let track = &playlist.read().unwrap().items[index as usize];
+        let titlelabel: gtk::Label = gui.read().unwrap().get_object("titleLabel").unwrap();
+        let artistlabel: gtk::Label = gui.read().unwrap().get_object("artistLabel").unwrap();
+        let albumlabel: gtk::Label = gui.read().unwrap().get_object("albumLabel").unwrap();
+        let cover: gtk::Image = gui.read().unwrap().get_object("coverImage").unwrap();
+
+        titlelabel.set_markup(&track.title);
+        artistlabel.set_markup(&track.artist);
+        albumlabel.set_markup(&track.album);
+        if let Some(ref p) = track.albumpath {
+            cover.set_from_file(p);
+        } else {
+            cover.clear();
+        }
     } else {
         println!("Not playing");
         treeselection.unselect_all();

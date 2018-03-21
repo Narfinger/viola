@@ -1,10 +1,10 @@
 table! {
     tracks (id) {
         id -> Integer,
-        title -> Nullable<Text>,
-        artist -> Nullable<Text>,
-        album -> Nullable<Text>,
-        genre -> Nullable<Text>,
+        title -> Text,
+        artist -> Text,
+        album -> Text,
+        genre -> Text,
         tracknumber -> Nullable<Integer>,
         year -> Nullable<Integer>,
         path -> Text,

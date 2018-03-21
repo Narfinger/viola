@@ -1,6 +1,7 @@
 use diesel;
 use rayon::prelude::*;
 use std;
+use std::path::Path;
 use std::ops::Deref;
 use r2d2;
 use r2d2_diesel;
@@ -12,10 +13,10 @@ use schema::tracks;
 #[derive(Queryable)]
 pub struct Track {
     pub id: i32,
-    pub title: Option<String>,
-    pub artist: Option<String>,
-    pub album: Option<String>,
-    pub genre: Option<String>,
+    pub title: String,
+    pub artist: String,
+    pub album: String,
+    pub genre: String,
     pub tracknumber: Option<i32>,
     pub year: Option<i32>,
     pub path: String,
@@ -59,6 +60,22 @@ fn number_zero_to_option(i: u32) -> Option<i32> {
     }
 }
 
+fn get_album_file(s: &str) -> Option<String> {
+    Path::new(s)
+        .parent()
+        .and_then(|p| {
+            let jpg = p.with_file_name("cover.jpg");
+            let png = p.with_file_name("cover.png");
+            if jpg.exists() {
+                Some(jpg)
+            } else if png.exists() {
+                Some(png)
+            } else {
+                None
+            }})
+        .and_then(|s| s.to_str().map(String::from))    
+}
+
 fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
     let taglibfile = taglib::File::new(&s);
     if let Err(e) = taglibfile {
@@ -67,7 +84,7 @@ fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
         let ataglib = taglibfile.unwrap();
         let tags = ataglib.tag().unwrap();
         let properties = ataglib.audioproperties().unwrap();
-        
+        let album = get_album_file(&s);
         //tracknumber and year return 0 if none set
         Ok(NewTrack {
             title: tags.title(),
@@ -78,7 +95,7 @@ fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
             year: number_zero_to_option(tags.year()),
             path: s,
             length: properties.length() as i32,
-            albumpath: None,
+            albumpath: album,
         })
     }
 }
