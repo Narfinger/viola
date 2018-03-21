@@ -4,9 +4,11 @@ table! {
         title -> Nullable<Text>,
         artist -> Nullable<Text>,
         album -> Nullable<Text>,
+        genre -> Nullable<Text>,
+        tracknumber -> Nullable<Integer>,
         year -> Nullable<Integer>,
         path -> Text,
-        duration -> Nullable<Integer>,
+        length -> Integer,
         albumpath -> Nullable<Text>,
     }
 }

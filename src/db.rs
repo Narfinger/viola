@@ -15,9 +15,11 @@ pub struct Track {
     pub title: Option<String>,
     pub artist: Option<String>,
     pub album: Option<String>,
+    pub genre: Option<String>,
+    pub tracknumber: Option<i32>,
     pub year: Option<i32>,
     pub path: String,
-    pub duration: Option<i32>,
+    pub length: i32,
     pub albumpath: Option<String>,
 }
 
@@ -27,9 +29,11 @@ pub struct NewTrack {
     title: String,
     artist: String,
     album: String,
-    year: i32,
+    genre: String,
+    tracknumber: Option<i32>,
+    year: Option<i32>,
     path: String,
-    duration: i32,
+    length: i32,
     albumpath: Option<String>,
 }
 
@@ -46,6 +50,15 @@ fn check_dir(s: &Result<walkdir::DirEntry, walkdir::Error>) -> bool {
     }
 }
 
+/// gets a number and returns None if the number is zero, otherwise the number converted to i32 
+fn number_zero_to_option(i: u32) -> Option<i32> {
+    if i == 0 {
+        None
+    } else {
+        Some(i as i32)
+    }
+}
+
 fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
     let taglibfile = taglib::File::new(&s);
     if let Err(e) = taglibfile {
@@ -53,14 +66,17 @@ fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
     } else {
         let ataglib = taglibfile.unwrap();
         let tags = ataglib.tag().unwrap();
-
+        let properties = ataglib.audioproperties().unwrap();
+        //tracknumber and year return 0 if none set
         Ok(NewTrack {
             title: tags.title(),
             artist: tags.artist(),
             album: tags.album(),
-            year: tags.year() as i32,
+            genre: tags.genre(),
+            tracknumber: number_zero_to_option(tags.track()),
+            year: number_zero_to_option(tags.year()),
             path: s,
-            duration: 0,
+            length: properties.length() as i32,
             albumpath: None,
         })
     }

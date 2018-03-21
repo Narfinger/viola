@@ -1,3 +1,4 @@
 /target/
+music.db
 **/*.rs.bk
 ui/*.glade~

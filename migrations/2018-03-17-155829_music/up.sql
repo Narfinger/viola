@@ -4,8 +4,10 @@ CREATE TABLE tracks (
     title VARCHAR,
     artist VARCHAR,
     album VARCHAR,
+    genre VARCHAR,
     year Integer,
+    tracknumber Integer,
     path VARCHAR NOT NULL,
-    duration Integer,
+    length Integer NOT NULL,
     albumpath VARCHAR
 );

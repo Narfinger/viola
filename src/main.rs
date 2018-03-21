@@ -119,7 +119,7 @@ fn main() {
 
     let pool = db::setup_db_connection();
 
-    //db::build_db("/mnt/ssd-media/Musik/1rest/".into(), pool.clone()).unwrap();
+    //db::build_db("/mnt/ssd-media/Musik/1rest/".into(), &pool.clone()).unwrap();
     let glade_src = include_str!("../ui/main.glade");
     let builder: Gui = Arc::new(RwLock::new(gtk::Builder::new_from_string(glade_src)));
 
@@ -187,14 +187,17 @@ fn main() {
         }));
     }
 
-    let model = gtk::ListStore::new(&[u32::static_type(), String::static_type(), String::static_type(), String::static_type()]);
+    let model = gtk::ListStore::new(&[String::static_type(), String::static_type(), String::static_type(), String::static_type(), String::static_type(), String::static_type(), String::static_type()]);
     
     {
         let p = current_playlist.read().unwrap();
         for (i, entry) in p.items.iter().enumerate() {
-             model.insert_with_values(None, &[0,1,2,3], &[&(i as u32 + 1), &entry.title, &entry.artist, &entry.album]);
+            println!("{:?}", entry.tracknumber);
+             model.insert_with_values(None, &[0,1,2,3,4,5,6], &[&entry.tracknumber.map(|s| s.to_string()).unwrap_or(String::from("")), 
+             &entry.title, &entry.artist, &entry.album, &entry.length, &entry.year.map(|s| s.to_string()).unwrap_or(String::from("")), 
+             &entry.genre]);
         }
-        for (id, title) in vec![(0,"#"), (1, "Title"), (2, "Artist"), (3, "Album")] {
+        for (id, title) in vec![(0,"#"), (1, "Title"), (2, "Artist"), (3, "Album"), (4, "Length"), (5, "Year"), (6, "Genre")] {
             let column = gtk::TreeViewColumn::new();
             let cell = gtk::CellRendererText::new();
             column.pack_start(&cell, true);
@@ -237,7 +240,6 @@ fn main() {
         Inhibit(false)
     }));
 
-    println!("TODO: change to rwlock where I can");
     window.show_all();
     gtk::main();
 }
