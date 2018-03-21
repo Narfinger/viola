@@ -1,6 +1,5 @@
 use diesel;
 use rayon::prelude::*;
-use std;
 use std::path::Path;
 use std::ops::Deref;
 use r2d2;
@@ -114,12 +113,11 @@ fn insert_track(s: String, pool: &DBPool) -> Result<(), String> {
 }
 
 pub fn build_db(path: String, pool: &DBPool) -> Result<(), String> {
-    let db = pool.get();
     let files = walkdir::WalkDir::new(path)
                 .into_iter()
                 .filter(check_dir)
                 .map(|i| String::from(i.unwrap().path().to_str().unwrap()));
     
     /// TODO switch this to par_iter or something
-    files.into_iter().map(|s| insert_track(s, &pool)).collect::<Result<(), String>>()
+    files.into_iter().map(|s| insert_track(s, pool)).collect::<Result<(), String>>()
 }

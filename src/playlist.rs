@@ -1,4 +1,3 @@
-use gtk::prelude::*;
 use std::ops::Deref;
 
 use db::Track;

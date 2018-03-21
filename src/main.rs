@@ -13,7 +13,6 @@ pub mod playlist;
 pub mod schema;
 pub mod types;
 
-use std::sync::Mutex;
 use std::sync::Arc;
 use std::sync::RwLock;
 use gstreamer::ElementExt;
@@ -69,7 +68,7 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
                 (*p).current_position += 1;
                 if (*p).current_position >= (*p).items.len() as i64{
                     (*p).current_position = 0;
-                    update_gui(&pipeline, &current_playlist, &builder, PlayerStatus::Stopped);
+                    update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Stopped);
                 } else {
                     println!("Next should play");
                     let pl = pipeline.read().unwrap();
@@ -77,7 +76,7 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
                     (*pl).set_property("uri", &playlist::get_current_uri(&p));
                     (*pl).set_state(gstreamer::State::Playing);
                     println!("Next one now playing is: {}", &playlist::get_current_uri(&p));
-                    update_gui(&pipeline, &current_playlist, &builder, PlayerStatus::Playing)
+                    update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Playing)
                 }
                 println!("Eos found");
             },
@@ -104,12 +103,12 @@ fn gstreamer_init(current_playlist: CurrentPlaylist, builder: Gui) -> Result<Pip
 }
 
 /// General purpose function to update the gui on any change
-fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, gui: &Gui, status: PlayerStatus) {
+fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, gui: &Gui, status: &PlayerStatus) {
     println!("Updating gui");
     let (_, state, _) = pipeline.read().unwrap().get_state(gstreamer::ClockTime(Some(1000)));  
     let treeview: gtk::TreeView = gui.read().unwrap().get_object("listview").unwrap();
     let treeselection = treeview.get_selection();
-    match status {
+    match *status {
         PlayerStatus::Playing => {
     //if state == gstreamer::State::Paused || state == gstreamer::State::Playing {
         let index = playlist.read().unwrap().current_position;
@@ -168,7 +167,7 @@ fn main() {
                 let pl = current_playlist.read().unwrap();
                 (*p).set_property("uri", &playlist::get_current_uri(&pl));
                 p.set_state(gstreamer::State::Playing);
-                update_gui(&pipeline, &current_playlist, &builder, PlayerStatus::Playing); 
+                update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Playing); 
             }
         }));
     }
@@ -182,7 +181,7 @@ fn main() {
                     (_, gstreamer::State::Playing, _) => { (*p).set_state(gstreamer::State::Paused);  },
                     (_, _, _) => {}
                 };
-                update_gui(&pipeline, &current_playlist, &builder, PlayerStatus::Paused); 
+                update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Paused); 
             }
         }));
     }
@@ -197,7 +196,7 @@ fn main() {
                 (*pl).current_position = ((*pl).current_position -1) % (*pl).items.len() as i64;
                 (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
                 (*p).set_state(gstreamer::State::Playing);
-                update_gui(&pipeline, &current_playlist, &builder, PlayerStatus::Playing); 
+                update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Playing); 
             }
         }));
     }
@@ -212,7 +211,7 @@ fn main() {
                 (*pl).current_position = ((*pl).current_position +1) % (*pl).items.len() as i64;
                 (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
                 (*p).set_state(gstreamer::State::Playing);
-                update_gui(&pipeline, &current_playlist, &builder, PlayerStatus::Playing); 
+                update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Playing); 
             }
         }));
     }
@@ -222,8 +221,10 @@ fn main() {
     {
         let p = current_playlist.read().unwrap();
         for (i, entry) in p.items.iter().enumerate() {
-             model.insert_with_values(None, &[0,1,2,3,4,5,6], &[&entry.tracknumber.map(|s| s.to_string()).unwrap_or(String::from("")), 
-             &entry.title, &entry.artist, &entry.album, &entry.length, &entry.year.map(|s| s.to_string()).unwrap_or(String::from("")), 
+             model.insert_with_values(None, &[0,1,2,3,4,5,6], &[&entry.tracknumber.map(|s| s.to_string())
+                .unwrap_or_else (|| String::from("")), 
+             &entry.title, &entry.artist, &entry.album, &entry.length, &entry.year.map(|s| s.to_string())
+                .unwrap_or_else(|| String::from("")), 
              &entry.genre]);
         }
         for (id, title) in vec![(0,"#"), (1, "Title"), (2, "Artist"), (3, "Album"), (4, "Length"), (5, "Year"), (6, "Genre")] {
@@ -250,7 +251,7 @@ fn main() {
                     (*p).set_property("uri", &playlist::get_current_uri(&cp));
                     p.set_state(gstreamer::State::Playing);
                 }
-                update_gui(&pipeline, &current_playlist, &builder, PlayerStatus::Playing);
+                update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Playing);
                 gtk::Inhibit(true)
             } else {
                 gtk::Inhibit(false)
