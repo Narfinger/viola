@@ -67,6 +67,7 @@ fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
         let ataglib = taglibfile.unwrap();
         let tags = ataglib.tag().unwrap();
         let properties = ataglib.audioproperties().unwrap();
+        
         //tracknumber and year return 0 if none set
         Ok(NewTrack {
             title: tags.title(),
@@ -83,13 +84,12 @@ fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
 }
 
 fn insert_track(s: String, pool: &DBPool) -> Result<(), String> {
-    return Err(String::from("Not yet checking for new version"));
     use schema::tracks;
     use diesel::RunQueryDsl;
 
     let db = pool.get().unwrap();
     let track = construct_track_from_path(s)?;
-    diesel::insert_into(tracks::table)
+    diesel::replace_into(tracks::table)
         .values(&track)
         .execute(db.deref())
         .map(|_| ())
