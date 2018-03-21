@@ -4,9 +4,11 @@ version = "0.1.0"
 authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 
 [dependencies]
+clap = "2.31"                    # A simple to use, efficient, and full featured  Command Line Argument Parser 
 diesel = { version = "1.1", features = ["sqlite"] }
 dotenv = "0.11"
 error-chain = "0.11"
+indicatif = "0.9"    # A progress bar and cli reporting library for Rust
 taglib = {git = "https://github.com/ebassi/taglib-rust.git", rev="513dabf"}        # Rust bindings for TagLib    
 gdk = "0.7.0"               # Rust bindings for the GDK 3 library   
 gstreamer = "0.10.2"               # Rust bindings for GStreamer     

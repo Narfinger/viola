@@ -1,4 +1,6 @@
+extern crate clap;
 #[macro_use] extern crate diesel;
+extern crate indicatif;
 extern crate gdk;
 extern crate gtk;
 extern crate gstreamer;
@@ -13,6 +15,7 @@ pub mod playlist;
 pub mod schema;
 pub mod types;
 
+use clap::{Arg, App};
 use std::sync::Arc;
 use std::sync::RwLock;
 use gstreamer::ElementExt;
@@ -136,15 +139,11 @@ fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, gui: &Gui, status
     }
 }
 
-fn main() {
+fn build_gui(pool: &DBPool) {
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
         return;
     }
-
-    let pool = db::setup_db_connection();
-
-    db::build_db("/mnt/ssd-media/Musik/1rest/".into(), &pool.clone()).unwrap();
     let glade_src = include_str!("../ui/main.glade");
     let builder: Gui = Arc::new(RwLock::new(gtk::Builder::new_from_string(glade_src)));
 
@@ -273,4 +272,22 @@ fn main() {
 
     window.show_all();
     gtk::main();
+}
+
+fn main() {
+    let matches = App::new("Viola")
+        .about("Music Player")
+        .arg(Arg::with_name("update")
+            .short("u")
+            .long("update")
+            .help("Updates the database"))
+        .get_matches();
+
+    let pool = db::setup_db_connection();        
+    if matches.is_present("update") {
+        println!("Updating Database");
+        db::build_db("/mnt/ssd-media/Musik/1rest/".into(), &pool.clone()).unwrap();
+    } else {
+        build_gui(&pool);
+    }
 }

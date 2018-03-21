@@ -1,4 +1,5 @@
 use diesel;
+use indicatif::ProgressBar;
 use rayon::prelude::*;
 use std::path::Path;
 use std::ops::Deref;
@@ -119,5 +120,7 @@ pub fn build_db(path: String, pool: &DBPool) -> Result<(), String> {
                 .map(|i| String::from(i.unwrap().path().to_str().unwrap()));
     
     /// TODO switch this to par_iter or something
-    files.into_iter().map(|s| insert_track(s, pool)).collect::<Result<(), String>>()
+    let pb = ProgressBar::new_spinner();
+    pb.wrap_iter(files.into_iter().map(|s| insert_track(s, pool)))
+        .collect::<Result<(), String>>()
 }
