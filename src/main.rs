@@ -38,6 +38,12 @@ macro_rules! clone {
     );
 }
 
+enum PlayerStatus {
+    Playing,
+    Paused,
+    Stopped
+}
+
 /// poll the message bus and on eos start new
 fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlaylist, builder: Gui) -> gtk::Continue {
     let bus = {
@@ -54,15 +60,16 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
                 println!("Pipeline state changed from {:?} to {:?}",
                         state_changed.get_old(),
                         state_changed.get_current());
-                if state_changed.get_current() == gstreamer::State::Playing {
-                    update_gui(&pipeline, &current_playlist, &builder);
-                }
+                //if state_changed.get_current() == gstreamer::State::Playing {
+                //    update_gui(&pipeline, &current_playlist, &builder);
+                //}
             },
             MessageView::Eos(..) => {
                 let mut p = current_playlist.write().unwrap();
                 (*p).current_position += 1;
                 if (*p).current_position >= (*p).items.len() as i64{
                     (*p).current_position = 0;
+                    update_gui(&pipeline, &current_playlist, &builder, PlayerStatus::Stopped);
                 } else {
                     println!("Next should play");
                     let pl = pipeline.read().unwrap();
@@ -70,6 +77,7 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
                     (*pl).set_property("uri", &playlist::get_current_uri(&p));
                     (*pl).set_state(gstreamer::State::Playing);
                     println!("Next one now playing is: {}", &playlist::get_current_uri(&p));
+                    update_gui(&pipeline, &current_playlist, &builder, PlayerStatus::Playing)
                 }
                 println!("Eos found");
             },
@@ -96,11 +104,14 @@ fn gstreamer_init(current_playlist: CurrentPlaylist, builder: Gui) -> Result<Pip
 }
 
 /// General purpose function to update the gui on any change
-fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, gui: &Gui) {
+fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, gui: &Gui, status: PlayerStatus) {
+    println!("Updating gui");
     let (_, state, _) = pipeline.read().unwrap().get_state(gstreamer::ClockTime(Some(1000)));  
     let treeview: gtk::TreeView = gui.read().unwrap().get_object("listview").unwrap();
     let treeselection = treeview.get_selection();
-    if state == gstreamer::State::Paused || state == gstreamer::State::Playing {
+    match status {
+        PlayerStatus::Playing => {
+    //if state == gstreamer::State::Paused || state == gstreamer::State::Playing {
         let index = playlist.read().unwrap().current_position;
         let mut ipath = gtk::TreePath::new();
         ipath.append_index(index as i32);
@@ -121,9 +132,8 @@ fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, gui: &Gui) {
         } else {
             cover.clear();
         }
-    } else {
-        println!("Not playing");
-        treeselection.unselect_all();
+    },
+    _ => {}
     }
 }
 
@@ -152,31 +162,33 @@ fn main() {
     
     { // Play Button
         let button: gtk::Button = builder.read().unwrap().get_object("playButton").unwrap();
-        button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
+        button.connect_clicked(clone!(current_playlist, pipeline, builder => move |_| {
             {
                 let p = pipeline.read().unwrap();
                 let pl = current_playlist.read().unwrap();
                 (*p).set_property("uri", &playlist::get_current_uri(&pl));
-                p.set_state(gstreamer::State::Playing); 
+                p.set_state(gstreamer::State::Playing);
+                update_gui(&pipeline, &current_playlist, &builder, PlayerStatus::Playing); 
             }
         }));
     }
     { // Pause Button
         let button: gtk::Button = builder.read().unwrap().get_object("pauseButton").unwrap();
-        button.connect_clicked(clone!(current_playlist, pipeline  => move |_| {
+        button.connect_clicked(clone!(current_playlist, pipeline, builder  => move |_| {
             {
                 let p = pipeline.read().unwrap();      
                 match p.get_state(gstreamer::ClockTime(Some(1000))) {
                     (_, gstreamer::State::Paused, _) =>  { (*p).set_state(gstreamer::State::Playing); },
                     (_, gstreamer::State::Playing, _) => { (*p).set_state(gstreamer::State::Paused);  },
                     (_, _, _) => {}
-                }
+                };
+                update_gui(&pipeline, &current_playlist, &builder, PlayerStatus::Paused); 
             }
         }));
     }
     {  // Previous button
         let button: gtk::Button = builder.read().unwrap().get_object("prevButton").unwrap();
-        button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
+        button.connect_clicked(clone!(current_playlist, pipeline, builder => move |_| {
             {
                 let p = pipeline.read().unwrap();
                 let mut pl = current_playlist.write().unwrap();
@@ -185,12 +197,13 @@ fn main() {
                 (*pl).current_position = ((*pl).current_position -1) % (*pl).items.len() as i64;
                 (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
                 (*p).set_state(gstreamer::State::Playing);
+                update_gui(&pipeline, &current_playlist, &builder, PlayerStatus::Playing); 
             }
         }));
     }
     {  // Next button
         let button: gtk::Button = builder.read().unwrap().get_object("nextButton").unwrap();
-        button.connect_clicked(clone!(current_playlist, pipeline => move |_| {
+        button.connect_clicked(clone!(current_playlist, pipeline, builder => move |_| {
             {
                 let p = pipeline.read().unwrap();
                 let mut pl = current_playlist.write().unwrap();
@@ -199,6 +212,7 @@ fn main() {
                 (*pl).current_position = ((*pl).current_position +1) % (*pl).items.len() as i64;
                 (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
                 (*p).set_state(gstreamer::State::Playing);
+                update_gui(&pipeline, &current_playlist, &builder, PlayerStatus::Playing); 
             }
         }));
     }
@@ -222,7 +236,7 @@ fn main() {
             column.set_resizable(id>0);
             treeview.append_column(&column);
         }
-        treeview.connect_button_press_event(clone!(pipeline, current_playlist => move |tv, eventbutton| {
+        treeview.connect_button_press_event(clone!(pipeline, current_playlist, builder => move |tv, eventbutton| {
             if eventbutton.get_event_type() == gdk::EventType::DoubleButtonPress {
                 let (vec, tv2) = tv.get_selection().get_selected_rows();
                 if vec.len() == 1 {
@@ -236,6 +250,7 @@ fn main() {
                     (*p).set_property("uri", &playlist::get_current_uri(&cp));
                     p.set_state(gstreamer::State::Playing);
                 }
+                update_gui(&pipeline, &current_playlist, &builder, PlayerStatus::Playing);
                 gtk::Inhibit(true)
             } else {
                 gtk::Inhibit(false)
