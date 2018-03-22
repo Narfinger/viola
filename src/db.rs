@@ -38,19 +38,6 @@ pub struct NewTrack {
     albumpath: Option<String>,
 }
 
-#[derive(Queryable)]
-pub struct Playlist {
-    id: i32,
-    name: String,
-    current_position: i32,
-} 
-
-#[derive(Queryable)]
-pub struct PlaylistTracks {
-    playlist_id: i32,
-    track_id: i32,
-}
-
 pub fn setup_db_connection() -> DBPool {
     let manager = r2d2_diesel::ConnectionManager::<diesel::SqliteConnection>::new("./music.db");
     r2d2::Pool::builder().build(manager).expect("Failed to create pool.")

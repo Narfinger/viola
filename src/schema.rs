@@ -2,6 +2,7 @@ table! {
     playlists (id) {
         id -> Integer,
         name -> Text,
+        current_position -> Integer,
     }
 }
 
@@ -29,6 +30,7 @@ table! {
 }
 
 joinable!(playlisttracks -> tracks (track_id));
+joinable!(playlisttracks -> playlists (playlist_id));
 
 allow_tables_to_appear_in_same_query!(
     playlists,
