@@ -14,7 +14,8 @@ CREATE TABLE tracks (
 
 CREATE TABLE playlists (
     id Integer PRIMARY KEY NOT NULL,
-    name VARCHAR NOT NULL
+    name VARCHAR NOT NULL,
+    current_position Integer NOT NULL
 );
 
 CREATE TABLE playlisttracks (

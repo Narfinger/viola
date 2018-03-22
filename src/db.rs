@@ -42,6 +42,7 @@ pub struct NewTrack {
 pub struct Playlist {
     id: i32,
     name: String,
+    current_position: i32,
 } 
 
 #[derive(Queryable)]

@@ -7,9 +7,9 @@ use r2d2::Pool;
 use r2d2_diesel::ConnectionManager;
 
 
-use playlist::Playlist;
+use playlist::LoadedPlaylist;
 
-pub type CurrentPlaylist = Arc<RwLock<Playlist>>;
+pub type CurrentPlaylist = Arc<RwLock<LoadedPlaylist>>;
 pub type Pipeline = Arc<RwLock<Element>>;
 pub type Gui = Arc<RwLock<Builder>>;
 pub type DBPool = Pool<ConnectionManager<SqliteConnection>>;
