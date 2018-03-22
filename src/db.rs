@@ -132,7 +132,7 @@ pub fn build_db(path: String, pool: &DBPool) -> Result<(), String> {
     let pb = ProgressBar::new(file_count as u64);
     pb.set_message("Updating files");
     pb.set_style(ProgressStyle::default_bar()
-                          .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7}")
+                          .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7} ({percent}%)")
                           .progress_chars("#>-"));
     pb.wrap_iter(files.into_iter().map(|s| insert_track(s, pool)))
         .collect::<Result<(), String>>()
