@@ -82,12 +82,11 @@ fn get_album_file(s: &str) -> Option<String> {
 
 fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
     let taglibfile = taglib::File::new(&s);
-    if let Err(e) = taglibfile {
-        Err("taglib couldn't open the file".into())
-    } else {
-        let ataglib = taglibfile.unwrap();
-        let tags = ataglib.tag().unwrap();
-        let properties = ataglib.audioproperties().unwrap();
+    if let Ok(ataglib) = taglibfile {
+        let tags = ataglib.tag()
+            .unwrap_or_else(|_| panic!(format!("Could not read tags for: {}", s)));
+        let properties = ataglib
+            .audioproperties().unwrap_or_else(|_| panic!(format!("Could not find audio properties for: {}", s)));
         let album = get_album_file(&s);
         //tracknumber and year return 0 if none set
         Ok(NewTrack {
@@ -101,6 +100,8 @@ fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
             length: properties.length() as i32,
             albumpath: album,
         })
+    } else {
+        panic!(format!("Taglib could not open file: {}", s));
     }
 }
 
