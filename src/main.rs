@@ -148,7 +148,7 @@ fn build_gui(pool: &DBPool) {
     let builder: Gui = Arc::new(RwLock::new(gtk::Builder::new_from_string(glade_src)));
 
     println!("Building list");
-    let playlist = playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest/", &pool);
+    let playlist = playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest", pool);
     let current_playlist = Arc::new(RwLock::new(playlist));
     println!("Done building list");
     
@@ -226,7 +226,7 @@ fn build_gui(pool: &DBPool) {
                 .unwrap_or_else(|| String::from("")), 
              &entry.genre]);
         }
-        for (id, title) in vec![(0,"#"), (1, "Title"), (2, "Artist"), (3, "Album"), (4, "Length"), (5, "Year"), (6, "Genre")] {
+        for &(id, title) in &[(0,"#"), (1, "Title"), (2, "Artist"), (3, "Album"), (4, "Length"), (5, "Year"), (6, "Genre")] {
             let column = gtk::TreeViewColumn::new();
             let cell = gtk::CellRendererText::new();
             column.pack_start(&cell, true);
@@ -286,7 +286,7 @@ fn main() {
     let pool = db::setup_db_connection();        
     if matches.is_present("update") {
         println!("Updating Database");
-        db::build_db("/mnt/ssd-media/Musik/1rest/".into(), &pool.clone()).unwrap();
+        db::build_db("/mnt/ssd-media/Musik/1a - Test", &pool.clone()).unwrap();
     } else {
         build_gui(&pool);
     }

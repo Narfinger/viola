@@ -115,10 +115,10 @@ fn insert_track(s: String, pool: &DBPool) -> Result<(), String> {
         .values(&track)
         .execute(db.deref())
         .map(|_| ())
-        .map_err(|e| "Insertion Error".into())
+        .map_err(|_| "Insertion Error".into())
 }
 
-pub fn build_db(path: String, pool: &DBPool) -> Result<(), String> {
+pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
     let files = walkdir::WalkDir::new(&path)
                 .into_iter()
                 .filter(check_file)
@@ -135,6 +135,8 @@ pub fn build_db(path: String, pool: &DBPool) -> Result<(), String> {
     pb.set_style(ProgressStyle::default_bar()
                           .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7} ({percent}%)")
                           .progress_chars("#>-"));
-    pb.wrap_iter(files.into_iter().map(|s| insert_track(s, pool)))
-        .collect::<Result<(), String>>()
+    let res = pb.wrap_iter(files.into_iter().map(|s| insert_track(s, pool)))
+        .collect::<Result<(), String>>();
+    pb.finish_with_message("Done Updating");
+    res
 }
