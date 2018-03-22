@@ -1,5 +1,5 @@
 use diesel;
-use indicatif::ProgressBar;
+use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 use std::path::Path;
 use std::ops::Deref;
@@ -43,9 +43,13 @@ pub fn setup_db_connection() -> DBPool {
     r2d2::Pool::builder().build(manager).expect("Failed to create pool.")
 }
 
-fn check_dir(s: &Result<walkdir::DirEntry, walkdir::Error>) -> bool {
+fn check_file(s: &Result<walkdir::DirEntry, walkdir::Error>) -> bool {
     if let Ok(ref sp) = *s {
-        sp.file_type().is_file()
+        if sp.file_type().is_file() {
+            Some(true) == sp.path().extension().map(|ex| vec!["ogg", "flac", "mp3", "wma", "aac", "opus"].contains(&ex.to_str().unwrap()))
+        } else {
+            false
+        }
     } else {
         false
     }
@@ -114,13 +118,22 @@ fn insert_track(s: String, pool: &DBPool) -> Result<(), String> {
 }
 
 pub fn build_db(path: String, pool: &DBPool) -> Result<(), String> {
-    let files = walkdir::WalkDir::new(path)
+    let files = walkdir::WalkDir::new(&path)
                 .into_iter()
-                .filter(check_dir)
+                .filter(check_file)
                 .map(|i| String::from(i.unwrap().path().to_str().unwrap()));
     
+    let file_count = walkdir::WalkDir::new(&path)
+                .into_iter()
+                .filter(check_file)
+                .map(|i| String::from(i.unwrap().path().to_str().unwrap()))
+                .count();
     /// TODO switch this to par_iter or something
-    let pb = ProgressBar::new_spinner();
+    let pb = ProgressBar::new(file_count as u64);
+    pb.set_message("Updating files");
+    pb.set_style(ProgressStyle::default_bar()
+                          .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7}")
+                          .progress_chars("#>-"));
     pb.wrap_iter(files.into_iter().map(|s| insert_track(s, pool)))
         .collect::<Result<(), String>>()
 }
