@@ -10,7 +10,7 @@ use walkdir;
 use types::DBPool;
 use schema::tracks;
 
-#[derive(Queryable)]
+#[derive(Identifiable,Queryable)]
 pub struct Track {
     pub id: i32,
     pub title: String,
@@ -36,6 +36,18 @@ pub struct NewTrack {
     path: String,
     length: i32,
     albumpath: Option<String>,
+}
+
+#[derive(Queryable)]
+pub struct Playlist {
+    id: i32,
+    name: String,
+} 
+
+#[derive(Queryable)]
+pub struct PlaylistTracks {
+    playlist_id: i32,
+    track_id: i32,
 }
 
 pub fn setup_db_connection() -> DBPool {

@@ -11,3 +11,16 @@ CREATE TABLE tracks (
     length Integer NOT NULL,
     albumpath VARCHAR
 );
+
+CREATE TABLE playlists (
+    id Integer PRIMARY KEY NOT NULL,
+    name VARCHAR NOT NULL
+);
+
+CREATE TABLE playlisttracks (
+    id Integer PRIMARY KEY NOT NULL,
+    playlist_id Integer NOT NULL,
+    track_id Integer NOT NULL,
+    FOREIGN KEY(playlist_id) REFERENCES playlist(id),
+    FOREIGN KEY(track_id) REFERENCES tracks(id)
+);
