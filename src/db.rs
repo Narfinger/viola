@@ -10,7 +10,7 @@ use walkdir;
 use types::DBPool;
 use schema::tracks;
 
-#[derive(Identifiable,Queryable)]
+#[derive(Identifiable,Queryable, Clone)]
 pub struct Track {
     pub id: i32,
     pub title: String,

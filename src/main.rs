@@ -69,7 +69,7 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
             MessageView::Eos(..) => {
                 let mut p = current_playlist.write().unwrap();
                 (*p).current_position += 1;
-                if (*p).current_position >= (*p).items.len() as i64{
+                if (*p).current_position >= (*p).items.len() as i32 {
                     (*p).current_position = 0;
                     update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Stopped);
                 } else {
@@ -192,7 +192,7 @@ fn build_gui(pool: &DBPool) {
                 let mut pl = current_playlist.write().unwrap();
                 (*p).set_state(gstreamer::State::Paused);
                 (*p).set_state(gstreamer::State::Ready);
-                (*pl).current_position = ((*pl).current_position -1) % (*pl).items.len() as i64;
+                (*pl).current_position = ((*pl).current_position -1) % (*pl).items.len() as i32;
                 (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
                 (*p).set_state(gstreamer::State::Playing);
                 update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Playing); 
@@ -207,7 +207,7 @@ fn build_gui(pool: &DBPool) {
                 let mut pl = current_playlist.write().unwrap();
                 (*p).set_state(gstreamer::State::Paused);
                 (*p).set_state(gstreamer::State::Ready);
-                (*pl).current_position = ((*pl).current_position +1) % (*pl).items.len() as i64;
+                (*pl).current_position = ((*pl).current_position +1) % (*pl).items.len() as i32;
                 (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
                 (*p).set_state(gstreamer::State::Playing);
                 update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Playing); 
@@ -246,7 +246,7 @@ fn build_gui(pool: &DBPool) {
                     p.set_state(gstreamer::State::Ready);
                     let pos = vec[0].get_indices()[0];
                     let mut cp = current_playlist.write().unwrap();
-                    (*cp).current_position = i64::from(pos);
+                    (*cp).current_position = i32::from(pos);
                     (*p).set_property("uri", &playlist::get_current_uri(&cp));
                     p.set_state(gstreamer::State::Playing);
                 }

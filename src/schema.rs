@@ -11,6 +11,7 @@ table! {
         id -> Integer,
         playlist_id -> Integer,
         track_id -> Integer,
+        playlist_order -> Integer,
     }
 }
 
