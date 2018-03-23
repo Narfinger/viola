@@ -63,6 +63,24 @@ pub fn restore_playlists(pool: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::r
     }).collect()
 }
 
+pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) -> Result<(),diesel::result::Error> {
+    use schema::playlisttracks::dsl::*;
+    use schema::playlists::dsl::*;
+    use schema::tracks::dsl::*;
+    use diesel::associations::HasTable;
+    use diesel::{BelongingToDsl, QueryDsl, RunQueryDsl, GroupedBy, ExpressionMethods};
+    use diesel;
+
+    let db = pool.get().unwrap();
+    if let Some(id) = pl.id {
+        // the playlist is already in the database
+        diesel::update(playlists.find(id)).set(current_position.eq(pl.current_position)).execute(db.deref())?;
+    } else {
+        // the playlist is not in the database
+    }
+    panic!("Not yet implemented");
+}
+
 pub fn playlist_from_directory(folder: &str, pool: &DBPool) -> LoadedPlaylist {
     use schema::tracks::dsl::*;
     use diesel::QueryDsl;
