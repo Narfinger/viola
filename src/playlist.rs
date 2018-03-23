@@ -1,13 +1,20 @@
 use std::ops::Deref;
 use diesel;
-use schema::playlisttracks;
+use schema::{playlists, playlisttracks};
 
 use db::Track;
 use types::DBPool;
 
-#[derive(Queryable)]
+#[derive(Identifiable,Queryable)]
 struct Playlist {
     id: i32,
+    name: String,
+    current_position: i32,
+}
+
+#[derive(Insertable)]
+#[table_name="playlists"]
+struct NewPlaylist {
     name: String,
     current_position: i32,
 }
@@ -84,17 +91,22 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
     if let Some(id) = pl.id {
         // the playlist is already in the database
         diesel::update(playlists.find(id)).set(current_position.eq(pl.current_position)).execute(db.deref()).expect("Error in playlist update");
-    } else {
-        // the playlist is not in the database
-
-        for (index, track) in pl.items.iter().enumerate() {
-            let t = NewPlaylistTracks { playlist_id: 1, track_id: track.id, playlist_order: index as i32};
-            diesel::replace_into(playlisttracks::table)
-                .values(t)
-                .execute(db.deref())
-                .map(|_| ())
-                .map_err(|_| "Insertion Error".into());
-            }
+    }
+    let playlist: Playlist = if let Some(id) = pl.id { 
+        playlists.find(id).first::<Playlist>(db.deref()).expect("DB Error")
+        } else {
+            let t = vec![NewPlaylist {name: pl.name.clone(), current_position: pl.current_position }];
+            diesel::insert_into(playlists).values(&t).execute(db.deref());
+            playlists.filter(name.eq(&pl.name)).first(db.deref()).expect("DB Erorr")
+        };
+    // the playlist is not in the database
+    for (index, track) in pl.items.iter().enumerate() {
+        let t = vec![NewPlaylistTracks { playlist_id: playlist.id, track_id: track.id, playlist_order: index as i32}];
+        diesel::insert_into(playlisttracks::table)
+            .values(&t)
+            .execute(db.deref())
+            .map(|_| ())
+            .map_err(|_| "Insertion Error".into());
     }
     panic!("fix playlist");
 }
