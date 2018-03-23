@@ -1,5 +1,6 @@
 use std::ops::Deref;
 use diesel;
+use schema::playlisttracks;
 
 use db::Track;
 use types::DBPool;
@@ -14,6 +15,14 @@ struct Playlist {
 #[derive(Queryable)]
 pub struct PlaylistTracks {
     id: i32,
+    playlist_id: i32,
+    track_id: i32,
+    playlist_order: i32,
+}
+
+#[derive(Insertable)]
+#[table_name="playlisttracks"]
+pub struct NewPlaylistTracks {
     playlist_id: i32,
     track_id: i32,
     playlist_order: i32,
@@ -63,7 +72,7 @@ pub fn restore_playlists(pool: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::r
     }).collect()
 }
 
-pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) -> Result<(),diesel::result::Error> {
+pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
     use schema::playlisttracks::dsl::*;
     use schema::playlists::dsl::*;
     use schema::tracks::dsl::*;
@@ -74,11 +83,20 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) -> Result<(),diesel::
     let db = pool.get().unwrap();
     if let Some(id) = pl.id {
         // the playlist is already in the database
-        diesel::update(playlists.find(id)).set(current_position.eq(pl.current_position)).execute(db.deref())?;
+        diesel::update(playlists.find(id)).set(current_position.eq(pl.current_position)).execute(db.deref()).expect("Error in playlist update");
     } else {
         // the playlist is not in the database
+
+        for (index, track) in pl.items.iter().enumerate() {
+            let t = NewPlaylistTracks { playlist_id: 1, track_id: track.id, playlist_order: index as i32};
+            diesel::replace_into(playlisttracks::table)
+                .values(t)
+                .execute(db.deref())
+                .map(|_| ())
+                .map_err(|_| "Insertion Error".into());
+            }
     }
-    panic!("Not yet implemented");
+    panic!("fix playlist");
 }
 
 pub fn playlist_from_directory(folder: &str, pool: &DBPool) -> LoadedPlaylist {
