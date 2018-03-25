@@ -5,7 +5,7 @@ use schema::{playlists, playlisttracks};
 use db::Track;
 use types::DBPool;
 
-#[derive(Identifiable,Queryable)]
+#[derive(Identifiable,Queryable, Associations)]
 struct Playlist {
     id: i32,
     name: String,
@@ -19,17 +19,20 @@ struct NewPlaylist {
     current_position: i32,
 }
 
-#[derive(Queryable)]
-pub struct PlaylistTracks {
+#[derive(Identifiable, Queryable, Associations)]
+#[table_name="playlisttracks"]
+#[belongs_to(Track, foreign_key="playlist_id")]
+#[belongs_to(Playlist, foreign_key="track_id")]
+pub struct PlaylistTrack {
     id: i32,
     playlist_id: i32,
     track_id: i32,
     playlist_order: i32,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Associations)]
 #[table_name="playlisttracks"]
-pub struct NewPlaylistTracks {
+struct NewPlaylistTrack {
     playlist_id: i32,
     track_id: i32,
     playlist_order: i32,
@@ -42,7 +45,7 @@ pub struct LoadedPlaylist {
     pub current_position: i32,
 }
 
-fn get_ordering(&(ref t, ref pt): &(Track, PlaylistTracks)) -> (i32, &Track) {
+fn get_ordering(&(ref t, ref pt): &(Track, PlaylistTrack)) -> (i32, &Track) {
     (pt.playlist_order, t)
 }
 
@@ -50,7 +53,7 @@ fn only_tracks<'a>(&(ref i, ref t): &'a (i32, &Track)) -> &'a Track {
     t
 }
 
-fn create_loaded_from_playlist(pl: &Playlist, r: &Vec<(Track,PlaylistTracks)>) -> Result<LoadedPlaylist, diesel::result::Error> {
+fn create_loaded_from_playlist(pl: &Playlist, r: &Vec<(Track,PlaylistTrack)>) -> Result<LoadedPlaylist, diesel::result::Error> {
     let mut unsorted = r.iter()
         .map(get_ordering)
         .collect::<Vec<(i32, &Track)>>();
@@ -71,7 +74,7 @@ pub fn restore_playlists(pool: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::r
     let db = pool.get().unwrap();
     let pls = playlists.load::<Playlist>(db.deref())?;
     pls.iter().map(|pl| {
-        let t: Vec<(Track, PlaylistTracks)> = tracks.inner_join(playlisttracks)
+        let t: Vec<(Track, PlaylistTrack)> = tracks.inner_join(playlisttracks)
         .filter(playlist_id.eq(pl.id))
         .load(db.deref())?;
         
@@ -101,12 +104,18 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
         };
     // the playlist is not in the database
     for (index, track) in pl.items.iter().enumerate() {
-        let t = vec![NewPlaylistTracks { playlist_id: playlist.id, track_id: track.id, playlist_order: index as i32}];
-        diesel::insert_into(playlisttracks::table)
+        let t = vec![ NewPlaylistTrack { playlist_id: playlist.id, track_id: track.id, playlist_order: index as i32}];
+        diesel::insert_into(playlisttracks)
+            .values(&t)
+            .execute(db.deref())
+            .expect("Database error");
+        
+        /*diesel::insert_into(playlisttracks::table)
             .values(&t)
             .execute(db.deref())
             .map(|_| ())
             .map_err(|_| "Insertion Error".into());
+        */
     }
     panic!("fix playlist");
 }
