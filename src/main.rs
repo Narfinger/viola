@@ -75,9 +75,9 @@ fn gstreamer_message_handler(pipeline: Pipeline, current_playlist: CurrentPlayli
                 } else {
                     println!("Next should play");
                     let pl = pipeline.read().unwrap();
-                    (*pl).set_state(gstreamer::State::Ready);
-                    (*pl).set_property("uri", &playlist::get_current_uri(&p));
-                    (*pl).set_state(gstreamer::State::Playing);
+                    (*pl).set_state(gstreamer::State::Ready).into_result().expect("Error in changing gstreamer state to ready");
+                    (*pl).set_property("uri", &playlist::get_current_uri(&p)).expect("Error setting new url for gstreamer");
+                    (*pl).set_state(gstreamer::State::Playing).into_result().expect("Error in changing gstreamer state to playing");
                     println!("Next one now playing is: {}", &playlist::get_current_uri(&p));
                     update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Playing)
                 }
@@ -139,6 +139,10 @@ fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, gui: &Gui, status
     }
 }
 
+fn change_track_to(filename: &str, p: &Pipeline) {
+    ///todo do this uniformly
+} 
+
 fn build_gui(pool: &DBPool) {
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
@@ -164,8 +168,8 @@ fn build_gui(pool: &DBPool) {
             {
                 let p = pipeline.read().unwrap();
                 let pl = current_playlist.read().unwrap();
-                (*p).set_property("uri", &playlist::get_current_uri(&pl));
-                p.set_state(gstreamer::State::Playing);
+                (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error setting new gstreamer url");
+                p.set_state(gstreamer::State::Playing).into_result().expect("Error in setting gstreamer state playing");
                 update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Playing); 
             }
         }));
@@ -176,8 +180,8 @@ fn build_gui(pool: &DBPool) {
             {
                 let p = pipeline.read().unwrap();      
                 match p.get_state(gstreamer::ClockTime(Some(1000))) {
-                    (_, gstreamer::State::Paused, _) =>  { (*p).set_state(gstreamer::State::Playing); },
-                    (_, gstreamer::State::Playing, _) => { (*p).set_state(gstreamer::State::Paused);  },
+                    (_, gstreamer::State::Paused, _) =>  { (*p).set_state(gstreamer::State::Playing).into_result().expect("Error in setting gstreamer state playing"); },
+                    (_, gstreamer::State::Playing, _) => { (*p).set_state(gstreamer::State::Paused).into_result().expect("Error in setting gstreamer state paused");  },
                     (_, _, _) => {}
                 };
                 update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Paused); 
@@ -190,11 +194,11 @@ fn build_gui(pool: &DBPool) {
             {
                 let p = pipeline.read().unwrap();
                 let mut pl = current_playlist.write().unwrap();
-                (*p).set_state(gstreamer::State::Paused);
-                (*p).set_state(gstreamer::State::Ready);
+                (*p).set_state(gstreamer::State::Paused).into_result().expect("Error in gstreamer state set, paused");
+                (*p).set_state(gstreamer::State::Ready).into_result().expect("Error in gstreamer state set, ready");
                 (*pl).current_position = ((*pl).current_position -1) % (*pl).items.len() as i32;
                 (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
-                (*p).set_state(gstreamer::State::Playing);
+                (*p).set_state(gstreamer::State::Playing).into_result().expect("Error in gstreamer state set, playing");
                 update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Playing); 
             }
         }));
@@ -205,11 +209,11 @@ fn build_gui(pool: &DBPool) {
             {
                 let p = pipeline.read().unwrap();
                 let mut pl = current_playlist.write().unwrap();
-                (*p).set_state(gstreamer::State::Paused);
-                (*p).set_state(gstreamer::State::Ready);
+                (*p).set_state(gstreamer::State::Paused).into_result().expect("Error in gstreamer state set: Paused");
+                (*p).set_state(gstreamer::State::Ready).into_result().expect("Error in gstreamer state set: Ready");
                 (*pl).current_position = ((*pl).current_position +1) % (*pl).items.len() as i32;
                 (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
-                (*p).set_state(gstreamer::State::Playing);
+                (*p).set_state(gstreamer::State::Playing).into_result().expect("Error in gstreamer state set: Playing");
                 update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Playing); 
             }
         }));
@@ -242,13 +246,13 @@ fn build_gui(pool: &DBPool) {
                 if vec.len() == 1 {
                     println!("we should work");
                     let p = pipeline.read().unwrap();
-                    p.set_state(gstreamer::State::Paused);
-                    p.set_state(gstreamer::State::Ready);
+                    p.set_state(gstreamer::State::Paused).into_result().expect("Error in gstreamer state set: Paused");
+                    p.set_state(gstreamer::State::Ready).into_result().expect("Error in gstreamer state set: Ready");
                     let pos = vec[0].get_indices()[0];
                     let mut cp = current_playlist.write().unwrap();
                     (*cp).current_position = i32::from(pos);
                     (*p).set_property("uri", &playlist::get_current_uri(&cp));
-                    p.set_state(gstreamer::State::Playing);
+                    p.set_state(gstreamer::State::Playing).into_result().expect("Error in gstreamer state set: Playing");
                 }
                 update_gui(&pipeline, &current_playlist, &builder, &PlayerStatus::Playing);
                 gtk::Inhibit(true)

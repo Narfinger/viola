@@ -67,9 +67,7 @@ pub fn restore_playlists(pool: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::r
     use schema::playlisttracks::dsl::*;
     use schema::playlists::dsl::*;
     use schema::tracks::dsl::*;
-    use diesel::associations::HasTable;
-    use diesel::{BelongingToDsl, QueryDsl, RunQueryDsl, GroupedBy, ExpressionMethods};
-    use diesel;
+    use diesel::{QueryDsl, RunQueryDsl, ExpressionMethods};
 
     let db = pool.get().unwrap();
     let pls = playlists.load::<Playlist>(db.deref())?;
@@ -85,9 +83,7 @@ pub fn restore_playlists(pool: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::r
 pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
     use schema::playlisttracks::dsl::*;
     use schema::playlists::dsl::*;
-    use schema::tracks::dsl::*;
-    use diesel::associations::HasTable;
-    use diesel::{BelongingToDsl, QueryDsl, RunQueryDsl, GroupedBy, ExpressionMethods};
+    use diesel::{QueryDsl, RunQueryDsl, ExpressionMethods};
     use diesel;
 
     let db = pool.get().unwrap();
@@ -99,7 +95,7 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
         playlists.find(id).first::<Playlist>(db.deref()).expect("DB Error")
         } else {
             let t = vec![NewPlaylist {name: pl.name.clone(), current_position: pl.current_position }];
-            diesel::insert_into(playlists).values(&t).execute(db.deref());
+            diesel::insert_into(playlists).values(&t).execute(db.deref()).expect("Database error");
             playlists.filter(name.eq(&pl.name)).first(db.deref()).expect("DB Erorr")
         };
     // the playlist is not in the database
