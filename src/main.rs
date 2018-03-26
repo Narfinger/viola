@@ -139,6 +139,7 @@ fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, gui: &Gui, status
     }
 }
 
+#[derive(Debug, Eq, PartialEq)]
 enum GStreamerAction {
     Next,
     Playing,
@@ -146,42 +147,39 @@ enum GStreamerAction {
     Previous,
 }
 
-fn do_gui_gstreamer_action(current_playlist: &CurrentPlaylist, builder: &Gui, pipeline: &Pipeline, action: GStreamerAction) {
+fn do_gui_gstreamer_action(current_playlist: CurrentPlaylist, builder: Gui, pipeline: Pipeline, action: GStreamerAction) {
     let p = pipeline.read().unwrap();
-    let pl = current_playlist.read().unwrap();
-    let mut gui_update = PlayerStatus::Playing;   
+    let mut pl = current_playlist.write().unwrap();
+    let mut gui_update = PlayerStatus::Playing;
+    let mut gstreamer_action = gstreamer::State::Playing;
+
+    //we need to set the state to paused and ready
+    if (action == GStreamerAction::Previous) || (action == GStreamerAction::Next) {
+        (*p).set_state(gstreamer::State::Paused).into_result().expect("Error in gstreamer state set, paused");
+        (*p).set_state(gstreamer::State::Ready).into_result().expect("Error in gstreamer state set, ready");
+            
+    }
+
     match action {
              GStreamerAction::Playing => {
-            (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error setting new gstreamer url");
-            p.set_state(gstreamer::State::Playing).into_result().expect("Error in setting gstreamer state playing");
-            
+            (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error setting new gstreamer url");            
         },
         GStreamerAction::Pausing => {
-            match p.get_state(gstreamer::ClockTime(Some(1000))) {
-                (_, gstreamer::State::Paused, _) =>  { 
-                    (*p).set_state(gstreamer::State::Playing).into_result().expect("Error in setting gstreamer state playing"); 
-                    },
-                (_, gstreamer::State::Playing, _) => { 
-                    (*p).set_state(gstreamer::State::Paused).into_result().expect("Error in setting gstreamer state paused");  gui_update = PlayerStatus::Paused;  
-                    },
-                (_, _, _) => {}
-            };
+            if gstreamer::State::Playing == p.get_state(gstreamer::ClockTime(Some(1000))).1 {
+                gstreamer_action = gstreamer::State::Paused;
+                gui_update = PlayerStatus::Paused;
+            }
         },
         GStreamerAction::Previous => {
-            (*p).set_state(gstreamer::State::Paused).into_result().expect("Error in gstreamer state set, paused");
-            (*p).set_state(gstreamer::State::Ready).into_result().expect("Error in gstreamer state set, ready");
             (*pl).current_position = ((*pl).current_position -1) % (*pl).items.len() as i32;
             (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
-            (*p).set_state(gstreamer::State::Playing).into_result().expect("Error in gstreamer state set, playing");
         },
         GStreamerAction::Next => {
-            (*p).set_state(gstreamer::State::Paused).into_result().expect("Error in gstreamer state set: Paused");
-            (*p).set_state(gstreamer::State::Ready).into_result().expect("Error in gstreamer state set: Ready");
             (*pl).current_position = ((*pl).current_position +1) % (*pl).items.len() as i32;
             (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
-            (*p).set_state(gstreamer::State::Playing).into_result().expect("Error in gstreamer state set: Playing");
         }
     }
+    p.set_state(gstreamer_action).into_result().expect("Error in setting gstreamer state playing");
     update_gui(&pipeline, &current_playlist, &builder, &gui_update); 
 } 
 
@@ -208,7 +206,7 @@ fn build_gui(pool: &DBPool) {
         let button: gtk::Button = builder.read().unwrap().get_object("playButton").unwrap();
         button.connect_clicked(clone!(current_playlist,  builder, pipeline => move |_| {
             {
-                do_gui_gstreamer_action(&current_playlist, &builder, &pipeline, GStreamerAction::Playing);
+                do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), GStreamerAction::Playing);
             }
         }));
     }
@@ -216,7 +214,7 @@ fn build_gui(pool: &DBPool) {
         let button: gtk::Button = builder.read().unwrap().get_object("pauseButton").unwrap();
         button.connect_clicked(clone!(current_playlist, builder, pipeline  => move |_| {
             {
-                do_gui_gstreamer_action(&current_playlist, &builder, &pipeline, GStreamerAction::Pausing);
+                do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), GStreamerAction::Pausing);
             }
         }));
     }
@@ -224,7 +222,7 @@ fn build_gui(pool: &DBPool) {
         let button: gtk::Button = builder.read().unwrap().get_object("prevButton").unwrap();
         button.connect_clicked(clone!(current_playlist, builder, pipeline => move |_| {
             {
-                do_gui_gstreamer_action(&current_playlist, &builder, &pipeline, GStreamerAction::Previous);
+                do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), GStreamerAction::Previous);
             }
         }));
     }
@@ -232,7 +230,7 @@ fn build_gui(pool: &DBPool) {
         let button: gtk::Button = builder.read().unwrap().get_object("nextButton").unwrap();
         button.connect_clicked(clone!(current_playlist, builder, pipeline => move |_| {
             {
-                do_gui_gstreamer_action(&current_playlist, &builder, &pipeline, GStreamerAction::Next)
+                do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), GStreamerAction::Next)
             }
         }));
     }
