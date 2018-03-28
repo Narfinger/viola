@@ -9,9 +9,10 @@ diesel = { version = "1.1", features = ["sqlite"] }
 dotenv = "0.11"
 error-chain = "0.11"
 indicatif = "0.9"    # A progress bar and cli reporting library for Rust
-taglib = {git = "https://github.com/ebassi/taglib-rust.git", rev="513dabf"}        # Rust bindings for TagLib    
-gdk = "0.7.0"               # Rust bindings for the GDK 3 library   
-gstreamer = "0.10.2"               # Rust bindings for GStreamer     
+taglib = {git = "https://github.com/ebassi/taglib-rust.git", rev="513dabf"}        # Rust bindings for TagLib   
+gdk = "0.8"               # Rust bindings for the GDK 3 library
+gio = "0.4"             # Rust bindings for the Gio library    
+gstreamer = "0.11"               # Rust bindings for GStreamer     
 rayon = "1.0"               # Simple work-stealing parallelism for Rust   
 r2d2 = "0.8"                # A generic connection pool
 r2d2-diesel = "1.0"      # r2d2 support for Diesel
@@ -19,5 +20,5 @@ walkdir = "2"
 
 
 [dependencies.gtk]
-version = "0.3.0"
+version = "0.4.0"
 features = ["v3_10"]

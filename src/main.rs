@@ -2,6 +2,7 @@ extern crate clap;
 #[macro_use] extern crate diesel;
 extern crate indicatif;
 extern crate gdk;
+extern crate gio;
 extern crate gtk;
 extern crate gstreamer;
 extern crate rayon;
@@ -18,6 +19,7 @@ pub mod types;
 use clap::{Arg, App};
 use std::sync::Arc;
 use std::sync::RwLock;
+use gio::ApplicationExt;
 use gstreamer::ElementExt;
 use gtk::prelude::*;
 
@@ -193,7 +195,7 @@ fn do_gui_gstreamer_action(current_playlist: CurrentPlaylist, builder: Gui, pipe
     update_gui(&pipeline, &current_playlist, &builder, &gui_update); 
 } 
 
-fn build_gui(pool: &DBPool) {
+fn build_gui(application: &gtk::Application, pool: &DBPool) {
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
         return;
@@ -202,11 +204,11 @@ fn build_gui(pool: &DBPool) {
     let builder: Gui = Arc::new(RwLock::new(gtk::Builder::new_from_string(glade_src)));
 
     println!("Building list");
-    let playlist = playlist::playlist_from_directory("/mnt/ssd-media/Musik/1rest", pool);
+    let playlist = playlist::playlist_from_directory("/mnt/ssd-media/Musik/", pool);
     let current_playlist = Arc::new(RwLock::new(playlist));
     println!("Done building list");
     
-    let window: gtk::Window = builder.read().unwrap().get_object("mainwindow").unwrap();
+    let window: gtk::ApplicationWindow = builder.read().unwrap().get_object("mainwindow").unwrap();
     let treeview: gtk::TreeView = builder.read().unwrap().get_object("listview").unwrap();
 
     let pipeline = gstreamer_init(current_playlist.clone(), builder.clone()).unwrap();
@@ -286,16 +288,15 @@ fn build_gui(pool: &DBPool) {
         treeview.set_model(Some(&model));
     }
     
-    
-    window.connect_delete_event(clone!(pipeline => move |_, _| {
+    window.set_application(application);    
+    window.connect_delete_event(clone!(pipeline, window => move |_, _| {
         let p = pipeline.read().unwrap();
         (*p).set_state(gstreamer::State::Null).into_result().expect("Error in setting gstreamer state: Null");
-        gtk::main_quit();
+        window.destroy();
         Inhibit(false)
     }));
 
     window.show_all();
-    gtk::main();
 }
 
 fn main() {
@@ -310,8 +311,15 @@ fn main() {
     let pool = db::setup_db_connection();        
     if matches.is_present("update") {
         println!("Updating Database");
-        db::build_db("/mnt/ssd-media/Musik/1a - Test", &pool.clone()).unwrap();
+        db::build_db("/mnt/ssd-media/Musik/", &pool.clone()).unwrap();
     } else {
-        build_gui(&pool);
+        use gio::ApplicationExtManual;
+        let application = gtk::Application::new("com.github.builder_basics",
+                                                gio::ApplicationFlags::empty())
+                                           .expect("Initialization failed...");
+        application.connect_startup(move |app| {
+            build_gui(app, &pool);
+        });
+        application.run(&vec![]);
     }
 }
