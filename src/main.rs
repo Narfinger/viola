@@ -13,6 +13,7 @@ extern crate walkdir;
 
 pub mod db;
 pub mod playlist;
+pub mod playlistmanager;
 pub mod schema;
 pub mod types;
 
@@ -40,12 +41,6 @@ macro_rules! clone {
             move |$(clone!(@param $p),)+| $body
         }
     );
-}
-
-enum PlayerStatus {
-    Playing,
-    Paused,
-    Stopped
 }
 
 /// poll the message bus and on eos start new
@@ -139,17 +134,6 @@ fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, gui: &Gui, status
     },
     _ => {}
     }
-}
-
-/// Tells the gui and the gstreamer what action is performed. Splits the gui and the backend a tiny bit
-#[derive(Debug, Eq, PartialEq)]
-enum GStreamerAction {
-    Next,
-    Playing,
-    Pausing,
-    Previous,
-    /// This means we selected one specific track
-    Play(i32),
 }
 
 fn do_gui_gstreamer_action(current_playlist: CurrentPlaylist, builder: Gui, pipeline: Pipeline, action: &GStreamerAction) {
@@ -247,47 +231,11 @@ fn build_gui(application: &gtk::Application, pool: &DBPool) {
         }));
     }
 
-    let model = gtk::ListStore::new(&[String::static_type(), String::static_type(), String::static_type(), String::static_type(), String::static_type(), String::static_type(), String::static_type()]);
-    {
-        let p = current_playlist.read().unwrap();
-        let notebook: gtk::Notebook = builder.read().unwrap().get_object("playlistNotebook").unwrap();
-        let child = &notebook.get_children()[0];
-        notebook.set_tab_label_text(child, p.name.as_str());
-        for (i, entry) in p.items.iter().enumerate() {
-             model.insert_with_values(None, &[0,1,2,3,4,5,6], &[&entry.tracknumber.map(|s| s.to_string())
-                .unwrap_or_else (|| String::from("")), 
-             &entry.title, &entry.artist, &entry.album, &entry.length, &entry.year.map(|s| s.to_string())
-                .unwrap_or_else(|| String::from("")), 
-             &entry.genre]);
-        }
-        for &(id, title) in &[(0,"#"), (1, "Title"), (2, "Artist"), (3, "Album"), (4, "Length"), (5, "Year"), (6, "Genre")] {
-            let column = gtk::TreeViewColumn::new();
-            let cell = gtk::CellRendererText::new();
-            column.pack_start(&cell, true);
-            // Association of the view's column with the model's `id` column.
-            column.add_attribute(&cell, "text", id);
-            column.set_title(title);
-            column.set_resizable(id>0);
-            treeview.append_column(&column);
-        }
-        treeview.connect_button_press_event(clone!(pipeline, current_playlist, builder => move |tv, eventbutton| {
-            if eventbutton.get_event_type() == gdk::EventType::DoubleButtonPress {
-                let (vec, _) = tv.get_selection().get_selected_rows();
-                if vec.len() == 1 {
-                    let pos = vec[0].get_indices()[0];
-                    do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Play(pos));
-                }
-                gtk::Inhibit(true)
-            } else {
-                gtk::Inhibit(false)
-            }
-        }));
-        /* treeview.get_selection().connect_changed(move |ts| {
-            println!("selecting");
-        }); */
-        treeview.set_model(Some(&model));
-    }
+    let notebook: gtk::Notebook = builder.read().unwrap().get_object("playlistNotebook").unwrap(); 
+    let plm: PlaylistManager<_> = playlistmanager::new(notebook, treeview, pipeline.clone(), current_playlist.clone(), builder, 
+                                    do_gui_gstreamer_action);
     
+    window.maximize();
     window.set_application(application);    
     window.connect_delete_event(clone!(pipeline, window => move |_, _| {
         let p = pipeline.read().unwrap();
