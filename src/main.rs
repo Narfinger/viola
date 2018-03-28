@@ -246,9 +246,11 @@ fn build_gui(pool: &DBPool) {
     }
 
     let model = gtk::ListStore::new(&[String::static_type(), String::static_type(), String::static_type(), String::static_type(), String::static_type(), String::static_type(), String::static_type()]);
-    
     {
         let p = current_playlist.read().unwrap();
+        let notebook: gtk::Notebook = builder.read().unwrap().get_object("playlistNotebook").unwrap();
+        let child = &notebook.get_children()[0];
+        notebook.set_tab_label_text(child, p.name.as_str());
         for (i, entry) in p.items.iter().enumerate() {
              model.insert_with_values(None, &[0,1,2,3,4,5,6], &[&entry.tracknumber.map(|s| s.to_string())
                 .unwrap_or_else (|| String::from("")), 
