@@ -18,6 +18,7 @@ pub mod schema;
 pub mod types;
 
 use clap::{Arg, App};
+use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::RwLock;
 use gio::ApplicationExt;
@@ -137,45 +138,49 @@ fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, gui: &Gui, status
 }
 
 fn do_gui_gstreamer_action(current_playlist: CurrentPlaylist, builder: Gui, pipeline: Pipeline, action: &GStreamerAction) {
-    let p = pipeline.read().unwrap();
-    let mut pl = current_playlist.write().unwrap();
     let mut gui_update = PlayerStatus::Playing;
     let mut gstreamer_action = gstreamer::State::Playing;
-
-    //we need to set the state to paused and ready
-    match *action { 
-        GStreamerAction::Play(_) | GStreamerAction::Previous | GStreamerAction::Next => {    
-            (*p).set_state(gstreamer::State::Paused).into_result().expect("Error in gstreamer state set, paused");
-            (*p).set_state(gstreamer::State::Ready).into_result().expect("Error in gstreamer state set, ready");
-        }
-        _ => {}
-    }
-       
-
-    match *action {
-             GStreamerAction::Playing => {
-            (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error setting new gstreamer url");            
-        },
-        GStreamerAction::Pausing => {
-            if gstreamer::State::Playing == p.get_state(gstreamer::ClockTime(Some(1000))).1 {
-                gstreamer_action = gstreamer::State::Paused;
-                gui_update = PlayerStatus::Paused;
+    { //releaingx the locks later
+        let p = pipeline.read().unwrap();
+        let mut pl = current_playlist.write().unwrap();
+        //we need to set the state to paused and ready
+        match *action { 
+            GStreamerAction::Play(_) | GStreamerAction::Previous | GStreamerAction::Next => {
+                if gstreamer::State::Playing == (*p).get_state(gstreamer::ClockTime(Some(1000))).1 {
+                    (*p).set_state(gstreamer::State::Paused).into_result().expect("Error in gstreamer state set, paused");
+                    (*p).set_state(gstreamer::State::Ready).into_result().expect("Error in gstreamer state set, ready");
+                }
             }
-        },
-        GStreamerAction::Previous => {
-            (*pl).current_position = ((*pl).current_position -1) % (*pl).items.len() as i32;
-            (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
-        },
-        GStreamerAction::Next => {
-            (*pl).current_position = ((*pl).current_position +1) % (*pl).items.len() as i32;
-            (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
-        },
-        GStreamerAction::Play(i) => {
-            (*pl).current_position = i;
-            (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in chaning url");
+            _ => {}
         }
-    }
-    p.set_state(gstreamer_action).into_result().expect("Error in setting gstreamer state playing");
+
+
+        match *action {
+                 GStreamerAction::Playing => {
+                (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error setting new gstreamer url");            
+            },
+            GStreamerAction::Pausing => {
+                if gstreamer::State::Playing == p.get_state(gstreamer::ClockTime(Some(1000))).1 {
+                    gstreamer_action = gstreamer::State::Paused;
+                    gui_update = PlayerStatus::Paused;
+                }
+            },
+            GStreamerAction::Previous => {
+                (*pl).current_position = ((*pl).current_position -1) % (*pl).items.len() as i32;
+                (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
+            },
+            GStreamerAction::Next => {
+                (*pl).current_position = ((*pl).current_position +1) % (*pl).items.len() as i32;
+                (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in changing url");
+            },
+            GStreamerAction::Play(i) => {
+                (*pl).current_position = i;
+                (*p).set_property("uri", &playlist::get_current_uri(&pl)).expect("Error in chaning url");
+            }
+        }
+        p.set_state(gstreamer_action).into_result().expect("Error in setting gstreamer state playing");
+    } //locks releaed
+    
     update_gui(&pipeline, &current_playlist, &builder, &gui_update); 
 } 
 
@@ -232,8 +237,11 @@ fn build_gui(application: &gtk::Application, pool: &DBPool) {
     }
 
     let notebook: gtk::Notebook = builder.read().unwrap().get_object("playlistNotebook").unwrap(); 
-    let plm: PlaylistManager<_> = playlistmanager::new(notebook, treeview, pipeline.clone(), current_playlist.clone(), builder, 
-                                    do_gui_gstreamer_action);
+    let plm: playlistmanager::PlaylistManager = playlistmanager::new(notebook, 
+        treeview, pipeline.clone(), 
+        current_playlist.clone(), 
+        builder,  
+        Rc::new(do_gui_gstreamer_action));
     
     window.maximize();
     window.set_application(application);    

@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use gstreamer::ElementExt;
 use gtk::prelude::*;
 use gdk;
@@ -23,16 +24,19 @@ macro_rules! clone {
     );
 }
 
-pub struct PlaylistManager<F: Fn(CurrentPlaylist, Gui, Pipeline, &GStreamerAction)> {
+type GuiActionFn = Fn(CurrentPlaylist, Gui, Pipeline, &GStreamerAction) -> ();
+
+#[derive(Clone)]
+pub struct PlaylistManager {
     notebook: gtk::Notebook,
     treeview: gtk::TreeView,
     pipeline: Pipeline,
     current_playlist: CurrentPlaylist,
     builder: Gui,
-    gui_action: F,
+    gui_action: Rc<GuiActionFn>,
 }
 
-pub fn new<F: Fn(CurrentPlaylist, Gui, Pipeline, &GStreamerAction)>(notebook: gtk::Notebook, treeview: gtk::TreeView, pipeline: Pipeline, current_playlist: CurrentPlaylist, builder: Gui, gui_action: F) -> PlaylistManager<F> {
+pub fn new(notebook: gtk::Notebook, treeview: gtk::TreeView, pipeline: Pipeline, current_playlist: CurrentPlaylist, builder: Gui, gui_action: Rc<GuiActionFn>) -> PlaylistManager {
     let plm = PlaylistManager { 
                     notebook: notebook,
                     treeview: treeview,
@@ -41,17 +45,17 @@ pub fn new<F: Fn(CurrentPlaylist, Gui, Pipeline, &GStreamerAction)>(notebook: gt
                     builder: builder,
                     gui_action: gui_action,
                     };
-    setup(plm);
+    setup(&plm);
     plm
 }
 
 /// TODO clean this up
-fn setup<F: Fn(CurrentPlaylist, Gui, Pipeline, &GStreamerAction)>(plm: PlaylistManager<F>) {
-    let current_playlist = plm.current_playlist;
-    let notebook = plm.notebook;
-    let treeview = plm.treeview;
-    let pipeline = plm.pipeline;
-    let builder = plm.builder;
+fn setup(plm: &PlaylistManager) {
+    let current_playlist = &plm.current_playlist;
+    let notebook = &plm.notebook;
+    let treeview = &plm.treeview;
+    let pipeline = &plm.pipeline;
+    let builder = &plm.builder;
 
 
     let model = gtk::ListStore::new(&[String::static_type(), String::static_type(), String::static_type(), String::static_type(), String::static_type(), String::static_type(), String::static_type()]);
@@ -66,7 +70,7 @@ fn setup<F: Fn(CurrentPlaylist, Gui, Pipeline, &GStreamerAction)>(plm: PlaylistM
                 .unwrap_or_else(|| String::from("")), 
              &entry.genre]);
         }
-        for &(id, title, width) in &[(0,"#", 50), (1, "Title", 800), (2, "Artist",200), (3, "Album",200), (4, "Length",200), (5, "Year",200), (6, "Genre",200)] {
+        for &(id, title, width) in &[(0,"#", 50), (1, "Title", 700), (2, "Artist",200), (3, "Album",200), (4, "Length",200), (5, "Year",200), (6, "Genre",200)] {
             let column = gtk::TreeViewColumn::new();
             let cell = gtk::CellRendererText::new();
             column.pack_start(&cell, true);
@@ -77,12 +81,14 @@ fn setup<F: Fn(CurrentPlaylist, Gui, Pipeline, &GStreamerAction)>(plm: PlaylistM
             column.set_fixed_width(width);
             treeview.append_column(&column);
         }
-        treeview.connect_button_press_event(clone!(pipeline, current_playlist, builder => move |tv, eventbutton| {
+
+        let gui_action = &plm.gui_action;
+        treeview.connect_button_press_event(clone!(pipeline, current_playlist, builder, gui_action => move |tv, eventbutton| {
             if eventbutton.get_event_type() == gdk::EventType::DoubleButtonPress {
                 let (vec, _) = tv.get_selection().get_selected_rows();
                 if vec.len() == 1 {
                     let pos = vec[0].get_indices()[0];
-                    (&plm.gui_action)(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Play(pos));
+                    (gui_action)(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Play(pos));
                 }
                 gtk::Inhibit(true)
             } else {
