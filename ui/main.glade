@@ -1,26 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.4 -->
+<!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkApplicationWindow" id="mainwindow">
     <property name="can_focus">False</property>
     <property name="default_width">800</property>
     <property name="default_height">800</property>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="homogeneous">True</property>
         <child>
           <object class="GtkBox">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
             <child>
-              <object class="GtkTreeView">
+              <object class="GtkScrolledWindow">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <child internal-child="selection">
-                  <object class="GtkTreeSelection"/>
+                <property name="shadow_type">in</property>
+                <child>
+                  <object class="GtkTreeView" id="libraryview">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="hscroll_policy">natural</property>
+                    <property name="vscroll_policy">natural</property>
+                    <property name="headers_visible">False</property>
+                    <property name="enable_search">False</property>
+                    <property name="rubber_banding">True</property>
+                    <property name="enable_grid_lines">both</property>
+                    <property name="enable_tree_lines">True</property>
+                    <child internal-child="selection">
+                      <object class="GtkTreeSelection"/>
+                    </child>
+                  </object>
                 </child>
               </object>
               <packing>
@@ -259,9 +277,6 @@
           </packing>
         </child>
       </object>
-    </child>
-    <child type="titlebar">
-      <placeholder/>
     </child>
   </object>
 </interface>

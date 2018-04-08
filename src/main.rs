@@ -12,6 +12,7 @@ extern crate taglib;
 extern crate walkdir;
 
 pub mod db;
+pub mod libraryviewstore;
 pub mod playlist;
 pub mod playlistmanager;
 pub mod schema;
@@ -184,7 +185,7 @@ fn do_gui_gstreamer_action(current_playlist: CurrentPlaylist, builder: Gui, pipe
     update_gui(&pipeline, &current_playlist, &builder, &gui_update); 
 } 
 
-fn build_gui(application: &gtk::Application, pool: &DBPool) {
+fn build_gui(application: &gtk::Application, pool: DBPool) {
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
         return;
@@ -193,7 +194,7 @@ fn build_gui(application: &gtk::Application, pool: &DBPool) {
     let builder: Gui = Arc::new(RwLock::new(gtk::Builder::new_from_string(glade_src)));
 
     println!("Building list");
-    let playlist = playlist::playlist_from_directory("/mnt/ssd-media/Musik/", pool);
+    let playlist = playlist::playlist_from_directory("/mnt/ssd-media/Musik/", &pool);
     let current_playlist = Arc::new(RwLock::new(playlist));
     println!("Done building list");
     
@@ -236,15 +237,26 @@ fn build_gui(application: &gtk::Application, pool: &DBPool) {
         }));
     }
 
-    let notebook: gtk::Notebook = builder.read().unwrap().get_object("playlistNotebook").unwrap(); 
-    let plm: playlistmanager::PlaylistManager = playlistmanager::new(notebook, 
-        treeview, pipeline.clone(), 
-        current_playlist.clone(), 
-        builder,  
-        Rc::new(do_gui_gstreamer_action));
+    {
+        let notebook: gtk::Notebook = builder.read().unwrap().get_object("playlistNotebook").unwrap(); 
+        let plm: playlistmanager::PlaylistManager = playlistmanager::new(notebook, 
+            treeview, pipeline.clone(), 
+            current_playlist.clone(), 
+            builder.clone(),  
+            Rc::new(do_gui_gstreamer_action));
+    }
+    // building libraryview
+    {
+        //gtk::idle_add(clone!(pool => move || {
+            let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();    
+            libraryviewstore::connect(pool.clone(), &libview);
+        //    Continue(false)
+        //}));
+    }
     
     window.maximize();
-    window.set_application(application);    
+    window.set_application(application);
+    window.set_title("Viola");
     window.connect_delete_event(clone!(pipeline, window => move |_, _| {
         let p = pipeline.read().unwrap();
         (*p).set_state(gstreamer::State::Null).into_result().expect("Error in setting gstreamer state: Null");
@@ -274,8 +286,9 @@ fn main() {
                                                 gio::ApplicationFlags::empty())
                                            .expect("Initialization failed...");
         application.connect_startup(move |app| {
-            build_gui(app, &pool);
+            build_gui(app, pool.clone());
         });
+        application.connect_activate( |_| {});
         application.run(&vec![]);
     }
 }
