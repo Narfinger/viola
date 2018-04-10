@@ -1,16 +1,16 @@
 use diesel;
 use indicatif::{ProgressBar, ProgressStyle};
-use rayon::prelude::*;
-use std::path::Path;
-use std::ops::Deref;
 use r2d2;
 use r2d2_diesel;
-use taglib;
-use walkdir;
-use types::DBPool;
+use rayon::prelude::*;
 use schema::tracks;
+use std::ops::Deref;
+use std::path::Path;
+use taglib;
+use types::DBPool;
+use walkdir;
 
-#[derive(Identifiable,Queryable, Clone)]
+#[derive(Identifiable, Queryable, Clone)]
 pub struct Track {
     pub id: i32,
     pub title: String,
@@ -25,7 +25,7 @@ pub struct Track {
 }
 
 #[derive(Insertable)]
-#[table_name="tracks"]
+#[table_name = "tracks"]
 pub struct NewTrack {
     title: String,
     artist: String,
@@ -40,13 +40,17 @@ pub struct NewTrack {
 
 pub fn setup_db_connection() -> DBPool {
     let manager = r2d2_diesel::ConnectionManager::<diesel::SqliteConnection>::new("./music.db");
-    r2d2::Pool::builder().build(manager).expect("Failed to create pool.")
+    r2d2::Pool::builder()
+        .build(manager)
+        .expect("Failed to create pool.")
 }
 
 fn check_file(s: &Result<walkdir::DirEntry, walkdir::Error>) -> bool {
     if let Ok(ref sp) = *s {
         if sp.file_type().is_file() {
-            Some(true) == sp.path().extension().map(|ex| vec!["ogg", "flac", "mp3", "wma", "aac", "opus"].contains(&ex.to_str().unwrap()))
+            Some(true) == sp.path().extension().map(|ex| {
+                vec!["ogg", "flac", "mp3", "wma", "aac", "opus"].contains(&ex.to_str().unwrap())
+            })
         } else {
             false
         }
@@ -55,7 +59,7 @@ fn check_file(s: &Result<walkdir::DirEntry, walkdir::Error>) -> bool {
     }
 }
 
-/// gets a number and returns None if the number is zero, otherwise the number converted to i32 
+/// gets a number and returns None if the number is zero, otherwise the number converted to i32
 fn number_zero_to_option(i: u32) -> Option<i32> {
     if i == 0 {
         None
@@ -76,17 +80,20 @@ fn get_album_file(s: &str) -> Option<String> {
                 Some(png)
             } else {
                 None
-            }})
-        .and_then(|s| s.to_str().map(String::from))    
+            }
+        })
+        .and_then(|s| s.to_str().map(String::from))
 }
 
 fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
     let taglibfile = taglib::File::new(&s);
     if let Ok(ataglib) = taglibfile {
-        let tags = ataglib.tag()
+        let tags = ataglib
+            .tag()
             .unwrap_or_else(|_| panic!(format!("Could not read tags for: {}", s)));
         let properties = ataglib
-            .audioproperties().unwrap_or_else(|_| panic!(format!("Could not find audio properties for: {}", s)));
+            .audioproperties()
+            .unwrap_or_else(|_| panic!(format!("Could not find audio properties for: {}", s)));
         let album = get_album_file(&s);
         //tracknumber and year return 0 if none set
         Ok(NewTrack {
@@ -106,8 +113,8 @@ fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
 }
 
 fn insert_track(s: String, pool: &DBPool) -> Result<(), String> {
-    use schema::tracks;
     use diesel::RunQueryDsl;
+    use schema::tracks;
 
     let db = pool.get().unwrap();
     let track = construct_track_from_path(s)?;
@@ -120,15 +127,15 @@ fn insert_track(s: String, pool: &DBPool) -> Result<(), String> {
 
 pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
     let files = walkdir::WalkDir::new(&path)
-                .into_iter()
-                .filter(check_file)
-                .map(|i| String::from(i.unwrap().path().to_str().unwrap()));
-    
+        .into_iter()
+        .filter(check_file)
+        .map(|i| String::from(i.unwrap().path().to_str().unwrap()));
+
     let file_count = walkdir::WalkDir::new(&path)
-                .into_iter()
-                .filter(check_file)
-                .map(|i| String::from(i.unwrap().path().to_str().unwrap()))
-                .count();
+        .into_iter()
+        .filter(check_file)
+        .map(|i| String::from(i.unwrap().path().to_str().unwrap()))
+        .count();
     /// TODO switch this to par_iter or something
     let pb = ProgressBar::new(file_count as u64);
     pb.set_message("Updating files");
