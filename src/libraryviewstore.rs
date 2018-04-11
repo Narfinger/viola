@@ -1,7 +1,29 @@
+use gdk;
+use gio;
 use gtk;
 use gtk::prelude::*;
 use std::ops::Deref;
 use types::*;
+
+fn signalhandler(tv: &gtk::TreeView, event: &gdk::Event) {
+    if event.get_event_type() == gdk::EventType::ButtonPress {
+        if let Ok(b) = event.clone().downcast::<gdk::EventButton>() {
+            if b.get_button() == 3 {
+                println!("YEAH");
+                let mut menu = gtk::Menu::new();
+                let new_pl = gtk::MenuItem::new_with_label("New Playlist");
+                menu.append(&new_pl);
+                let new_pl2 = gtk::MenuItem::new_with_label("Yeah");
+                menu.append(&new_pl2);
+
+                //let (_, iter) = tv.get_selection().get_selected().unwrap();
+                menu.attach(tv, 0, 0, 0, 0);
+                menu.popup_easy(b.get_button(), b.get_time());
+                //menu.show_all();
+            }
+        }
+    }
+}
 
 pub fn connect(pool: DBPool, tv: &gtk::TreeView) {
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl};
@@ -31,4 +53,6 @@ pub fn connect(pool: DBPool, tv: &gtk::TreeView) {
 
     tv.set_model(Some(&model));
     println!("Stopped");
+
+    tv.connect_event_after(signalhandler);
 }
