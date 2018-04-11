@@ -138,7 +138,7 @@ fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, gui: &Gui, status
         .read()
         .unwrap()
         .get_state(gstreamer::ClockTime(Some(1000)));
-    let treeview: gtk::TreeView = gui.read().unwrap().get_object("listview").unwrap();
+    let treeview: gtk::TreeView = gui.read().unwrap().get_object("playlistView").unwrap();
     let treeselection = treeview.get_selection();
     match *status {
         PlayerStatus::Playing => {
@@ -244,7 +244,7 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
     println!("Done building list");
 
     let window: gtk::ApplicationWindow = builder.read().unwrap().get_object("mainwindow").unwrap();
-    let treeview: gtk::TreeView = builder.read().unwrap().get_object("listview").unwrap();
+    let treeview: gtk::TreeView = builder.read().unwrap().get_object("playlistView").unwrap();
 
     let pipeline = gstreamer_init(current_playlist.clone(), builder.clone()).unwrap();
 
@@ -340,7 +340,7 @@ fn main() {
     } else {
         use gio::ApplicationExtManual;
         let application =
-            gtk::Application::new("com.github.builder_basics", gio::ApplicationFlags::empty())
+            gtk::Application::new("com.github.narfinger.viola", gio::ApplicationFlags::empty())
                 .expect("Initialization failed...");
         application.connect_startup(move |app| {
             build_gui(app, pool.clone());
