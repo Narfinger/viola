@@ -291,26 +291,25 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
         }));
     }
 
-    {
-        let notebook: gtk::Notebook = builder
-            .read()
-            .unwrap()
-            .get_object("playlistNotebook")
-            .unwrap();
-        let plm: playlistmanager::PlaylistManager = playlistmanager::new(
-            notebook,
-            treeview,
-            pipeline.clone(),
-            current_playlist.clone(),
-            builder.clone(),
-            Rc::new(do_gui_gstreamer_action),
-        );
-    }
+    
+    let notebook: gtk::Notebook = builder
+        .read()
+        .unwrap()
+        .get_object("playlistNotebook")
+        .unwrap();
+    let plm: playlistmanager::PlaylistManager = playlistmanager::new(
+        notebook,
+        treeview,
+        pipeline.clone(),
+        current_playlist.clone(),
+        builder.clone(),
+        Rc::new(do_gui_gstreamer_action),
+    );
     // building libraryview
     {
         //gtk::idle_add(clone!(pool => move || {
         let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
-        libraryviewstore::connect(pool.clone(), &libview);
+        libraryviewstore::connect(pool.clone(), Rc::new(plm), &libview);
         //    Continue(false)
         //}));
     }

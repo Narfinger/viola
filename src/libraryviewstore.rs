@@ -2,14 +2,39 @@ use gdk;
 use gio;
 use gtk;
 use gtk::prelude::*;
+use std::string::String;
 use std::ops::Deref;
+use playlist::LoadedPlaylist;
+use playlistmanager::PlaylistManagerExt;
 use types::*;
 
-fn signalhandler(tv: &gtk::TreeView, event: &gdk::Event) {
-    if event.get_event_type() == gdk::EventType::ButtonPress {
+fn signalhandler(pool: DBPool, plm: PlaylistManagerPtr, tv: &gtk::TreeView, event: &gdk::Event) {
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+    use schema::playlists::dsl::*;
+    use schema::playlisttracks::dsl::*;
+    use schema::tracks::dsl::*;
+
+    if event.get_event_type() == gdk::EventType::DoubleButtonPress {
         if let Ok(b) = event.clone().downcast::<gdk::EventButton>() {
-            if b.get_button() == 3 {
-                println!("YEAH");
+            if b.get_button() == 1 {
+                let (model, iter) = tv.get_selection().get_selected().unwrap();
+                let artist_name = model.get_value(&iter, 0).get::<String>().unwrap();
+                let db = pool.get().expect("DB problem");
+                let results = tracks
+                    .filter(artist.eq(&artist_name))
+                    .order(path)
+                    .load(db.deref())
+                    .expect("Problem loading playlist");
+
+                let pl = LoadedPlaylist {
+                    id: None,
+                    name: artist_name,
+                    items: results,
+                    current_position: 0,
+                };
+
+                (*plm.deref()).put_playlist_in_gui(pl) as Rc<PlaylistManager>;
+                /* println!("YEAH");
                 let mut menu = gtk::Menu::new();
                 let new_pl = gtk::MenuItem::new_with_label("New Playlist");
                 menu.append(&new_pl);
@@ -19,13 +44,13 @@ fn signalhandler(tv: &gtk::TreeView, event: &gdk::Event) {
                 //let (_, iter) = tv.get_selection().get_selected().unwrap();
                 menu.attach(tv, 0, 0, 0, 0);
                 menu.popup_easy(b.get_button(), b.get_time());
-                //menu.show_all();
+                //menu.show_all(); */
             }
         }
     }
 }
 
-pub fn connect(pool: DBPool, tv: &gtk::TreeView) {
+pub fn connect(pool: DBPool, plm: PlaylistManagerPtr, tv: &gtk::TreeView) {
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl};
     use schema::tracks::dsl::*;
 
@@ -54,5 +79,5 @@ pub fn connect(pool: DBPool, tv: &gtk::TreeView) {
     tv.set_model(Some(&model));
     println!("Stopped");
 
-    tv.connect_event_after(signalhandler);
+    tv.connect_event_after(move |s,e| { signalhandler(pool.clone(), plm.clone(), s, e) });
 }

@@ -5,6 +5,7 @@ use gtk;
 use gtk::prelude::*;
 use std::rc::Rc;
 
+use playlist::LoadedPlaylist;
 use types::*;
 
 macro_rules! clone {
@@ -34,6 +35,16 @@ pub struct PlaylistManager {
     current_playlist: CurrentPlaylist,
     builder: Gui,
     gui_action: Rc<GuiActionFn>,
+}
+
+trait PlaylistManagerExt {
+    fn put_playlist_in_gui(LoadedPlaylist);
+}
+
+impl PlaylistManagerExt for PlaylistManager {
+    fn put_playlist_in_gui(pl: LoadedPlaylist) {
+        println!("this is good");
+    }
 }
 
 pub fn new(
