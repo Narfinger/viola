@@ -2,6 +2,7 @@ extern crate clap;
 #[macro_use]
 extern crate diesel;
 extern crate gdk;
+extern crate gdk_pixbuf;
 extern crate gio;
 extern crate gstreamer;
 extern crate gtk;
@@ -159,7 +160,12 @@ fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, gui: &Gui, status
             artistlabel.set_markup(&track.artist);
             albumlabel.set_markup(&track.album);
             if let Some(ref p) = track.albumpath {
-                cover.set_from_file(p);
+                if let Ok(ref pp) = gdk_pixbuf::Pixbuf::new_from_file_at_size(p,300,300) {
+                    cover.set_from_pixbuf(pp);
+                } else {
+                    println!("error creating pixbuf");
+                }
+                
             } else {
                 cover.clear();
             }

@@ -10,6 +10,7 @@ error-chain = "0.11"
 indicatif = "0.9"    # A progress bar and cli reporting library for Rust
 taglib = {git = "https://github.com/ebassi/taglib-rust.git", rev="513dabf"}        # Rust bindings for TagLib   
 gdk = "0.8"               # Rust bindings for the GDK 3 library
+gdk-pixbuf = "0.4"        # Rust bindings for the GdkPixbuf library 
 gio = "0.4"             # Rust bindings for the Gio library    
 gstreamer = "0.11"               # Rust bindings for GStreamer     
 rayon = "1.0"               # Simple work-stealing parallelism for Rust   
