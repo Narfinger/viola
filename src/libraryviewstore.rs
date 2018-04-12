@@ -33,7 +33,7 @@ fn signalhandler(pool: DBPool, plm: PlaylistManagerPtr, tv: &gtk::TreeView, even
                     current_position: 0,
                 };
 
-                (*plm.deref()).put_playlist_in_gui(pl) as Rc<PlaylistManager>;
+                plm.put_playlist_in_gui(pl);
                 /* println!("YEAH");
                 let mut menu = gtk::Menu::new();
                 let new_pl = gtk::MenuItem::new_with_label("New Playlist");

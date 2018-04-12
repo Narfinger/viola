@@ -37,13 +37,13 @@ pub struct PlaylistManager {
     gui_action: Rc<GuiActionFn>,
 }
 
-trait PlaylistManagerExt {
-    fn put_playlist_in_gui(LoadedPlaylist);
+pub trait PlaylistManagerExt {
+    fn put_playlist_in_gui(&self, LoadedPlaylist);
 }
 
 impl PlaylistManagerExt for PlaylistManager {
-    fn put_playlist_in_gui(pl: LoadedPlaylist) {
-        println!("this is good");
+    fn put_playlist_in_gui(&self, lp: LoadedPlaylist) {
+
     }
 }
 
