@@ -43,8 +43,22 @@ pub trait PlaylistManagerExt {
 
 impl PlaylistManagerExt for PlaylistManager {
     fn put_playlist_in_gui(&self, lp: LoadedPlaylist) {
+        println!("doing new");
 
+
+        let tv = gtk::TreeView::new();
+        let label = gtk::Label::new(Some(lp.name.as_str()));
+        tv.show();
+        label.show();
+        populate_treeview(&lp, &tv);
+        self.notebook.append_page(&tv, Some(&label));
+        self.notebook.next_page();
+        println!("{}", self.notebook.get_n_pages());
     }
+}
+
+fn populate_treeview(lp: &LoadedPlaylist, tv: &gtk::TreeView) {
+
 }
 
 pub fn new(
