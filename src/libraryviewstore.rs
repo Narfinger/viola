@@ -8,7 +8,7 @@ use playlist::LoadedPlaylist;
 use playlistmanager::PlaylistManagerExt;
 use types::*;
 
-fn signalhandler(pool: DBPool, plm: PlaylistManagerPtr, tv: &gtk::TreeView, event: &gdk::Event) {
+fn signalhandler(pool: DBPool, plm: &mut PlaylistManagerPtr, tv: &gtk::TreeView, event: &gdk::Event) {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     use schema::playlists::dsl::*;
     use schema::playlisttracks::dsl::*;

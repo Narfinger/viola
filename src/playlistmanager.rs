@@ -4,6 +4,7 @@ use gstreamer::ElementExt;
 use gtk;
 use gtk::prelude::*;
 use std::rc::Rc;
+use std::sync::{Arc, RwLock};
 
 use playlist::LoadedPlaylist;
 use types::*;
@@ -27,7 +28,7 @@ macro_rules! clone {
 
 #[derive(Clone)]
 struct PlaylistTab {
-    lp: Rc<LoadedPlaylist>,
+    lp: Arc<RwLock<LoadedPlaylist>>,
     treeview: Rc<gtk::TreeView>,
 }
 
@@ -59,9 +60,13 @@ impl PlaylistManagerExt for PlaylistManager {
         self.notebook.next_page();
         println!("{}", self.notebook.get_n_pages());
         
-        let tab = PlaylistTab { lp: Rc::new(lp), treeview: Rc::new(tv)};
+        //I want to replace the value arc is pointing to but not the arc
+        //this arc is in a bunch of values and I need to keep it the same
+        let mut np = self.current_playlist.write().unwrap();
+        *np = lp;    
+
+        let tab = PlaylistTab { lp: self.current_playlist.clone(), treeview: Rc::new(tv)};
         self.playlist_tabs.push(tab);
-        self.current_playlist.write() = lp;
     }
 }
 
