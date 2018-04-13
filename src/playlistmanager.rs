@@ -25,12 +25,16 @@ macro_rules! clone {
     );
 }
 
-type GuiActionFn = Fn(CurrentPlaylist, Gui, Pipeline, &GStreamerAction) -> ();
+#[derive(Clone)]
+struct PlaylistTab {
+    lp: Rc<LoadedPlaylist>,
+    treeview: Rc<gtk::TreeView>,
+}
 
 #[derive(Clone)]
 pub struct PlaylistManager {
     notebook: gtk::Notebook,
-    treeview: gtk::TreeView,
+    playlist_tabs: Vec<PlaylistTab>,
     pipeline: Pipeline,
     current_playlist: CurrentPlaylist,
     builder: Gui,
@@ -38,57 +42,82 @@ pub struct PlaylistManager {
 }
 
 pub trait PlaylistManagerExt {
-    fn put_playlist_in_gui(&self, LoadedPlaylist);
+    fn put_playlist_in_gui(&mut self, LoadedPlaylist);
 }
 
 impl PlaylistManagerExt for PlaylistManager {
-    fn put_playlist_in_gui(&self, lp: LoadedPlaylist) {
+    fn put_playlist_in_gui(&mut self, lp: LoadedPlaylist) {
         println!("doing new");
 
-
-        let tv = gtk::TreeView::new();
         let label = gtk::Label::new(Some(lp.name.as_str()));
-        tv.show();
         label.show();
-        populate_treeview(&lp, &tv);
+        
+        //populate the thing
+        let tv = create_populated_treeview(&lp, &self);
+
         self.notebook.append_page(&tv, Some(&label));
         self.notebook.next_page();
         println!("{}", self.notebook.get_n_pages());
+        
+        let tab = PlaylistTab { lp: Rc::new(lp), treeview: Rc::new(tv)};
+        self.playlist_tabs.push(tab);
+        self.current_playlist.write() = lp;
     }
 }
 
-fn populate_treeview(lp: &LoadedPlaylist, tv: &gtk::TreeView) {
+fn create_populated_treeview(lp: &LoadedPlaylist, plm: &PlaylistManager) -> gtk::TreeView {
+    let treeview = gtk::TreeView::new();
+    for &(id, title, width) in &[
+        (0, "#", 50),
+        (1, "Title", 500),
+        (2, "Artist", 200),
+        (3, "Album", 200),
+        (4, "Length", 200),
+        (5, "Year", 200),
+        (6, "Genre", 200),
+    ] {
+        let column = gtk::TreeViewColumn::new();
+        let cell = gtk::CellRendererText::new();
+        column.pack_start(&cell, true);
+        // Association of the view's column with the model's `id` column.
+        column.add_attribute(&cell, "text", id);
+        column.set_title(title);
+        column.set_resizable(id > 0);
+        column.set_fixed_width(width);
+        treeview.append_column(&column);
+    }
 
+    treeview.set_model(Some(&populate_model_with_playlist(lp)));
+    connect_treeview(&treeview, plm);
+    treeview.show();
+    treeview
 }
 
-pub fn new(
-    notebook: gtk::Notebook,
-    treeview: gtk::TreeView,
-    pipeline: Pipeline,
-    current_playlist: CurrentPlaylist,
-    builder: Gui,
-    gui_action: Rc<GuiActionFn>,
-) -> PlaylistManager {
-    let plm = PlaylistManager {
-        notebook: notebook,
-        treeview: treeview,
-        pipeline: pipeline,
-        current_playlist: current_playlist,
-        builder: builder,
-        gui_action: gui_action,
-    };
-    setup(&plm);
-    plm
-}
+type GuiActionFn = Fn(CurrentPlaylist, Gui, Pipeline, &GStreamerAction) -> ();
 
-/// TODO clean this up
-fn setup(plm: &PlaylistManager) {
+fn connect_treeview(treeview: &gtk::TreeView, plm: &PlaylistManager) {
     let current_playlist = &plm.current_playlist;
-    let notebook = &plm.notebook;
-    let treeview = &plm.treeview;
-    let pipeline = &plm.pipeline;
     let builder = &plm.builder;
+    let gui_action = &plm.gui_action;
+    let pipeline = &plm.pipeline;
 
+    treeview.connect_button_press_event(
+        clone!(pipeline, current_playlist, builder, gui_action => move |tv, eventbutton| {
+        if eventbutton.get_event_type() == gdk::EventType::DoubleButtonPress {
+            let (vec, _) = tv.get_selection().get_selected_rows();
+            if vec.len() == 1 {
+                let pos = vec[0].get_indices()[0];
+                (gui_action)(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Play(pos));
+            }
+            gtk::Inhibit(true)
+        } else {
+            gtk::Inhibit(false)
+        }
+    }),
+    );
+}
+
+fn populate_model_with_playlist(lp: &LoadedPlaylist) -> gtk::ListStore  {
     let model = gtk::ListStore::new(&[
         String::static_type(),
         String::static_type(),
@@ -98,69 +127,46 @@ fn setup(plm: &PlaylistManager) {
         String::static_type(),
         String::static_type(),
     ]);
-    {
-        let p = current_playlist.read().unwrap();
-        let child = &notebook.get_children()[0];
-        notebook.set_tab_label_text(child, p.name.as_str());
-        for (i, entry) in p.items.iter().enumerate() {
-            model.insert_with_values(
-                None,
-                &[0, 1, 2, 3, 4, 5, 6],
-                &[
-                    &entry
-                        .tracknumber
-                        .map(|s| s.to_string())
-                        .unwrap_or_else(|| String::from("")),
-                    &entry.title,
-                    &entry.artist,
-                    &entry.album,
-                    &entry.length,
-                    &entry
-                        .year
-                        .map(|s| s.to_string())
-                        .unwrap_or_else(|| String::from("")),
-                    &entry.genre,
-                ],
-            );
-        }
-        for &(id, title, width) in &[
-            (0, "#", 50),
-            (1, "Title", 700),
-            (2, "Artist", 200),
-            (3, "Album", 200),
-            (4, "Length", 200),
-            (5, "Year", 200),
-            (6, "Genre", 200),
-        ] {
-            let column = gtk::TreeViewColumn::new();
-            let cell = gtk::CellRendererText::new();
-            column.pack_start(&cell, true);
-            // Association of the view's column with the model's `id` column.
-            column.add_attribute(&cell, "text", id);
-            column.set_title(title);
-            column.set_resizable(id > 0);
-            column.set_fixed_width(width);
-            treeview.append_column(&column);
-        }
 
-        let gui_action = &plm.gui_action;
-        treeview.connect_button_press_event(
-            clone!(pipeline, current_playlist, builder, gui_action => move |tv, eventbutton| {
-            if eventbutton.get_event_type() == gdk::EventType::DoubleButtonPress {
-                let (vec, _) = tv.get_selection().get_selected_rows();
-                if vec.len() == 1 {
-                    let pos = vec[0].get_indices()[0];
-                    (gui_action)(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Play(pos));
-                }
-                gtk::Inhibit(true)
-            } else {
-                gtk::Inhibit(false)
-            }
-        }),
-        );
-        /* treeview.get_selection().connect_changed(move |ts| {
-            println!("selecting");
-        }); */
-        treeview.set_model(Some(&model));
+    for (i, entry) in lp.items.iter().enumerate() {
+    model.insert_with_values(
+        None,
+        &[0, 1, 2, 3, 4, 5, 6],
+        &[
+            &entry
+                .tracknumber
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| String::from("")),
+            &entry.title,
+            &entry.artist,
+            &entry.album,
+            &entry.length,
+            &entry
+                .year
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| String::from("")),
+            &entry.genre,
+        ],
+    );
     }
+
+    model
+}
+
+pub fn new(
+    notebook: gtk::Notebook,
+    pipeline: Pipeline,
+    current_playlist: CurrentPlaylist,
+    builder: Gui,
+    gui_action: Rc<GuiActionFn>,
+) -> PlaylistManager {
+    let plm = PlaylistManager {
+        notebook: notebook,
+        pipeline: pipeline,
+        playlist_tabs: Vec::new(),
+        current_playlist: current_playlist,
+        builder: builder,
+        gui_action: gui_action,
+    };
+    plm
 }

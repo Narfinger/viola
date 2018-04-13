@@ -250,7 +250,6 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
     println!("Done building list");
 
     let window: gtk::ApplicationWindow = builder.read().unwrap().get_object("mainwindow").unwrap();
-    let treeview: gtk::TreeView = builder.read().unwrap().get_object("playlistView").unwrap();
 
     let pipeline = gstreamer_init(current_playlist.clone(), builder.clone()).unwrap();
 
@@ -299,7 +298,6 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
         .unwrap();
     let plm: playlistmanager::PlaylistManager = playlistmanager::new(
         notebook,
-        treeview,
         pipeline.clone(),
         current_playlist.clone(),
         builder.clone(),
