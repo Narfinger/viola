@@ -31,7 +31,7 @@ pub type CurrentPlaylist = Arc<RwLock<LoadedPlaylist>>;
 pub type Pipeline = Arc<RwLock<Element>>;
 pub type Gui = Arc<RwLock<Builder>>;
 pub type DBPool = Pool<ConnectionManager<SqliteConnection>>;
-pub type PlaylistManagerPtr = Rc<PlaylistManager>;
+pub type PlaylistManagerPtr = Arc<RwLock<PlaylistManager>>;
 
 pub enum PlayerStatus {
     Playing,

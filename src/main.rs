@@ -307,7 +307,7 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
     {
         //gtk::idle_add(clone!(pool => move || {
         let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
-        libraryviewstore::connect(pool.clone(), Rc::new(plm), &libview);
+        libraryviewstore::connect(pool.clone(), Arc::new(RwLock::new(plm)), &libview);
         //    Continue(false)
         //}));
     }

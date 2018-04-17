@@ -8,7 +8,7 @@ use playlist::LoadedPlaylist;
 use playlistmanager::PlaylistManagerExt;
 use types::*;
 
-fn signalhandler(pool: DBPool, plm: &mut PlaylistManagerPtr, tv: &gtk::TreeView, event: &gdk::Event) {
+fn signalhandler(pool: DBPool, plm: PlaylistManagerPtr, tv: &gtk::TreeView, event: &gdk::Event) {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     use schema::playlists::dsl::*;
     use schema::playlisttracks::dsl::*;
@@ -33,7 +33,7 @@ fn signalhandler(pool: DBPool, plm: &mut PlaylistManagerPtr, tv: &gtk::TreeView,
                     current_position: 0,
                 };
 
-                plm.put_playlist_in_gui(pl);
+                plm.write().unwrap().put_playlist_in_gui(pl);
                 /* println!("YEAH");
                 let mut menu = gtk::Menu::new();
                 let new_pl = gtk::MenuItem::new_with_label("New Playlist");
