@@ -38,7 +38,7 @@ pub struct PlaylistManager {
     playlist_tabs: Vec<PlaylistTab>,
     pipeline: Pipeline,
     current_playlist: CurrentPlaylist,
-    builder: Gui,
+//    builder: Gui,
     gui_action: Rc<GuiActionFn>,
 }
 
@@ -98,21 +98,20 @@ fn create_populated_treeview(lp: &LoadedPlaylist, plm: &PlaylistManager) -> gtk:
     treeview
 }
 
-type GuiActionFn = Fn(CurrentPlaylist, Gui, Pipeline, &GStreamerAction) -> ();
+type GuiActionFn = Fn(&GStreamerAction) -> ();
 
 fn connect_treeview(treeview: &gtk::TreeView, plm: &PlaylistManager) {
     let current_playlist = &plm.current_playlist;
-    let builder = &plm.builder;
     let gui_action = &plm.gui_action;
     let pipeline = &plm.pipeline;
 
     treeview.connect_button_press_event(
-        clone!(pipeline, current_playlist, builder, gui_action => move |tv, eventbutton| {
+        clone!(pipeline, current_playlist, gui_action => move |tv, eventbutton| {
         if eventbutton.get_event_type() == gdk::EventType::DoubleButtonPress {
             let (vec, _) = tv.get_selection().get_selected_rows();
             if vec.len() == 1 {
                 let pos = vec[0].get_indices()[0];
-                (gui_action)(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Play(pos));
+                (gui_action)(&GStreamerAction::Play(pos));
             }
             gtk::Inhibit(true)
         } else {
@@ -162,7 +161,6 @@ pub fn new(
     notebook: gtk::Notebook,
     pipeline: Pipeline,
     current_playlist: CurrentPlaylist,
-    builder: Gui,
     gui_action: Rc<GuiActionFn>,
 ) -> PlaylistManager {
     let plm = PlaylistManager {
@@ -170,7 +168,6 @@ pub fn new(
         pipeline: pipeline,
         playlist_tabs: Vec::new(),
         current_playlist: current_playlist,
-        builder: builder,
         gui_action: gui_action,
     };
     plm

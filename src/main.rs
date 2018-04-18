@@ -300,8 +300,9 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
         notebook,
         pipeline.clone(),
         current_playlist.clone(),
-        builder.clone(),
-        Rc::new(do_gui_gstreamer_action),
+        Rc::new(clone!(current_playlist, builder, pipeline => move |s| {
+            do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), s);
+        })),
     );
     // building libraryview
     {
