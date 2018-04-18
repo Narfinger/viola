@@ -29,6 +29,8 @@ use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::RwLock;
 
+use gui::{Gui, GuiExt};
+
 use types::*;
 
 macro_rules! clone {
@@ -50,9 +52,9 @@ macro_rules! clone {
 
 /// poll the message bus and on eos start new
 fn gstreamer_message_handler(
-    pipeline: Pipeline,
+    pipeline: GstreamerPipeline,
     current_playlist: CurrentPlaylist,
-    builder: GuiPtr,
+    gui: &Gui,
 ) -> gtk::Continue {
     let bus = { pipeline.read().unwrap().get_bus().unwrap() };
     if let Some(msg) = bus.pop() {
@@ -77,15 +79,10 @@ fn gstreamer_message_handler(
                 (*p).current_position += 1;
                 if (*p).current_position >= (*p).items.len() as i32 {
                     (*p).current_position = 0;
-                    update_gui(
-                        &pipeline,
-                        &current_playlist,
-                        &builder,
-                        &PlayerStatus::Stopped,
-                    );
+                    gui.update_gui(&PlayerStatus::Stopped);
                 } else {
                     println!("Next should play");
-                    let pl = pipeline.read().unwrap();
+                    let pl = pipeline.write().unwrap();
                     (*pl)
                         .set_state(gstreamer::State::Ready)
                         .into_result()
@@ -101,12 +98,7 @@ fn gstreamer_message_handler(
                         "Next one now playing is: {}",
                         &playlist::get_current_uri(&p)
                     );
-                    update_gui(
-                        &pipeline,
-                        &current_playlist,
-                        &builder,
-                        &PlayerStatus::Playing,
-                    )
+                    gui.update_gui(&PlayerStatus::Playing)
                 }
                 println!("Eos found");
             }
@@ -116,69 +108,29 @@ fn gstreamer_message_handler(
     gtk::Continue(true)
 }
 
-fn gstreamer_init(current_playlist: CurrentPlaylist, builder: GuiPtr) -> Result<Pipeline, String> {
+fn gstreamer_init(current_playlist: CurrentPlaylist) -> Result<GstreamerPipeline, String> {
     gstreamer::init().unwrap();
     let pipeline =
         gstreamer::parse_launch("playbin").map_err(|_| String::from("Cannot do gstreamer"))?;
     let p = Arc::new(RwLock::new(pipeline));
 
     let pc = p.clone();
+    /// TODO add timeout again
+    /*
     gtk::timeout_add(500, move || {
         let pc = p.clone();
         let cpc = current_playlist.clone();
-        let bc = builder.clone();
-        gstreamer_message_handler(pc, cpc, bc)
+        ///let bc = .clone();
+        gstreamer_message_handler(pc, cpc, gui)
     });
-
+    */
     Ok(pc)
-}
-
-/// General purpose function to update the GuiPtr on any change
-fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, guiptr: &GuiPtr, status: &PlayerStatus) {
-    println!("Updating GuiPtr");
-    let (_, state, _) = pipeline
-        .read()
-        .unwrap()
-        .get_state(gstreamer::ClockTime(Some(1000)));
-    let treeview: gtk::TreeView = guiptr.read().unwrap().get_object("playlistView").unwrap();
-    let treeselection = treeview.get_selection();
-    match *status {
-        PlayerStatus::Playing => {
-            //if state == gstreamer::State::Paused || state == gstreamer::State::Playing {
-            let index = playlist.read().unwrap().current_position;
-            let mut ipath = gtk::TreePath::new();
-            ipath.append_index(index as i32);
-            treeselection.select_path(&ipath);
-
-            //update track display
-            let track = &playlist.read().unwrap().items[index as usize];
-            let titlelabel: gtk::Label = guiptr.read().unwrap().get_object("titleLabel").unwrap();
-            let artistlabel: gtk::Label = guiptr.read().unwrap().get_object("artistLabel").unwrap();
-            let albumlabel: gtk::Label = guiptr.read().unwrap().get_object("albumLabel").unwrap();
-            let cover: gtk::Image = guiptr.read().unwrap().get_object("coverImage").unwrap();
-
-            titlelabel.set_markup(&track.title);
-            artistlabel.set_markup(&track.artist);
-            albumlabel.set_markup(&track.album);
-            if let Some(ref p) = track.albumpath {
-                if let Ok(ref pp) = gdk_pixbuf::Pixbuf::new_from_file_at_size(p,300,300) {
-                    cover.set_from_pixbuf(pp);
-                } else {
-                    println!("error creating pixbuf");
-                }
-                
-            } else {
-                cover.clear();
-            }
-        }
-        _ => {}
-    }
 }
 
 fn do_gui_gstreamer_action(
     current_playlist: CurrentPlaylist,
-    builder: GuiPtr,
-    pipeline: Pipeline,
+    gui: &Gui,
+    pipeline: GstreamerPipeline,
     action: &GStreamerAction,
 ) {
     let mut GuiPtr_update = PlayerStatus::Playing;
@@ -234,7 +186,7 @@ fn do_gui_gstreamer_action(
             .expect("Error in setting gstreamer state playing");
     } //locks releaed
 
-    update_gui(&pipeline, &current_playlist, &builder, &GuiPtr_update);
+    gui.update_gui(&GuiPtr_update);
 }
 
 fn build_gui(application: &gtk::Application, pool: DBPool) {
@@ -251,8 +203,8 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
     println!("Done building list");
 
     let window: gtk::ApplicationWindow = builder.read().unwrap().get_object("mainwindow").unwrap();
-
-    let pipeline = gstreamer_init(current_playlist.clone(), builder.clone()).unwrap();
+    let pipeline = gstreamer_init(current_playlist.clone()).unwrap();
+    let gui = gui::new(builder, playlist);
 
     {
         // Play Button

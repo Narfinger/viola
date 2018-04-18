@@ -28,7 +28,7 @@ macro_rules! clone {
 }
 
 pub type CurrentPlaylist = Arc<RwLock<LoadedPlaylist>>;
-pub type Pipeline = Arc<RwLock<Element>>;
+pub type GstreamerPipeline = Arc<RwLock<Element>>;
 pub type GuiPtr = Arc<RwLock<Builder>>;
 pub type DBPool = Pool<ConnectionManager<SqliteConnection>>;
 pub type PlaylistManagerPtr = Arc<RwLock<PlaylistManager>>;
