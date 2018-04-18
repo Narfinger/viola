@@ -134,13 +134,13 @@ fn gstreamer_init(current_playlist: CurrentPlaylist, builder: GuiPtr) -> Result<
 }
 
 /// General purpose function to update the GuiPtr on any change
-fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, GuiPtr: &GuiPtr, status: &PlayerStatus) {
+fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, guiptr: &GuiPtr, status: &PlayerStatus) {
     println!("Updating GuiPtr");
     let (_, state, _) = pipeline
         .read()
         .unwrap()
         .get_state(gstreamer::ClockTime(Some(1000)));
-    let treeview: gtk::TreeView = GuiPtr.read().unwrap().get_object("playlistView").unwrap();
+    let treeview: gtk::TreeView = guiptr.read().unwrap().get_object("playlistView").unwrap();
     let treeselection = treeview.get_selection();
     match *status {
         PlayerStatus::Playing => {
@@ -152,10 +152,10 @@ fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, GuiPtr: &GuiPtr, 
 
             //update track display
             let track = &playlist.read().unwrap().items[index as usize];
-            let titlelabel: gtk::Label = GuiPtr.read().unwrap().get_object("titleLabel").unwrap();
-            let artistlabel: gtk::Label = GuiPtr.read().unwrap().get_object("artistLabel").unwrap();
-            let albumlabel: gtk::Label = GuiPtr.read().unwrap().get_object("albumLabel").unwrap();
-            let cover: gtk::Image = GuiPtr.read().unwrap().get_object("coverImage").unwrap();
+            let titlelabel: gtk::Label = guiptr.read().unwrap().get_object("titleLabel").unwrap();
+            let artistlabel: gtk::Label = guiptr.read().unwrap().get_object("artistLabel").unwrap();
+            let albumlabel: gtk::Label = guiptr.read().unwrap().get_object("albumLabel").unwrap();
+            let cover: gtk::Image = guiptr.read().unwrap().get_object("coverImage").unwrap();
 
             titlelabel.set_markup(&track.title);
             artistlabel.set_markup(&track.artist);
