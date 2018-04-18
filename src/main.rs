@@ -77,7 +77,7 @@ fn gstreamer_message_handler(
                 (*p).current_position += 1;
                 if (*p).current_position >= (*p).items.len() as i32 {
                     (*p).current_position = 0;
-                    update_GuiPtr(
+                    update_gui(
                         &pipeline,
                         &current_playlist,
                         &builder,
@@ -101,7 +101,7 @@ fn gstreamer_message_handler(
                         "Next one now playing is: {}",
                         &playlist::get_current_uri(&p)
                     );
-                    update_GuiPtr(
+                    update_gui(
                         &pipeline,
                         &current_playlist,
                         &builder,
@@ -134,7 +134,7 @@ fn gstreamer_init(current_playlist: CurrentPlaylist, builder: GuiPtr) -> Result<
 }
 
 /// General purpose function to update the GuiPtr on any change
-fn update_GuiPtr(pipeline: &Pipeline, playlist: &CurrentPlaylist, GuiPtr: &GuiPtr, status: &PlayerStatus) {
+fn update_gui(pipeline: &Pipeline, playlist: &CurrentPlaylist, GuiPtr: &GuiPtr, status: &PlayerStatus) {
     println!("Updating GuiPtr");
     let (_, state, _) = pipeline
         .read()
@@ -175,7 +175,7 @@ fn update_GuiPtr(pipeline: &Pipeline, playlist: &CurrentPlaylist, GuiPtr: &GuiPt
     }
 }
 
-fn do_GuiPtr_gstreamer_action(
+fn do_gui_gstreamer_action(
     current_playlist: CurrentPlaylist,
     builder: GuiPtr,
     pipeline: Pipeline,
@@ -234,10 +234,10 @@ fn do_GuiPtr_gstreamer_action(
             .expect("Error in setting gstreamer state playing");
     } //locks releaed
 
-    update_GuiPtr(&pipeline, &current_playlist, &builder, &GuiPtr_update);
+    update_gui(&pipeline, &current_playlist, &builder, &GuiPtr_update);
 }
 
-fn build_GuiPtr(application: &gtk::Application, pool: DBPool) {
+fn build_gui(application: &gtk::Application, pool: DBPool) {
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
         return;
@@ -259,7 +259,7 @@ fn build_GuiPtr(application: &gtk::Application, pool: DBPool) {
         let button: gtk::Button = builder.read().unwrap().get_object("playButton").unwrap();
         button.connect_clicked(clone!(current_playlist,  builder, pipeline => move |_| {
             {
-                do_GuiPtr_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Playing);
+                do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Playing);
             }
         }));
     }
@@ -268,7 +268,7 @@ fn build_GuiPtr(application: &gtk::Application, pool: DBPool) {
         let button: gtk::Button = builder.read().unwrap().get_object("pauseButton").unwrap();
         button.connect_clicked(clone!(current_playlist, builder, pipeline  => move |_| {
             {
-                do_GuiPtr_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Pausing);
+                do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Pausing);
             }
         }));
     }
@@ -277,7 +277,7 @@ fn build_GuiPtr(application: &gtk::Application, pool: DBPool) {
         let button: gtk::Button = builder.read().unwrap().get_object("prevButton").unwrap();
         button.connect_clicked(clone!(current_playlist, builder, pipeline => move |_| {
             {
-                do_GuiPtr_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Previous);
+                do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Previous);
             }
         }));
     }
@@ -286,7 +286,7 @@ fn build_GuiPtr(application: &gtk::Application, pool: DBPool) {
         let button: gtk::Button = builder.read().unwrap().get_object("nextButton").unwrap();
         button.connect_clicked(clone!(current_playlist, builder, pipeline => move |_| {
             {
-                do_GuiPtr_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Next)
+                do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Next)
             }
         }));
     }
@@ -299,10 +299,9 @@ fn build_GuiPtr(application: &gtk::Application, pool: DBPool) {
         .unwrap();
     let plm: playlistmanager::PlaylistManager = playlistmanager::new(
         notebook,
-        pipeline.clone(),
         current_playlist.clone(),
         Rc::new(clone!(current_playlist, builder, pipeline => move |s| {
-            do_GuiPtr_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), s);
+            do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), s);
         })),
     );
     // building libraryview
@@ -348,7 +347,7 @@ fn main() {
             gtk::Application::new("com.github.narfinger.viola", gio::ApplicationFlags::empty())
                 .expect("Initialization failed...");
         application.connect_startup(move |app| {
-            build_GuiPtr(app, pool.clone());
+            build_gui(app, pool.clone());
         });
         application.connect_activate(|_| {});
         application.run(&vec![]);

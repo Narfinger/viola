@@ -36,7 +36,6 @@ struct PlaylistTab {
 pub struct PlaylistManager {
     notebook: gtk::Notebook,
     playlist_tabs: Vec<PlaylistTab>,
-    pipeline: Pipeline,
     current_playlist: CurrentPlaylist,
     gui_action: Rc<GuiActionFn>,
 }
@@ -155,13 +154,11 @@ fn populate_model_with_playlist(lp: &LoadedPlaylist) -> gtk::ListStore  {
 
 pub fn new(
     notebook: gtk::Notebook,
-    pipeline: Pipeline,
     current_playlist: CurrentPlaylist,
     gui_action: Rc<GuiActionFn>,
 ) -> PlaylistManager {
     let plm = PlaylistManager {
         notebook: notebook,
-        pipeline: pipeline,
         playlist_tabs: Vec::new(),
         current_playlist: current_playlist,
         gui_action: gui_action,
