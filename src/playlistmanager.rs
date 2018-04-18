@@ -38,7 +38,7 @@ pub struct PlaylistManager {
     playlist_tabs: Vec<PlaylistTab>,
     pipeline: Pipeline,
     current_playlist: CurrentPlaylist,
-    GuiPtr_action: Rc<GuiPtrActionFn>,
+    gui_action: Rc<GuiActionFn>,
 }
 
 pub trait PlaylistManagerExt {
@@ -97,10 +97,10 @@ fn create_populated_treeview(lp: &LoadedPlaylist, plm: &PlaylistManager) -> gtk:
     treeview
 }
 
-type GuiPtrActionFn = Fn(&GStreamerAction) -> ();
+type GuiActionFn = Fn(&GStreamerAction) -> ();
 
 fn connect_treeview(treeview: &gtk::TreeView, plm: &PlaylistManager) {
-    let guiptr_action = &plm.GuiPtr_action;
+    let guiptr_action = &plm.gui_action;
 
     treeview.connect_button_press_event(clone!(guiptr_action => move |tv, eventbutton| {
         if eventbutton.get_event_type() == gdk::EventType::DoubleButtonPress {
@@ -157,14 +157,14 @@ pub fn new(
     notebook: gtk::Notebook,
     pipeline: Pipeline,
     current_playlist: CurrentPlaylist,
-    GuiPtr_action: Rc<GuiPtrActionFn>,
+    gui_action: Rc<GuiActionFn>,
 ) -> PlaylistManager {
     let plm = PlaylistManager {
         notebook: notebook,
         pipeline: pipeline,
         playlist_tabs: Vec::new(),
         current_playlist: current_playlist,
-        GuiPtr_action: GuiPtr_action,
+        gui_action: gui_action,
     };
     plm
 }
