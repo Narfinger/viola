@@ -38,16 +38,16 @@ pub struct PlaylistManager {
     playlist_tabs: Vec<PlaylistTab>,
     pipeline: Pipeline,
     current_playlist: CurrentPlaylist,
-//    builder: Gui,
-    gui_action: Rc<GuiActionFn>,
+//    builder: GuiPtr,
+    GuiPtr_action: Rc<GuiPtrActionFn>,
 }
 
 pub trait PlaylistManagerExt {
-    fn put_playlist_in_gui(&mut self, LoadedPlaylist);
+    fn put_playlist_in_GuiPtr(&mut self, LoadedPlaylist);
 }
 
 impl PlaylistManagerExt for PlaylistManager {
-    fn put_playlist_in_gui(&mut self, lp: LoadedPlaylist) {
+    fn put_playlist_in_GuiPtr(&mut self, lp: LoadedPlaylist) {
         println!("doing new");
 
         let label = gtk::Label::new(Some(lp.name.as_str()));
@@ -98,20 +98,20 @@ fn create_populated_treeview(lp: &LoadedPlaylist, plm: &PlaylistManager) -> gtk:
     treeview
 }
 
-type GuiActionFn = Fn(&GStreamerAction) -> ();
+type GuiPtrActionFn = Fn(&GStreamerAction) -> ();
 
 fn connect_treeview(treeview: &gtk::TreeView, plm: &PlaylistManager) {
     let current_playlist = &plm.current_playlist;
-    let gui_action = &plm.gui_action;
+    let GuiPtr_action = &plm.GuiPtr_action;
     let pipeline = &plm.pipeline;
 
     treeview.connect_button_press_event(
-        clone!(pipeline, current_playlist, gui_action => move |tv, eventbutton| {
+        clone!(pipeline, current_playlist, GuiPtr_action => move |tv, eventbutton| {
         if eventbutton.get_event_type() == gdk::EventType::DoubleButtonPress {
             let (vec, _) = tv.get_selection().get_selected_rows();
             if vec.len() == 1 {
                 let pos = vec[0].get_indices()[0];
-                (gui_action)(&GStreamerAction::Play(pos));
+                (GuiPtr_action)(&GStreamerAction::Play(pos));
             }
             gtk::Inhibit(true)
         } else {
@@ -161,14 +161,14 @@ pub fn new(
     notebook: gtk::Notebook,
     pipeline: Pipeline,
     current_playlist: CurrentPlaylist,
-    gui_action: Rc<GuiActionFn>,
+    GuiPtr_action: Rc<GuiPtrActionFn>,
 ) -> PlaylistManager {
     let plm = PlaylistManager {
         notebook: notebook,
         pipeline: pipeline,
         playlist_tabs: Vec::new(),
         current_playlist: current_playlist,
-        gui_action: gui_action,
+        GuiPtr_action: GuiPtr_action,
     };
     plm
 }

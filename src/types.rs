@@ -29,7 +29,7 @@ macro_rules! clone {
 
 pub type CurrentPlaylist = Arc<RwLock<LoadedPlaylist>>;
 pub type Pipeline = Arc<RwLock<Element>>;
-pub type Gui = Arc<RwLock<Builder>>;
+pub type GuiPtr = Arc<RwLock<Builder>>;
 pub type DBPool = Pool<ConnectionManager<SqliteConnection>>;
 pub type PlaylistManagerPtr = Arc<RwLock<PlaylistManager>>;
 
@@ -39,7 +39,7 @@ pub enum PlayerStatus {
     Stopped,
 }
 
-/// Tells the gui and the gstreamer what action is performed. Splits the gui and the backend a tiny bit
+/// Tells the GuiPtr and the gstreamer what action is performed. Splits the GuiPtr and the backend a tiny bit
 #[derive(Debug, Eq, PartialEq)]
 pub enum GStreamerAction {
     Next,
