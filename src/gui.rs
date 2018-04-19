@@ -79,7 +79,7 @@ impl GuiExt for Gui {
                 treeselection.select_path(&ipath);
 
                 //update track display
-                let track = self.current_playlist.items[index as usize];
+                let track = &self.current_playlist.items[index as usize];
 
                 self.title_label.set_markup(&track.title);
                 self.artist_label.set_markup(&track.artist);
@@ -132,7 +132,7 @@ fn create_populated_treeview(gui: &Gui, lp: &LoadedPlaylist) -> gtk::TreeView {
             let (vec, _) = tv.get_selection().get_selected_rows();
             if vec.len() == 1 {
                 let pos = vec[0].get_indices()[0];
-                gui.update_gui(&GStreamerAction::Play(pos));
+                //gui.update_gui(&GStreamerAction::Play(pos));
             }
             gtk::Inhibit(true)
         } else {

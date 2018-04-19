@@ -129,7 +129,7 @@ fn gstreamer_init(current_playlist: CurrentPlaylist) -> Result<GstreamerPipeline
 
 fn do_gui_gstreamer_action(
     current_playlist: CurrentPlaylist,
-    gui: &Gui,
+    gui: Rc<Gui>,
     pipeline: GstreamerPipeline,
     action: &GStreamerAction,
 ) {
@@ -199,46 +199,46 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
 
     println!("Building list");
     let playlist = playlist::playlist_from_directory("/mnt/ssd-media/Musik/", &pool);
-    let current_playlist = Arc::new(RwLock::new(playlist));
+    let current_playlist = Arc::new(RwLock::new(playlist.clone()));
     println!("Done building list");
 
     let window: gtk::ApplicationWindow = builder.read().unwrap().get_object("mainwindow").unwrap();
     let pipeline = gstreamer_init(current_playlist.clone()).unwrap();
-    let gui = gui::new(builder, playlist);
+    let gui = Rc::new(gui::new(builder.clone(), playlist));
 
     {
         // Play Button
         let button: gtk::Button = builder.read().unwrap().get_object("playButton").unwrap();
-        button.connect_clicked(clone!(current_playlist,  builder, pipeline => move |_| {
+        button.connect_clicked(clone!(current_playlist, gui, pipeline => move |_| {
             {
-                do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Playing);
+                do_gui_gstreamer_action(current_playlist.clone(), gui.clone(), pipeline.clone(), &GStreamerAction::Playing);
             }
         }));
     }
     {
         // Pause Button
         let button: gtk::Button = builder.read().unwrap().get_object("pauseButton").unwrap();
-        button.connect_clicked(clone!(current_playlist, builder, pipeline  => move |_| {
+        button.connect_clicked(clone!(current_playlist, gui, pipeline  => move |_| {
             {
-                do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Pausing);
+                do_gui_gstreamer_action(current_playlist.clone(), gui.clone(), pipeline.clone(), &GStreamerAction::Pausing);
             }
         }));
     }
     {
         // Previous button
         let button: gtk::Button = builder.read().unwrap().get_object("prevButton").unwrap();
-        button.connect_clicked(clone!(current_playlist, builder, pipeline => move |_| {
+        button.connect_clicked(clone!(current_playlist, gui, pipeline => move |_| {
             {
-                do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Previous);
+                do_gui_gstreamer_action(current_playlist.clone(), gui.clone(), pipeline.clone(), &GStreamerAction::Previous);
             }
         }));
     }
     {
         // Next button
         let button: gtk::Button = builder.read().unwrap().get_object("nextButton").unwrap();
-        button.connect_clicked(clone!(current_playlist, builder, pipeline => move |_| {
+        button.connect_clicked(clone!(current_playlist, gui, pipeline => move |_| {
             {
-                do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), &GStreamerAction::Next)
+                do_gui_gstreamer_action(current_playlist.clone(), gui.clone(), pipeline.clone(), &GStreamerAction::Next)
             }
         }));
     }
@@ -252,8 +252,8 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
     let plm: playlistmanager::PlaylistManager = playlistmanager::new(
         notebook,
         current_playlist.clone(),
-        Rc::new(clone!(current_playlist, builder, pipeline => move |s| {
-            do_gui_gstreamer_action(current_playlist.clone(), builder.clone(), pipeline.clone(), s);
+        Rc::new(clone!(current_playlist, gui, pipeline => move |s| {
+            do_gui_gstreamer_action(current_playlist.clone(), gui.clone(), pipeline.clone(), s);
         })),
     );
     // building libraryview

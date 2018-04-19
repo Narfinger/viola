@@ -38,6 +38,7 @@ struct NewPlaylistTrack {
     playlist_order: i32,
 }
 
+#[derive(Clone)]
 pub struct LoadedPlaylist {
     pub id: Option<i32>,
     pub name: String,
