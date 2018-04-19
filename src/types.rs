@@ -8,7 +8,6 @@ use std::rc::Rc;
 use std::sync::RwLock;
 
 use playlist::LoadedPlaylist;
-use playlistmanager::PlaylistManager;
 
 macro_rules! clone {
     (@param _) => ( _ );
@@ -31,21 +30,9 @@ pub type CurrentPlaylist = Arc<RwLock<LoadedPlaylist>>;
 pub type GstreamerPipeline = Arc<RwLock<Element>>;
 pub type GuiPtr = Arc<RwLock<Builder>>;
 pub type DBPool = Pool<ConnectionManager<SqliteConnection>>;
-pub type PlaylistManagerPtr = Arc<RwLock<PlaylistManager>>;
 
 pub enum PlayerStatus {
     Playing,
     Paused,
     Stopped,
-}
-
-/// Tells the GuiPtr and the gstreamer what action is performed. Splits the GuiPtr and the backend a tiny bit
-#[derive(Debug, Eq, PartialEq)]
-pub enum GStreamerAction {
-    Next,
-    Playing,
-    Pausing,
-    Previous,
-    /// This means we selected one specific track
-    Play(i32),
 }

@@ -4,6 +4,9 @@ use gdk;
 use gdk_pixbuf;
 use gtk;
 use gtk::prelude::*;
+
+use gstreamer_wrapper;
+use gstreamer_wrapper::{GStreamer, GStreamerExt, GStreamerAction, GStreamerMessage};
 use playlist::LoadedPlaylist;
 use types::*;
 
@@ -39,10 +42,13 @@ pub struct Gui {
     cover: gtk::Image,
     current_playlist: LoadedPlaylist,
     playlist_tabs: Vec<PlaylistTab>,
+    gstreamer: GStreamer,
 }
 
 pub fn new(builder: GuiPtr, current_playlist: LoadedPlaylist) -> Gui {
-    Gui {
+    let (gst, recv) = gstreamer_wrapper::new(&current_playlist).unwrap();
+
+    let g = Gui {
     notebook: builder.read().unwrap().get_object("playlistNotebook").unwrap(),
     title_label: builder.read().unwrap().get_object("titleLabel").unwrap(),
     artist_label: builder.read().unwrap().get_object("artistLabel").unwrap(),
@@ -50,7 +56,20 @@ pub fn new(builder: GuiPtr, current_playlist: LoadedPlaylist) -> Gui {
     cover: builder.read().unwrap().get_object("coverImage").unwrap(),
     current_playlist: current_playlist,
     playlist_tabs: Vec::new(),
-    }
+    gstreamer: gst,
+    };
+
+    gtk::timeout_add(500, || {
+        if let Ok(t) = recv.try_recv() {
+            match t {
+                GStreamerMessage::Stopped => g.update_gui(&PlayerStatus::Stopped),
+                GStreamerMessage::Playing => g.update_gui(&PlayerStatus::Playing),
+            }
+        }
+        gtk::Continue(true)
+    });
+
+    g
 }
 
 
@@ -132,7 +151,7 @@ fn create_populated_treeview(gui: &Gui, lp: &LoadedPlaylist) -> gtk::TreeView {
             let (vec, _) = tv.get_selection().get_selected_rows();
             if vec.len() == 1 {
                 let pos = vec[0].get_indices()[0];
-                //gui.update_gui(&GStreamerAction::Play(pos));
+                gui.gstreamer.do_gstreamer_action(&GStreamerAction::Play(pos));
             }
             gtk::Inhibit(true)
         } else {

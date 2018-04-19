@@ -5,10 +5,10 @@ use gtk::prelude::*;
 use std::string::String;
 use std::ops::Deref;
 use playlist::LoadedPlaylist;
-use playlistmanager::PlaylistManagerExt;
+
 use types::*;
 
-fn signalhandler(pool: DBPool, plm: PlaylistManagerPtr, tv: &gtk::TreeView, event: &gdk::Event) {
+/* fn signalhandler(pool: DBPool, plm: PlaylistManagerPtr, tv: &gtk::TreeView, event: &gdk::Event) {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     use schema::playlists::dsl::*;
     use schema::playlisttracks::dsl::*;
@@ -81,3 +81,4 @@ pub fn connect(pool: DBPool, plm: PlaylistManagerPtr, tv: &gtk::TreeView) {
 
     tv.connect_event_after(move |s,e| { signalhandler(pool.clone(), plm.clone(), s, e) });
 }
+ */
