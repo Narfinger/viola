@@ -40,30 +40,32 @@ pub struct Gui {
     artist_label: gtk::Label,
     album_label: gtk::Label,
     cover: gtk::Image,
-    current_playlist: LoadedPlaylist,
+    current_playlist: CurrentPlaylist,
     playlist_tabs: Vec<PlaylistTab>,
-    gstreamer: GStreamer,
+    gstreamer: Rc<GStreamer>,
 }
 
-pub fn new(builder: GuiPtr, current_playlist: LoadedPlaylist) -> Gui {
-    let (gst, recv) = gstreamer_wrapper::new(&current_playlist).unwrap();
+pub fn new(builder: GuiPtr, current_playlist: LoadedPlaylist) -> Rc<Gui> {
+    let cp = Arc::new(RwLock::new(current_playlist));
+    let (gst, recv) = gstreamer_wrapper::new(cp.clone()).unwrap();
 
-    let g = Gui {
+    let g = Rc::new(Gui {
     notebook: builder.read().unwrap().get_object("playlistNotebook").unwrap(),
     title_label: builder.read().unwrap().get_object("titleLabel").unwrap(),
     artist_label: builder.read().unwrap().get_object("artistLabel").unwrap(),
     album_label: builder.read().unwrap().get_object("albumLabel").unwrap(),
     cover: builder.read().unwrap().get_object("coverImage").unwrap(),
-    current_playlist: current_playlist,
+    current_playlist: cp,
     playlist_tabs: Vec::new(),
     gstreamer: gst,
-    };
+    });
 
-    gtk::timeout_add(500, || {
+    let gc = g.clone();
+    gtk::timeout_add(500, move || {
         if let Ok(t) = recv.try_recv() {
             match t {
-                GStreamerMessage::Stopped => g.update_gui(&PlayerStatus::Stopped),
-                GStreamerMessage::Playing => g.update_gui(&PlayerStatus::Playing),
+                GStreamerMessage::Stopped => gc.update_gui(&PlayerStatus::Stopped),
+                GStreamerMessage::Playing => gc.update_gui(&PlayerStatus::Playing),
             }
         }
         gtk::Continue(true)
@@ -92,13 +94,13 @@ impl GuiExt for Gui {
         match *status {
             PlayerStatus::Playing => {
                 //if state == gstreamer::State::Paused || state == gstreamer::State::Playing {
-                let index = self.current_playlist.current_position;
+                let index = self.current_playlist.read().unwrap().current_position;
                 let mut ipath = gtk::TreePath::new();
                 ipath.append_index(index as i32);
                 treeselection.select_path(&ipath);
 
                 //update track display
-                let track = &self.current_playlist.items[index as usize];
+                let track = &self.current_playlist.read().unwrap().items[index as usize];
 
                 self.title_label.set_markup(&track.title);
                 self.artist_label.set_markup(&track.artist);
@@ -146,7 +148,7 @@ fn create_populated_treeview(gui: &Gui, lp: &LoadedPlaylist) -> gtk::TreeView {
     }
 
     treeview.set_model(Some(&populate_model_with_playlist(lp)));
-    treeview.connect_button_press_event(|tv, eventbutton| {
+    /*treeview.connect_button_press_event(|tv, eventbutton| {
         if eventbutton.get_event_type() == gdk::EventType::DoubleButtonPress {
             let (vec, _) = tv.get_selection().get_selected_rows();
             if vec.len() == 1 {
@@ -157,8 +159,8 @@ fn create_populated_treeview(gui: &Gui, lp: &LoadedPlaylist) -> gtk::TreeView {
         } else {
             gtk::Inhibit(false)
         }
-    }
-    );
+    }*
+    );*/
     treeview.show();
     treeview
 }

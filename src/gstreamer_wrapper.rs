@@ -3,6 +3,7 @@ use gstreamer::ElementExt;
 use gtk;
 use gtk::ObjectExt;
 use std::sync::mpsc::{Receiver, Sender, channel};
+use std::rc::Rc;
 
 use gui::Gui;
 use playlist;
@@ -18,16 +19,17 @@ pub enum GStreamerMessage {
     Playing,
 }
 
-pub fn new(current_playlist: &LoadedPlaylist) -> Result<(GStreamer, Receiver<GStreamerMessage>), String> {
+pub fn new(current_playlist: CurrentPlaylist) -> Result<(Rc<GStreamer>, Receiver<GStreamerMessage>), String> {
     gstreamer::init().unwrap();
     let pipeline =
         gstreamer::parse_launch("playbin").map_err(|_| String::from("Cannot do gstreamer"))?;
 
     let (tx, rx) = channel::<GStreamerMessage>();
-    let res = GStreamer { pipeline: pipeline };
+    let res = Rc::new(GStreamer { pipeline: pipeline });
 
-    gtk::timeout_add(500, || {
-        res.gstreamer_message_handler(current_playlist, tx)
+    let resc = res.clone();
+    gtk::timeout_add(500, move || {
+        resc.gstreamer_message_handler(current_playlist.clone(), tx.clone())
     });
     Ok((res, rx))
 }
