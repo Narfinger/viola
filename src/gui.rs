@@ -50,7 +50,7 @@ pub struct Gui {
 }
 
 /// Constructs a new gui, given a BuilderPtr and a loaded playlist.
-pub fn new(builder: BuilderPtr, loaded_playlist: LoadedPlaylist) -> Rc<Gui> {
+pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> Rc<Gui> {
     let cp = Arc::new(RwLock::new(
         LoadedPlaylist { 
             id: None, 
@@ -59,7 +59,7 @@ pub fn new(builder: BuilderPtr, loaded_playlist: LoadedPlaylist) -> Rc<Gui> {
             current_position: 0}));
     let (gst, recv) = gstreamer_wrapper::new(cp.clone()).unwrap();
 
-    let g = Rc::new(Gui {
+    let mut g = Rc::new(Gui {
     notebook: builder.read().unwrap().get_object("playlistNotebook").unwrap(),
     title_label: builder.read().unwrap().get_object("titleLabel").unwrap(),
     artist_label: builder.read().unwrap().get_object("artistLabel").unwrap(),
@@ -71,8 +71,10 @@ pub fn new(builder: BuilderPtr, loaded_playlist: LoadedPlaylist) -> Rc<Gui> {
     });
 
     let gc = g.clone();
-    gtk::timeout_add(500, move || {
+    gtk::timeout_add(250, move || {
+        println!("trying to get channel");
         if let Ok(t) = recv.try_recv() {
+            println!("updating gui");
             match t {
                 GStreamerMessage::Stopped => gc.update_gui(&PlayerStatus::Stopped),
                 GStreamerMessage::Playing => gc.update_gui(&PlayerStatus::Playing),
@@ -96,6 +98,7 @@ pub trait GuiExt {
 impl GuiExt for Gui {
     fn get_active_treeview(&self) -> &gtk::TreeView {
         let cur_page = self.notebook.get_current_page().unwrap();
+        println!("The page: {:?}", cur_page);
         &self.playlist_tabs[cur_page as usize].treeview
     }
 
@@ -127,6 +130,14 @@ impl GuiExt for Gui {
                 } else {
                     self.cover.clear();
                 }
+
+                //highlight row
+                let model: gtk::ListStore = treeview.get_model().unwrap().downcast::<gtk::ListStore>().unwrap();
+                let (_, selection) = treeselection.get_selected().unwrap();
+                println!("doing color");
+                let color = gdk::RGBA { red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0};
+                let c = gdk_pixbuf::Value::from(&color);
+                model.set_value(&selection, 7, &c);
             }
             _ => {}
         }
@@ -142,19 +153,23 @@ impl GuiExt for Gui {
 /// will generally setup a gtk callback. As gtk callbacks have a static lifetime, we need the lifetime guarantees
 /// of GuiPtr instead of just a reference.
 pub trait GuiPtrExt {
-    fn add_page(&self, lp: LoadedPlaylist);
+    fn add_page(&mut self, lp: LoadedPlaylist);
 }
 
 impl GuiPtrExt for GuiPtr {
-    fn add_page(&self, lp: LoadedPlaylist) {
-        let tv = create_populated_treeview(self, &lp);
+    fn add_page(&mut self, lp: LoadedPlaylist) {
+        let tv = create_populated_treeview(&self, &lp);
         let scw = gtk::ScrolledWindow::new(None, None);
         scw.add(&tv);
         let label = gtk::Label::new(Some(lp.name.as_str()));
         self.notebook.append_page(&scw, Some(&label));
-        println!("trying the lock");
-        let mut cp = self.current_playlist.write().unwrap();
-        *cp = lp;
+        {
+            let mut cp = self.current_playlist.write().unwrap();
+            *cp = lp;
+        }
+        let tab = PlaylistTab { lp: self.current_playlist.clone(), treeview: tv };
+        let mut vec = &self.playlist_tabs;
+        vec.push(tab);
     }
 }
 
@@ -174,6 +189,7 @@ fn create_populated_treeview(gui: &GuiPtr, lp: &LoadedPlaylist) -> gtk::TreeView
         column.pack_start(&cell, true);
         // Association of the view's column with the model's `id` column.
         column.add_attribute(&cell, "text", id);
+        column.add_attribute(&cell, "background-rgba", 7);
         column.set_title(title);
         column.set_resizable(id > 0);
         column.set_fixed_width(width);
@@ -188,6 +204,7 @@ fn create_populated_treeview(gui: &GuiPtr, lp: &LoadedPlaylist) -> gtk::TreeView
             if vec.len() == 1 {
                 let pos = vec[0].get_indices()[0];
                 guic.gstreamer.do_gstreamer_action(&GStreamerAction::Play(pos));
+                guic.update_gui(&PlayerStatus::Playing);
             }
             gtk::Inhibit(true)
         } else {
@@ -208,12 +225,13 @@ fn populate_model_with_playlist(lp: &LoadedPlaylist) -> gtk::ListStore  {
         String::static_type(),
         String::static_type(),
         String::static_type(),
+        gdk::RGBA::static_type(),
     ]);
 
     for (i, entry) in lp.items.iter().enumerate() {
     model.insert_with_values(
         None,
-        &[0, 1, 2, 3, 4, 5, 6],
+        &[0, 1, 2, 3, 4, 5, 6, 7],
         &[
             &entry
                 .tracknumber
@@ -228,6 +246,7 @@ fn populate_model_with_playlist(lp: &LoadedPlaylist) -> gtk::ListStore  {
                 .map(|s| s.to_string())
                 .unwrap_or_else(|| String::from("")),
             &entry.genre,
+            &gdk::RGBA { red: 1.0, green: 1.0, blue: 1.0, alpha: 0.0},
         ],
     );
     }

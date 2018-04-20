@@ -66,8 +66,8 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
 
     let window: gtk::ApplicationWindow = builder.read().unwrap().get_object("mainwindow").unwrap();
     //let pipeline = gstreamer_init(current_playlist.clone()).unwrap();
-    let gui = gui::new(builder.clone(), playlist);
-/*  
+    let gui = gui::new(&builder, playlist);
+  
     {
         // Play Button
         let button: gtk::Button = builder.read().unwrap().get_object("playButton").unwrap();
@@ -126,7 +126,7 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
         //}));
     }
  */
-*/
+
     window.maximize();
     window.set_application(application);
     window.set_title("Viola");

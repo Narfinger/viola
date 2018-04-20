@@ -21,6 +21,8 @@ impl Drop for GStreamer {
     }
 }
 
+
+
 pub enum GStreamerMessage {
     Stopped,
     Playing,
@@ -137,7 +139,7 @@ impl GStreamerExt for GStreamer {
                     (*p).current_position += 1;
                     if (*p).current_position >= (*p).items.len() as i32 {
                         (*p).current_position = 0;
-                        sender.send(GStreamerMessage::Playing);
+                        sender.send(GStreamerMessage::Playing).expect("Message Queue Error");
 
                     } else {
                         println!("Next should play");
@@ -157,7 +159,7 @@ impl GStreamerExt for GStreamer {
                             &playlist::get_current_uri(&p)
                         );
                         
-                        sender.send(GStreamerMessage::Stopped);
+                        sender.send(GStreamerMessage::Stopped).expect("Message Queue Error");
                     }
                     println!("Eos found");
                 }
