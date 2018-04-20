@@ -7,6 +7,7 @@ use std::sync::Arc;
 use std::rc::Rc;
 use std::sync::RwLock;
 
+use gui::Gui;
 use playlist::LoadedPlaylist;
 
 macro_rules! clone {
@@ -26,9 +27,10 @@ macro_rules! clone {
     );
 }
 
+pub type BuilderPtr = Arc<RwLock<Builder>>;
 pub type CurrentPlaylist = Arc<RwLock<LoadedPlaylist>>;
 pub type GstreamerPipeline = Arc<RwLock<Element>>;
-pub type GuiPtr = Arc<RwLock<Builder>>;
+pub type GuiPtr = Rc<Gui>;
 pub type DBPool = Pool<ConnectionManager<SqliteConnection>>;
 
 pub enum PlayerStatus {

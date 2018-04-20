@@ -1,3 +1,6 @@
+//! The main gui parts.
+
+
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 use gdk;
@@ -33,7 +36,8 @@ struct PlaylistTab {
     treeview: gtk::TreeView,
 }
 
-/// TODO try to get all this as references and not as Rc with explicit lifetimes
+/// Gui is the main struct for calling things on the gui or in the gstreamer. It will take care that
+/// everything is the correct state. You should probably interface it with a GuiPtr.
 pub struct Gui {
     notebook: gtk::Notebook,
     title_label: gtk::Label,
@@ -45,8 +49,14 @@ pub struct Gui {
     gstreamer: Rc<GStreamer>,
 }
 
-pub fn new(builder: GuiPtr, current_playlist: LoadedPlaylist) -> Rc<Gui> {
-    let cp = Arc::new(RwLock::new(current_playlist.clone()));
+/// Constructs a new gui, given a BuilderPtr and a loaded playlist.
+pub fn new(builder: BuilderPtr, loaded_playlist: LoadedPlaylist) -> Rc<Gui> {
+    let cp = Arc::new(RwLock::new(
+        LoadedPlaylist { 
+            id: None, 
+            name: String::from("DUMMY"), 
+            items: vec![], 
+            current_position: 0}));
     let (gst, recv) = gstreamer_wrapper::new(cp.clone()).unwrap();
 
     let g = Rc::new(Gui {
@@ -71,16 +81,16 @@ pub fn new(builder: GuiPtr, current_playlist: LoadedPlaylist) -> Rc<Gui> {
         gtk::Continue(true)
     });
 
-    g.add_page(&current_playlist);
+    g.add_page(loaded_playlist);
     g
 }
 
-
+/// This is a trait for all gui related functions that do not need a GuiPtr, only a reference to the gui.
+/// The main indication is: This are all functions that do not need to have gtk callbacks.
 pub trait GuiExt {
     fn get_active_treeview(&self) -> &gtk::TreeView;
     fn update_gui(&self, &PlayerStatus); //does not need pipeline
     fn set_playback(&self, &GStreamerAction);
-    fn add_page(&self, &LoadedPlaylist);
 }
 
 impl GuiExt for Gui {
@@ -126,13 +136,29 @@ impl GuiExt for Gui {
         self.gstreamer.do_gstreamer_action(status);
     }
 
-    fn add_page(&self, lp: &LoadedPlaylist) {
-        let tv = create_populated_treeview(self, lp);
-        panic!("Implement this");
+}
+
+/// Trait for all functions that need a GuiPtr instead of just a gui. This is different to GuiExt, as these
+/// will generally setup a gtk callback. As gtk callbacks have a static lifetime, we need the lifetime guarantees
+/// of GuiPtr instead of just a reference.
+pub trait GuiPtrExt {
+    fn add_page(&self, lp: LoadedPlaylist);
+}
+
+impl GuiPtrExt for GuiPtr {
+    fn add_page(&self, lp: LoadedPlaylist) {
+        let tv = create_populated_treeview(self, &lp);
+        let mut scw = gtk::ScrolledWindow::new(None, None);
+        scw.add(&tv);
+        let label = gtk::Label::new(Some(lp.name.as_str()));
+        self.notebook.append_page(&scw, Some(&label));
+        println!("trying the lock");
+        let mut cp = self.current_playlist.write().unwrap();
+        *cp = lp;
     }
 }
 
-fn create_populated_treeview(gui: &Gui, lp: &LoadedPlaylist) -> gtk::TreeView {
+fn create_populated_treeview(gui: &GuiPtr, lp: &LoadedPlaylist) -> gtk::TreeView {
     let treeview = gtk::TreeView::new();
     for &(id, title, width) in &[
         (0, "#", 50),
@@ -153,27 +179,24 @@ fn create_populated_treeview(gui: &Gui, lp: &LoadedPlaylist) -> gtk::TreeView {
         column.set_fixed_width(width);
         treeview.append_column(&column);
     }
-
     treeview.set_model(Some(&populate_model_with_playlist(lp)));
-    panic!("Do the connection");
-    /*treeview.connect_button_press_event(|tv, eventbutton| {
+    //panic!("Do the connection");
+    let guic = gui.clone();
+    treeview.connect_button_press_event(move |tv, eventbutton| {
         if eventbutton.get_event_type() == gdk::EventType::DoubleButtonPress {
             let (vec, _) = tv.get_selection().get_selected_rows();
             if vec.len() == 1 {
                 let pos = vec[0].get_indices()[0];
-                gui.gstreamer.do_gstreamer_action(&GStreamerAction::Play(pos));
+                guic.gstreamer.do_gstreamer_action(&GStreamerAction::Play(pos));
             }
             gtk::Inhibit(true)
         } else {
             gtk::Inhibit(false)
         }
-    }*
-    );*/
+    }
+    );
     treeview.show();
     treeview
-}
-
-fn connect_treeview(treeview: &gtk::TreeView) {
 }
 
 fn populate_model_with_playlist(lp: &LoadedPlaylist) -> gtk::ListStore  {
