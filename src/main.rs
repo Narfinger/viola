@@ -131,9 +131,7 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
     window.maximize();
     window.set_application(application);
     window.set_title("Viola");
-    window.connect_delete_event(clone!(/*pipeline,*/ window => move |_, _| {
-//        let p = pipeline.read().unwrap();
-  //      (*p).set_state(gstreamer::State::Null).into_result().expect("Error in setting gstreamer state: Null");
+    window.connect_delete_event(clone!(window => move |_, _| {
         window.destroy();
         Inhibit(false)
     }));

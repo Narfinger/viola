@@ -14,6 +14,12 @@ pub struct GStreamer {
     pipeline: gstreamer::Element,
 }
 
+impl Drop for GStreamer {
+    fn drop(&mut self) {
+        self.pipeline.set_state(gstreamer::State::Null).into_result().expect("Error in setting gstreamer state: Null");
+    }
+}
+
 pub enum GStreamerMessage {
     Stopped,
     Playing,
