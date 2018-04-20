@@ -56,7 +56,7 @@ fn only_tracks<'a>(&(ref i, ref t): &'a (i32, &Track)) -> &'a Track {
 
 fn create_loaded_from_playlist(
     pl: &Playlist,
-    r: &Vec<(Track, PlaylistTrack)>,
+    r: &[(Track, PlaylistTrack)],
 ) -> Result<LoadedPlaylist, diesel::result::Error> {
     let mut unsorted = r.iter().map(get_ordering).collect::<Vec<(i32, &Track)>>();
     unsorted.sort_unstable_by(|&(i, _), &(j, _)| i.cmp(&j));
@@ -64,7 +64,7 @@ fn create_loaded_from_playlist(
     let sorted = unsorted
         .iter()
         .map(only_tracks)
-        .map(|t| t.clone())
+        .cloned()
         .collect();
     Ok(LoadedPlaylist {
         id: Some(pl.id),

@@ -32,7 +32,7 @@ pub fn new(current_playlist: CurrentPlaylist) -> Result<(Rc<GStreamer>, Receiver
         gstreamer::parse_launch("playbin").map_err(|_| String::from("Cannot do gstreamer"))?;
 
     let (tx, rx) = channel::<GStreamerMessage>();
-    let res = Rc::new(GStreamer { pipeline: pipeline, current_playlist: current_playlist.clone() });
+    let res = Rc::new(GStreamer { pipeline: pipeline, current_playlist: current_playlist });
 
     let resc = res.clone();
     gtk::timeout_add(500, move || {

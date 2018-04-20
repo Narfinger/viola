@@ -148,7 +148,7 @@ pub trait GuiPtrExt {
 impl GuiPtrExt for GuiPtr {
     fn add_page(&self, lp: LoadedPlaylist) {
         let tv = create_populated_treeview(self, &lp);
-        let mut scw = gtk::ScrolledWindow::new(None, None);
+        let scw = gtk::ScrolledWindow::new(None, None);
         scw.add(&tv);
         let label = gtk::Label::new(Some(lp.name.as_str()));
         self.notebook.append_page(&scw, Some(&label));
