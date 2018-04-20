@@ -67,46 +67,45 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
 
     let window: gtk::ApplicationWindow = builder.read().unwrap().get_object("mainwindow").unwrap();
     //let pipeline = gstreamer_init(current_playlist.clone()).unwrap();
-    let gui = Rc::new(gui::new(builder.clone(), playlist));
-/* 
+    let gui = gui::new(builder.clone(), playlist);
+
     {
         // Play Button
         let button: gtk::Button = builder.read().unwrap().get_object("playButton").unwrap();
-        button.connect_clicked(clone!(current_playlist, gui, pipeline => move |_| {
+        button.connect_clicked(clone!(gui => move |_| {
             {
-                do_gui_gstreamer_action(current_playlist.clone(), gui.clone(), pipeline.clone(), &GStreamerAction::Playing);
+                (*gui).set_playback(&GStreamerAction::Playing);
             }
         }));
     }
     {
         // Pause Button
         let button: gtk::Button = builder.read().unwrap().get_object("pauseButton").unwrap();
-        button.connect_clicked(clone!(current_playlist, gui, pipeline  => move |_| {
+        button.connect_clicked(clone!(gui  => move |_| {
             {
-                do_gui_gstreamer_action(current_playlist.clone(), gui.clone(), pipeline.clone(), &GStreamerAction::Pausing);
+                (*gui).set_playback(&GStreamerAction::Pausing);
             }
         }));
     }
     {
         // Previous button
         let button: gtk::Button = builder.read().unwrap().get_object("prevButton").unwrap();
-        button.connect_clicked(clone!(current_playlist, gui, pipeline => move |_| {
+        button.connect_clicked(clone!(gui => move |_| {
             {
-                do_gui_gstreamer_action(current_playlist.clone(), gui.clone(), pipeline.clone(), &GStreamerAction::Previous);
+                (*gui).set_playback(&GStreamerAction::Previous);
             }
         }));
     }
     {
         // Next button
         let button: gtk::Button = builder.read().unwrap().get_object("nextButton").unwrap();
-        button.connect_clicked(clone!(current_playlist, gui, pipeline => move |_| {
+        button.connect_clicked(clone!(gui => move |_| {
             {
-                do_gui_gstreamer_action(current_playlist.clone(), gui.clone(), pipeline.clone(), &GStreamerAction::Next)
+                (*gui).set_playback(&GStreamerAction::Next)
             }
         }));
     }
- */
-    
+     
     let notebook: gtk::Notebook = builder
         .read()
         .unwrap()
@@ -136,6 +135,7 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
         Inhibit(false)
     }));
 
+    println!("Showing all");
     window.show_all();
 }
 

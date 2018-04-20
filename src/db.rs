@@ -10,7 +10,7 @@ use taglib;
 use types::DBPool;
 use walkdir;
 
-#[derive(Identifiable, Queryable, Clone)]
+#[derive(Debug, Identifiable, Queryable, Clone)]
 pub struct Track {
     pub id: i32,
     pub title: String,

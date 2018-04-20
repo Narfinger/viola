@@ -12,6 +12,7 @@ use types::*;
 
 pub struct GStreamer {
     pipeline: gstreamer::Element,
+    current_playlist: CurrentPlaylist,
 }
 
 impl Drop for GStreamer {
@@ -31,11 +32,11 @@ pub fn new(current_playlist: CurrentPlaylist) -> Result<(Rc<GStreamer>, Receiver
         gstreamer::parse_launch("playbin").map_err(|_| String::from("Cannot do gstreamer"))?;
 
     let (tx, rx) = channel::<GStreamerMessage>();
-    let res = Rc::new(GStreamer { pipeline: pipeline });
+    let res = Rc::new(GStreamer { pipeline: pipeline, current_playlist: current_playlist.clone() });
 
     let resc = res.clone();
     gtk::timeout_add(500, move || {
-        resc.gstreamer_message_handler(current_playlist.clone(), tx.clone())
+        resc.gstreamer_message_handler(tx.clone())
     });
     Ok((res, rx))
 }
@@ -53,12 +54,12 @@ pub enum GStreamerAction {
 
 pub trait GStreamerExt {
     fn do_gstreamer_action(&self, &GStreamerAction);
-    fn gstreamer_message_handler(&self, CurrentPlaylist, Sender<GStreamerMessage>) -> gtk::Continue;
+    fn gstreamer_message_handler(&self, Sender<GStreamerMessage>) -> gtk::Continue;
 }
 
 impl GStreamerExt for GStreamer {
     fn do_gstreamer_action(&self, action: &GStreamerAction) {
-        let mut GuiPtr_update = PlayerStatus::Playing;
+        let mut gui_update = PlayerStatus::Playing;
         let mut gstreamer_action = gstreamer::State::Playing;
         {
             //releaingx the locks later
@@ -78,7 +79,8 @@ impl GStreamerExt for GStreamer {
                 _ => {}
             }
 
-          /*   match *action {
+            let mut pl = self.current_playlist.write().unwrap();
+            match *action {
                 GStreamerAction::Playing => {
                     self.pipeline.set_property("uri", &playlist::get_current_uri(&pl))
                         .expect("Error setting new gstreamer url");
@@ -86,7 +88,7 @@ impl GStreamerExt for GStreamer {
                 GStreamerAction::Pausing => {
                     if gstreamer::State::Playing == self.pipeline.get_state(gstreamer::ClockTime(Some(1000))).1 {
                         gstreamer_action = gstreamer::State::Paused;
-                        GuiPtr_update = PlayerStatus::Paused;
+                        gui_update = PlayerStatus::Paused;
                     }
                 }
                 GStreamerAction::Previous => {
@@ -104,14 +106,14 @@ impl GStreamerExt for GStreamer {
                     self.pipeline.set_property("uri", &playlist::get_current_uri(&pl))
                         .expect("Error in chaning url");
                 }
-            } */
+            }
             self.pipeline.set_state(gstreamer_action)
                 .into_result()
                 .expect("Error in setting gstreamer state playing");
         } //locks releaed
     }   
     /// poll the message bus and on eos start new
-    fn gstreamer_message_handler(&self, current_playlist: CurrentPlaylist, sender: Sender<GStreamerMessage>) -> gtk::Continue {
+    fn gstreamer_message_handler(&self, sender: Sender<GStreamerMessage>) -> gtk::Continue {
         let bus = self.pipeline.get_bus().unwrap();
         if let Some(msg) = bus.pop() {
             use gstreamer::MessageView;
@@ -131,7 +133,7 @@ impl GStreamerExt for GStreamer {
                     //}
                 }
                 MessageView::Eos(..) => {
-                    let mut p = current_playlist.write().unwrap();
+                    let mut p = self.current_playlist.write().unwrap();
                     (*p).current_position += 1;
                     if (*p).current_position >= (*p).items.len() as i32 {
                         (*p).current_position = 0;

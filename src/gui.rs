@@ -46,7 +46,7 @@ pub struct Gui {
 }
 
 pub fn new(builder: GuiPtr, current_playlist: LoadedPlaylist) -> Rc<Gui> {
-    let cp = Arc::new(RwLock::new(current_playlist));
+    let cp = Arc::new(RwLock::new(current_playlist.clone()));
     let (gst, recv) = gstreamer_wrapper::new(cp.clone()).unwrap();
 
     let g = Rc::new(Gui {
@@ -71,6 +71,7 @@ pub fn new(builder: GuiPtr, current_playlist: LoadedPlaylist) -> Rc<Gui> {
         gtk::Continue(true)
     });
 
+    g.add_page(&current_playlist);
     g
 }
 
@@ -78,6 +79,7 @@ pub fn new(builder: GuiPtr, current_playlist: LoadedPlaylist) -> Rc<Gui> {
 pub trait GuiExt {
     fn get_active_treeview(&self) -> &gtk::TreeView;
     fn update_gui(&self, &PlayerStatus); //does not need pipeline
+    fn set_playback(&self, &GStreamerAction);
     fn add_page(&self, &LoadedPlaylist);
 }
 
@@ -120,8 +122,13 @@ impl GuiExt for Gui {
         }
     }
 
-    fn add_page(&self, lp: &LoadedPlaylist) {
+    fn set_playback(&self, status: &GStreamerAction) {
+        self.gstreamer.do_gstreamer_action(status);
+    }
 
+    fn add_page(&self, lp: &LoadedPlaylist) {
+        let tv = create_populated_treeview(self, lp);
+        panic!("Implement this");
     }
 }
 
@@ -148,6 +155,7 @@ fn create_populated_treeview(gui: &Gui, lp: &LoadedPlaylist) -> gtk::TreeView {
     }
 
     treeview.set_model(Some(&populate_model_with_playlist(lp)));
+    panic!("Do the connection");
     /*treeview.connect_button_press_event(|tv, eventbutton| {
         if eventbutton.get_event_type() == gdk::EventType::DoubleButtonPress {
             let (vec, _) = tv.get_selection().get_selected_rows();
