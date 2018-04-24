@@ -6,6 +6,7 @@ use r2d2_diesel::ConnectionManager;
 use std::sync::Arc;
 use std::rc::Rc;
 use std::sync::RwLock;
+use std::cell::RefCell;
 
 use gui::Gui;
 use playlist::LoadedPlaylist;

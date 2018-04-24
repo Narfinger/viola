@@ -1,8 +1,9 @@
 //! The main gui parts.
 
-
+use std::borrow::{Borrow, BorrowMut};
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
+use std::cell::RefCell;
 use gdk;
 use gdk_pixbuf;
 use gtk;
@@ -32,6 +33,7 @@ macro_rules! clone {
 
 #[derive(Clone)]
 struct PlaylistTab {
+    /// TODO this probably does not need multithread safe
     lp: Arc<RwLock<LoadedPlaylist>>,
     treeview: gtk::TreeView,
 }
@@ -45,7 +47,7 @@ pub struct Gui {
     album_label: gtk::Label,
     cover: gtk::Image,
     current_playlist: CurrentPlaylist,
-    playlist_tabs: Vec<PlaylistTab>,
+    playlist_tabs: RefCell<Vec<PlaylistTab>>,
     gstreamer: Rc<GStreamer>,
 }
 
@@ -66,7 +68,7 @@ pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> Rc<Gui> {
     album_label: builder.read().unwrap().get_object("albumLabel").unwrap(),
     cover: builder.read().unwrap().get_object("coverImage").unwrap(),
     current_playlist: cp,
-    playlist_tabs: Vec::new(),
+    playlist_tabs: RefCell::new(Vec::new()),
     gstreamer: gst,
     });
 
@@ -90,21 +92,22 @@ pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> Rc<Gui> {
 /// This is a trait for all gui related functions that do not need a GuiPtr, only a reference to the gui.
 /// The main indication is: This are all functions that do not need to have gtk callbacks.
 pub trait GuiExt {
-    fn get_active_treeview(&self) -> &gtk::TreeView;
+    //fn get_active_treeview(&self) -> &gtk::TreeView;
     fn update_gui(&self, &PlayerStatus); //does not need pipeline
     fn set_playback(&self, &GStreamerAction);
 }
 
 impl GuiExt for Gui {
-    fn get_active_treeview(&self) -> &gtk::TreeView {
-        let cur_page = self.notebook.get_current_page().unwrap();
-        println!("The page: {:?}", cur_page);
-        &self.playlist_tabs[cur_page as usize].treeview
-    }
+    //fn get_active_treeview(&self) -> &gtk::TreeView {
+    //    let cur_page = self.notebook.get_current_page().unwrap();
+    //    println!("The page: {:?}", cur_page);
+    //    &self.playlist_tabs.borrow()[cur_page as usize].treeview
+    //}
 
     /// General purpose function to update the GuiPtr on any change
     fn update_gui(&self, status: &PlayerStatus) {
-        let treeview = self.get_active_treeview();
+        let cur_page = self.notebook.get_current_page().unwrap();
+        let treeview = &self.playlist_tabs.borrow()[cur_page as usize].treeview;
         let treeselection = treeview.get_selection();
         match *status {
             PlayerStatus::Playing => {
@@ -168,8 +171,7 @@ impl GuiPtrExt for GuiPtr {
             *cp = lp;
         }
         let tab = PlaylistTab { lp: self.current_playlist.clone(), treeview: tv };
-        let mut vec = &self.playlist_tabs;
-        vec.push(tab);
+        self.playlist_tabs.borrow_mut().push(tab);
     }
 }
 
