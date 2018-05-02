@@ -17,7 +17,7 @@ use types::*;
 #[derive(Clone)]
 struct PlaylistTab {
     /// TODO this probably does not need multithread safe
-    lp: Arc<RwLock<LoadedPlaylist>>,
+    lp: LoadedPlaylist,
     treeview: gtk::TreeView,
 }
 
@@ -144,11 +144,12 @@ impl GuiExt for Gui {
 
     fn page_changed(&self, index: u32) {
         panic!("NOT WORKING");
-        let pltabs = self.playlist_tabs.borrow();
-        let lp: &LoadedPlaylist = &*pltabs[index as usize].lp.read().unwrap();
+        let pltabs = &*self.playlist_tabs.borrow();
+        let lp = pltabs[index as usize].lp;
+        let mut cp = self.current_playlist.write().unwrap();
         
-        //let mut cp = self.current_playlist.write().unwrap();
-        //*cp = *lp;
+        cp = *&lp;
+        println!("changed");
     }
 
 }
@@ -192,7 +193,7 @@ impl GuiPtrExt for GuiPtr {
             });
         }
 
-        let tab = PlaylistTab { lp: self.current_playlist.clone(), treeview: tv };
+        let tab = PlaylistTab { lp: lp, treeview: tv };
         self.playlist_tabs.borrow_mut().push(tab);
     }
 

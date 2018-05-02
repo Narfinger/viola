@@ -171,10 +171,11 @@ pub fn playlist_from_directory(folder: &str, pool: &DBPool) -> LoadedPlaylist {
     }
 }
 
-pub fn get_current_uri(p: &LoadedPlaylist) -> String {
+pub fn get_current_uri(lp: &LoadedPlaylist) -> String {
+    println!("loading from playlist with name: {}", lp.name);
     format!(
         "file:////{}",
-        p.items[p.current_position as usize]
+        lp.items[lp.current_position as usize]
             .path
             .replace(" ", "%20")
     )
