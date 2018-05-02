@@ -126,6 +126,7 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
         //}));
     }
  */
+    let libview = libraryviewstore::new(pool.clone(), builder.clone(), gui.clone());
 
     window.maximize();
     window.set_application(application);

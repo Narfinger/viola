@@ -74,9 +74,9 @@ pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> Rc<Gui> {
 
     let gc = g.clone();
     gtk::timeout_add(250, move || {
-        println!("trying to get channel");
+        //println!("trying to get channel");
         if let Ok(t) = recv.try_recv() {
-            println!("updating gui");
+            //println!("updating gui");
             match t {
                 GStreamerMessage::Stopped => gc.update_gui(&PlayerStatus::Stopped),
                 GStreamerMessage::Playing => gc.update_gui(&PlayerStatus::Playing),
@@ -156,22 +156,27 @@ impl GuiExt for Gui {
 /// will generally setup a gtk callback. As gtk callbacks have a static lifetime, we need the lifetime guarantees
 /// of GuiPtr instead of just a reference.
 pub trait GuiPtrExt {
-    fn add_page(&mut self, lp: LoadedPlaylist);
+    fn add_page(&self, lp: LoadedPlaylist);
 }
 
 impl GuiPtrExt for GuiPtr {
-    fn add_page(&mut self, lp: LoadedPlaylist) {
+    fn add_page(&self, lp: LoadedPlaylist) {
+        println!("added thingies");
         let tv = create_populated_treeview(&self, &lp);
         let scw = gtk::ScrolledWindow::new(None, None);
         scw.add(&tv);
         let label = gtk::Label::new(Some(lp.name.as_str()));
-        self.notebook.append_page(&scw, Some(&label));
+        scw.show();
+        label.show();
+        let int = self.notebook.append_page(&scw, Some(&label));
+        println!("int: {}", int);
         {
             let mut cp = self.current_playlist.write().unwrap();
             *cp = lp;
         }
         let tab = PlaylistTab { lp: self.current_playlist.clone(), treeview: tv };
         self.playlist_tabs.borrow_mut().push(tab);
+        println!("added new page");
     }
 }
 
