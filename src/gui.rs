@@ -7,6 +7,7 @@ use gdk;
 use gdk_pixbuf;
 use gtk;
 use gtk::prelude::*;
+use std;
 
 use gstreamer_wrapper;
 use gstreamer_wrapper::{GStreamer, GStreamerExt, GStreamerAction, GStreamerMessage};
@@ -34,7 +35,7 @@ pub struct Gui {
 }
 
 /// Constructs a new gui, given a BuilderPtr and a loaded playlist.
-pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> Rc<Gui> {
+pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> GuiPtr {
     let cp = Arc::new(RwLock::new(
         LoadedPlaylist { 
             id: None, 
@@ -68,6 +69,14 @@ pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> Rc<Gui> {
     });
 
     g.add_page(loaded_playlist);
+
+    {
+        let gc = g.clone();
+    
+        g.notebook.connect_switch_page(move |_, _, index| {
+            gc.page_changed(index);
+        });
+    }
     g
 }
 
@@ -77,6 +86,7 @@ pub trait GuiExt {
     //fn get_active_treeview(&self) -> &gtk::TreeView;
     fn update_gui(&self, &PlayerStatus); //does not need pipeline
     fn set_playback(&self, &GStreamerAction);
+    fn page_changed(&self, u32);
 }
 
 impl GuiExt for Gui {
@@ -132,6 +142,15 @@ impl GuiExt for Gui {
         self.gstreamer.do_gstreamer_action(status);
     }
 
+    fn page_changed(&self, index: u32) {
+        panic!("NOT WORKING");
+        let pltabs = self.playlist_tabs.borrow();
+        let lp: &LoadedPlaylist = &*pltabs[index as usize].lp.read().unwrap();
+        
+        //let mut cp = self.current_playlist.write().unwrap();
+        //*cp = *lp;
+    }
+
 }
 
 /// Trait for all functions that need a GuiPtr instead of just a gui. This is different to GuiExt, as these
@@ -139,6 +158,7 @@ impl GuiExt for Gui {
 /// of GuiPtr instead of just a reference.
 pub trait GuiPtrExt {
     fn add_page(&self, lp: LoadedPlaylist);
+    fn delete_page(&self, u32);
 }
 
 impl GuiPtrExt for GuiPtr {
@@ -148,16 +168,37 @@ impl GuiPtrExt for GuiPtr {
         let scw = gtk::ScrolledWindow::new(None, None);
         scw.add(&tv);
         let label = gtk::Label::new(Some(lp.name.as_str()));
-        scw.show();
-        label.show();
-        self.notebook.append_page(&scw, Some(&label));
-        {
+
+        let button = gtk::ToolButton::new_from_stock("window-close");
+        button.set_icon_name("window-close");
+        button.show();
+
+        let b = gtk::Box::new(gtk::Orientation::Horizontal,20);
+        b.pack_start(&label, false, false, 0);
+        b.pack_start(&button, false, false, 0);
+
+        let index = self.notebook.append_page(&scw, Some(&b));
+        /*{
             let mut cp = self.current_playlist.write().unwrap();
             *cp = lp;
+        }*/
+        b.show_all();
+        scw.show();
+
+        {
+            let s = self.clone();
+            button.connect_clicked(move |_| {
+                    s.delete_page(index)
+            });
         }
+
         let tab = PlaylistTab { lp: self.current_playlist.clone(), treeview: tv };
         self.playlist_tabs.borrow_mut().push(tab);
-        println!("added new page");
+    }
+
+    fn delete_page(&self, index: u32) {
+        self.notebook.remove_page(Some(index));
+        self.playlist_tabs.borrow_mut().remove(index as usize);
     }
 }
 
