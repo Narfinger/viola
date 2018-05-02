@@ -1,5 +1,4 @@
 use gdk;
-use gio;
 use gtk;
 use gtk::prelude::*;
 use std::string::String;
@@ -14,8 +13,8 @@ pub struct LibraryView {
 }
 
 
-pub fn new(pool: DBPool, builder: BuilderPtr, gui: GuiPtr) {
-    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl};
+pub fn new(pool: DBPool, builder: &BuilderPtr, gui: GuiPtr) {
+    use diesel::{GroupByDsl, QueryDsl, RunQueryDsl};
     use schema::tracks::dsl::*;
 
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
@@ -45,14 +44,12 @@ pub fn new(pool: DBPool, builder: BuilderPtr, gui: GuiPtr) {
     libview.set_model(Some(&model));
     println!("Stopped");
 
-    libview.connect_event_after(move |s,e| { signalhandler(pool.clone(), gui.clone(), s, e) });
+    libview.connect_event_after(move |s,e| { signalhandler(&pool.clone(), &gui.clone(), s, e) });
 }
 
-fn signalhandler(pool: DBPool, gui: GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) {
+fn signalhandler(pool: &DBPool, gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
-    use schema::playlists::dsl::*;
-    use schema::playlisttracks::dsl::*;
-    use schema::tracks::dsl::*;
+     use schema::tracks::dsl::*;
 
     if event.get_event_type() == gdk::EventType::DoubleButtonPress {
         if let Ok(b) = event.clone().downcast::<gdk::EventButton>() {

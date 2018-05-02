@@ -1,6 +1,5 @@
 //! The main gui parts.
 
-use std::borrow::{Borrow, BorrowMut};
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 use std::cell::RefCell;
@@ -13,23 +12,6 @@ use gstreamer_wrapper;
 use gstreamer_wrapper::{GStreamer, GStreamerExt, GStreamerAction, GStreamerMessage};
 use playlist::LoadedPlaylist;
 use types::*;
-
-macro_rules! clone {
-    (@param _) => ( _ );
-    (@param $x:ident) => ( $x );
-    ($($n:ident),+ => move || $body:expr) => (
-        {
-            $( let $n = $n.clone(); )+
-            move || $body
-        }
-    );
-    ($($n:ident),+ => move |$($p:tt),+| $body:expr) => (
-        {
-            $( let $n = $n.clone(); )+
-            move |$(clone!(@param $p),)+| $body
-        }
-    );
-}
 
 #[derive(Clone)]
 struct PlaylistTab {
@@ -61,7 +43,7 @@ pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> Rc<Gui> {
             current_position: 0}));
     let (gst, recv) = gstreamer_wrapper::new(cp.clone()).unwrap();
 
-    let mut g = Rc::new(Gui {
+    let g = Rc::new(Gui {
     notebook: builder.read().unwrap().get_object("playlistNotebook").unwrap(),
     title_label: builder.read().unwrap().get_object("titleLabel").unwrap(),
     artist_label: builder.read().unwrap().get_object("artistLabel").unwrap(),
@@ -168,8 +150,7 @@ impl GuiPtrExt for GuiPtr {
         let label = gtk::Label::new(Some(lp.name.as_str()));
         scw.show();
         label.show();
-        let int = self.notebook.append_page(&scw, Some(&label));
-        println!("int: {}", int);
+        self.notebook.append_page(&scw, Some(&label));
         {
             let mut cp = self.current_playlist.write().unwrap();
             *cp = lp;

@@ -5,9 +5,7 @@ use gtk::ObjectExt;
 use std::sync::mpsc::{Receiver, Sender, channel};
 use std::rc::Rc;
 
-use gui::Gui;
 use playlist;
-use playlist::LoadedPlaylist;
 use types::*;
 
 pub struct GStreamer {

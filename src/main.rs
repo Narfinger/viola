@@ -23,13 +23,11 @@ pub mod types;
 
 use clap::{App, Arg};
 use gio::ApplicationExt;
-use gstreamer::ElementExt;
 use gtk::prelude::*;
-use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use gui::{Gui, GuiExt, GuiPtrExt};
+use gui::{GuiExt};
 use gstreamer_wrapper::GStreamerAction;
 
 use types::*;
@@ -126,7 +124,7 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
         //}));
     }
  */
-    let libview = libraryviewstore::new(pool.clone(), builder.clone(), gui.clone());
+    let libview = libraryviewstore::new(pool.clone(), &builder, gui.clone());
 
     window.maximize();
     window.set_application(application);
