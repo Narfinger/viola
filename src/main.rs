@@ -18,6 +18,7 @@ pub mod gui;
 pub mod gstreamer_wrapper;
 pub mod libraryviewstore;
 pub mod playlist;
+pub mod playlist_tabs;
 pub mod schema;
 pub mod types;
 

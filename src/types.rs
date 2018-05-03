@@ -10,6 +10,7 @@ use std::cell::RefCell;
 
 use gui::Gui;
 use playlist::LoadedPlaylist;
+use playlist_tabs::PlaylistTabs;
 
 macro_rules! clone {
     (@param _) => ( _ );
@@ -29,10 +30,11 @@ macro_rules! clone {
 }
 
 pub type BuilderPtr = Arc<RwLock<Builder>>;
-pub type CurrentPlaylist = Arc<RwLock<LoadedPlaylist>>;
+//pub type CurrentPlaylist = Arc<RwLock<LoadedPlaylist>>;
 pub type GstreamerPipeline = Arc<RwLock<Element>>;
 pub type GuiPtr = Rc<Gui>;
 pub type DBPool = Pool<ConnectionManager<SqliteConnection>>;
+pub type PlaylistTabsPtr = Rc<RefCell<PlaylistTabs>>;
 
 pub enum PlayerStatus {
     Playing,

@@ -10,7 +10,7 @@ use types::*;
 
 pub struct GStreamer {
     pipeline: gstreamer::Element,
-    current_playlist: CurrentPlaylist,
+    current_playlist: PlaylistTabsPtr,
 }
 
 impl Drop for GStreamer {
@@ -26,7 +26,7 @@ pub enum GStreamerMessage {
     Playing,
 }
 
-pub fn new(current_playlist: CurrentPlaylist) -> Result<(Rc<GStreamer>, Receiver<GStreamerMessage>), String> {
+pub fn new(current_playlist: PlaylistTabsPtr) -> Result<(Rc<GStreamer>, Receiver<GStreamerMessage>), String> {
     gstreamer::init().unwrap();
     let pipeline =
         gstreamer::parse_launch("playbin").map_err(|_| String::from("Cannot do gstreamer"))?;

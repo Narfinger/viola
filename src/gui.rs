@@ -12,14 +12,9 @@ use std;
 use gstreamer_wrapper;
 use gstreamer_wrapper::{GStreamer, GStreamerExt, GStreamerAction, GStreamerMessage};
 use playlist::LoadedPlaylist;
+use playlist_tabs;
+use playlist_tabs::PlaylistTabsExt;
 use types::*;
-
-#[derive(Clone)]
-struct PlaylistTab {
-    /// TODO this probably does not need multithread safe
-    lp: LoadedPlaylist,
-    treeview: gtk::TreeView,
-}
 
 /// Gui is the main struct for calling things on the gui or in the gstreamer. It will take care that
 /// everything is the correct state. You should probably interface it with a GuiPtr.
@@ -29,20 +24,15 @@ pub struct Gui {
     artist_label: gtk::Label,
     album_label: gtk::Label,
     cover: gtk::Image,
-    current_playlist: CurrentPlaylist,
-    playlist_tabs: RefCell<Vec<PlaylistTab>>,
+    current_playlist: usize,
+    playlist_tabs: PlaylistTabsPtr,
     gstreamer: Rc<GStreamer>,
 }
 
 /// Constructs a new gui, given a BuilderPtr and a loaded playlist.
 pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> GuiPtr {
-    let cp = Arc::new(RwLock::new(
-        LoadedPlaylist { 
-            id: None, 
-            name: String::from("DUMMY"), 
-            items: vec![], 
-            current_position: 0}));
-    let (gst, recv) = gstreamer_wrapper::new(cp.clone()).unwrap();
+    let pltabs = playlist_tabs::new();
+    let (gst, recv) = gstreamer_wrapper::new(pltabs.clone()).unwrap();
 
     let g = Rc::new(Gui {
     notebook: builder.read().unwrap().get_object("playlistNotebook").unwrap(),
@@ -50,8 +40,8 @@ pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> GuiPtr {
     artist_label: builder.read().unwrap().get_object("artistLabel").unwrap(),
     album_label: builder.read().unwrap().get_object("albumLabel").unwrap(),
     cover: builder.read().unwrap().get_object("coverImage").unwrap(),
-    current_playlist: cp,
-    playlist_tabs: RefCell::new(Vec::new()),
+    current_playlist: 0,
+    playlist_tabs: pltabs,
     gstreamer: gst,
     });
 
@@ -99,18 +89,18 @@ impl GuiExt for Gui {
     /// General purpose function to update the GuiPtr on any change
     fn update_gui(&self, status: &PlayerStatus) {
         let cur_page = self.notebook.get_current_page().unwrap();
-        let treeview = &self.playlist_tabs.borrow()[cur_page as usize].treeview;
+        let treeview = &self.playlist_tabs.borrow().tabs[cur_page as usize].treeview;
         let treeselection = treeview.get_selection();
         match *status {
             PlayerStatus::Playing => {
                 //if state == gstreamer::State::Paused || state == gstreamer::State::Playing {
-                let index = self.current_playlist.read().unwrap().current_position;
+                let index = self.playlist_tabs.current_position();
                 let mut ipath = gtk::TreePath::new();
                 ipath.append_index(index as i32);
                 treeselection.select_path(&ipath);
 
                 //update track display
-                let track = &self.current_playlist.read().unwrap().items[index as usize];
+                let track = &self.playlist_tabs.current_track();
 
                 self.title_label.set_markup(&track.title);
                 self.artist_label.set_markup(&track.artist);
@@ -144,11 +134,11 @@ impl GuiExt for Gui {
 
     fn page_changed(&self, index: u32) {
         panic!("NOT WORKING");
-        let pltabs = &*self.playlist_tabs.borrow();
-        let lp = pltabs[index as usize].lp;
-        let mut cp = self.current_playlist.write().unwrap();
+        //let pltabs = &*self.playlist_tabs.borrow();
+        //let lp = pltabs[index as usize].lp;
+        //let mut cp = self.current_playlist.write().unwrap();
         
-        cp = *&lp;
+        //cp = *&lp;
         println!("changed");
     }
 
@@ -193,8 +183,8 @@ impl GuiPtrExt for GuiPtr {
             });
         }
 
-        let tab = PlaylistTab { lp: lp, treeview: tv };
-        self.playlist_tabs.borrow_mut().push(tab);
+        let tab = playlist_tabs::PlaylistTab { lp: lp, treeview: tv };
+        self.playlist_tabs.borrow_mut().tabs.push(tab);
     }
 
     fn delete_page(&self, index: u32) {
