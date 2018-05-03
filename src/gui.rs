@@ -1,5 +1,6 @@
 //! The main gui parts.
 
+use std::borrow::BorrowMut;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 use std::cell::RefCell;
@@ -68,7 +69,7 @@ pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> GuiPtr {
         });
     }
 
-    g.playlist_tabs.borrow_mut().current_playlist = Some(0);
+    g.current_playlist = 0;
 
     g
 }
@@ -79,7 +80,6 @@ pub trait GuiExt {
     //fn get_active_treeview(&self) -> &gtk::TreeView;
     fn update_gui(&self, &PlayerStatus); //does not need pipeline
     fn set_playback(&self, &GStreamerAction);
-    fn page_changed(&self, u32);
 }
 
 impl GuiExt for Gui {
@@ -135,28 +135,22 @@ impl GuiExt for Gui {
     fn set_playback(&self, status: &GStreamerAction) {
         self.gstreamer.do_gstreamer_action(status);
     }
-
-    fn page_changed(&self, index: u32) {
-        panic!("NOT WORKING");
-        //let pltabs = &*self.playlist_tabs.borrow();
-        //let lp = pltabs[index as usize].lp;
-        //let mut cp = self.current_playlist.write().unwrap();
-        
-        //cp = *&lp;
-        println!("changed");
-    }
-
 }
 
 /// Trait for all functions that need a GuiPtr instead of just a gui. This is different to GuiExt, as these
 /// will generally setup a gtk callback. As gtk callbacks have a static lifetime, we need the lifetime guarantees
 /// of GuiPtr instead of just a reference.
 pub trait GuiPtrExt {
-    fn add_page(&self, lp: LoadedPlaylist);
+    fn page_changed(&self, u32);
+    fn add_page(&self, LoadedPlaylist);
     fn delete_page(&self, u32);
 }
 
 impl GuiPtrExt for GuiPtr {
+    fn page_changed(&self, index: u32) {
+        self.borrow_mut().current_playlist = index as usize;
+    }
+
     fn add_page(&self, lp: LoadedPlaylist) {
         println!("added thingies");
         let tv = create_populated_treeview(&self, &lp);
@@ -188,12 +182,14 @@ impl GuiPtrExt for GuiPtr {
         }
 
         let tab = playlist_tabs::PlaylistTab { lp: lp, treeview: tv };
-        self.playlist_tabs.borrow_mut().tabs.push(tab);
+        self.playlist_tabs.borrow_mut().add(tab);
     }
 
     fn delete_page(&self, index: u32) {
         self.notebook.remove_page(Some(index));
-        self.playlist_tabs.borrow_mut().tabs.remove(index as usize);
+        if let Some(i) = self.playlist_tabs.remove(index as usize) {
+            self.page_changed(i);
+        }
     }
 }
 

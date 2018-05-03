@@ -28,6 +28,8 @@ pub fn new() -> PlaylistTabsPtr {
 pub trait PlaylistTabsExt {
     fn current_track<'a>(&'a self) -> &'a db::Track;
     fn current_position(&self) -> i32;
+    fn add(&mut self, PlaylistTab);
+    fn remove(&mut self, i32) -> Option<i32>;
 }
 
 impl PlaylistTabsExt for PlaylistTabs {
@@ -38,6 +40,19 @@ impl PlaylistTabsExt for PlaylistTabs {
 
     fn current_position(&self) -> i32 {
         self.tabs[self.current_playlist.unwrap()].lp.current_position
+    }
+
+    fn add(&mut self, plt: PlaylistTab) {
+        self.tabs.push(plt);
+    }
+
+    fn remove(&mut self, index: i32) -> Option<i32> {
+        self.tabs.remove(index as usize);
+        if self.current_playlist.unwrap() >= self.tabs.len() {
+            Some(0)
+        } else {
+            None
+        }
     }
 }
 
