@@ -25,7 +25,6 @@ pub struct Gui {
     artist_label: gtk::Label,
     album_label: gtk::Label,
     cover: gtk::Image,
-    current_playlist: usize,
     playlist_tabs: PlaylistTabsPtr,
     gstreamer: Rc<GStreamer>,
 }
@@ -41,7 +40,6 @@ pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> GuiPtr {
     artist_label: builder.read().unwrap().get_object("artistLabel").unwrap(),
     album_label: builder.read().unwrap().get_object("albumLabel").unwrap(),
     cover: builder.read().unwrap().get_object("coverImage").unwrap(),
-    current_playlist: 0,
     playlist_tabs: pltabs,
     gstreamer: gst,
     });
@@ -68,8 +66,6 @@ pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> GuiPtr {
             gc.page_changed(index);
         });
     }
-
-    g.current_playlist = 0;
 
     g
 }
@@ -148,7 +144,8 @@ pub trait GuiPtrExt {
 
 impl GuiPtrExt for GuiPtr {
     fn page_changed(&self, index: u32) {
-        self.borrow_mut().current_playlist = index as usize;
+        (*self.playlist_tabs).borrow_mut().set_current_playlist(index as i32);
+        //panic!("NOT YET IMPLEMENTED");
     }
 
     fn add_page(&self, lp: LoadedPlaylist) {
@@ -182,13 +179,13 @@ impl GuiPtrExt for GuiPtr {
         }
 
         let tab = playlist_tabs::PlaylistTab { lp: lp, treeview: tv };
-        self.playlist_tabs.borrow_mut().add(tab);
+        (*self.playlist_tabs).borrow_mut().add(tab);
     }
 
     fn delete_page(&self, index: u32) {
         self.notebook.remove_page(Some(index));
-        if let Some(i) = self.playlist_tabs.remove(index as usize) {
-            self.page_changed(i);
+        if let Some(i) = (*self.playlist_tabs).borrow_mut().remove(index as i32) {
+            self.page_changed(i as u32);
         }
     }
 }
