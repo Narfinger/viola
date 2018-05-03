@@ -14,6 +14,7 @@ extern crate taglib;
 extern crate walkdir;
 
 pub mod db;
+pub mod loaded_playlist;
 pub mod gui;
 pub mod gstreamer_wrapper;
 pub mod libraryviewstore;

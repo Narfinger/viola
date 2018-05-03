@@ -3,7 +3,7 @@ use gtk;
 use gtk::prelude::*;
 use std::string::String;
 use std::ops::Deref;
-use playlist::LoadedPlaylist;
+use loaded_playlist::LoadedPlaylist;
 
 use gui::GuiPtrExt;
 use types::*;

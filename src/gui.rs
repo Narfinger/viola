@@ -11,7 +11,7 @@ use std;
 
 use gstreamer_wrapper;
 use gstreamer_wrapper::{GStreamer, GStreamerExt, GStreamerAction, GStreamerMessage};
-use playlist::LoadedPlaylist;
+use loaded_playlist::LoadedPlaylist;
 use playlist_tabs;
 use playlist_tabs::PlaylistTabsExt;
 use types::*;
@@ -94,13 +94,13 @@ impl GuiExt for Gui {
         match *status {
             PlayerStatus::Playing => {
                 //if state == gstreamer::State::Paused || state == gstreamer::State::Playing {
-                let index = self.playlist_tabs.current_position();
+                let index = self.playlist_tabs.borrow().current_position();
                 let mut ipath = gtk::TreePath::new();
                 ipath.append_index(index as i32);
                 treeselection.select_path(&ipath);
 
                 //update track display
-                let track = &self.playlist_tabs.current_track();
+                let track = &self.playlist_tabs.borrow().current_track();
 
                 self.title_label.set_markup(&track.title);
                 self.artist_label.set_markup(&track.artist);
@@ -189,7 +189,7 @@ impl GuiPtrExt for GuiPtr {
 
     fn delete_page(&self, index: u32) {
         self.notebook.remove_page(Some(index));
-        self.playlist_tabs.borrow_mut().remove(index as usize);
+        self.playlist_tabs.borrow_mut().tabs.remove(index as usize);
     }
 }
 

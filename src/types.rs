@@ -9,7 +9,7 @@ use std::sync::RwLock;
 use std::cell::RefCell;
 
 use gui::Gui;
-use playlist::LoadedPlaylist;
+use loaded_playlist::LoadedPlaylist;
 use playlist_tabs::PlaylistTabs;
 
 macro_rules! clone {

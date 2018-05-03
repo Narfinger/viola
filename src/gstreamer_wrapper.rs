@@ -6,6 +6,8 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 use std::rc::Rc;
 
 use playlist;
+use playlist_tabs::PlaylistTabsExt;
+use loaded_playlist::PlaylistControls;
 use types::*;
 
 pub struct GStreamer {
@@ -79,10 +81,10 @@ impl GStreamerExt for GStreamer {
                 _ => {}
             }
 
-            let mut pl = self.current_playlist.write().unwrap();
             match *action {
                 GStreamerAction::Playing => {
-                    self.pipeline.set_property("uri", &playlist::get_current_uri(&pl))
+                    let uri = self.current_playlist.borrow().get_current_uri();
+                    self.pipeline.set_property("uri", &uri)
                         .expect("Error setting new gstreamer url");
                 }
                 GStreamerAction::Pausing => {
@@ -92,18 +94,18 @@ impl GStreamerExt for GStreamer {
                     }
                 }
                 GStreamerAction::Previous => {
-                    (*pl).current_position = ((*pl).current_position - 1) % (*pl).items.len() as i32;
-                    self.pipeline.set_property("uri", &playlist::get_current_uri(&pl))
+                    let uri = self.current_playlist.previous();
+                    self.pipeline.set_property("uri", &uri)
                         .expect("Error in changing url");
                 }
                 GStreamerAction::Next => {
-                    (*pl).current_position = ((*pl).current_position + 1) % (*pl).items.len() as i32;
-                    self.pipeline.set_property("uri", &playlist::get_current_uri(&pl))
+                    let uri = self.current_playlist.next();
+                    self.pipeline.set_property("uri", &uri)
                         .expect("Error in changing url");
                 }
                 GStreamerAction::Play(i) => {
-                    (*pl).current_position = i;
-                    self.pipeline.set_property("uri", &playlist::get_current_uri(&pl))
+                    let uri = self.current_playlist.set(i);
+                    self.pipeline.set_property("uri", &uri)
                         .expect("Error in chaning url");
                 }
             }
@@ -133,31 +135,25 @@ impl GStreamerExt for GStreamer {
                     //}
                 }
                 MessageView::Eos(..) => {
-                    let mut p = self.current_playlist.write().unwrap();
-                    (*p).current_position += 1;
-                    if (*p).current_position >= (*p).items.len() as i32 {
-                        (*p).current_position = 0;
-                        sender.send(GStreamerMessage::Playing).expect("Message Queue Error");
-
-                    } else {
-                        println!("Next should play");
-                        self.pipeline
-                            .set_state(gstreamer::State::Ready)
-                            .into_result()
-                            .expect("Error in changing gstreamer state to ready");
-                        self.pipeline
-                            .set_property("uri", &playlist::get_current_uri(&p))
-                            .expect("Error setting new url for gstreamer");
-                        self.pipeline
-                            .set_state(gstreamer::State::Playing)
-                            .into_result()
-                            .expect("Error in changing gstreamer state to playing");
-                        println!(
-                            "Next one now playing is: {}",
-                            &playlist::get_current_uri(&p)
-                        );
-                        
-                        sender.send(GStreamerMessage::Stopped).expect("Message Queue Error");
+                    let res = self.current_playlist.next_or_eol();
+                    match res {
+                        None => { 
+                            sender.send(GStreamerMessage::Stopped).expect("Message Queue Error");
+                            },
+                        Some(i) => {
+                            println!("Next should play");
+                            self.pipeline
+                                .set_state(gstreamer::State::Ready)
+                                .into_result()
+                                .expect("Error in changing gstreamer state to ready");
+                            self.pipeline
+                                .set_property("uri", &i)
+                                .expect("Error setting new url for gstreamer");
+                            self.pipeline
+                                .set_state(gstreamer::State::Playing)
+                                .into_result()
+                                .expect("Error in changing gstreamer state to playing");
+                        }
                     }
                     println!("Eos found");
                 }

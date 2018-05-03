@@ -3,6 +3,7 @@ use schema::{playlists, playlisttracks};
 use std::ops::Deref;
 
 use db::Track;
+use loaded_playlist::LoadedPlaylist;
 use types::DBPool;
 
 #[derive(Identifiable, Queryable, Associations)]
@@ -36,14 +37,6 @@ struct NewPlaylistTrack {
     playlist_id: i32,
     track_id: i32,
     playlist_order: i32,
-}
-
-#[derive(Clone, Debug)]
-pub struct LoadedPlaylist {
-    pub id: Option<i32>,
-    pub name: String,
-    pub items: Vec<Track>,
-    pub current_position: i32,
 }
 
 fn get_ordering(&(ref t, ref pt): &(Track, PlaylistTrack)) -> (i32, &Track) {
@@ -169,14 +162,4 @@ pub fn playlist_from_directory(folder: &str, pool: &DBPool) -> LoadedPlaylist {
         items: results,
         current_position: 0,
     }
-}
-
-pub fn get_current_uri(lp: &LoadedPlaylist) -> String {
-    println!("loading from playlist with name: {}", lp.name);
-    format!(
-        "file:////{}",
-        lp.items[lp.current_position as usize]
-            .path
-            .replace(" ", "%20")
-    )
 }
