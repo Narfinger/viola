@@ -8,6 +8,16 @@ pub struct LoadedPlaylist {
     pub current_position: i32,
 }
 
+pub trait LoadedPlaylistExt {
+    fn get_current_track<'a>(&'a self) -> &'a Track;
+}
+
+impl LoadedPlaylistExt for LoadedPlaylist {
+    fn get_current_track<'a>(&'a self) -> &'a Track {
+        &self.items[self.current_position as usize]
+    }
+}
+
 pub trait PlaylistControls {
     fn get_current_uri(&self) -> String;
     fn previous(&mut self) -> String;

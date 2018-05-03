@@ -67,6 +67,9 @@ pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> GuiPtr {
             gc.page_changed(index);
         });
     }
+
+    g.playlist_tabs.borrow_mut().current_playlist = Some(0);
+
     g
 }
 
@@ -100,7 +103,8 @@ impl GuiExt for Gui {
                 treeselection.select_path(&ipath);
 
                 //update track display
-                let track = &self.playlist_tabs.borrow().current_track();
+                let tabs = self.playlist_tabs.borrow();
+                let track = &tabs.current_track();
 
                 self.title_label.set_markup(&track.title);
                 self.artist_label.set_markup(&track.artist);

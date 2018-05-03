@@ -3,12 +3,11 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 use db;
-use loaded_playlist::{LoadedPlaylist, PlaylistControls};
+use loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
 use types::*;
 
 #[derive(Clone,Debug)]
 pub struct PlaylistTab {
-    /// TODO this probably does not need multithread safe
     pub lp: LoadedPlaylist,
     pub treeview: gtk::TreeView,
 }
@@ -27,13 +26,14 @@ pub fn new() -> PlaylistTabsPtr {
 }
 
 pub trait PlaylistTabsExt {
-    fn current_track<'a>(&self) -> &'a db::Track;
+    fn current_track<'a>(&'a self) -> &'a db::Track;
     fn current_position(&self) -> i32;
 }
 
 impl PlaylistTabsExt for PlaylistTabs {
-    fn current_track<'a>(&self) -> &'a db::Track {
-        panic!("NOT IMPLEMENTED YED");
+    fn current_track<'a>(&'a self) -> &'a db::Track {
+        let pos = self.current_playlist.unwrap();
+        self.tabs[pos as usize].lp.get_current_track()
     }
 
     fn current_position(&self) -> i32 {
@@ -48,23 +48,19 @@ impl PlaylistControls for PlaylistTabs {
     }
 
     fn previous(&mut self) -> String {
-        let mut lp = &self.tabs[self.current_playlist.unwrap()].lp;
-        lp.previous()
+        self.tabs[self.current_playlist.unwrap()].lp.previous()
     }
 
     fn next(&mut self) -> String {
-        let mut lp = &self.tabs[self.current_playlist.unwrap()].lp;
-        lp.next()
+        self.tabs[self.current_playlist.unwrap()].lp.next()
     }
 
     fn set(&mut self, i: i32) -> String  {
-        let mut lp = &self.tabs[self.current_playlist.unwrap()].lp;
-        lp.set(i)
+        self.tabs[self.current_playlist.unwrap()].lp.set(i)
     }
 
     fn next_or_eol(&mut self) -> Option<String> {
-        let mut lp = &self.tabs[self.current_playlist.unwrap()].lp;
-        lp.next_or_eol()
+        self.tabs[self.current_playlist.unwrap()].lp.next_or_eol()
     }
 }
 
