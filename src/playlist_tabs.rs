@@ -43,39 +43,47 @@ impl PlaylistTabsExt for PlaylistTabs {
 
 impl PlaylistControls for PlaylistTabs {
     fn get_current_uri(&self) -> String {
-        let lp = self.tabs[self.current_playlist.unwrap()].lp;
+        let lp = &self.tabs[self.current_playlist.unwrap()].lp;
         lp.get_current_uri()
     }
 
     fn previous(&mut self) -> String {
-        let mut lp = self.tabs[self.current_playlist.unwrap()].lp;
+        let mut lp = &self.tabs[self.current_playlist.unwrap()].lp;
         lp.previous()
     }
 
     fn next(&mut self) -> String {
-        let mut lp = self.tabs[self.current_playlist.unwrap()].lp;
-        lp.next();
+        let mut lp = &self.tabs[self.current_playlist.unwrap()].lp;
+        lp.next()
     }
 
     fn set(&mut self, i: i32) -> String  {
-        let mut lp = self.tabs[self.current_playlist.unwrap()].lp;
+        let mut lp = &self.tabs[self.current_playlist.unwrap()].lp;
         lp.set(i)
     }
 
     fn next_or_eol(&mut self) -> Option<String> {
-        let mut lp = self.tabs[self.current_playlist.unwrap()].lp;
+        let mut lp = &self.tabs[self.current_playlist.unwrap()].lp;
         lp.next_or_eol()
     }
 }
 
-impl PlaylistControls for PlaylistTabsPtr {
+pub trait PlaylistControlsImmutable {
+    fn get_current_uri(&self) -> String;
+    fn previous(&self) -> String;
+    fn next(&self) -> String;
+    fn set(&self, i32) -> String;
+    fn next_or_eol(&self) -> Option<String>;
+}
+
+
+impl PlaylistControlsImmutable for PlaylistTabsPtr {
     fn get_current_uri(&self) -> String {
         self.borrow().get_current_uri()
     }
 
     fn previous(&self) -> String {
-        let mut s = *self.borrow_mut();
-        s.previous()
+        self.borrow_mut().previous()
     }
 
     fn next(&self) -> String {
@@ -86,7 +94,7 @@ impl PlaylistControls for PlaylistTabsPtr {
         self.borrow_mut().set(i)
     }
 
-    fn next_or_eol(&self) -> String {
+    fn next_or_eol(&self) -> Option<String> {
         self.borrow_mut().next_or_eol()
     }
 }

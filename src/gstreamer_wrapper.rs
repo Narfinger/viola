@@ -6,7 +6,7 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 use std::rc::Rc;
 
 use playlist;
-use playlist_tabs::PlaylistTabsExt;
+use playlist_tabs::PlaylistControlsImmutable;
 use loaded_playlist::PlaylistControls;
 use types::*;
 
