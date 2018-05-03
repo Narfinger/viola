@@ -43,7 +43,7 @@ fn get_ordering(&(ref t, ref pt): &(Track, PlaylistTrack)) -> (i32, &Track) {
     (pt.playlist_order, t)
 }
 
-fn only_tracks<'a>(&(ref i, ref t): &'a (i32, &Track)) -> &'a Track {
+fn only_tracks<'a>(&(_, ref t): &'a (i32, &Track)) -> &'a Track {
     t
 }
 
@@ -142,7 +142,7 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
     panic!("fix playlist");
 }
 
-pub fn playlist_from_directory(folder: &str, pool: &DBPool) -> LoadedPlaylist {
+pub fn load_playlist_from_directory(folder: &str, pool: &DBPool) -> LoadedPlaylist {
     use diesel::QueryDsl;
     use diesel::RunQueryDsl;
     use diesel::TextExpressionMethods;

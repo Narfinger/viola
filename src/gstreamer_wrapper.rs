@@ -5,7 +5,7 @@ use gtk::ObjectExt;
 use std::sync::mpsc::{Receiver, Sender, channel};
 use std::rc::Rc;
 
-use playlist;
+use gui::GuiExt;
 use playlist_tabs::PlaylistControlsImmutable;
 use loaded_playlist::PlaylistControls;
 use types::*;
@@ -20,8 +20,6 @@ impl Drop for GStreamer {
         self.pipeline.set_state(gstreamer::State::Null).into_result().expect("Error in setting gstreamer state: Null");
     }
 }
-
-
 
 pub enum GStreamerMessage {
     Stopped,
@@ -61,7 +59,6 @@ pub trait GStreamerExt {
 
 impl GStreamerExt for GStreamer {
     fn do_gstreamer_action(&self, action: &GStreamerAction) {
-        let mut gui_update = PlayerStatus::Playing;
         let mut gstreamer_action = gstreamer::State::Playing;
         {
             //releaingx the locks later
@@ -90,7 +87,6 @@ impl GStreamerExt for GStreamer {
                 GStreamerAction::Pausing => {
                     if gstreamer::State::Playing == self.pipeline.get_state(gstreamer::ClockTime(Some(1000))).1 {
                         gstreamer_action = gstreamer::State::Paused;
-                        gui_update = PlayerStatus::Paused;
                     }
                 }
                 GStreamerAction::Previous => {
@@ -113,7 +109,8 @@ impl GStreamerExt for GStreamer {
                 .into_result()
                 .expect("Error in setting gstreamer state playing");
         } //locks releaed
-    }   
+    }
+
     /// poll the message bus and on eos start new
     fn gstreamer_message_handler(&self, sender: Sender<GStreamerMessage>) -> gtk::Continue {
         let bus = self.pipeline.get_bus().unwrap();
@@ -130,15 +127,14 @@ impl GStreamerExt for GStreamer {
                         state_changed.get_old(),
                         state_changed.get_current()
                     );
-                    //if state_changed.get_current() == gstreamer::State::Playing {
-                    //    update_GuiPtr(&pipeline, &current_playlist, &builder);
-                    //}
+                    sender.send(GStreamerMessage::Playing).expect("Error in gstreamer sending message to gui");
                 }
                 MessageView::Eos(..) => {
                     let res = self.current_playlist.next_or_eol();
                     match res {
                         None => { 
                             sender.send(GStreamerMessage::Stopped).expect("Message Queue Error");
+                            sender.send(GStreamerMessage::Stopped).expect("Error in gstreamer sending message to gui");
                             },
                         Some(i) => {
                             println!("Next should play");
@@ -153,12 +149,15 @@ impl GStreamerExt for GStreamer {
                                 .set_state(gstreamer::State::Playing)
                                 .into_result()
                                 .expect("Error in changing gstreamer state to playing");
+                                sender.send(GStreamerMessage::Playing).expect("Error in gstreamer sending message to gui");
                         }
                     }
                     println!("Eos found");
                 }
                 _ => (),
             }
+            
+
         }
         gtk::Continue(true)
     }

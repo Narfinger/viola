@@ -61,7 +61,7 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
     let builder = Arc::new(RwLock::new(gtk::Builder::new_from_string(glade_src)));
 
     println!("Building list");
-    let playlist = playlist::playlist_from_directory("/mnt/ssd-media/Musik", &pool);
+    let playlist = playlist::load_playlist_from_directory("/mnt/ssd-media/Musik", &pool);
     println!("Done building list");
 
     let window: gtk::ApplicationWindow = builder.read().unwrap().get_object("mainwindow").unwrap();
@@ -104,28 +104,7 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
             }
         }));
     }
-     
-    let notebook: gtk::Notebook = builder
-        .read()
-        .unwrap()
-        .get_object("playlistNotebook")
-        .unwrap();
-   /*  let plm: playlistmanager::PlaylistManager = playlistmanager::new(
-        notebook,
-        current_playlist.clone(),
-        Rc::new(clone!(current_playlist, gui, pipeline => move |s| {
-            do_gui_gstreamer_action(current_playlist.clone(), gui.clone(), pipeline.clone(), s);
-        })),
-    );
-    */ // building libraryview
-   /*  {
-        //gtk::idle_add(clone!(pool => move || {
-        let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
-        libraryviewstore::connect(pool.clone(), Arc::new(RwLock::new(plm)), &libview);
-        //    Continue(false)
-        //}));
-    }
- */
+
     let libview = libraryviewstore::new(pool.clone(), &builder, gui.clone());
 
     window.maximize();

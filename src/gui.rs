@@ -1,14 +1,10 @@
 //! The main gui parts.
 
-use std::borrow::BorrowMut;
 use std::rc::Rc;
-use std::sync::{Arc, RwLock};
-use std::cell::RefCell;
 use gdk;
 use gdk_pixbuf;
 use gtk;
 use gtk::prelude::*;
-use std;
 
 use gstreamer_wrapper;
 use gstreamer_wrapper::{GStreamer, GStreamerExt, GStreamerAction, GStreamerMessage};
@@ -41,7 +37,7 @@ pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> GuiPtr {
     album_label: builder.read().unwrap().get_object("albumLabel").unwrap(),
     cover: builder.read().unwrap().get_object("coverImage").unwrap(),
     playlist_tabs: pltabs,
-    gstreamer: gst,
+    gstreamer: gst.clone(),
     });
 
     let gc = g.clone();
@@ -66,7 +62,6 @@ pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> GuiPtr {
             gc.page_changed(index);
         });
     }
-
     g
 }
 
@@ -245,7 +240,7 @@ fn populate_model_with_playlist(lp: &LoadedPlaylist) -> gtk::ListStore  {
         gdk::RGBA::static_type(),
     ]);
 
-    for (i, entry) in lp.items.iter().enumerate() {
+    for entry in &lp.items {
     model.insert_with_values(
         None,
         &[0, 1, 2, 3, 4, 5, 6, 7],
