@@ -62,12 +62,12 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
     let builder = Arc::new(RwLock::new(gtk::Builder::new_from_string(glade_src)));
 
     println!("Building list");
-    let playlist = playlist::load_playlist_from_directory("/mnt/ssd-media/Musik", &pool);
+    //let playlist = playlist::load_playlist_from_directory("/mnt/ssd-media/Musik", &pool);
     println!("Done building list");
 
     let window: gtk::ApplicationWindow = builder.read().unwrap().get_object("mainwindow").unwrap();
     //let pipeline = gstreamer_init(current_playlist.clone()).unwrap();
-    let gui = gui::new(&builder, playlist);
+    let gui = gui::new(&builder);
   
     {
         // Play Button
@@ -120,6 +120,10 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
     println!("Showing all");
     window.show_all();
     println!("done showing");
+
+    println!("\n\n\n Current Bugs:");
+    println!("feat. artist are not correctly given");
+    println!("tab close button does not work when we close a different tab then the current one.");
 }
 
 fn main() {

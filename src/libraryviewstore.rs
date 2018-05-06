@@ -27,7 +27,7 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: GuiPtr) {
         .group_by(artist)
         .load(db.deref())
         .expect("Error in db connection");
-
+ 
     let column = gtk::TreeViewColumn::new();
     let cell = gtk::CellRendererText::new();
 

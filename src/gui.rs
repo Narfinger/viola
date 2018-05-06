@@ -26,7 +26,7 @@ pub struct Gui {
 }
 
 /// Constructs a new gui, given a BuilderPtr and a loaded playlist.
-pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> GuiPtr {
+pub fn new(builder: &BuilderPtr) -> GuiPtr {
     let pltabs = playlist_tabs::new();
     let (gst, recv) = gstreamer_wrapper::new(pltabs.clone()).unwrap();
 
@@ -53,7 +53,7 @@ pub fn new(builder: &BuilderPtr, loaded_playlist: LoadedPlaylist) -> GuiPtr {
         gtk::Continue(true)
     });
 
-    g.add_page(loaded_playlist);
+    //g.add_page(loaded_playlist);
 
     {
         let gc = g.clone();
