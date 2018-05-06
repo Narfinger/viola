@@ -20,6 +20,7 @@ pub mod gstreamer_wrapper;
 pub mod libraryviewstore;
 pub mod playlist;
 pub mod playlist_tabs;
+pub mod playlist_manager;
 pub mod schema;
 pub mod types;
 
@@ -106,6 +107,7 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
     }
 
     let libview = libraryviewstore::new(pool.clone(), &builder, gui.clone());
+    let plmview = playlist_manager::new(pool.clone(), &builder, gui.clone());
 
     window.maximize();
     window.set_application(application);

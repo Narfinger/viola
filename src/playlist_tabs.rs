@@ -17,7 +17,14 @@ pub struct PlaylistTabs {
     pub tabs: Vec<PlaylistTab>,
 }
 
+impl Drop for PlaylistTabs {
+    fn drop(&mut self) {
+        panic!("implemente saving");
+    }
+}
+
 pub fn new() -> PlaylistTabsPtr {
+    println!("implemente restoring");
     Rc::new(
         RefCell::new(
             PlaylistTabs { current_playlist: None, tabs: Vec::new() }
