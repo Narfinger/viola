@@ -8,6 +8,7 @@ use gtk::prelude::*;
 
 use gstreamer_wrapper;
 use gstreamer_wrapper::{GStreamer, GStreamerExt, GStreamerAction, GStreamerMessage};
+use playlist;
 use loaded_playlist::LoadedPlaylist;
 use playlist_tabs;
 use playlist_tabs::PlaylistTabsExt;
@@ -16,28 +17,30 @@ use types::*;
 /// Gui is the main struct for calling things on the gui or in the gstreamer. It will take care that
 /// everything is the correct state. You should probably interface it with a GuiPtr.
 pub struct Gui {
+    pool: DBPool,
     notebook: gtk::Notebook,
     title_label: gtk::Label,
     artist_label: gtk::Label,
     album_label: gtk::Label,
     cover: gtk::Image,
-    playlist_tabs: PlaylistTabsPtr,
+    pub playlist_tabs: PlaylistTabsPtr,
     gstreamer: Rc<GStreamer>,
 }
 
 /// Constructs a new gui, given a BuilderPtr and a loaded playlist.
-pub fn new(builder: &BuilderPtr) -> GuiPtr {
+pub fn new(pool: &DBPool, builder: &BuilderPtr) -> GuiPtr {
     let pltabs = playlist_tabs::new();
     let (gst, recv) = gstreamer_wrapper::new(pltabs.clone()).unwrap();
 
     let g = Rc::new(Gui {
-    notebook: builder.read().unwrap().get_object("playlistNotebook").unwrap(),
-    title_label: builder.read().unwrap().get_object("titleLabel").unwrap(),
-    artist_label: builder.read().unwrap().get_object("artistLabel").unwrap(),
-    album_label: builder.read().unwrap().get_object("albumLabel").unwrap(),
-    cover: builder.read().unwrap().get_object("coverImage").unwrap(),
-    playlist_tabs: pltabs,
-    gstreamer: gst.clone(),
+        pool: pool.clone(),
+        notebook: builder.read().unwrap().get_object("playlistNotebook").unwrap(),
+        title_label: builder.read().unwrap().get_object("titleLabel").unwrap(),
+        artist_label: builder.read().unwrap().get_object("artistLabel").unwrap(),
+        album_label: builder.read().unwrap().get_object("albumLabel").unwrap(),
+        cover: builder.read().unwrap().get_object("coverImage").unwrap(),
+        playlist_tabs: pltabs,
+        gstreamer: gst.clone(),
     });
 
     let gc = g.clone();
@@ -62,6 +65,7 @@ pub fn new(builder: &BuilderPtr) -> GuiPtr {
             gc.page_changed(index);
         });
     }
+
     g
 }
 

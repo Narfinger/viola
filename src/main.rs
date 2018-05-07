@@ -30,7 +30,7 @@ use gtk::prelude::*;
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use gui::{GuiExt};
+use gui::{GuiExt, GuiPtrExt};
 use gstreamer_wrapper::GStreamerAction;
 
 use types::*;
@@ -67,7 +67,7 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
 
     let window: gtk::ApplicationWindow = builder.read().unwrap().get_object("mainwindow").unwrap();
     //let pipeline = gstreamer_init(current_playlist.clone()).unwrap();
-    let gui = gui::new(&builder);
+    let gui = gui::new(&pool, &builder);
   
     {
         // Play Button
@@ -112,14 +112,21 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
     window.maximize();
     window.set_application(application);
     window.set_title("Viola");
-    window.connect_delete_event(clone!(window => move |_, _| {
+    window.connect_delete_event(clone!(window, gui, pool => move |_, _| {
+        playlist::clear_tabs(&pool);
+        let playlisttabs = &gui.playlist_tabs.borrow().tabs;
+        for pl in playlisttabs.into_iter().map(|ref t| &t.lp) {
+            playlist::update_playlist(&pool, &pl);
+        }
         window.destroy();
         Inhibit(false)
     }));
 
-    println!("Showing all");
     window.show_all();
-    println!("done showing");
+    println!("Restoring tabs");
+    for pl in playlist::restore_playlists(&pool).expect("Error in database (restoring tabs)") {
+        gui.add_page(pl);
+    }
 
     println!("\n\n\n Current Bugs:");
     println!("tab close button does not work when we close a different tab then the current one.");

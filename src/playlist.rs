@@ -87,6 +87,17 @@ pub fn restore_playlists(pool: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::r
         .collect()
 }
 
+pub fn clear_tabs(pool: &DBPool) {
+    use diesel;
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+    use schema::playlists::dsl::*;
+    use schema::playlisttracks::dsl::*;
+
+    let db = pool.get().unwrap();
+    diesel::delete(playlists).execute(db.deref());
+    diesel::delete(playlisttracks).execute(db.deref());
+}
+
 pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
     use diesel;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
@@ -139,7 +150,7 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
             .map_err(|_| "Insertion Error".into());
         */
     }
-    panic!("fix playlist");
+    //panic!("fix playlist");
 }
 
 pub fn load_playlist_from_directory(folder: &str, pool: &DBPool) -> LoadedPlaylist {
