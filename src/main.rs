@@ -122,7 +122,6 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
     println!("done showing");
 
     println!("\n\n\n Current Bugs:");
-    println!("feat. artist are not correctly given");
     println!("tab close button does not work when we close a different tab then the current one.");
 }
 
