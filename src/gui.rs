@@ -23,7 +23,7 @@ pub struct Gui {
     artist_label: gtk::Label,
     album_label: gtk::Label,
     cover: gtk::Image,
-    pub playlist_tabs: PlaylistTabsPtr,
+    playlist_tabs: PlaylistTabsPtr,
     gstreamer: Rc<GStreamer>,
 }
 
@@ -75,6 +75,7 @@ pub trait GuiExt {
     //fn get_active_treeview(&self) -> &gtk::TreeView;
     fn update_gui(&self, &PlayerStatus); //does not need pipeline
     fn set_playback(&self, &GStreamerAction);
+    fn save(&self, &DBPool);
 }
 
 impl GuiExt for Gui {
@@ -130,6 +131,10 @@ impl GuiExt for Gui {
     fn set_playback(&self, status: &GStreamerAction) {
         self.gstreamer.do_gstreamer_action(status);
     }
+
+    fn save(&self, pool: &DBPool) {
+        self.playlist_tabs.borrow().save(pool);
+    }
 }
 
 /// Trait for all functions that need a GuiPtr instead of just a gui. This is different to GuiExt, as these
@@ -139,6 +144,7 @@ pub trait GuiPtrExt {
     fn page_changed(&self, u32);
     fn add_page(&self, LoadedPlaylist);
     fn delete_page(&self, u32);
+    fn restore(&self, &DBPool);
 }
 
 impl GuiPtrExt for GuiPtr {
@@ -185,6 +191,12 @@ impl GuiPtrExt for GuiPtr {
         self.notebook.remove_page(Some(index));
         if let Some(i) = (*self.playlist_tabs).borrow_mut().remove(index as i32) {
             self.page_changed(i as u32);
+        }
+    }
+
+    fn restore(&self, pool: &DBPool) {
+        for lp in playlist::restore_playlists(pool).expect("Error restoring playlisttabs") {
+            self.add_page(lp);
         }
     }
 }

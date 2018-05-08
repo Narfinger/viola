@@ -113,20 +113,14 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
     window.set_application(application);
     window.set_title("Viola");
     window.connect_delete_event(clone!(window, gui, pool => move |_, _| {
-        playlist::clear_tabs(&pool);
-        let playlisttabs = &gui.playlist_tabs.borrow().tabs;
-        for pl in playlisttabs.into_iter().map(|ref t| &t.lp) {
-            playlist::update_playlist(&pool, &pl);
-        }
+        gui.save(&pool);       
         window.destroy();
         Inhibit(false)
     }));
 
     window.show_all();
     println!("Restoring tabs");
-    for pl in playlist::restore_playlists(&pool).expect("Error in database (restoring tabs)") {
-        gui.add_page(pl);
-    }
+    gui.restore(&pool);
 
     println!("\n\n\n Current Bugs:");
     println!("tab close button does not work when we close a different tab then the current one.");

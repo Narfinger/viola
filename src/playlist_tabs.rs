@@ -4,6 +4,7 @@ use std::cell::RefCell;
 
 use db;
 use loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
+use playlist;
 use types::*;
 
 #[derive(Clone,Debug)]
@@ -38,6 +39,7 @@ pub trait PlaylistTabsExt {
     fn set_current_playlist(&mut self, i32);
     fn add(&mut self, PlaylistTab);
     fn remove(&mut self, i32) -> Option<i32>;
+    fn save(&self, &DBPool);
 }
 
 impl PlaylistTabsExt for PlaylistTabs {
@@ -67,6 +69,12 @@ impl PlaylistTabsExt for PlaylistTabs {
             Some(0)
         } else {
             None
+        }
+    }
+
+    fn save(&self, pool: &DBPool) {
+        for lp in &self.tabs {
+            playlist::update_playlist(pool, &lp.lp);
         }
     }
 }
