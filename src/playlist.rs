@@ -89,13 +89,13 @@ pub fn restore_playlists(pool: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::r
 
 pub fn clear_tabs(pool: &DBPool) {
     use diesel;
-    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+    use diesel::RunQueryDsl;
     use schema::playlists::dsl::*;
     use schema::playlisttracks::dsl::*;
 
     let db = pool.get().unwrap();
-    diesel::delete(playlists).execute(db.deref());
-    diesel::delete(playlisttracks).execute(db.deref());
+    diesel::delete(playlists).execute(db.deref()).expect("Error in deleting");
+    diesel::delete(playlisttracks).execute(db.deref()).expect("Error in deleting");
 }
 
 pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {

@@ -9,7 +9,7 @@ pub struct LoadedPlaylist {
 }
 
 pub trait LoadedPlaylistExt {
-    fn get_current_track<'a>(&'a self) -> &'a Track;
+    fn get_current_track(&self) -> &Track;
 }
 
 impl LoadedPlaylistExt for LoadedPlaylist {

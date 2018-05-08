@@ -53,7 +53,7 @@ macro_rules! clone {
 }
 
 
-fn build_gui(application: &gtk::Application, pool: DBPool) {
+fn build_gui(application: &gtk::Application, pool: &DBPool) {
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
         return;
@@ -67,7 +67,7 @@ fn build_gui(application: &gtk::Application, pool: DBPool) {
 
     let window: gtk::ApplicationWindow = builder.read().unwrap().get_object("mainwindow").unwrap();
     //let pipeline = gstreamer_init(current_playlist.clone()).unwrap();
-    let gui = gui::new(&pool, &builder);
+    let gui = gui::new(&builder);
   
     {
         // Play Button
@@ -147,9 +147,9 @@ fn main() {
             gtk::Application::new("com.github.narfinger.viola", gio::ApplicationFlags::empty())
                 .expect("Initialization failed...");
         application.connect_startup(move |app| {
-            build_gui(app, pool.clone());
+            build_gui(app, &pool);
         });
         application.connect_activate(|_| {});
-        application.run(&vec![]);
+        application.run(&[]);
     }
 }

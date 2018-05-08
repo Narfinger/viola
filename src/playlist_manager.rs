@@ -13,9 +13,6 @@ pub struct PlaylistManager {
 }
 
 pub fn new(pool: DBPool, builder: &BuilderPtr, gui: GuiPtr) {
-    use diesel::{GroupByDsl, QueryDsl, RunQueryDsl};
-    use schema::tracks::dsl::*;
-
     let plview: gtk::TreeView = builder.read().unwrap().get_object("playlistmanagerview").unwrap();
 
     let column = gtk::TreeViewColumn::new();
@@ -46,7 +43,7 @@ fn signalhandler(pool: &DBPool, gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::E
 }
 
 fn add_playlist(pool: &DBPool, index: i32) -> LoadedPlaylist {
-    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+    use diesel::{QueryDsl, RunQueryDsl};
     use schema::tracks::dsl::*;
     
     println!("You selected index: {}", index);

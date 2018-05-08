@@ -49,9 +49,8 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: GuiPtr) {
 }
 
 fn signalhandler(pool: &DBPool, gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) {
-    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, debug_query};
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     use schema::tracks::dsl::*;
-    use diesel;
 
     if event.get_event_type() == gdk::EventType::DoubleButtonPress {
         if let Ok(b) = event.clone().downcast::<gdk::EventButton>() {
