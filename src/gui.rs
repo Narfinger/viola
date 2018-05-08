@@ -152,7 +152,6 @@ impl GuiPtrExt for GuiPtr {
     }
 
     fn add_page(&self, lp: LoadedPlaylist) {
-        println!("added thingies");
         let tv = create_populated_treeview(&self, &lp);
         let scw = gtk::ScrolledWindow::new(None, None);
         scw.add(&tv);
@@ -186,10 +185,8 @@ impl GuiPtrExt for GuiPtr {
     }
 
     fn delete_page(&self, index: u32) {
+        (*self.playlist_tabs).borrow_mut().remove(index as i32);
         self.notebook.remove_page(Some(index));
-        if let Some(i) = (*self.playlist_tabs).borrow_mut().remove(index as i32) {
-            self.page_changed(i as u32);
-        }
     }
 
     fn restore(&self, pool: &DBPool) {
