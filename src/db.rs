@@ -90,7 +90,7 @@ fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
     if let Ok(ataglib) = taglibfile {
         let tags = ataglib
             .tag()
-            .unwrap_or_else(|_| panic!(format!("Could not read tags for: {}", s)));
+            .unwrap_or_else(|e| panic!(format!("Could not read tags for: {}. {:?}", s, e)));
         let properties = ataglib
             .audioproperties()
             .unwrap_or_else(|_| panic!(format!("Could not find audio properties for: {}", s)));

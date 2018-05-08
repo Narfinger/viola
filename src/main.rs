@@ -61,13 +61,9 @@ fn build_gui(application: &gtk::Application, pool: &DBPool) {
     let glade_src = include_str!("../ui/main.glade");
     let builder = Arc::new(RwLock::new(gtk::Builder::new_from_string(glade_src)));
 
-    println!("Building list");
-    //let playlist = playlist::load_playlist_from_directory("/mnt/ssd-media/Musik", &pool);
-    println!("Done building list");
-
     let window: gtk::ApplicationWindow = builder.read().unwrap().get_object("mainwindow").unwrap();
     //let pipeline = gstreamer_init(current_playlist.clone()).unwrap();
-    let gui = gui::new(&builder);
+    let gui = gui::new(&pool, &builder);
   
     {
         // Play Button

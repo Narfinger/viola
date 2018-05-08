@@ -87,17 +87,6 @@ pub fn restore_playlists(pool: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::r
         .collect()
 }
 
-pub fn clear_tabs(pool: &DBPool) {
-    use diesel;
-    use diesel::RunQueryDsl;
-    use schema::playlists::dsl::*;
-    use schema::playlisttracks::dsl::*;
-
-    let db = pool.get().unwrap();
-    diesel::delete(playlists).execute(db.deref()).expect("Error in deleting");
-    diesel::delete(playlisttracks).execute(db.deref()).expect("Error in deleting");
-}
-
 pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
     use diesel;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
@@ -112,6 +101,7 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
             .execute(db.deref())
             .expect("Error in playlist update");
     }
+    
     let playlist: Playlist = if let Some(id) = pl.id {
         playlists
             .find(id)
@@ -131,26 +121,38 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
             .first(db.deref())
             .expect("DB Erorr")
     };
-    // the playlist is not in the database
-    for (index, track) in pl.items.iter().enumerate() {
-        let t = vec![NewPlaylistTrack {
+
+    //deleting the old tracks
+    diesel::delete(playlisttracks).filter(playlist_id.eq(playlist.id)).execute(db.deref());
+    //inserting new tracks
+
+    println!("starting to gather");
+    let vals = pl.items.iter().enumerate().map(|(index, track)| {
+        NewPlaylistTrack {
             playlist_id: playlist.id,
             track_id: track.id,
             playlist_order: index as i32,
-        }];
-        diesel::insert_into(playlisttracks)
-            .values(&t)
-            .execute(db.deref())
-            .expect("Database error");
+        }
+    }).collect::<Vec<NewPlaylistTrack>>();
+    println!("collected and inserting");
+    diesel::insert_into(playlisttracks)
+        .values(&vals)
+        .execute(db.deref())
+        .expect("Database error");
+    println!("done");
+}
 
-        /*diesel::insert_into(playlisttracks::table)
-            .values(&t)
-            .execute(db.deref())
-            .map(|_| ())
-            .map_err(|_| "Insertion Error".into());
-        */
-    }
-    //panic!("fix playlist");
+pub fn delete_with_id(pool: &DBPool, index: i32) {
+    use schema;
+    use diesel;
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+    use schema::playlists::dsl::*;
+    use schema::playlisttracks::dsl::*;
+
+    let db = pool.get().unwrap();
+
+    diesel::delete(playlists).filter(schema::playlists::dsl::id.eq(index)).execute(db.deref());
+    diesel::delete(playlisttracks).filter(playlist_id.eq(index)).execute(db.deref());
 }
 
 pub fn load_playlist_from_directory(folder: &str, pool: &DBPool) -> LoadedPlaylist {

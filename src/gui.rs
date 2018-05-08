@@ -17,6 +17,7 @@ use types::*;
 /// Gui is the main struct for calling things on the gui or in the gstreamer. It will take care that
 /// everything is the correct state. You should probably interface it with a GuiPtr.
 pub struct Gui {
+    pool: DBPool,
     notebook: gtk::Notebook,
     title_label: gtk::Label,
     artist_label: gtk::Label,
@@ -27,11 +28,12 @@ pub struct Gui {
 }
 
 /// Constructs a new gui, given a BuilderPtr and a loaded playlist.
-pub fn new(builder: &BuilderPtr) -> GuiPtr {
+pub fn new(pool: &DBPool, builder: &BuilderPtr) -> GuiPtr {
     let pltabs = playlist_tabs::new();
     let (gst, recv) = gstreamer_wrapper::new(pltabs.clone()).unwrap();
 
     let g = Rc::new(Gui {
+        pool: pool.clone(),
         notebook: builder.read().unwrap().get_object("playlistNotebook").unwrap(),
         title_label: builder.read().unwrap().get_object("titleLabel").unwrap(),
         artist_label: builder.read().unwrap().get_object("artistLabel").unwrap(),
@@ -185,8 +187,12 @@ impl GuiPtrExt for GuiPtr {
     }
 
     fn delete_page(&self, index: u32) {
+        let db_id = (*self.playlist_tabs).borrow().id(index as i32);
         (*self.playlist_tabs).borrow_mut().remove(index as i32);
         self.notebook.remove_page(Some(index));
+
+        //deleting in database
+        playlist::delete_with_id(&self.pool, index as i32);
     }
 
     fn restore(&self, pool: &DBPool) {
