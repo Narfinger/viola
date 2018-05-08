@@ -190,9 +190,11 @@ impl GuiPtrExt for GuiPtr {
         let db_id = (*self.playlist_tabs).borrow().id(index as i32);
         (*self.playlist_tabs).borrow_mut().remove(index as i32);
         self.notebook.remove_page(Some(index));
-
+        println!("deleting the page");
         //deleting in database
-        playlist::delete_with_id(&self.pool, index as i32);
+        if let Some(i) = db_id {
+            playlist::delete_with_id(&self.pool, i as i32);
+        }
     }
 
     fn restore(&self, pool: &DBPool) {

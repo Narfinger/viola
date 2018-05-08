@@ -151,10 +151,13 @@ pub fn delete_with_id(pool: &DBPool, index: i32) {
 
     let db = pool.get().unwrap();
 
+    println!("index for deleting: {}", index);
+
     diesel::delete(playlists).filter(schema::playlists::dsl::id.eq(index)).execute(db.deref());
     diesel::delete(playlisttracks).filter(playlist_id.eq(index)).execute(db.deref());
 }
 
+/*
 pub fn load_playlist_from_directory(folder: &str, pool: &DBPool) -> LoadedPlaylist {
     use diesel::QueryDsl;
     use diesel::RunQueryDsl;
@@ -176,3 +179,4 @@ pub fn load_playlist_from_directory(folder: &str, pool: &DBPool) -> LoadedPlayli
         current_position: 0,
     }
 }
+*/
