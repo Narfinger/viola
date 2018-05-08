@@ -121,9 +121,12 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
             .first(db.deref())
             .expect("DB Erorr")
     };
-
-    //deleting the old tracks
-    diesel::delete(playlisttracks).filter(playlist_id.eq(playlist.id)).execute(db.deref());
+    
+    //deleting old tracks
+    diesel::delete(playlisttracks)
+        .filter(playlist_id.eq(playlist.id))
+        .execute(db.deref())
+        .expect("Error in database deletion");
     //inserting new tracks
 
     println!("starting to gather");
@@ -153,8 +156,15 @@ pub fn delete_with_id(pool: &DBPool, index: i32) {
 
     println!("index for deleting: {}", index);
 
-    diesel::delete(playlists).filter(schema::playlists::dsl::id.eq(index)).execute(db.deref());
-    diesel::delete(playlisttracks).filter(playlist_id.eq(index)).execute(db.deref());
+    diesel::delete(playlists)
+        .filter(schema::playlists::dsl::id.eq(index))
+        .execute(db.deref())
+        .expect("Error in database deletion");
+    
+    diesel::delete(playlisttracks)
+        .filter(playlist_id.eq(index))
+        .execute(db.deref())
+        .expect("Error in database deletion");
 }
 
 /*

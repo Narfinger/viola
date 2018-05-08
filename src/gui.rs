@@ -96,7 +96,7 @@ impl GuiExt for Gui {
                 let index = self.playlist_tabs.borrow().current_position();
                 let mut ipath = gtk::TreePath::new();
                 ipath.append_index(index as i32);
-                treeselection.select_path(&ipath);
+                //treeselection.select_path(&ipath);
 
                 //update track display
                 let tabs = self.playlist_tabs.borrow();
@@ -117,12 +117,15 @@ impl GuiExt for Gui {
                 }
 
                 //highlight row
+                let pos = self.playlist_tabs.borrow().current_position();
                 let model: gtk::ListStore = treeview.get_model().unwrap().downcast::<gtk::ListStore>().unwrap();
-                let (_, selection) = treeselection.get_selected().unwrap();
+                let path = gtk::TreePath::new_from_indicesv(&[pos, 7]);
+                let treeiter = model.get_iter(&path).unwrap();
+                //let (_, selection) = treeselection.get_selected().unwrap();
                 println!("doing color");
-                let color = gdk::RGBA { red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0};
+                let color = gdk::RGBA { red: 0.6, green: 0.0, blue: 0.3, alpha: 0.6};
                 let c = gdk_pixbuf::Value::from(&color);
-                model.set_value(&selection, 7, &c);
+                model.set_value(&treeiter, 7, &c);
             }
             _ => {}
         }
