@@ -8,7 +8,7 @@ use gtk;
 use gtk::prelude::*;
 
 use gstreamer_wrapper;
-use gstreamer_wrapper::{GStreamer, GStreamerExt, GStreamerAction, GStreamerMessage};
+use gstreamer_wrapper::{GStreamer, GStreamerExt, GStreamerAction};
 use playlist;
 use loaded_playlist::LoadedPlaylist;
 use playlist_tabs;
@@ -185,7 +185,9 @@ impl GuiPtrExt for GuiPtr {
         scw.add(&tv);
         let label = gtk::Label::new(Some(lp.name.as_str()));
 
-        let button = gtk::ToolButton::new_from_stock("window-close");
+        ///FIXME we should use one of the enum but it doesn't exist yet?
+        let icon = gtk::Image::new_from_icon_name("window-close", 32);
+        let button = gtk::ToolButton::new(&icon,"");
         button.set_icon_name("window-close");
         button.show();
 
