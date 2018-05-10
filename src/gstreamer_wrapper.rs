@@ -22,6 +22,7 @@ impl Drop for GStreamer {
 }
 
 pub enum GStreamerMessage {
+    Pausing,
     Stopped,
     Playing,
 }
@@ -110,7 +111,9 @@ impl GStreamerExt for GStreamer {
                 GStreamerAction::Playing | GStreamerAction::Previous | GStreamerAction::Next | GStreamerAction::Play(_) => {
                 self.sender.send(GStreamerMessage::Playing).expect("Error in gstreamer sending message to gui");
                 }
-                GStreamerAction::Pausing => {}
+                GStreamerAction::Pausing => {
+                    self.sender.send(GStreamerMessage::Pausing).expect("Error in gstreamer sending message to gui");
+                }
             }
             self.pipeline.set_state(gstreamer_action)
                 .into_result()

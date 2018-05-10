@@ -1,6 +1,7 @@
 //! The main gui parts.
 
 use std::rc::Rc;
+use std::cell::RefCell;
 use gdk;
 use gdk_pixbuf;
 use gtk;
@@ -22,7 +23,9 @@ pub struct Gui {
     title_label: gtk::Label,
     artist_label: gtk::Label,
     album_label: gtk::Label,
+    status_label: gtk::Label,
     cover: gtk::Image,
+    last_marked: RefCell<Option<gtk::TreeIter>>,
     playlist_tabs: PlaylistTabsPtr,
     gstreamer: Rc<GStreamer>,
 }
@@ -38,7 +41,9 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> GuiPtr {
         title_label: builder.read().unwrap().get_object("titleLabel").unwrap(),
         artist_label: builder.read().unwrap().get_object("artistLabel").unwrap(),
         album_label: builder.read().unwrap().get_object("albumLabel").unwrap(),
+        status_label: builder.read().unwrap().get_object("statusLabel").unwrap(),
         cover: builder.read().unwrap().get_object("coverImage").unwrap(),
+        last_marked: RefCell::new(None),
         playlist_tabs: pltabs,
         gstreamer: gst.clone(),
     });
@@ -47,11 +52,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> GuiPtr {
     gtk::timeout_add(250, move || {
         //println!("trying to get channel");
         if let Ok(t) = recv.try_recv() {
-            //println!("updating gui");
-            match t {
-                GStreamerMessage::Stopped => gc.update_gui(&PlayerStatus::Stopped),
-                GStreamerMessage::Playing => gc.update_gui(&PlayerStatus::Playing),
-            }
+            gc.update_gui(&t.into());
         }
         gtk::Continue(true)
     });
@@ -105,6 +106,7 @@ impl GuiExt for Gui {
                     self.title_label.set_markup(&track.title);
                     self.artist_label.set_markup(&track.artist);
                     self.album_label.set_markup(&track.album);
+                    self.status_label.set_markup("Playing");
                     if let Some(ref p) = track.albumpath {
                         if let Ok(ref pp) = gdk_pixbuf::Pixbuf::new_from_file_at_size(p,300,300) {
                             self.cover.set_from_pixbuf(pp);
@@ -124,11 +126,30 @@ impl GuiExt for Gui {
                     //let (_, selection) = treeselection.get_selected().unwrap();
                     println!("doing color");
                     println!("this does not reset the colors of the other things");
+                    println!("Resetting the other color");
+                    {
+                        let cell = self.last_marked.borrow();
+                        if let Some(ref previous_row) = *cell {
+                            let color = gdk::RGBA {red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0};
+                            let c = gdk_pixbuf::Value::from(&color);
+                            model.set_value(&previous_row, 7, &c);
+                        }
+                    }
                     let color = gdk::RGBA { red: 0.6, green: 0.0, blue: 0.3, alpha: 0.6};
                     let c = gdk_pixbuf::Value::from(&color);
                     model.set_value(&treeiter, 7, &c);
+
+                    *self.last_marked.borrow_mut() = Some(treeiter);                    
                 }
-                _ => {}
+                PlayerStatus::Paused => {
+                    self.status_label.set_markup("Paused");
+                }
+                PlayerStatus::Stopped => {
+                    self.title_label.set_markup("");
+                    self.artist_label.set_markup("");
+                    self.album_label.set_markup("");
+                    self.status_label.set_markup("Playing");
+                }
             }
         }
     }

@@ -10,6 +10,7 @@ use std::cell::RefCell;
 
 use gui::Gui;
 use playlist_tabs::PlaylistTabs;
+use gstreamer_wrapper::GStreamerMessage;
 
 pub type BuilderPtr = Arc<RwLock<Builder>>;
 pub type GstreamerPipeline = Arc<RwLock<Element>>;
@@ -22,4 +23,14 @@ pub enum PlayerStatus {
     Playing,
     Paused,
     Stopped,
+}
+
+impl From<GStreamerMessage> for PlayerStatus {
+    fn from(item: GStreamerMessage) -> Self {
+        match item {
+            GStreamerMessage::Pausing => PlayerStatus::Paused,
+            GStreamerMessage::Stopped => PlayerStatus::Stopped,
+            GStreamerMessage::Playing => PlayerStatus::Playing,
+        }
+    }
 }
