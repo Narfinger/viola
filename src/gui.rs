@@ -87,47 +87,49 @@ impl GuiExt for Gui {
 
     /// General purpose function to update the GuiPtr on any change
     fn update_gui(&self, status: &PlayerStatus) {
-        let cur_page = self.notebook.get_current_page().unwrap();
-        let treeview = &self.playlist_tabs.borrow().tabs[cur_page as usize].treeview;
-        let treeselection = treeview.get_selection();
-        match *status {
-            PlayerStatus::Playing => {
-                //if state == gstreamer::State::Paused || state == gstreamer::State::Playing {
-                let index = self.playlist_tabs.borrow().current_position();
-                let mut ipath = gtk::TreePath::new();
-                ipath.append_index(index as i32);
-                //treeselection.select_path(&ipath);
+        if let Some(cur_page) = self.notebook.get_current_page() {
+            let treeview = &self.playlist_tabs.borrow().tabs[cur_page as usize].treeview;
+            //let treeselection = treeview.get_selection();
+            match *status {
+                PlayerStatus::Playing => {
+                    //if state == gstreamer::State::Paused || state == gstreamer::State::Playing {
+                    let index = self.playlist_tabs.borrow().current_position();
+                    let mut ipath = gtk::TreePath::new();
+                    ipath.append_index(index as i32);
+                    //treeselection.select_path(&ipath);
 
-                //update track display
-                let tabs = self.playlist_tabs.borrow();
-                let track = &tabs.current_track();
+                    //update track display
+                    let tabs = self.playlist_tabs.borrow();
+                    let track = &tabs.current_track();
 
-                self.title_label.set_markup(&track.title);
-                self.artist_label.set_markup(&track.artist);
-                self.album_label.set_markup(&track.album);
-                if let Some(ref p) = track.albumpath {
-                    if let Ok(ref pp) = gdk_pixbuf::Pixbuf::new_from_file_at_size(p,300,300) {
-                        self.cover.set_from_pixbuf(pp);
+                    self.title_label.set_markup(&track.title);
+                    self.artist_label.set_markup(&track.artist);
+                    self.album_label.set_markup(&track.album);
+                    if let Some(ref p) = track.albumpath {
+                        if let Ok(ref pp) = gdk_pixbuf::Pixbuf::new_from_file_at_size(p,300,300) {
+                            self.cover.set_from_pixbuf(pp);
+                        } else {
+                            println!("error creating pixbuf");
+                        }
+
                     } else {
-                        println!("error creating pixbuf");
+                        self.cover.clear();
                     }
 
-                } else {
-                    self.cover.clear();
+                    //highlight row
+                    let pos = self.playlist_tabs.borrow().current_position();
+                    let model: gtk::ListStore = treeview.get_model().unwrap().downcast::<gtk::ListStore>().unwrap();
+                    let path = gtk::TreePath::new_from_indicesv(&[pos, 7]);
+                    let treeiter = model.get_iter(&path).unwrap();
+                    //let (_, selection) = treeselection.get_selected().unwrap();
+                    println!("doing color");
+                    println!("this does not reset the colors of the other things");
+                    let color = gdk::RGBA { red: 0.6, green: 0.0, blue: 0.3, alpha: 0.6};
+                    let c = gdk_pixbuf::Value::from(&color);
+                    model.set_value(&treeiter, 7, &c);
                 }
-
-                //highlight row
-                let pos = self.playlist_tabs.borrow().current_position();
-                let model: gtk::ListStore = treeview.get_model().unwrap().downcast::<gtk::ListStore>().unwrap();
-                let path = gtk::TreePath::new_from_indicesv(&[pos, 7]);
-                let treeiter = model.get_iter(&path).unwrap();
-                //let (_, selection) = treeselection.get_selected().unwrap();
-                println!("doing color");
-                let color = gdk::RGBA { red: 0.6, green: 0.0, blue: 0.3, alpha: 0.6};
-                let c = gdk_pixbuf::Value::from(&color);
-                model.set_value(&treeiter, 7, &c);
+                _ => {}
             }
-            _ => {}
         }
     }
 

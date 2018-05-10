@@ -12,6 +12,7 @@ use types::*;
 pub struct GStreamer {
     pipeline: gstreamer::Element,
     current_playlist: PlaylistTabsPtr,
+    sender: Sender<GStreamerMessage>,
 }
 
 impl Drop for GStreamer {
@@ -31,11 +32,11 @@ pub fn new(current_playlist: PlaylistTabsPtr) -> Result<(Rc<GStreamer>, Receiver
         gstreamer::parse_launch("playbin").map_err(|_| String::from("Cannot do gstreamer"))?;
 
     let (tx, rx) = channel::<GStreamerMessage>();
-    let res = Rc::new(GStreamer { pipeline, current_playlist });
+    let res = Rc::new(GStreamer { pipeline, current_playlist, sender: tx });
 
     let resc = res.clone();
     gtk::timeout_add(500, move || {
-        resc.gstreamer_message_handler(tx.clone())
+        resc.gstreamer_message_handler()
     });
     Ok((res, rx))
 }
@@ -53,7 +54,7 @@ pub enum GStreamerAction {
 
 pub trait GStreamerExt {
     fn do_gstreamer_action(&self, &GStreamerAction);
-    fn gstreamer_message_handler(&self, Sender<GStreamerMessage>) -> gtk::Continue;
+    fn gstreamer_message_handler(&self) -> gtk::Continue;
 }
 
 impl GStreamerExt for GStreamer {
@@ -104,6 +105,13 @@ impl GStreamerExt for GStreamer {
                         .expect("Error in chaning url");
                 }
             }
+
+            match *action {
+                GStreamerAction::Playing | GStreamerAction::Previous | GStreamerAction::Next | GStreamerAction::Play(_) => {
+                self.sender.send(GStreamerMessage::Playing).expect("Error in gstreamer sending message to gui");
+                }
+                GStreamerAction::Pausing => {}
+            }
             self.pipeline.set_state(gstreamer_action)
                 .into_result()
                 .expect("Error in setting gstreamer state playing");
@@ -111,7 +119,7 @@ impl GStreamerExt for GStreamer {
     }
 
     /// poll the message bus and on eos start new
-    fn gstreamer_message_handler(&self, sender: Sender<GStreamerMessage>) -> gtk::Continue {
+    fn gstreamer_message_handler(&self) -> gtk::Continue {
         let bus = self.pipeline.get_bus().unwrap();
         if let Some(msg) = bus.pop() {
             use gstreamer::MessageView;
@@ -126,14 +134,14 @@ impl GStreamerExt for GStreamer {
                         state_changed.get_old(),
                         state_changed.get_current()
                     );
-                    sender.send(GStreamerMessage::Playing).expect("Error in gstreamer sending message to gui");
+                    //sender.send(GStreamerMessage::Playing).expect("Error in gstreamer sending message to gui");
                 }
                 MessageView::Eos(..) => {
                     let res = self.current_playlist.next_or_eol();
                     match res {
                         None => { 
-                            sender.send(GStreamerMessage::Stopped).expect("Message Queue Error");
-                            sender.send(GStreamerMessage::Stopped).expect("Error in gstreamer sending message to gui");
+                            self.sender.send(GStreamerMessage::Stopped).expect("Message Queue Error");
+                            self.sender.send(GStreamerMessage::Stopped).expect("Error in gstreamer sending message to gui");
                             },
                         Some(i) => {
                             println!("Next should play");
@@ -148,7 +156,7 @@ impl GStreamerExt for GStreamer {
                                 .set_state(gstreamer::State::Playing)
                                 .into_result()
                                 .expect("Error in changing gstreamer state to playing");
-                                sender.send(GStreamerMessage::Playing).expect("Error in gstreamer sending message to gui");
+                            self.sender.send(GStreamerMessage::Playing).expect("Error in gstreamer sending message to gui");
                         }
                     }
                     println!("Eos found");
