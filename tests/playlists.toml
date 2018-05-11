@@ -1,9 +1,10 @@
-[[playlist]]
+test = ""
+[[smartplaylist]]
 name = "Test1"
 dir_exclude = ["test1", "test2"]
 dir_include = ["1a - Test"]
 
-[[playlist]]
+[[smartplaylist]]
 name = "Test2"
 dir_exclude = []
 dir_include = []

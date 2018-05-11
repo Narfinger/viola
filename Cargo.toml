@@ -5,7 +5,7 @@ authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 
 [dependencies]
 clap = "2.31"                    # A simple to use, efficient, and full featured  Command Line Argument Parser 
-diesel = { version = "1.1", features = ["sqlite"] }
+diesel = { version = "1.2", features = ["sqlite"] }
 error-chain = "0.11"
 indicatif = "0.9"    # A progress bar and cli reporting library for Rust
 taglib = {git = "https://github.com/ebassi/taglib-rust.git", rev="513dabf"}        # Rust bindings for TagLib   
@@ -17,6 +17,8 @@ preferences = "1.1"         # Read and write user-specific application data (in 
 rayon = "1.0"               # Simple work-stealing parallelism for Rust   
 r2d2 = "0.8"                # A generic connection pool
 r2d2-diesel = "1.0"      # r2d2 support for Diesel
+serde_derive = "1.0"                   # Macros 1.1 implementation of #[derive(Serialize, Deserialize)]
+serde = "1.0"                      # A generic serialization/deserialization framework
 toml = "0.4"
 walkdir = "2"
 

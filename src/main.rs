@@ -11,6 +11,9 @@ extern crate preferences;
 extern crate r2d2;
 extern crate r2d2_diesel;
 extern crate rayon;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 extern crate taglib;
 extern crate toml;
 extern crate walkdir;
