@@ -7,6 +7,7 @@ extern crate gio;
 extern crate gstreamer;
 extern crate gtk;
 extern crate indicatif;
+extern crate preferences;
 extern crate r2d2;
 extern crate r2d2_diesel;
 extern crate rayon;
@@ -29,6 +30,10 @@ use gio::ApplicationExt;
 use gtk::prelude::*;
 use std::sync::Arc;
 use std::sync::RwLock;
+use preferences::{AppInfo, PreferencesMap, Preferences};
+
+const APP_INFO: AppInfo = AppInfo{name: "viola", author: "narfinger"};
+const PREFS_KEY: &'static str = "viola_prefs";
 
 use gui::{GuiExt, GuiPtrExt};
 use gstreamer_wrapper::GStreamerAction;
@@ -128,14 +133,33 @@ fn main() {
             Arg::with_name("update")
                 .short("u")
                 .long("update")
-                .help("Updates the database"),
+                .help("Updates the database"))
+        .arg(
+            Arg::with_name("music_dir")
+                .short("m")
+                .takes_value(true)
+                .long("music_dir")
+                .help("Set the music directory"),
         )
         .get_matches();
 
     let pool = db::setup_db_connection();
     if matches.is_present("update") {
         println!("Updating Database");
-        db::build_db("/mnt/ssd-media/Musik/", &pool.clone()).unwrap();
+        if let Ok(preferences) = PreferencesMap::<String>::load(&APP_INFO, PREFS_KEY) {
+            if let Some(music_dir) = preferences.get("music_dir") {
+                db::build_db(music_dir, &pool.clone()).unwrap();
+            } else {
+                println!("Could not find music_dir");
+            }
+        } else {
+            println!("could not find settings file");
+        }
+    } else if let Some(new_music_dir) = matches.value_of("music_dir") {
+        let mut prefs = PreferencesMap::<String>::new();
+        prefs.insert(String::from("music_dir"), String::from(new_music_dir));
+        prefs.save(&APP_INFO, PREFS_KEY).expect("Error in saving preferences");
+        println!("saved music directory");
     } else {
         use gio::ApplicationExtManual;
         let application =
