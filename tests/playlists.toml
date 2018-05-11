@@ -1,0 +1,11 @@
+[[playlist]]
+name = "Test1"
+dir_exclude = ["test1", "test2"]
+dir_include = ["1a - Test"]
+
+[[playlist]]
+name = "Test2"
+dir_exclude = []
+dir_include = []
+artist_include = ["Mega Drive", "Magic Sword"]
+genre_include = ["Synthwave", "Retrowave"]

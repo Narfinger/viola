@@ -17,6 +17,7 @@ preferences = "1.1"         # Read and write user-specific application data (in 
 rayon = "1.0"               # Simple work-stealing parallelism for Rust   
 r2d2 = "0.8"                # A generic connection pool
 r2d2-diesel = "1.0"      # r2d2 support for Diesel
+toml = "0.4"
 walkdir = "2"
 
 

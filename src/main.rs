@@ -12,6 +12,7 @@ extern crate r2d2;
 extern crate r2d2_diesel;
 extern crate rayon;
 extern crate taglib;
+extern crate toml;
 extern crate walkdir;
 
 pub mod db;
@@ -23,6 +24,7 @@ pub mod playlist;
 pub mod playlist_tabs;
 pub mod playlist_manager;
 pub mod schema;
+pub mod smartplaylist_parser;
 pub mod types;
 
 use clap::{App, Arg};
