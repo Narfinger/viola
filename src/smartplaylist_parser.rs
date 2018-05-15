@@ -7,14 +7,19 @@ use diesel::QueryDsl;
 use diesel::sqlite::Sqlite;
 use schema::tracks::dsl::*;
 
+struct SmartPlaylist<'a> {
+    name: String,
+    query: diesel::helper_types::IntoBoxed<'a, tracks, Sqlite>,
+}
+
 #[derive(Deserialize, Debug)]
 struct SmartPlaylistConfig {
     test: String,
-    smartplaylist: Vec<SmartPlaylist>,
+    smartplaylist: Vec<SmartPlaylistParsed>,
 }
 
 #[derive(Debug, Deserialize)]
-struct SmartPlaylist {
+struct SmartPlaylistParsed {
     name: String,
     dir_exclude: Option<Vec<String>>,
     dir_include: Option<Vec<String>>,
@@ -22,6 +27,7 @@ struct SmartPlaylist {
     genre_include: Option<Vec<String>>,
 }
 
+#[derive(Clone, Debug)]
 enum Tag {
     DirExclude,
     DirInclude,
@@ -29,11 +35,11 @@ enum Tag {
     GenreInclude,
 }
 
-fn build_iter(t: Tag, v: Option<Vec<String>>) -> impl Iterator {
-    v.unwrap_or(vec![]).into_iter().map(|v| (t, v))
+fn build_iter(t: Tag, v: Option<Vec<String>>) -> impl Iterator<Item = (Tag, String)> {
+    v.unwrap_or(vec![]).into_iter().map(move |v| (t.clone(), v))
 }
 
-impl IntoIterator for SmartPlaylist {
+impl IntoIterator for SmartPlaylistParsed {
     type Item = (Tag, String);
     type IntoIter = Box<Iterator<Item = (Tag, String)>>;
     fn into_iter(self) -> Self::IntoIter {
@@ -52,29 +58,38 @@ impl IntoIterator for SmartPlaylist {
     }
 }
 
-fn read_smartplaylist(sm: SmartPlaylist) -> (String, impl QueryDsl) {
+fn read_smartplaylist<'a>(sm: SmartPlaylistParsed) -> SmartPlaylist<'a> {
     use diesel::{QueryDsl, RunQueryDsl, ExpressionMethods, TextExpressionMethods};
     
-    let mut s = tracks.into_boxed::<Sqlite>();
-    let mut name = None;
-    /*for (k,v) in s {
+    let s = tracks.into_boxed::<Sqlite>();
+    //let mut name = s.name.clone();
+    
+    for (k,v) in sm {
         match k {
             //"name" => { name = Some(v)},
             Tag::ArtistInclude => { s = s.filter(artist.eq(v)); },
             Tag::DirInclude => { s = s.filter(path.like(String::from("%") + &v + "%")); },
             Tag::DirExclude => { s = s.filter(path.not_like(String::from("%") + &v + "%")); },
             Tag::GenreInclude => { s = s.filter(genre.eq(v)); },
-            v => { panic!("We found a weird tag, we could not quite figure out: {}", v); },
+            v => { panic!("We found a weird tag, we could not quite figure out: {:?}", v); },
         };
-    }*/
-    if let Some(n) = name {
-        (n, s)
-    } else {
-        panic!("Did not find file");
     }
+
+    SmartPlaylist {
+        name: sm.name,
+        query: s
+    }
+
+    
+
+    //if let Some(n) = name {
+    //    (n, s)
+    //} else {
+    //    panic!("Did not find file");
+    //}
 }
 
-fn read_file(file: &str) -> Vec<(String, impl QueryDsl)> {
+fn read_file(file: &str) -> Vec<SmartPlaylist> {
     let string = fs::read_to_string(file).unwrap();
     let s = toml::from_str::<SmartPlaylistConfig>(&string).expect("Could not parse");
 
