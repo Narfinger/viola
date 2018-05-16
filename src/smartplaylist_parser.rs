@@ -5,11 +5,12 @@ use std::collections::HashMap;
 use diesel;
 use diesel::QueryDsl;
 use diesel::sqlite::Sqlite;
+use schema;
 use schema::tracks::dsl::*;
 
-struct SmartPlaylist<'a> {
+pub struct SmartPlaylist<'a> {
     name: String,
-    query: diesel::helper_types::IntoBoxed<'a, tracks, Sqlite>,
+    query: schema::tracks::BoxedQuery<'a, Sqlite>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -61,8 +62,8 @@ impl IntoIterator for SmartPlaylistParsed {
 fn read_smartplaylist<'a>(sm: SmartPlaylistParsed) -> SmartPlaylist<'a> {
     use diesel::{QueryDsl, RunQueryDsl, ExpressionMethods, TextExpressionMethods};
     
-    let s = tracks.into_boxed::<Sqlite>();
-    //let mut name = s.name.clone();
+    let mut s = tracks.into_boxed::<Sqlite>();
+    let name = sm.name.clone();
     
     for (k,v) in sm {
         match k {
@@ -76,7 +77,7 @@ fn read_smartplaylist<'a>(sm: SmartPlaylistParsed) -> SmartPlaylist<'a> {
     }
 
     SmartPlaylist {
-        name: sm.name,
+        name: name,
         query: s
     }
 
