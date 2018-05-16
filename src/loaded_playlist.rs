@@ -2,6 +2,7 @@ use db::Track;
 
 #[derive(Clone, Debug)]
 pub struct LoadedPlaylist {
+    /// The id we have in the database for it. If none, means this was not yet saved
     pub id: Option<i32>,
     pub name: String,
     pub items: Vec<Track>,

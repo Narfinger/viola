@@ -8,9 +8,11 @@ use diesel::sqlite::Sqlite;
 use schema;
 use schema::tracks::dsl::*;
 
+use loaded_playlist::LoadedPlaylist;
+
 pub struct SmartPlaylist<'a> {
-    name: String,
-    query: schema::tracks::BoxedQuery<'a, Sqlite>,
+    pub name: String,
+    pub query: schema::tracks::BoxedQuery<'a, Sqlite>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -59,6 +61,22 @@ impl IntoIterator for SmartPlaylistParsed {
     }
 }
 
+pub trait LoadSmartPlaylist {
+    fn load(&self) -> LoadedPlaylist;
+}
+
+impl<'a> LoadSmartPlaylist for SmartPlaylist<'a> {
+    fn load(&self) -> LoadedPlaylist {
+        panic!("Implement");
+        LoadedPlaylist {
+            id: None,
+            name: self.name.clone(),
+            items: vec![],
+            current_position: 0,
+        }
+    }
+}
+
 fn read_smartplaylist<'a>(sm: SmartPlaylistParsed) -> SmartPlaylist<'a> {
     use diesel::{QueryDsl, RunQueryDsl, ExpressionMethods, TextExpressionMethods};
     
@@ -95,6 +113,11 @@ fn read_file(file: &str) -> Vec<SmartPlaylist> {
     let s = toml::from_str::<SmartPlaylistConfig>(&string).expect("Could not parse");
 
     s.smartplaylist.into_iter().map(read_smartplaylist).collect()
+}
+
+pub fn construct_smartplaylists_from_config<'a>() -> Vec<SmartPlaylist<'a>> {
+    panic!("not yet implemented");
+    vec![]
 }
 
 #[test]
