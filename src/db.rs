@@ -1,7 +1,6 @@
 use diesel;
 use indicatif::{ProgressBar, ProgressStyle};
-use r2d2;
-use r2d2_diesel;
+use diesel::r2d2;
 use rayon::prelude::*;
 use schema::tracks;
 use std::ops::Deref;
@@ -39,7 +38,7 @@ pub struct NewTrack {
 }
 
 pub fn setup_db_connection() -> DBPool {
-    let manager = r2d2_diesel::ConnectionManager::<diesel::SqliteConnection>::new("./music.db");
+    let manager = diesel::r2d2::ConnectionManager::<diesel::SqliteConnection>::new("./music.db");
     r2d2::Pool::builder()
         .build(manager)
         .expect("Failed to create pool.")

@@ -1,14 +1,17 @@
 use toml;
 use std;
+use std::ops::Deref;
 use std::fs;
+use std::rc::Rc;
 use std::collections::HashMap;
 use diesel;
-use diesel::QueryDsl;
+use diesel::{QueryDsl, RunQueryDsl};
 use diesel::sqlite::Sqlite;
 use schema;
 use schema::tracks::dsl::*;
 
 use loaded_playlist::LoadedPlaylist;
+use types::*;
 
 pub struct SmartPlaylist<'a> {
     pub name: String,
@@ -62,16 +65,17 @@ impl IntoIterator for SmartPlaylistParsed {
 }
 
 pub trait LoadSmartPlaylist {
-    fn load(&self) -> LoadedPlaylist;
+    fn load(&self, &DBPool) -> LoadedPlaylist;
 }
 
 impl<'a> LoadSmartPlaylist for SmartPlaylist<'a> {
-    fn load(&self) -> LoadedPlaylist {
-        panic!("Implement");
+    fn load(&self, pool: &DBPool) -> LoadedPlaylist {
+        let db = pool.get().unwrap();
+        let res = self.query.load(db.deref()).unwrap();
         LoadedPlaylist {
             id: None,
             name: self.name.clone(),
-            items: vec![],
+            items: res,
             current_position: 0,
         }
     }
@@ -96,7 +100,7 @@ fn read_smartplaylist<'a>(sm: SmartPlaylistParsed) -> SmartPlaylist<'a> {
 
     SmartPlaylist {
         name: name,
-        query: s
+        query: s,
     }
 
     

@@ -1,8 +1,7 @@
 use diesel::SqliteConnection;
 use gstreamer::Element;
 use gtk::Builder;
-use r2d2::Pool;
-use r2d2_diesel::ConnectionManager;
+use diesel::r2d2::{Pool, ConnectionManager};
 use std::sync::Arc;
 use std::rc::{Rc, Weak};
 use std::sync::RwLock;

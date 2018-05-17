@@ -8,8 +8,6 @@ extern crate gstreamer;
 extern crate gtk;
 extern crate indicatif;
 extern crate preferences;
-extern crate r2d2;
-extern crate r2d2_diesel;
 extern crate rayon;
 extern crate serde;
 #[macro_use]

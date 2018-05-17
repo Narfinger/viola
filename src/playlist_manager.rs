@@ -70,6 +70,6 @@ fn add_playlist(pool: &DBPool, sm: &Vec<SmartPlaylist>, index: i32) -> LoadedPla
         }
     } else {
         let i = index-1 as i32;
-        sm[i as usize].load()
+        sm[i as usize].load(pool)
     }
 }
