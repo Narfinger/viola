@@ -148,7 +148,7 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
 pub fn delete_with_id(pool: &DBPool, index: i32) {
     use schema;
     use diesel;
-    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+    use diesel::{ExpressionMethods, RunQueryDsl};
     use schema::playlists::dsl::*;
     use schema::playlisttracks::dsl::*;
 

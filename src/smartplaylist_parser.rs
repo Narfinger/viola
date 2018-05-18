@@ -1,13 +1,8 @@
 use toml;
-use std;
 use std::ops::Deref;
 use std::fs;
-use std::rc::Rc;
-use std::collections::HashMap;
-use diesel;
 use diesel::{QueryDsl, RunQueryDsl};
 use diesel::sqlite::Sqlite;
-use schema;
 use schema::tracks::dsl::*;
 
 use loaded_playlist::LoadedPlaylist;
@@ -78,7 +73,6 @@ impl LoadSmartPlaylist for SmartPlaylist {
                 Tag::DirInclude => { s = s.filter(path.like(String::from("%") + &v + "%")); },
                 Tag::DirExclude => { s = s.filter(path.not_like(String::from("%") + &v + "%")); },
                 Tag::GenreInclude => { s = s.filter(genre.eq(v)); },
-                v => { panic!("We found a weird tag, we could not quite figure out: {:?}", v); },
             };
         }
 
