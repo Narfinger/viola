@@ -33,7 +33,7 @@ use gio::ApplicationExt;
 use gtk::prelude::*;
 use std::sync::Arc;
 use std::sync::RwLock;
-use preferences::{AppInfo, PreferencesMap, Preferences};
+use preferences::{AppInfo, PreferencesMap, Preferences, prefs_base_dir};
 
 const APP_INFO: AppInfo = AppInfo{name: "viola", author: "narfinger"};
 const PREFS_KEY: &'static str = "viola_prefs";
@@ -142,8 +142,12 @@ fn main() {
                 .short("m")
                 .takes_value(true)
                 .long("music_dir")
-                .help("Set the music directory"),
-        )
+                .help("Set the music directory"))
+        .arg(
+            Arg::with_name("configpath")
+                .short("c")
+                .long("config")
+                .help("Shows the config path"))
         .get_matches();
 
     let pool = db::setup_db_connection();
@@ -163,6 +167,12 @@ fn main() {
         prefs.insert(String::from("music_dir"), String::from(new_music_dir));
         prefs.save(&APP_INFO, PREFS_KEY).expect("Error in saving preferences");
         println!("saved music directory");
+    } else if matches.is_present("configpath") {
+        let mut p =  prefs_base_dir().expect("Base dir cannot be founds");
+        p.push("viola");
+        let s = p.to_str().expect("Error in convert");
+        println!("The config path can be found under {}.\n Please add the file smartplaylists.toml\
+        if you want to add smartplaylists", s);
     } else {
         use gio::ApplicationExtManual;
         let application =

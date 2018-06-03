@@ -97,7 +97,8 @@ fn read_file(file: &str) -> Vec<SmartPlaylist> {
 
 pub fn construct_smartplaylists_from_config<'a>() -> Vec<SmartPlaylist> {
     let mut p = prefs_base_dir().expect("Could not find base dir");
-    p.push("smartplaylist.toml");
+    p.push("viola");
+    p.push("smartplaylists.toml");
     if p.exists() {
         let st = p.to_str().expect("Could not convert");
         read_file(st)
