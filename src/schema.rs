@@ -33,4 +33,8 @@ table! {
 joinable!(playlisttracks -> playlists (playlist_id));
 joinable!(playlisttracks -> tracks (track_id));
 
-allow_tables_to_appear_in_same_query!(playlists, playlisttracks, tracks,);
+allow_tables_to_appear_in_same_query!(
+    playlists,
+    playlisttracks,
+    tracks,
+);

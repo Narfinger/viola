@@ -4,6 +4,7 @@ use std::fs;
 use diesel::{QueryDsl, RunQueryDsl};
 use diesel::sqlite::Sqlite;
 use schema::tracks::dsl::*;
+use preferences::prefs_base_dir;
 
 use loaded_playlist::LoadedPlaylist;
 use types::*;
@@ -95,8 +96,14 @@ fn read_file(file: &str) -> Vec<SmartPlaylist> {
 }
 
 pub fn construct_smartplaylists_from_config<'a>() -> Vec<SmartPlaylist> {
-    panic!("not yet implemented");
-    vec![]
+    let mut p = prefs_base_dir().expect("Could not find base dir");
+    p.push("smartplaylist.toml");
+    if p.exists() {
+        let st = p.to_str().expect("Could not convert");
+        read_file(st)
+    } else {
+        vec![]
+    }
 }
 
 #[test]
