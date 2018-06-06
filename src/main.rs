@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate clap;
 #[macro_use]
 extern crate diesel;
@@ -132,6 +133,7 @@ fn build_gui(application: &gtk::Application, pool: &DBPool) {
 fn main() {
     let matches = App::new("Viola")
         .about("Music Player")
+        .version(crate_version!())
         .arg(
             Arg::with_name("update")
                 .short("u")
