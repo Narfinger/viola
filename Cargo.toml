@@ -17,6 +17,7 @@ preferences = "1.1"         # Read and write user-specific application data (in 
 rayon = "1.0"               # Simple work-stealing parallelism for Rust   
 serde_derive = "1.0"                   # Macros 1.1 implementation of #[derive(Serialize, Deserialize)]
 serde = "1.0"                      # A generic serialization/deserialization framework
+open = "1.2.1"
 toml = "0.4"
 walkdir = "2"
 

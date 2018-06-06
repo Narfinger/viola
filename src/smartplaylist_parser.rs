@@ -62,6 +62,7 @@ pub trait LoadSmartPlaylist {
 
 impl LoadSmartPlaylist for SmartPlaylist {
     fn load(&self, pool: &DBPool) -> LoadedPlaylist {
+        panic!("the order of operation is not quite good, filter would filter multiple things while we need some or and some and");
         use diesel::{ExpressionMethods, TextExpressionMethods};
 
         let db = pool.get().unwrap();     

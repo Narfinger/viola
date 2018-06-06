@@ -8,6 +8,7 @@ extern crate gio;
 extern crate gstreamer;
 extern crate gtk;
 extern crate indicatif;
+extern crate open;
 extern crate preferences;
 extern crate rayon;
 extern crate serde;
@@ -150,6 +151,11 @@ fn main() {
                 .short("c")
                 .long("config")
                 .help("Shows the config path"))
+        .arg(
+            Arg::with_name("editsmartplaylists")
+                .short("e")
+                .long("editsmartplaylists")
+                .help("Opens an editor to edit the smartplaylist file"))
         .get_matches();
 
     let pool = db::setup_db_connection();
@@ -175,6 +181,11 @@ fn main() {
         let s = p.to_str().expect("Error in convert");
         println!("The config path can be found under {}.\n Please add the file smartplaylists.toml\
         if you want to add smartplaylists", s);
+    } else if matches.is_present("editsmartplaylists") {
+        let mut path = prefs_base_dir().expect("Could not find base dir");
+        path.push("viola");
+        path.push("smartplaylists.toml");
+        open::that(path);
     } else {
         use gio::ApplicationExtManual;
         let application =
