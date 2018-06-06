@@ -185,7 +185,7 @@ fn main() {
         let mut path = prefs_base_dir().expect("Could not find base dir");
         path.push("viola");
         path.push("smartplaylists.toml");
-        open::that(path);
+        open::that(&path).expect(&format!("Could not open file {:?}", &path));
     } else {
         use gio::ApplicationExtManual;
         let application =
