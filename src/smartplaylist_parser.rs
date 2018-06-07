@@ -1,6 +1,7 @@
 use toml;
 use std::ops::Deref;
 use std::fs;
+use std::collections::HashMap;
 use diesel::{QueryDsl, RunQueryDsl};
 use diesel::sqlite::Sqlite;
 use schema::tracks::dsl::*;
@@ -11,7 +12,7 @@ use types::*;
 
 pub struct SmartPlaylist {
     pub name: String,
-    query: Vec<(Tag, String)>,
+    query: HashMap<Tag, Vec<String>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -29,7 +30,7 @@ struct SmartPlaylistParsed {
     genre_include: Option<Vec<String>>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Tag {
     DirExclude,
     DirInclude,
@@ -37,22 +38,18 @@ pub enum Tag {
     GenreInclude,
 }
 
-fn build_iter(t: Tag, v: Option<Vec<String>>) -> impl Iterator<Item = (Tag, String)> {
-    v.unwrap_or(vec![]).into_iter().map(move |v| (t.clone(), v))
-}
-
 fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
-    let query = build_iter(Tag::DirExclude, smp.dir_exclude)
-        .chain(
-            build_iter(Tag::DirInclude, smp.dir_include)
-            .chain(
-                build_iter(Tag::ArtistInclude, smp.artist_include)
-                .chain(
-                    build_iter(Tag::GenreInclude, smp.genre_include)
-                )
-            )
-        ).collect::<Vec<(Tag, String)>>();
-
+    fn query_insert(v: Option<Vec<String>>, tag: Tag, m: &mut HashMap<Tag, Vec<String>>) {
+    if let Some(p) = v {
+        if !p.is_empty() {
+            m.insert(tag, p);
+        }
+    } 
+} 
+    let mut query = HashMap::new();
+    query_insert(smp.dir_exclude,   Tag::DirExclude, &mut query);
+    query_insert(smp.dir_include,   Tag::DirInclude, &mut query);
+    query_insert(smp.genre_include, Tag::GenreInclude, &mut query);
     SmartPlaylist {name: smp.name, query: query }
 }
 
@@ -60,25 +57,56 @@ pub trait LoadSmartPlaylist {
     fn load(&self, &DBPool) -> LoadedPlaylist;
 }
 
+use diesel::debug_query;
 impl LoadSmartPlaylist for SmartPlaylist {
+    /// This is kind of weird because we need to construct the vector instead of the query.
+    /// I would love to use union of queries but it doesn't seem to work in diesel
     fn load(&self, pool: &DBPool) -> LoadedPlaylist {
-        panic!("the order of operation is not quite good, filter would filter multiple things while we need some or and some and");
+        use db::Track;
         use diesel::{ExpressionMethods, TextExpressionMethods};
 
-        let db = pool.get().unwrap();     
-        let mut s = tracks.into_boxed::<Sqlite>();
-    
-        for (k,v) in self.query.iter() {
+        let res = self.query.iter().map(|(k,v)| {
             match k {
-                //"name" => { name = Some(v)},
-                Tag::ArtistInclude => { s = s.filter(artist.eq(v)); },
-                Tag::DirInclude => { s = s.filter(path.like(String::from("%") + &v + "%")); },
-                Tag::DirExclude => { s = s.filter(path.not_like(String::from("%") + &v + "%")); },
-                Tag::GenreInclude => { s = s.filter(genre.eq(v)); },
-            };
-        }
-
-        let res = s.load(db.deref()).expect("Error in loading smart playlist");
+                Tag::ArtistInclude => {
+                    let mut s = tracks.into_boxed::<Sqlite>();
+                    for value in v {
+                        s = s.or_filter(artist.eq(value));
+                    }
+                    let db = pool.get().expect("DB Error");
+                    println!("Query ArtistInclude: {:?}", debug_query(&s));
+                    s.load(db.deref()).expect("Error in loading smart playlist")
+                },
+                Tag::DirInclude => {
+                    let mut s = tracks.into_boxed::<Sqlite>();
+                    for value in v {
+                        s = s.or_filter(path.like(String::from("%") + &value + "%"));
+                    }
+                    let db = pool.get().expect("DB Error");
+                    println!("Query DirInclude: {:?}", debug_query(&s));
+                    s.load(db.deref()).expect("Error in loading smart playlist")
+                },
+                Tag::DirExclude => {
+                    let mut s = tracks.into_boxed::<Sqlite>();
+                    for value in v {
+                        s = s.or_filter(path.not_like(String::from("%") + &value + "%"));
+                    }
+                    let db = pool.get().expect("DB Error");
+                    println!("Query DirExclude: {:?}", debug_query(&s));
+                    s.load(db.deref()).expect("Error in loading smart playlist")
+                },
+                Tag::GenreInclude => {
+                    let mut s = tracks.into_boxed::<Sqlite>();
+                    for value in v {
+                        s = s.or_filter(genre.eq(value));
+                    }
+                    let db = pool.get().expect("DB Error");
+                    println!("Query GenreInclude: {:?}", debug_query(&s));
+                    s.load(db.deref()).expect("Error in loading smart playlist")
+                },
+            }
+        })
+        .flat_map(|v| v.into_iter())
+        .collect::<Vec<Track>>();
 
         LoadedPlaylist {
             id: None,
