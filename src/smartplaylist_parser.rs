@@ -65,7 +65,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
         use db::Track;
         use diesel::{ExpressionMethods, TextExpressionMethods};
 
-        let res = self.query.iter().map(|(k,v)| {
+        let mut res = self.query.iter().map(|(k,v)| {
             match k {
                 Tag::ArtistInclude => {
                     let mut s = tracks.into_boxed::<Sqlite>();
@@ -107,6 +107,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
         })
         .flat_map(|v| v.into_iter())
         .collect::<Vec<Track>>();
+        res.sort_unstable_by(|u, v| u.path.cmp(&v.path));
 
         LoadedPlaylist {
             id: None,
