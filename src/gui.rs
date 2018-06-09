@@ -232,6 +232,40 @@ impl GuiPtrExt for GuiPtr {
     }
 }
 
+/// Handles mouse button presses in treeviews/playlistviews
+fn button_signal_handler(gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> gtk::Inhibit {
+    if event.get_event_type() == gdk::EventType::DoubleButtonPress {
+          let (vec, _) = tv.get_selection().get_selected_rows();
+          if vec.len() == 1 {
+              let pos = vec[0].get_indices()[0];
+              gui.gstreamer.do_gstreamer_action(&GStreamerAction::Play(pos));
+              gui.update_gui(&PlayerStatus::Playing);
+          }
+          gtk::Inhibit(true)
+    } else {
+        gtk::Inhibit(false)
+    }
+}
+
+//yes... this is werid, I don't know why there are not constants
+const DELETE_KEY: u32 = 65535;
+
+/// Handles keyboard presses in treeviews/playlistviews
+fn key_signal_handler(gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> gtk::Inhibit {
+    println!("key {:?}", event.get_event_type());
+    if event.get_event_type() == gdk::EventType::KeyPress {
+        if let Ok(b) = event.clone().downcast::<gdk::EventKey>() {
+            println!("event key {}", b.get_keyval());
+            if b.get_keyval() == DELETE_KEY {
+                let (vec, _) = tv.get_selection().get_selected_rows();
+                panic!("Not yet implemented, remove things");
+                //gtk::Inhibit(true)
+            }
+        }
+    }
+    gtk::Inhibit(false)
+}
+
 fn create_populated_treeview(gui: &GuiPtr, lp: &LoadedPlaylist) -> gtk::TreeView {
     let treeview = gtk::TreeView::new();
     for &(id, title, width) in &[
@@ -256,21 +290,18 @@ fn create_populated_treeview(gui: &GuiPtr, lp: &LoadedPlaylist) -> gtk::TreeView
     }
     treeview.set_model(Some(&populate_model_with_playlist(lp)));
     //panic!("Do the connection");
-    let guic = gui.clone();
-    treeview.connect_button_press_event(move |tv, eventbutton| {
-        if eventbutton.get_event_type() == gdk::EventType::DoubleButtonPress {
-            let (vec, _) = tv.get_selection().get_selected_rows();
-            if vec.len() == 1 {
-                let pos = vec[0].get_indices()[0];
-                guic.gstreamer.do_gstreamer_action(&GStreamerAction::Play(pos));
-                guic.update_gui(&PlayerStatus::Playing);
-            }
-            gtk::Inhibit(true)
-        } else {
-            gtk::Inhibit(false)
-        }
+    {
+        let guic = gui.clone();
+        treeview.connect_button_press_event(move |tv, event| {
+            button_signal_handler(&guic, tv, event)
+        });
     }
-    );
+    {
+        let guic = gui.clone();
+        treeview.connect_key_press_event(move |tv, event| {
+            key_signal_handler(&guic, tv, event)
+        });
+    }
     treeview.show();
     treeview
 }
