@@ -257,7 +257,12 @@ fn key_signal_handler(gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> g
         if let Ok(b) = event.clone().downcast::<gdk::EventKey>() {
             println!("event key {}", b.get_keyval());
             if b.get_keyval() == DELETE_KEY {
-                let (vec, _) = tv.get_selection().get_selected_rows();
+                let (mut vec, _) = tv.get_selection().get_selected_rows();
+                //println!("Length of selection: {}", vec.len());
+                let rows = vec.into_iter().flat_map(|mut v| v.get_indices_with_depth()).collect::<Vec<i32>>();
+                
+                
+                println!("vec to delete: {:?}", rows);
                 panic!("Not yet implemented, remove things");
                 //gtk::Inhibit(true)
             }
@@ -268,6 +273,8 @@ fn key_signal_handler(gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> g
 
 fn create_populated_treeview(gui: &GuiPtr, lp: &LoadedPlaylist) -> gtk::TreeView {
     let treeview = gtk::TreeView::new();
+    treeview.get_selection().set_mode(gtk::SelectionMode::Multiple);
+
     for &(id, title, width) in &[
         (0, "#", 50),
         (1, "Title", 500),

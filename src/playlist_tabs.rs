@@ -34,12 +34,25 @@ pub fn new() -> PlaylistTabsPtr {
 }
 
 pub trait PlaylistTabsExt {
+    /// Returns the current track
     fn current_track<'a>(&'a self) -> &'a db::Track;
+
+    /// returns the current position in the current playlist
     fn current_position(&self) -> i32;
+
+    /// gets the playlist id (if it exists)
     fn id(&self, i32) -> Option<i32>;
+
+    /// set the current playlist, used for changing tabs
     fn set_current_playlist(&mut self, i32);
+
+    /// add a new tab
     fn add(&mut self, PlaylistTab);
+
+    /// remove the tab given by the index
     fn remove(&mut self, i32) -> Option<i32>;
+
+    /// saves the playlist tabs to the database
     fn save(&self, &DBPool);
 }
 
