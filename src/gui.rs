@@ -211,12 +211,12 @@ impl GuiPtrExt for GuiPtr {
         }
 
         let tab = playlist_tabs::PlaylistTab { lp, treeview: tv };
-        (*self.playlist_tabs).borrow_mut().add(tab);
+        (*self.playlist_tabs).borrow_mut().addTab(tab);
     }
 
     fn delete_page(&self, index: u32) {
         let db_id = (*self.playlist_tabs).borrow().id(index as i32);
-        (*self.playlist_tabs).borrow_mut().remove(index as i32);
+        (*self.playlist_tabs).borrow_mut().removeTab(index as i32);
         self.notebook.remove_page(Some(index));
         println!("deleting the page");
         //deleting in database
@@ -260,9 +260,8 @@ fn key_signal_handler(gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> g
                 let (mut vec, _) = tv.get_selection().get_selected_rows();
                 //println!("Length of selection: {}", vec.len());
                 let rows = vec.into_iter().flat_map(|mut v| v.get_indices_with_depth()).collect::<Vec<i32>>();
+                gui.playlist_tabs.borrow_mut().removeItems(rows);
                 
-                
-                println!("vec to delete: {:?}", rows);
                 panic!("Not yet implemented, remove things");
                 //gtk::Inhibit(true)
             }

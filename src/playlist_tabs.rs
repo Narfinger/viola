@@ -47,10 +47,13 @@ pub trait PlaylistTabsExt {
     fn set_current_playlist(&mut self, i32);
 
     /// add a new tab
-    fn add(&mut self, PlaylistTab);
+    fn addTab(&mut self, PlaylistTab);
 
     /// remove the tab given by the index
-    fn remove(&mut self, i32) -> Option<i32>;
+    fn removeTab(&mut self, i32) -> Option<i32>;
+
+    /// removes the items from the vector
+    fn removeItems(&mut self, Vec<i32>);
 
     /// saves the playlist tabs to the database
     fn save(&self, &DBPool);
@@ -74,20 +77,31 @@ impl PlaylistTabsExt for PlaylistTabs {
         self.current_playlist = Some(index as usize)
     }
 
-    fn add(&mut self, plt: PlaylistTab) {
+    fn addTab(&mut self, plt: PlaylistTab) {
         self.tabs.push(plt);
         if self.tabs.len() == 1 {
             self.current_playlist = Some(0);
         }
     }
 
-    fn remove(&mut self, index: i32) -> Option<i32> {
+    fn removeTab(&mut self, index: i32) -> Option<i32> {
         self.tabs.remove(index as usize);
         if self.current_playlist.unwrap() >= self.tabs.len() {
             Some(0)
         } else {
             None
         }
+    }
+
+    fn removeItems(&mut self, indices: Vec<i32>) {
+        let tabs = &self.tabs[self.current_playlist.unwrap()];
+        let mut sort_ind = indices;
+        // sort descending
+        sort_ind.sort_unstable_by(|x,y| y.cmp(x));
+        for i in sort_ind {
+            tabs.lp.items.remove(i as usize);
+        }
+        panic!("need to remove in the treeview");
     }
 
     fn save(&self, pool: &DBPool) {
