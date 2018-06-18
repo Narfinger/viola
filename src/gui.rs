@@ -259,7 +259,7 @@ fn key_signal_handler(gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> g
             if b.get_keyval() == DELETE_KEY {
                 gui.playlist_tabs.borrow_mut().remove_items(tv.get_selection());
                 
-                panic!("Not yet implemented, remove things");
+                //panic!("Not yet implemented, remove things");
                 //gtk::Inhibit(true)
             }
         }

@@ -1,7 +1,7 @@
 use gtk;
 use std::rc::Rc;
 use std::cell::RefCell;
-use gtk::{ListStoreExt, TreeSelectionExt};
+use gtk::{ListStoreExt, TreeModelExt, TreeSelectionExt};
 
 use db;
 use loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
@@ -97,21 +97,31 @@ impl PlaylistTabsExt for PlaylistTabs {
 
     fn remove_items(&mut self, selection: gtk::TreeSelection) {
         let (vecpath, _) = selection.get_selected_rows();
+        let index = self.current_playlist.unwrap();
+
+        //remove stuff in model
+        {
+            let model = &self.tabs[index].model;
+            for t in &vecpath {
+                let iter = model.get_iter(&t).expect("Error in converting treepath");
+                model.remove(&iter);
+            }
+        }
+
+        // remove stuff in the list
         let mut rows = vecpath.into_iter().flat_map(|mut v| v.get_indices_with_depth()).collect::<Vec<i32>>();
         // sort descending
         rows.sort_unstable_by(|x,y| y.cmp(x));
 
-        let index = self.current_playlist.unwrap();
         let mut new_lp = self.tabs[index].lp.clone();
         for i in rows {
             new_lp.items.remove(i as usize);
         }
         self.tabs[index].lp = new_lp;
-        let (_, treeiter) = selection.get_selected().unwrap();
-        while self.tabs[index].model.remove(&treeiter) {
-        }
-        panic!("need to adjust current position");
-        panic!("need to remove in the treeview");
+        
+
+        //panic!("need to adjust current position");
+        //panic!("need to remove in the treeview");
     }
 
     fn save(&self, pool: &DBPool) {
