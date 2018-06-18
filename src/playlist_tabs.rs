@@ -1,6 +1,7 @@
 use gtk;
 use std::rc::Rc;
 use std::cell::RefCell;
+use gtk::{ListStoreExt, TreeSelectionExt};
 
 use db;
 use loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
@@ -11,6 +12,7 @@ use types::*;
 pub struct PlaylistTab {
     pub lp: LoadedPlaylist,
     pub treeview: gtk::TreeView,
+    pub model: gtk::ListStore,
 }
 
 pub struct PlaylistTabs {
@@ -47,13 +49,13 @@ pub trait PlaylistTabsExt {
     fn set_current_playlist(&mut self, i32);
 
     /// add a new tab
-    fn addTab(&mut self, PlaylistTab);
+    fn add_tab(&mut self, PlaylistTab);
 
     /// remove the tab given by the index
-    fn removeTab(&mut self, i32) -> Option<i32>;
+    fn remove_tab(&mut self, i32) -> Option<i32>;
 
     /// removes the items from the vector
-    fn removeItems(&mut self, Vec<i32>);
+    fn remove_items(&mut self, gtk::TreeSelection);
 
     /// saves the playlist tabs to the database
     fn save(&self, &DBPool);
@@ -77,14 +79,14 @@ impl PlaylistTabsExt for PlaylistTabs {
         self.current_playlist = Some(index as usize)
     }
 
-    fn addTab(&mut self, plt: PlaylistTab) {
+    fn add_tab(&mut self, plt: PlaylistTab) {
         self.tabs.push(plt);
         if self.tabs.len() == 1 {
             self.current_playlist = Some(0);
         }
     }
 
-    fn removeTab(&mut self, index: i32) -> Option<i32> {
+    fn remove_tab(&mut self, index: i32) -> Option<i32> {
         self.tabs.remove(index as usize);
         if self.current_playlist.unwrap() >= self.tabs.len() {
             Some(0)
@@ -93,14 +95,22 @@ impl PlaylistTabsExt for PlaylistTabs {
         }
     }
 
-    fn removeItems(&mut self, indices: Vec<i32>) {
-        let tabs = &self.tabs[self.current_playlist.unwrap()];
-        let mut sort_ind = indices;
+    fn remove_items(&mut self, selection: gtk::TreeSelection) {
+        let (vecpath, _) = selection.get_selected_rows();
+        let mut rows = vecpath.into_iter().flat_map(|mut v| v.get_indices_with_depth()).collect::<Vec<i32>>();
         // sort descending
-        sort_ind.sort_unstable_by(|x,y| y.cmp(x));
-        for i in sort_ind {
-            tabs.lp.items.remove(i as usize);
+        rows.sort_unstable_by(|x,y| y.cmp(x));
+
+        let index = self.current_playlist.unwrap();
+        let mut new_lp = self.tabs[index].lp.clone();
+        for i in rows {
+            new_lp.items.remove(i as usize);
         }
+        self.tabs[index].lp = new_lp;
+        let (_, treeiter) = selection.get_selected().unwrap();
+        while self.tabs[index].model.remove(&treeiter) {
+        }
+        panic!("need to adjust current position");
         panic!("need to remove in the treeview");
     }
 

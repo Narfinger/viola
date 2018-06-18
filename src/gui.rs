@@ -180,7 +180,7 @@ impl GuiPtrExt for GuiPtr {
     }
 
     fn add_page(&self, lp: LoadedPlaylist) {
-        let tv = create_populated_treeview(&self, &lp);
+        let (tv, model) = create_populated_treeview(&self, &lp);
         let scw = gtk::ScrolledWindow::new(None, None);
         scw.add(&tv);
         let label = gtk::Label::new(Some(lp.name.as_str()));
@@ -210,13 +210,13 @@ impl GuiPtrExt for GuiPtr {
             });
         }
 
-        let tab = playlist_tabs::PlaylistTab { lp, treeview: tv };
-        (*self.playlist_tabs).borrow_mut().addTab(tab);
+        let tab = playlist_tabs::PlaylistTab { lp, treeview: tv, model };
+        (*self.playlist_tabs).borrow_mut().add_tab(tab);
     }
 
     fn delete_page(&self, index: u32) {
         let db_id = (*self.playlist_tabs).borrow().id(index as i32);
-        (*self.playlist_tabs).borrow_mut().removeTab(index as i32);
+        (*self.playlist_tabs).borrow_mut().remove_tab(index as i32);
         self.notebook.remove_page(Some(index));
         println!("deleting the page");
         //deleting in database
@@ -257,10 +257,7 @@ fn key_signal_handler(gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> g
         if let Ok(b) = event.clone().downcast::<gdk::EventKey>() {
             println!("event key {}", b.get_keyval());
             if b.get_keyval() == DELETE_KEY {
-                let (mut vec, _) = tv.get_selection().get_selected_rows();
-                //println!("Length of selection: {}", vec.len());
-                let rows = vec.into_iter().flat_map(|mut v| v.get_indices_with_depth()).collect::<Vec<i32>>();
-                gui.playlist_tabs.borrow_mut().removeItems(rows);
+                gui.playlist_tabs.borrow_mut().remove_items(tv.get_selection());
                 
                 panic!("Not yet implemented, remove things");
                 //gtk::Inhibit(true)
@@ -270,7 +267,7 @@ fn key_signal_handler(gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> g
     gtk::Inhibit(false)
 }
 
-fn create_populated_treeview(gui: &GuiPtr, lp: &LoadedPlaylist) -> gtk::TreeView {
+fn create_populated_treeview(gui: &GuiPtr, lp: &LoadedPlaylist) -> (gtk::TreeView, gtk::ListStore) {
     let treeview = gtk::TreeView::new();
     treeview.get_selection().set_mode(gtk::SelectionMode::Multiple);
 
@@ -294,7 +291,8 @@ fn create_populated_treeview(gui: &GuiPtr, lp: &LoadedPlaylist) -> gtk::TreeView
         column.set_fixed_width(width);
         treeview.append_column(&column);
     }
-    treeview.set_model(Some(&populate_model_with_playlist(lp)));
+    let model = populate_model_with_playlist(lp);
+    treeview.set_model(Some(&model));
     //panic!("Do the connection");
     {
         let guic = gui.clone();
@@ -309,7 +307,7 @@ fn create_populated_treeview(gui: &GuiPtr, lp: &LoadedPlaylist) -> gtk::TreeView
         });
     }
     treeview.show();
-    treeview
+    (treeview, model)
 }
 
 fn populate_model_with_playlist(lp: &LoadedPlaylist) -> gtk::ListStore  {
