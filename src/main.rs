@@ -1,3 +1,4 @@
+extern crate app_dirs;
 #[macro_use]
 extern crate clap;
 #[macro_use]
@@ -141,6 +142,11 @@ fn main() {
                 .long("update")
                 .help("Updates the database"))
         .arg(
+            Arg::with_name("fastupdate")
+                .short("f")
+                .long("fastupdate")
+                .help("Does a fast update of the database, doing a heuristic on time modified"))
+        .arg(
             Arg::with_name("music_dir")
                 .short("m")
                 .takes_value(true)
@@ -170,6 +176,8 @@ fn main() {
         } else {
             println!("could not find settings file");
         }
+    } else if matches.is_present("fastupdate") {
+        panic!("not yet implemented");
     } else if let Some(new_music_dir) = matches.value_of("music_dir") {
         let mut prefs = PreferencesMap::<String>::new();
         prefs.insert(String::from("music_dir"), String::from(new_music_dir));

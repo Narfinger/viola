@@ -957,6 +957,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "viola"
 version = "0.1.0"
 dependencies = [
+ "app_dirs 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.31.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "diesel 1.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "error-chain 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",

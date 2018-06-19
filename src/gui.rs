@@ -252,12 +252,13 @@ const DELETE_KEY: u32 = 65535;
 
 /// Handles keyboard presses in treeviews/playlistviews
 fn key_signal_handler(gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> gtk::Inhibit {
-    println!("key {:?}", event.get_event_type());
+    //println!("key {:?}", event.get_event_type());
     if event.get_event_type() == gdk::EventType::KeyPress {
         if let Ok(b) = event.clone().downcast::<gdk::EventKey>() {
             println!("event key {}", b.get_keyval());
             if b.get_keyval() == DELETE_KEY {
                 gui.playlist_tabs.borrow_mut().remove_items(tv.get_selection());
+                tv.get_selection().unselect_all();
                 
                 //panic!("Not yet implemented, remove things");
                 //gtk::Inhibit(true)

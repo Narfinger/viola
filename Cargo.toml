@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 
 [dependencies]
+app_dirs = "1.2"         # Put your app's data in the right place on every platform
 clap = "2.31"                    # A simple to use, efficient, and full featured  Command Line Argument Parser 
 diesel = { version = "~1.2", features = ["sqlite", "r2d2"] }
 error-chain = "0.11"
@@ -17,7 +18,7 @@ preferences = "1.1"         # Read and write user-specific application data (in 
 rayon = "1.0"               # Simple work-stealing parallelism for Rust   
 serde_derive = "1.0"                   # Macros 1.1 implementation of #[derive(Serialize, Deserialize)]
 serde = "1.0"                      # A generic serialization/deserialization framework
-open = "1.2.1"
+open = "1.2"
 toml = "0.4"
 walkdir = "2"
 

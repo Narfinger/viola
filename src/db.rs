@@ -1,3 +1,4 @@
+use app_dirs::*;
 use diesel;
 use indicatif::{ProgressBar, ProgressStyle};
 use diesel::r2d2;
@@ -6,7 +7,7 @@ use schema::tracks;
 use std::ops::Deref;
 use std::path::Path;
 use taglib;
-use types::DBPool;
+use types::{APP_INFO, DBPool};
 use walkdir;
 
 #[derive(Debug, Identifiable, Queryable, Clone)]
@@ -38,7 +39,9 @@ pub struct NewTrack {
 }
 
 pub fn setup_db_connection() -> DBPool {
-    let manager = diesel::r2d2::ConnectionManager::<diesel::SqliteConnection>::new("./music.db");
+    let mut db_file = get_app_root(AppDataType::UserConfig, &APP_INFO).expect("Could not get app root");
+    db_file.push("music.db");
+    let manager = diesel::r2d2::ConnectionManager::<diesel::SqliteConnection>::new(db_file.to_str().expect("Error in converting string"));
     r2d2::Pool::builder()
         .build(manager)
         .expect("Failed to create pool.")

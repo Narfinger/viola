@@ -1,3 +1,4 @@
+use app_dirs::*;
 use diesel::SqliteConnection;
 use gstreamer::Element;
 use gtk::Builder;
@@ -10,6 +11,9 @@ use std::cell::RefCell;
 use gui::Gui;
 use playlist_tabs::PlaylistTabs;
 use gstreamer_wrapper::GStreamerMessage;
+
+pub const APP_INFO: AppInfo = AppInfo{name: "viola", author: "Narfinger"};
+
 
 pub type BuilderPtr = Arc<RwLock<Builder>>;
 pub type GstreamerPipeline = Arc<RwLock<Element>>;
