@@ -115,9 +115,9 @@ impl GStreamerExt for GStreamer {
                     self.sender.send(GStreamerMessage::Pausing).expect("Error in gstreamer sending message to gui");
                 }
             }
-            self.pipeline.set_state(gstreamer_action)
-                .into_result()
-                .expect("Error in setting gstreamer state playing");
+            if let Err(e) = self.pipeline.set_state(gstreamer_action).into_result() {
+                    panic!("Error in setting gstreamer state playing, found the following error {:?}", e);
+            }
         } //locks releaed
     }
 
