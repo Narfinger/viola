@@ -17,7 +17,7 @@ use types::*;
 
 /// Gui is the main struct for calling things on the gui or in the gstreamer. It will take care that
 /// everything is the correct state. You should probably interface it with a GuiPtr.
-pub struct Gui {
+pub struct MainGui {
     pool: DBPool,
     notebook: gtk::Notebook,
     title_label: gtk::Label,
@@ -31,11 +31,11 @@ pub struct Gui {
 }
 
 /// Constructs a new gui, given a BuilderPtr and a loaded playlist.
-pub fn new(pool: &DBPool, builder: &BuilderPtr) -> GuiPtr {
+pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
     let pltabs = playlist_tabs::new();
     let (gst, recv) = gstreamer_wrapper::new(pltabs.clone()).unwrap();
 
-    let g = Rc::new(Gui {
+    let g = Rc::new(MainGui {
         pool: pool.clone(),
         notebook: builder.read().unwrap().get_object("playlistNotebook").unwrap(),
         title_label: builder.read().unwrap().get_object("titleLabel").unwrap(),
@@ -72,14 +72,14 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> GuiPtr {
 
 /// This is a trait for all gui related functions that do not need a GuiPtr, only a reference to the gui.
 /// The main indication is: This are all functions that do not need to have gtk callbacks.
-pub trait GuiExt {
+pub trait MainGuiExt {
     //fn get_active_treeview(&self) -> &gtk::TreeView;
     fn update_gui(&self, &PlayerStatus); //does not need pipeline
     fn set_playback(&self, &GStreamerAction);
     fn save(&self, &DBPool);
 }
 
-impl GuiExt for Gui {
+impl MainGuiExt for MainGui {
     //fn get_active_treeview(&self) -> &gtk::TreeView {
     //    let cur_page = self.notebook.get_current_page().unwrap();
     //    println!("The page: {:?}", cur_page);
@@ -166,14 +166,14 @@ impl GuiExt for Gui {
 /// Trait for all functions that need a GuiPtr instead of just a gui. This is different to GuiExt, as these
 /// will generally setup a gtk callback. As gtk callbacks have a static lifetime, we need the lifetime guarantees
 /// of GuiPtr instead of just a reference.
-pub trait GuiPtrExt {
+pub trait MainGuiPtrExt {
     fn page_changed(&self, u32);
     fn add_page(&self, LoadedPlaylist);
     fn delete_page(&self, u32);
     fn restore(&self, &DBPool);
 }
 
-impl GuiPtrExt for GuiPtr {
+impl MainGuiPtrExt for MainGuiPtr {
     fn page_changed(&self, index: u32) {
         (*self.playlist_tabs).borrow_mut().set_current_playlist(index as i32);
         //panic!("NOT YET IMPLEMENTED");
@@ -233,7 +233,7 @@ impl GuiPtrExt for GuiPtr {
 }
 
 /// Handles mouse button presses in treeviews/playlistviews
-fn button_signal_handler(gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> gtk::Inhibit {
+fn button_signal_handler(gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> gtk::Inhibit {
     if event.get_event_type() == gdk::EventType::DoubleButtonPress {
           let (vec, _) = tv.get_selection().get_selected_rows();
           if vec.len() == 1 {
@@ -251,7 +251,7 @@ fn button_signal_handler(gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -
 const DELETE_KEY: u32 = 65535;
 
 /// Handles keyboard presses in treeviews/playlistviews
-fn key_signal_handler(gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> gtk::Inhibit {
+fn key_signal_handler(gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> gtk::Inhibit {
     //println!("key {:?}", event.get_event_type());
     if event.get_event_type() == gdk::EventType::KeyPress {
         if let Ok(b) = event.clone().downcast::<gdk::EventKey>() {
@@ -268,7 +268,7 @@ fn key_signal_handler(gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> g
     gtk::Inhibit(false)
 }
 
-fn create_populated_treeview(gui: &GuiPtr, lp: &LoadedPlaylist) -> (gtk::TreeView, gtk::ListStore) {
+fn create_populated_treeview(gui: &MainGuiPtr, lp: &LoadedPlaylist) -> (gtk::TreeView, gtk::ListStore) {
     let treeview = gtk::TreeView::new();
     treeview.get_selection().set_mode(gtk::SelectionMode::Multiple);
 

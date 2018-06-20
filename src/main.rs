@@ -21,7 +21,7 @@ extern crate walkdir;
 
 pub mod db;
 pub mod loaded_playlist;
-pub mod gui;
+pub mod maingui;
 pub mod gstreamer_wrapper;
 pub mod libraryviewstore;
 pub mod playlist;
@@ -41,7 +41,7 @@ use preferences::{AppInfo, PreferencesMap, Preferences, prefs_base_dir};
 const APP_INFO: AppInfo = AppInfo{name: "viola", author: "narfinger"};
 const PREFS_KEY: &'static str = "viola_prefs";
 
-use gui::{GuiExt, GuiPtrExt};
+use maingui::{MainGuiExt, MainGuiPtrExt};
 use gstreamer_wrapper::GStreamerAction;
 
 use types::*;
@@ -74,7 +74,7 @@ fn build_gui(application: &gtk::Application, pool: &DBPool) {
 
     let window: gtk::ApplicationWindow = builder.read().unwrap().get_object("mainwindow").unwrap();
     //let pipeline = gstreamer_init(current_playlist.clone()).unwrap();
-    let gui = gui::new(&pool, &builder);
+    let gui = maingui::new(&pool, &builder);
   
     {
         // Play Button

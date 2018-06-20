@@ -5,7 +5,7 @@ use std::string::String;
 use std::ops::Deref;
 use loaded_playlist::LoadedPlaylist;
 
-use gui::GuiPtrExt;
+use maingui::MainGuiPtrExt;
 use types::*;
 
 pub struct LibraryView {
@@ -13,7 +13,7 @@ pub struct LibraryView {
 }
 
 
-pub fn new(pool: DBPool, builder: &BuilderPtr, gui: GuiPtr) {
+pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
     use diesel::{GroupByDsl, QueryDsl, RunQueryDsl};
     use schema::tracks::dsl::*;
 
@@ -48,7 +48,7 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: GuiPtr) {
     libview.connect_event_after(move |s,e| { signalhandler(&pool.clone(), &gui.clone(), s, e) });
 }
 
-fn signalhandler(pool: &DBPool, gui: &GuiPtr, tv: &gtk::TreeView, event: &gdk::Event) {
+fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     use schema::tracks::dsl::*;
 

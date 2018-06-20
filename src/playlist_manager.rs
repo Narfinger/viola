@@ -7,13 +7,13 @@ use loaded_playlist::LoadedPlaylist;
 use smartplaylist_parser;
 use smartplaylist_parser::{LoadSmartPlaylist, SmartPlaylist};
 
-use gui::GuiPtrExt;
+use maingui::MainGuiPtrExt;
 use types::*;
 
 pub struct PlaylistManager {
 }
 
-pub fn new(pool: DBPool, builder: &BuilderPtr, gui: GuiPtr) -> PlaylistManager {
+pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) -> PlaylistManager {
     let plview: gtk::TreeView = builder.read().unwrap().get_object("playlistmanagerview").unwrap();
 
     let column = gtk::TreeViewColumn::new();
@@ -38,7 +38,7 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: GuiPtr) -> PlaylistManager {
     PlaylistManager {}
 }
 
-fn signalhandler(pool: &DBPool, gui: &GuiPtr, sm: &Vec<SmartPlaylist>, tv: &gtk::TreeView, event: &gdk::Event) {
+fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, sm: &Vec<SmartPlaylist>, tv: &gtk::TreeView, event: &gdk::Event) {
     if event.get_event_type() == gdk::EventType::DoubleButtonPress {
         if let Ok(b) = event.clone().downcast::<gdk::EventButton>() {
             if b.get_button() == 1 {

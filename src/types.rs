@@ -8,7 +8,7 @@ use std::rc::{Rc, Weak};
 use std::sync::RwLock;
 use std::cell::RefCell;
 
-use gui::Gui;
+use maingui::MainGui;
 use playlist_tabs::PlaylistTabs;
 use gstreamer_wrapper::GStreamerMessage;
 
@@ -17,8 +17,8 @@ pub const APP_INFO: AppInfo = AppInfo{name: "viola", author: "Narfinger"};
 
 pub type BuilderPtr = Arc<RwLock<Builder>>;
 pub type GstreamerPipeline = Arc<RwLock<Element>>;
-pub type GuiPtr = Rc<Gui>;
-pub type GuiWeakPtr = Weak<Gui>;
+pub type MainGuiPtr = Rc<MainGui>;
+pub type MainGuiWeakPtr = Weak<MainGui>;
 pub type DBPool = Pool<ConnectionManager<SqliteConnection>>;
 pub type PlaylistTabsPtr = Rc<RefCell<PlaylistTabs>>;
 
