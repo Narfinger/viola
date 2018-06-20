@@ -21,9 +21,10 @@ extern crate walkdir;
 
 pub mod db;
 pub mod loaded_playlist;
-pub mod maingui;
+pub mod gui;
 pub mod gstreamer_wrapper;
 pub mod libraryviewstore;
+pub mod maingui;
 pub mod playlist;
 pub mod playlist_tabs;
 pub mod playlist_manager;
@@ -33,104 +34,10 @@ pub mod types;
 
 use clap::{App, Arg};
 use gio::ApplicationExt;
-use gtk::prelude::*;
-use std::sync::Arc;
-use std::sync::RwLock;
 use preferences::{AppInfo, PreferencesMap, Preferences, prefs_base_dir};
 
 const APP_INFO: AppInfo = AppInfo{name: "viola", author: "narfinger"};
 const PREFS_KEY: &'static str = "viola_prefs";
-
-use maingui::{MainGuiExt, MainGuiPtrExt};
-use gstreamer_wrapper::GStreamerAction;
-
-use types::*;
-
-macro_rules! clone {
-    (@param _) => ( _ );
-    (@param $x:ident) => ( $x );
-    ($($n:ident),+ => move || $body:expr) => (
-        {
-            $( let $n = $n.clone(); )+
-            move || $body
-        }
-    );
-    ($($n:ident),+ => move |$($p:tt),+| $body:expr) => (
-        {
-            $( let $n = $n.clone(); )+
-            move |$(clone!(@param $p),)+| $body
-        }
-    );
-}
-
-
-fn build_gui(application: &gtk::Application, pool: &DBPool) {
-    if gtk::init().is_err() {
-        println!("Failed to initialize GTK.");
-        return;
-    }
-    let glade_src = include_str!("../ui/main.glade");
-    let builder = Arc::new(RwLock::new(gtk::Builder::new_from_string(glade_src)));
-
-    let window: gtk::ApplicationWindow = builder.read().unwrap().get_object("mainwindow").unwrap();
-    //let pipeline = gstreamer_init(current_playlist.clone()).unwrap();
-    let gui = maingui::new(&pool, &builder);
-  
-    {
-        // Play Button
-        let button: gtk::Button = builder.read().unwrap().get_object("playButton").unwrap();
-        button.connect_clicked(clone!(gui => move |_| {
-            {
-                (*gui).set_playback(&GStreamerAction::Playing);
-            }
-        }));
-    }
-    {
-        // Pause Button
-        let button: gtk::Button = builder.read().unwrap().get_object("pauseButton").unwrap();
-        button.connect_clicked(clone!(gui  => move |_| {
-            {
-                (*gui).set_playback(&GStreamerAction::Pausing);
-            }
-        }));
-    }
-    {
-        // Previous button
-        let button: gtk::Button = builder.read().unwrap().get_object("prevButton").unwrap();
-        button.connect_clicked(clone!(gui => move |_| {
-            {
-                (*gui).set_playback(&GStreamerAction::Previous);
-            }
-        }));
-    }
-    {
-        // Next button
-        let button: gtk::Button = builder.read().unwrap().get_object("nextButton").unwrap();
-        button.connect_clicked(clone!(gui => move |_| {
-            {
-                (*gui).set_playback(&GStreamerAction::Next)
-            }
-        }));
-    }
-
-    let libview = libraryviewstore::new(pool.clone(), &builder, gui.clone());
-    let plmview = playlist_manager::new(pool.clone(), &builder, gui.clone());
-
-    window.maximize();
-    window.set_application(application);
-    window.set_title("Viola");
-    window.connect_delete_event(clone!(window, gui, pool => move |_, _| {
-        gui.save(&pool);       
-        window.destroy();
-        Inhibit(false)
-    }));
-
-    window.show_all();
-    println!("Restoring tabs");
-    gui.restore(&pool);
-
-    println!("\n\n\n Current Bugs:");
-}
 
 fn main() {
     let matches = App::new("Viola")
@@ -200,7 +107,7 @@ fn main() {
             gtk::Application::new("com.github.narfinger.viola", gio::ApplicationFlags::empty())
                 .expect("Initialization failed...");
         application.connect_startup(move |app| {
-            build_gui(app, &pool);
+            gui::build_gui(app, &pool);
         });
         application.connect_activate(|_| {});
         application.run(&[]);
