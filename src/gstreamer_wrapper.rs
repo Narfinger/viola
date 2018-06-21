@@ -107,7 +107,7 @@ impl GStreamerExt for GStreamer {
         }
         //which gstreamer action
         let gstreamer_action = if (*action == GStreamerAction::Pausing) & 
-            (gstreamer::State::Playing != self.pipeline.get_state(gstreamer::ClockTime(Some(1000))).1) {
+            (gstreamer::State::Playing == self.pipeline.get_state(gstreamer::ClockTime(Some(1000))).1) {
             gstreamer::State::Paused
             
         } else {
