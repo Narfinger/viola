@@ -104,15 +104,30 @@ impl PlaylistTabsExt for PlaylistTabs {
         rows.sort_unstable_by(|x,y| y.cmp(x));
 
         let mut new_lp = self.tabs[index].lp.clone();
-        {
+
+        {   //model needs to go out of scope
             let model = &self.tabs[index].model;
+            let mut position_adjustment = 0;
+            let mut invalid_position = false;
             for i in rows {
-                println!("deleting {}", i);
+                if i < new_lp.current_position {
+                    position_adjustment += 1; 
+                } else if i == new_lp.current_position {
+                    invalid_position = true;
+                }
+                //println!("deleting {}", i);
                 new_lp.items.remove(i as usize);
 
                 //deleting in view
                 let iter = model.iter_nth_child(None, i).expect("Could not get iter");
                 model.remove(&iter);
+            }
+
+            //correcting the current position index
+            if invalid_position {
+                new_lp.current_position = 0;
+            } else {
+                new_lp.current_position -= position_adjustment;
             }
         }
         self.tabs[index].lp = new_lp;
