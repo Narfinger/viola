@@ -108,7 +108,7 @@ impl MainGuiExt for MainGui {
                     self.album_label.set_markup(&track.album);
                     self.status_label.set_markup("Playing");
                     if let Some(ref p) = track.albumpath {
-                        if let Ok(ref pp) = gdk_pixbuf::Pixbuf::new_from_file_at_size(p,300,300) {
+                        if let Ok(ref pp) = gdk_pixbuf::Pixbuf::new_from_file_at_size(p,200,200) {
                             self.cover.set_from_pixbuf(pp);
                         } else {
                             println!("error creating pixbuf");
