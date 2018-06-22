@@ -13,7 +13,8 @@ taglib = {git = "https://github.com/ebassi/taglib-rust.git", rev="513dabf"}     
 gdk = "0.8"               # Rust bindings for the GDK 3 library
 gdk-pixbuf = "0.4"        # Rust bindings for the GdkPixbuf library 
 gio = "0.4"             # Rust bindings for the Gio library    
-gstreamer = "0.11"               # Rust bindings for GStreamer     
+gstreamer = "0.11"               # Rust bindings for GStreamer    
+pango = "0.4.0"                         # Rust bindings for the Pango library 
 preferences = "1.1"         # Read and write user-specific application data (in stable Rust)
 rayon = "1.0"               # Simple work-stealing parallelism for Rust   
 serde_derive = "1.0"                   # Macros 1.1 implementation of #[derive(Serialize, Deserialize)]

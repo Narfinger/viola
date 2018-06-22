@@ -977,6 +977,7 @@ dependencies = [
  "gtk 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "indicatif 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "open 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pango 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "preferences 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rayon 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.66 (registry+https://github.com/rust-lang/crates.io-index)",

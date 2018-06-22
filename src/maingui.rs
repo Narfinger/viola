@@ -2,10 +2,12 @@
 
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::time::Duration;
 use gdk;
 use gdk_pixbuf;
 use gtk;
 use gtk::prelude::*;
+use pango;
 
 use gstreamer_wrapper;
 use gstreamer_wrapper::{GStreamer, GStreamerExt, GStreamerAction};
@@ -288,6 +290,9 @@ fn create_populated_treeview(gui: &MainGuiPtr, lp: &LoadedPlaylist) -> (gtk::Tre
         column.set_resizable(id > 0);
         column.set_fixed_width(width);
         treeview.append_column(&column);
+        if id == 4 {
+            cell.set_property_alignment(pango::Alignment::Right);
+        }
     }
     let model = populate_model_with_playlist(lp);
     treeview.set_model(Some(&model));
@@ -308,6 +313,21 @@ fn create_populated_treeview(gui: &MainGuiPtr, lp: &LoadedPlaylist) -> (gtk::Tre
     (treeview, model)
 }
 
+fn format_duration(d: i32) -> String {
+    if d < 60 {
+        format!("{}", d)
+    } else if d < 60*60 {
+        let s = d % 60;
+        let m = d/60;
+        format!("{}:{:02}", m, s)
+    } else {
+        let s = d % 60;
+        let m = d/60 % (60*60);
+        let h = d/(60*60);
+        format!("{}:{:02}:{:02}", h,m,s)
+    }
+}
+
 fn populate_model_with_playlist(lp: &LoadedPlaylist) -> gtk::ListStore  {
     let model = gtk::ListStore::new(&[
         String::static_type(),
@@ -321,6 +341,7 @@ fn populate_model_with_playlist(lp: &LoadedPlaylist) -> gtk::ListStore  {
     ]);
 
     for entry in &lp.items {
+        let length = format_duration(entry.length);
     model.insert_with_values(
         None,
         &[0, 1, 2, 3, 4, 5, 6, 7],
@@ -332,7 +353,7 @@ fn populate_model_with_playlist(lp: &LoadedPlaylist) -> gtk::ListStore  {
             &entry.title,
             &entry.artist,
             &entry.album,
-            &entry.length,
+            &length,
             &entry
                 .year
                 .map(|s| s.to_string())
