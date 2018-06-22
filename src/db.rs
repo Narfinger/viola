@@ -71,20 +71,17 @@ fn number_zero_to_option(i: u32) -> Option<i32> {
 }
 
 fn get_album_file(s: &str) -> Option<String> {
-    Path::new(s)
-        .parent()
-        .and_then(|p| {
-            let jpg = p.with_file_name("cover.jpg");
-            let png = p.with_file_name("cover.png");
-            if jpg.exists() {
-                Some(jpg)
-            } else if png.exists() {
-                Some(png)
-            } else {
-                None
-            }
-        })
-        .and_then(|s| s.to_str().map(String::from))
+    let p = Path::new(s);
+    let jpg = p.with_file_name("cover.jpg");
+    let png = p.with_file_name("cover.png");
+    if jpg.exists() {
+        Some(jpg)
+    } else if png.exists() {
+        Some(png)
+    } else {
+        None
+    }
+    .and_then(|s| s.to_str().map(String::from))
 }
 
 fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
