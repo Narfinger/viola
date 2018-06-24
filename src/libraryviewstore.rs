@@ -12,17 +12,39 @@ pub struct LibraryView {
     
 }
 
+const ARTIST_TYPE: i32 = 1;
+const ALBUM_TYPE: i32 = 2;
+const TRACK_TYPE: i32 = 3;
+
+enum LibraryLoadType {
+    Artist,
+    Album,
+    Track,
+    Invalid,
+}
+
+impl From<i32> for LibraryLoadType {
+    fn from(i: i32) -> Self {
+        match i {
+            1 => LibraryLoadType::Artist,
+            2 => LibraryLoadType::Album,
+            3 => LibraryLoadType::Track,
+            _ => LibraryLoadType::Invalid,
+        }
+    }
+}
 
 pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
-    use diesel::{GroupByDsl, QueryDsl, RunQueryDsl};
+    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl};
     use schema::tracks::dsl::*;
+    println!("Fetching is slow, first do the fetching in a thread and do it in a idle?");
 
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
 
     //the model contains first a abbreviated string and in second column the whole string to construct the playlist
-    let model = gtk::TreeStore::new(&[String::static_type(), String::static_type()]);
+    let model = gtk::TreeStore::new(&[String::static_type(), String::static_type(), i32::static_type()]);
     let db = pool.get().unwrap();
-    let res: Vec<String> = tracks
+    let artists: Vec<String> = tracks
         .select(artist)
         .order(artist)
         .group_by(artist)
@@ -36,11 +58,39 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
     column.add_attribute(&cell, "text", 0);
     libview.append_column(&column);
 
+    /*
     println!("Running");
-    for i in res {
-        let st: String = i.chars().take(20).collect::<String>() + "..";
-        model.insert_with_values(None, None, &[0, 1], &[&st, &i]);
+    for a in artists {
+        let st: String = a.chars().take(20).collect::<String>() + "..";
+        //let artist_node = model.insert_with_values(None, None, &[0, 1, 2], &[&st, &a, &ARTIST_TYPE]);
+
+        {
+            let albums: Vec<String> = tracks
+                .select(album)
+                .order(year)
+                .filter(artist.eq(&a))
+                .group_by(album)
+                .load(db.deref())
+                .expect("Error in db connection");
+            for ab in albums {
+                //let album_node = model.insert_with_values(Some(&artist_node), None, &[0, 1, 2], &[&ab, &ab, &ALBUM_TYPE]);
+                {
+                    let ts: Vec<String> = tracks
+                    .select(title)
+                    .order(tracknumber)
+                    .filter(artist.eq(&a))
+                    .filter(album.eq(ab))
+                    .load(db.deref())
+                    .expect("Error in db connection");
+
+                    for t in ts {
+                        //model.insert_with_values(Some(&album_node), None, &[0, 1, 2], &[&t, &t, &TRACK_TYPE]);
+                    }
+                }
+            }
+        }
     }
+    */
 
     libview.set_model(Some(&model));
     println!("Stopped");
