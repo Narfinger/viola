@@ -87,7 +87,7 @@
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
             <child>
-              <object class="GtkPaned">
+              <object class="GtkPaned" id="paned">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <child>
