@@ -2,6 +2,8 @@ use gdk;
 use gtk;
 use gtk::prelude::*;
 use std::string::String;
+use std::rc::Rc;
+use std::cell::{Cell, RefCell, RefMut};
 use std::ops::Deref;
 use loaded_playlist::LoadedPlaylist;
 
@@ -34,17 +36,58 @@ impl From<i32> for LibraryLoadType {
     }
 }
 
+fn idle_fill<'a, I>(pool: DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore, libview: &gtk::TreeView, gui: MainGuiPtr) -> gtk::Continue 
+    where I: Iterator<Item = String> {
+    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl};
+    use schema::tracks::dsl::*;
+
+    //panic!("does not work yet, iterator gets not changes");
+    if let Some(a) = ats.borrow_mut().next() {
+        let db = pool.get().unwrap();
+        let st: String = a.chars().take(20).collect::<String>() + "..";
+        {
+            let albums: Vec<String> = tracks
+                .select(album)
+                .order(year)
+                .filter(artist.eq(&a))
+                .group_by(album)
+                .load(db.deref())
+                .expect("Error in db connection");
+            let artist_node = model.insert_with_values(None, None, &[0, 1, 2], &[&st, &a, &ARTIST_TYPE]);
+            for ab in albums {
+                let album_node = model.insert_with_values(Some(&artist_node), None, &[0, 1, 2], &[&ab, &ab, &ALBUM_TYPE]);
+                {
+                    let ts: Vec<String> = tracks
+                    .select(title)
+                    .order(tracknumber)
+                    .filter(artist.eq(&a))
+                    .filter(album.eq(ab))
+                    .load(db.deref())
+                    .expect("Error in db connection");
+                    for t in ts {
+                        model.insert_with_values(Some(&album_node), None, &[0, 1, 2], &[&t, &t, &TRACK_TYPE]);
+                    }
+                }
+            }
+        }
+        gtk::Continue(true)
+    } else {
+        println!("Done");
+        libview.connect_event_after(move |s,e| { signalhandler(&pool.clone(), &gui.clone(), s, e) });
+        gtk::Continue(false)
+    }
+}
+
 pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl};
     use schema::tracks::dsl::*;
-    println!("Fetching is slow, first do the fetching in a thread and do it in a idle?");
-
+    
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
 
     //the model contains first a abbreviated string and in second column the whole string to construct the playlist
     let model = gtk::TreeStore::new(&[String::static_type(), String::static_type(), i32::static_type()]);
     let db = pool.get().unwrap();
-    let artists: Vec<String> = tracks
+    let mut artists: Vec<String> = tracks
         .select(artist)
         .order(artist)
         .group_by(artist)
@@ -58,44 +101,12 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
     column.add_attribute(&cell, "text", 0);
     libview.append_column(&column);
 
-    /*
-    println!("Running");
-    for a in artists {
-        let st: String = a.chars().take(20).collect::<String>() + "..";
-        //let artist_node = model.insert_with_values(None, None, &[0, 1, 2], &[&st, &a, &ARTIST_TYPE]);
-
-        {
-            let albums: Vec<String> = tracks
-                .select(album)
-                .order(year)
-                .filter(artist.eq(&a))
-                .group_by(album)
-                .load(db.deref())
-                .expect("Error in db connection");
-            for ab in albums {
-                //let album_node = model.insert_with_values(Some(&artist_node), None, &[0, 1, 2], &[&ab, &ab, &ALBUM_TYPE]);
-                {
-                    let ts: Vec<String> = tracks
-                    .select(title)
-                    .order(tracknumber)
-                    .filter(artist.eq(&a))
-                    .filter(album.eq(ab))
-                    .load(db.deref())
-                    .expect("Error in db connection");
-
-                    for t in ts {
-                        //model.insert_with_values(Some(&album_node), None, &[0, 1, 2], &[&t, &t, &TRACK_TYPE]);
-                    }
-                }
-            }
-        }
-    }
-    */
-
     libview.set_model(Some(&model));
-    println!("Stopped");
 
-    libview.connect_event_after(move |s,e| { signalhandler(&pool.clone(), &gui.clone(), s, e) });
+    let refcell = Rc::new(RefCell::new(artists.into_iter()));
+    gtk::idle_add(move || {
+        idle_fill(pool.clone(), &refcell, &model, &libview, gui.clone()) 
+    });
 }
 
 fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) {
