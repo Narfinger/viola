@@ -27,6 +27,7 @@ pub struct MainGui {
     album_label: gtk::Label,
     status_label: gtk::Label,
     cover: gtk::Image,
+    search_text: gtk::SearchEntry,
     last_marked: RefCell<Option<gtk::TreeIter>>,
     playlist_tabs: PlaylistTabsPtr,
     gstreamer: Rc<GStreamer>,
@@ -47,6 +48,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         album_label: builder.read().unwrap().get_object("albumLabel").unwrap(),
         status_label: builder.read().unwrap().get_object("statusLabel").unwrap(),
         cover: builder.read().unwrap().get_object("coverImage").unwrap(),
+        search_text: builder.read().unwrap().get_object("searchInput").unwrap(),
         last_marked: RefCell::new(None),
         playlist_tabs: pltabs,
         gstreamer: gst.clone(),
@@ -81,6 +83,7 @@ pub trait MainGuiExt {
     fn update_gui(&self, &PlayerStatus); //does not need pipeline
     fn set_playback(&self, &GStreamerAction);
     fn save(&self, &DBPool);
+    fn set_visible_function(&self, &gtk::TreeModel, &gtk::TreeIter) -> bool;
 }
 
 impl MainGuiExt for MainGui {
@@ -161,6 +164,27 @@ impl MainGuiExt for MainGui {
 
     fn save(&self, pool: &DBPool) {
         self.playlist_tabs.borrow().save(pool);
+    }
+
+    fn set_visible_function(&self, model: &gtk::TreeModel, i: &gtk::TreeIter) -> bool {
+        println!("filter thingy");
+        if let Some(text_to_search) = self.search_text.get_text() {
+            [0 as i32,1,2,3]
+                .iter()
+                .map(|v| model.get_value(i, *v).get::<String>())
+                .any(|s: Option<String>| 
+                    if let Some(v) = s {
+                        v.contains(&text_to_search)
+                    } else {
+                        false
+                    })
+        } else {
+            true
+        }
+
+            //.map(|o: Option<String>| o.map_or(|s| s.contains(text_to_search), false))
+            //.any()
+        //true
     }
 }
 
@@ -266,7 +290,7 @@ fn key_signal_handler(gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) 
     gtk::Inhibit(false)
 }
 
-fn create_populated_treeview(gui: &MainGuiPtr, lp: &LoadedPlaylist) -> (gtk::TreeView, gtk::ListStore) {
+fn create_populated_treeview(gui: &MainGuiPtr, lp: &LoadedPlaylist) -> (gtk::TreeView, gtk::TreeModelFilter) {
     let treeview = gtk::TreeView::new();
     treeview.get_selection().set_mode(gtk::SelectionMode::Multiple);
 
@@ -294,7 +318,14 @@ fn create_populated_treeview(gui: &MainGuiPtr, lp: &LoadedPlaylist) -> (gtk::Tre
         }
     }
     let model = populate_model_with_playlist(lp);
-    treeview.set_model(Some(&model));
+//    treeview.set_model(Some(&model));
+
+    let filter = gtk::TreeModelFilter::new(&model, None);
+    let guic = gui.clone();
+    filter.set_visible_func(move |m,i| guic.set_visible_function(m,i));
+    treeview.set_model(Some(&filter));
+    gui.search_text.connect_search_changed(move |_| filter.refilter());
+ 
     //panic!("Do the connection");
     {
         let guic = gui.clone();
@@ -309,7 +340,8 @@ fn create_populated_treeview(gui: &MainGuiPtr, lp: &LoadedPlaylist) -> (gtk::Tre
         });
     }
     treeview.show();
-    (treeview, model)
+
+    (treeview, filter)
 }
 
 fn format_duration(d: i32) -> String {

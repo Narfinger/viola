@@ -1,7 +1,8 @@
 use gtk;
 use std::rc::Rc;
 use std::cell::RefCell;
-use gtk::{ListStoreExt, TreeModelExt, TreeSelectionExt};
+use gtk::Cast;
+use gtk::{ListStoreExt, TreeModelExt, TreeSelectionExt, TreeModelFilterExt};
 
 use db;
 use loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
@@ -12,7 +13,7 @@ use types::*;
 pub struct PlaylistTab {
     pub lp: LoadedPlaylist,
     pub treeview: gtk::TreeView,
-    pub model: gtk::ListStore,
+    pub model: gtk::TreeModelFilter,
 }
 
 pub struct PlaylistTabs {
@@ -120,7 +121,12 @@ impl PlaylistTabsExt for PlaylistTabs {
 
                 //deleting in view
                 let iter = model.iter_nth_child(None, i).expect("Could not get iter");
-                model.remove(&iter);
+                model
+                    .get_model()
+                    .expect("error in getting model")
+                    .downcast::<gtk::ListStore>()
+                    .expect("Error in converting model")
+                    .remove(&model.convert_iter_to_child_iter(&iter));
             }
 
             //correcting the current position index
