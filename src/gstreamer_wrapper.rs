@@ -138,7 +138,8 @@ impl GStreamerExt for GStreamer {
     /// poll the message bus and on eos start new
     fn gstreamer_message_handler(&self) -> gtk::Continue {
         if self.finish_reicv.try_recv().is_ok() {
-            self.current_playlist.next_or_eol();
+            //println!("next is: {:?}", self.current_playlist.next_or_eol());
+            //self.current_playlist.next_or_eol();
             let res = self.current_playlist.next_or_eol();
             match res {
                 None => { 
@@ -146,7 +147,7 @@ impl GStreamerExt for GStreamer {
                     self.sender.send(GStreamerMessage::Stopped).expect("Error in gstreamer sending message to gui");
                     },
                 Some(i) => {
-                    println!("Next should play");
+                    println!("Next should play {:?}", &i);
                     self.pipeline
                         .set_state(gstreamer::State::Ready)
                         .into_result()

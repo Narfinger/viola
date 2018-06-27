@@ -38,7 +38,7 @@ impl From<i32> for LibraryLoadType {
 
 fn idle_fill<'a, I>(pool: DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore, libview: &gtk::TreeView, gui: MainGuiPtr) -> gtk::Continue 
     where I: Iterator<Item = String> {
-    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl};
+    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
 
     //panic!("does not work yet, iterator gets not changes");
@@ -49,7 +49,7 @@ fn idle_fill<'a, I>(pool: DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore, 
             let albums: Vec<String> = tracks
                 .select(album)
                 .order(year)
-                .filter(artist.eq(&a))
+                .filter(artist.like(String::from("%") + &a + "%"))
                 .group_by(album)
                 .load(db.deref())
                 .expect("Error in db connection");
@@ -60,7 +60,7 @@ fn idle_fill<'a, I>(pool: DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore, 
                     let ts: Vec<String> = tracks
                     .select(title)
                     .order(tracknumber)
-                    .filter(artist.eq(&a))
+                    .filter(artist.like(String::from("%") + &a + "%"))
                     .filter(album.eq(ab))
                     .load(db.deref())
                     .expect("Error in db connection");
@@ -79,20 +79,13 @@ fn idle_fill<'a, I>(pool: DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore, 
 }
 
 pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
-    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl};
+    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
     
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
 
     //the model contains first a abbreviated string and in second column the whole string to construct the playlist
     let model = gtk::TreeStore::new(&[String::static_type(), String::static_type(), i32::static_type()]);
-    let db = pool.get().unwrap();
-    let artists: Vec<String> = tracks
-        .select(artist)
-        .order(artist)
-        .group_by(artist)
-        .load(db.deref())
-        .expect("Error in db connection");
  
     let column = gtk::TreeViewColumn::new();
     let cell = gtk::CellRendererText::new();
@@ -102,6 +95,15 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
     libview.append_column(&column);
 
     libview.set_model(Some(&model));
+
+    let db = pool.get().unwrap();
+    let artists: Vec<String> = tracks
+        .select(artist)
+        .order(artist)
+        .group_by(artist)
+        .filter(artist.not_like(String::from("%") + "feat" + "%"))
+        .load(db.deref())
+        .expect("Error in db connection");
 
     let refcell = Rc::new(RefCell::new(artists.into_iter()));
     gtk::idle_add(move || {
