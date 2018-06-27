@@ -128,9 +128,6 @@ impl MainGuiExt for MainGui {
                     let path = gtk::TreePath::new_from_indicesv(&[pos, 7]);
                     let treeiter = model.get_iter(&path).unwrap();
                     //let (_, selection) = treeselection.get_selected().unwrap();
-                    println!("doing color");
-                    println!("this does not reset the colors of the other things");
-                    println!("Resetting the other color");
                     {
                         let cell = self.last_marked.borrow();
                         if let Some(ref previous_row) = *cell {

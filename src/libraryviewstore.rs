@@ -87,7 +87,7 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
     //the model contains first a abbreviated string and in second column the whole string to construct the playlist
     let model = gtk::TreeStore::new(&[String::static_type(), String::static_type(), i32::static_type()]);
     let db = pool.get().unwrap();
-    let mut artists: Vec<String> = tracks
+    let artists: Vec<String> = tracks
         .select(artist)
         .order(artist)
         .group_by(artist)
