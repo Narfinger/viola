@@ -134,14 +134,16 @@ impl GStreamerExt for GStreamer {
                     eprintln!("Debugging information: {:?}", err.get_debug());
                 }
                 MessageView::StateChanged(state_changed) => {
-                    println!(
-                        "Pipeline state changed from {:?} to {:?}",
-                        state_changed.get_old(),
-                        state_changed.get_current()
-                    );
+                    //println!(
+                    //    "Pipeline state changed from {:?} to {:?}",
+                    //    state_changed.get_old(),
+                    //    state_changed.get_current()
+                    //);
                     //sender.send(GStreamerMessage::Playing).expect("Error in gstreamer sending message to gui");
                 }
                 MessageView::Eos(..) => {
+                    use playlist_tabs::PlaylistTabsExt;
+                    println!("current playing: {}, new playing: {:?}", self.current_playlist.borrow().current_track().title, self.current_playlist.next_or_eol());
                     let res = self.current_playlist.next_or_eol();
                     match res {
                         None => { 
