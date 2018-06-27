@@ -84,6 +84,7 @@ pub trait MainGuiExt {
     fn set_playback(&self, &GStreamerAction);
     fn save(&self, &DBPool);
     fn set_visible_function(&self, &gtk::TreeModel, &gtk::TreeIter) -> bool;
+    fn refilter(&self);
 }
 
 impl MainGuiExt for MainGui {
@@ -167,7 +168,7 @@ impl MainGuiExt for MainGui {
     }
 
     fn set_visible_function(&self, model: &gtk::TreeModel, i: &gtk::TreeIter) -> bool {
-        println!("filter thingy");
+        //println!("filter thingy");
         if let Some(text_to_search) = self.search_text.get_text() {
             [0 as i32,1,2,3]
                 .iter()
@@ -185,6 +186,11 @@ impl MainGuiExt for MainGui {
             //.map(|o: Option<String>| o.map_or(|s| s.contains(text_to_search), false))
             //.any()
         //true
+    }
+
+    fn refilter(&self) {
+        use playlist_tabs::PlaylistTabsExt;
+        self.playlist_tabs.borrow().refilter();
     }
 }
 
@@ -321,11 +327,23 @@ fn create_populated_treeview(gui: &MainGuiPtr, lp: &LoadedPlaylist) -> (gtk::Tre
 //    treeview.set_model(Some(&model));
 
     let filter = gtk::TreeModelFilter::new(&model, None);
-    let guic = gui.clone();
-    filter.set_visible_func(move |m,i| guic.set_visible_function(m,i));
+    let guic = Rc::downgrade(gui);
+    //let guic = gui.downgrade();
+    
+    filter.set_visible_func(move |m,i| 
+        guic
+        .upgrade()
+        .map(|p: MainGuiPtr| p.set_visible_function(m,i))
+        .unwrap_or(true));
     treeview.set_model(Some(&filter));
-    gui.search_text.connect_search_changed(move |_| filter.refilter());
- 
+    {
+        let guic = Rc::downgrade(gui);
+        gui.search_text.connect_search_changed(move |_| { 
+            guic
+            .upgrade()
+            .map(|p: MainGuiPtr| p.refilter()); });
+    }
+    
     //panic!("Do the connection");
     {
         let guic = gui.clone();

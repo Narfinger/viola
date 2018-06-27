@@ -60,6 +60,9 @@ pub trait PlaylistTabsExt {
 
     /// saves the playlist tabs to the database
     fn save(&self, &DBPool);
+
+    //refilters the current tab
+    fn refilter(&self);
 }
 
 impl PlaylistTabsExt for PlaylistTabs {
@@ -142,6 +145,12 @@ impl PlaylistTabsExt for PlaylistTabs {
     fn save(&self, pool: &DBPool) {
         for lp in &self.tabs {
             playlist::update_playlist(pool, &lp.lp);
+        }
+    }
+
+    fn refilter(&self) {
+        if let Some(id) = self.current_playlist {
+            (&self.tabs[id].model).downcast::<gtk::TreeModelFilter>().expect("error in model cast").refilter();
         }
     }
 }
