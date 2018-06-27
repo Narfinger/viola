@@ -2,7 +2,7 @@ use gstreamer;
 use gstreamer::ElementExt;
 use gtk;
 use gtk::ObjectExt;
-use std::sync::mpsc::{Receiver, Sender, channel};
+use std::sync::mpsc::{Receiver, Sender, channel, sync_channel};
 use std::rc::Rc;
 
 use playlist_tabs::PlaylistControlsImmutable;
@@ -12,7 +12,10 @@ use types::*;
 pub struct GStreamer {
     pipeline: gstreamer::Element,
     current_playlist: PlaylistTabsPtr,
+    /// Handles gstreamer changes to the gui
     sender: Sender<GStreamerMessage>,
+    /// Handles if we get the almost finished signal
+    finish_reicv: Receiver<()>,
 }
 
 impl Drop for GStreamer {
@@ -46,7 +49,16 @@ pub fn new(current_playlist: PlaylistTabsPtr) -> Result<(Rc<GStreamer>, Receiver
         gstreamer::parse_launch("playbin").map_err(|_| String::from("Cannot do gstreamer"))?;
 
     let (tx, rx) = channel::<GStreamerMessage>();
-    let res = Rc::new(GStreamer { pipeline, current_playlist, sender: tx });
+    let (finish_send, finish_reicv) = sync_channel::<()>(1);
+    
+    pipeline.connect("about-to-finish", true, move |_| {
+        finish_send.send(()).expect("Error in sending almost_finished signal"); 
+        None
+     }).expect("Error in connecting");
+    
+    let res = Rc::new(GStreamer { pipeline, current_playlist, sender: tx, finish_reicv });
+
+    //panic!("this would leave us with a circ reference");
 
     let resc = res.clone();
     gtk::timeout_add(500, move || {
@@ -125,6 +137,34 @@ impl GStreamerExt for GStreamer {
 
     /// poll the message bus and on eos start new
     fn gstreamer_message_handler(&self) -> gtk::Continue {
+        if self.finish_reicv.try_recv().is_ok() {
+            self.current_playlist.next_or_eol();
+            let res = self.current_playlist.next_or_eol();
+            match res {
+                None => { 
+                    self.sender.send(GStreamerMessage::Stopped).expect("Message Queue Error");
+                    self.sender.send(GStreamerMessage::Stopped).expect("Error in gstreamer sending message to gui");
+                    },
+                Some(i) => {
+                    println!("Next should play");
+                    self.pipeline
+                        .set_state(gstreamer::State::Ready)
+                        .into_result()
+                        .expect("Error in changing gstreamer state to ready");
+                    self.pipeline
+                        .set_property("uri", &i)
+                        .expect("Error setting new url for gstreamer");
+                    self.pipeline
+                        .set_state(gstreamer::State::Playing)
+                        .into_result()
+                        .expect("Error in changing gstreamer state to playing");
+                    self.sender.send(GStreamerMessage::Playing).expect("Error in gstreamer sending message to gui");
+                }
+            };
+        }
+        gtk::Continue(true)
+        
+        /*
         let bus = self.pipeline.get_bus().unwrap();
         if let Some(msg) = bus.pop() {
             use gstreamer::MessageView;
@@ -174,5 +214,6 @@ impl GStreamerExt for GStreamer {
 
         }
         gtk::Continue(true)
+        */
     }
 }
