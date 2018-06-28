@@ -38,7 +38,7 @@ use gio::ApplicationExt;
 use preferences::{AppInfo, PreferencesMap, Preferences, prefs_base_dir};
 
 const APP_INFO: AppInfo = AppInfo{name: "viola", author: "narfinger"};
-const PREFS_KEY: &'static str = "viola_prefs";
+const PREFS_KEY: &str = "viola_prefs";
 
 fn main() {
     let matches = App::new("Viola")
@@ -101,7 +101,7 @@ fn main() {
         let mut path = prefs_base_dir().expect("Could not find base dir");
         path.push("viola");
         path.push("smartplaylists.toml");
-        open::that(&path).expect(&format!("Could not open file {:?}", &path));
+        open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else {
         use gio::ApplicationExtManual;
         let application =

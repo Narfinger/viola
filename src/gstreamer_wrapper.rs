@@ -2,7 +2,6 @@ use gstreamer;
 use gstreamer::ElementExt;
 use gtk;
 use gtk::ObjectExt;
-use std::path::Path;
 use std::sync::mpsc::{Receiver, Sender, channel, sync_channel};
 use std::rc::Rc;
 

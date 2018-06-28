@@ -3,7 +3,7 @@ use gtk;
 use gtk::prelude::*;
 use std::string::String;
 use std::rc::Rc;
-use std::cell::{Cell, RefCell, RefMut};
+use std::cell::RefCell;
 use std::ops::Deref;
 use loaded_playlist::LoadedPlaylist;
 
@@ -36,7 +36,7 @@ impl From<i32> for LibraryLoadType {
     }
 }
 
-fn idle_fill<'a, I>(pool: DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore, libview: &gtk::TreeView, gui: MainGuiPtr) -> gtk::Continue 
+fn idle_fill< I>(pool: DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore, libview: &gtk::TreeView, gui: MainGuiPtr) -> gtk::Continue 
     where I: Iterator<Item = String> {
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
@@ -79,7 +79,7 @@ fn idle_fill<'a, I>(pool: DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore, 
 }
 
 pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
-    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
+    use diesel::{GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
     
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();

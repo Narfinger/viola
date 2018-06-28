@@ -50,7 +50,7 @@ fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
     query_insert(smp.dir_exclude,   Tag::DirExclude, &mut query);
     query_insert(smp.dir_include,   Tag::DirInclude, &mut query);
     query_insert(smp.genre_include, Tag::GenreInclude, &mut query);
-    SmartPlaylist {name: smp.name, query: query }
+    SmartPlaylist {name: smp.name, query }
 }
 
 pub trait LoadSmartPlaylist {
@@ -125,7 +125,7 @@ fn read_file(file: &str) -> Vec<SmartPlaylist> {
     s.smartplaylist.into_iter().map(construct_smartplaylist).collect()
 }
 
-pub fn construct_smartplaylists_from_config<'a>() -> Vec<SmartPlaylist> {
+pub fn construct_smartplaylists_from_config() -> Vec<SmartPlaylist> {
     let mut p = prefs_base_dir().expect("Could not find base dir");
     p.push("viola");
     p.push("smartplaylists.toml");

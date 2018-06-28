@@ -2,7 +2,6 @@
 
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::time::Duration;
 use gdk;
 use gdk_pixbuf;
 use gtk;
