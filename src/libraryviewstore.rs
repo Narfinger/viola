@@ -36,7 +36,7 @@ impl From<i32> for LibraryLoadType {
     }
 }
 
-fn idle_fill< I>(pool: DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore, libview: &gtk::TreeView, gui: MainGuiPtr) -> gtk::Continue 
+fn idle_fill< I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore, libview: &gtk::TreeView, gui: &MainGuiPtr) -> gtk::Continue 
     where I: Iterator<Item = String> {
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
@@ -73,7 +73,6 @@ fn idle_fill< I>(pool: DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore, lib
         gtk::Continue(true)
     } else {
         println!("Done");
-        libview.connect_event_after(move |s,e| { signalhandler(&pool.clone(), &gui.clone(), s, e) });
         gtk::Continue(false)
     }
 }
@@ -105,41 +104,84 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
         .load(db.deref())
         .expect("Error in db connection");
 
+    {
+        let pc = pool.clone();
+        let guic = gui.clone();
+        libview.connect_event_after(move |s,e| { signalhandler(&pc, &guic, s, e) });
+    }
     let refcell = Rc::new(RefCell::new(artists.into_iter()));
-    gtk::idle_add(move || {
-        idle_fill(pool.clone(), &refcell, &model, &libview, gui.clone()) 
-    });
+    {
+        let pc = pool.clone();
+        let guic = gui.clone();
+        gtk::idle_add(move || {
+            idle_fill(&pc, &refcell, &model, &libview, &guic) 
+        });
+    }
 }
 
-fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) {
-    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+fn do_new(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
+    
+    let (model, iter) = tv.get_selection().get_selected().unwrap();
+    let artist_name = model.get_value(&iter, 1).get::<String>().unwrap();
+    let db = pool.get().expect("DB problem");
+    let results = tracks
+        .filter(artist.like(String::from("%") + &artist_name + "%"))
+        .order(path)
+        .load(db.deref())
+        .expect("Problem loading playlist");
+    let pl = LoadedPlaylist {
+        id: None,
+        name: artist_name,
+        items: results,
+        current_position: 0,
+    };
+    gui.add_page(pl);
+}
 
-    if event.get_event_type() == gdk::EventType::DoubleButtonPress {
+fn do_append(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
+
+}
+
+fn do_replace(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
+
+}
+
+
+fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) {
+    if event.get_event_type() == gdk::EventType::ButtonPress {
+        println!("button press");
         if let Ok(b) = event.clone().downcast::<gdk::EventButton>() {
-            if b.get_button() == 1 {
-                let (model, iter) = tv.get_selection().get_selected().unwrap();
-                let artist_name = model.get_value(&iter, 1).get::<String>().unwrap();
-                let db = pool.get().expect("DB problem");
-                let results = tracks
-                    .filter(artist.eq(&artist_name))
-                    .order(path)
-                    .load(db.deref())
-                    .expect("Problem loading playlist");
-/* 
+            println!("the button: {}", b.get_button());
+            if b.get_button() == 3 {
+                let mut menu = gtk::Menu::new();
                 {
-                    let dquery = tracks.filter(artist.eq(&artist_name));
-                    let debug = debug_query::<diesel::sqlite::Sqlite, _>(&dquery);
-                    println!("loading playlist from query: {:?}", debug);
-                } */
-
-                let pl = LoadedPlaylist {
-                    id: None,
-                    name: artist_name,
-                    items: results,
-                    current_position: 0,
-                };
-                gui.add_page(pl);
+                    let menuitem = gtk::MenuItem::new_with_label("New");
+                    let pc = pool.clone();
+                    let gc = gui.clone();
+                    let tvc = tv.clone();
+                    menuitem.connect_activate(move |_| do_new(&pc,&gc, &tvc));
+                    menu.append(&menuitem);
+                }
+                {
+                    let menuitem = gtk::MenuItem::new_with_label("Replace");
+                    let pc = pool.clone();
+                    let gc = gui.clone();
+                    let tvc = tv.clone();
+                    menuitem.connect_activate(move |_| do_replace(&pc,&gc, &tvc));
+                    menu.append(&menuitem);
+                }
+                {
+                    let menuitem = gtk::MenuItem::new_with_label("Append");
+                    let pc = pool.clone();
+                    let gc = gui.clone();
+                    let tvc = tv.clone();
+                    menuitem.connect_activate(move |_| do_append(&pc,&gc, &tvc));
+                    menu.append(&menuitem);
+                }
+                menu.show_all();
+                gtk::MenuExt::popup_at_pointer(&menu, event);
             }
         }
     }
