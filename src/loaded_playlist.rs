@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use db::Track;
 
 #[derive(Clone, Debug)]
@@ -20,6 +21,7 @@ impl LoadedPlaylistExt for LoadedPlaylist {
 }
 
 pub trait PlaylistControls {
+    fn get_current_path(&self) -> PathBuf;
     fn get_current_uri(&self) -> String;
     fn previous(&mut self) -> String;
     fn next(&mut self) -> String;
@@ -28,6 +30,14 @@ pub trait PlaylistControls {
 }
 
 impl PlaylistControls for LoadedPlaylist {
+    fn get_current_path(&self) -> PathBuf {
+        let mut pb = PathBuf::new();
+        pb.push(
+            &self.items[self.current_position as usize]
+            .path);
+        pb
+    }
+
     fn get_current_uri(&self) -> String {
         println!("loading from playlist with name: {}", self.name);
         format!(

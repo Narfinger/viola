@@ -1,6 +1,7 @@
 use gtk;
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::path::PathBuf;
 use gtk::{ListStoreExt, TreeModelExt, TreeSelectionExt};
 
 use db;
@@ -141,6 +142,11 @@ impl PlaylistTabsExt for PlaylistTabs {
 }
 
 impl PlaylistControls for PlaylistTabs {
+    fn get_current_path(&self) -> PathBuf {
+        let lp = &self.tabs[self.current_playlist.unwrap()].lp;
+        lp.get_current_path()
+    }
+
     fn get_current_uri(&self) -> String {
         let lp = &self.tabs[self.current_playlist.unwrap()].lp;
         lp.get_current_uri()
