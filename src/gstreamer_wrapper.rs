@@ -2,6 +2,7 @@ use gstreamer;
 use gstreamer::ElementExt;
 use gtk;
 use gtk::ObjectExt;
+use std::path::Path;
 use std::sync::mpsc::{Receiver, Sender, channel, sync_channel};
 use std::rc::Rc;
 
@@ -89,6 +90,7 @@ impl GStreamerExt for GStreamer {
         match *action {
             GStreamerAction::Play(_) | GStreamerAction::Previous | GStreamerAction::Next => {
                 if gstreamer::State::Playing == self.pipeline.get_state(gstreamer::ClockTime(Some(1000))).1 {
+                    println!("Doing");
                     self.pipeline.set_state(gstreamer::State::Paused)
                         .into_result()
                         .expect("Error in gstreamer state set, paused");
@@ -115,6 +117,10 @@ impl GStreamerExt for GStreamer {
         };
         //setting the url
         if let Some(u) = url {
+            if !self.current_playlist.borrow().get_current_path().exists() {
+                panic!("The file we want to play does not exist");
+            }
+
             self.pipeline.set_property("uri", &u).expect("Error setting new gstreamer url");
         }
         //which gstreamer action
