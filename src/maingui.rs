@@ -170,7 +170,7 @@ impl MainGuiExt for MainGui {
     fn set_visible_function(&self, model: &gtk::TreeModel, i: &gtk::TreeIter) -> bool {
         //println!("filter thingy");
         if let Some(text_to_search) = self.search_text.get_text() {
-            [0 as i32,1,2,3]
+            [1 as i32,2,3]
                 .iter()
                 .map(|v| model.get_value(i, *v).get::<String>())
                 .any(|s: Option<String>| 
