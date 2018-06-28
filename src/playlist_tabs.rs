@@ -150,7 +150,7 @@ impl PlaylistTabsExt for PlaylistTabs {
 
     fn refilter(&self) {
         if let Some(id) = self.current_playlist {
-            (&self.tabs[id].model).downcast::<gtk::TreeModelFilter>().expect("error in model cast").refilter();
+            self.tabs[id].model.refilter();
         }
     }
 }
