@@ -6,6 +6,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::ops::Deref;
 use loaded_playlist::LoadedPlaylist;
+use db::Track;
 
 use maingui::MainGuiPtrExt;
 use types::*;
@@ -119,22 +120,38 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
     }
 }
 
-fn do_new(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
+fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Option<(String, Vec<Track>)> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
     
     let (model, iter) = tv.get_selection().get_selected().unwrap();
-    let artist_name = model.get_value(&iter, 1).get::<String>().unwrap();
+    let m = model.downcast::<gtk::TreeStore>().expect("Error in downcast");
+    let artist_name = m.get_value(&iter, 1).get::<String>().unwrap();
     let db = pool.get().expect("DB problem");
-    let results = tracks
+    let query = tracks
         .filter(artist.like(String::from("%") + &artist_name + "%"))
         .order(path)
-        .load(db.deref())
-        .expect("Problem loading playlist");
-    let pl = LoadedPlaylist {
+        .into_boxed();
+    if m.iter_depth(&iter) == 1 {
+        Some((artist_name, query.load(db.deref()).expect("Error in query")))
+    } else if m.iter_depth(&iter) == 1 {
+        let a = m.get_value(&iter, 2).get::<String>().unwrap();
+        Some((a.clone(), query.filter(album.eq(a)).load(db.deref()).expect("Error in query")))
+    } else if m.iter_depth(&iter) == 2 {
+        let a = m.get_value(&iter, 2).get::<String>().unwrap();
+        let t = m.get_value(&iter, 3).get::<String>().unwrap();
+        Some((t.clone(), query.filter(album.eq(a)).filter(title.eq(t)).load(db.deref()).expect("Error in query")))
+    } else {
+        None
+    }
+}
+
+fn do_new(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
+    let (name, res) = get_tracks_for_selection(pool, tv).expect("Error in getting tracks");
+    let pl =LoadedPlaylist {
         id: None,
-        name: artist_name,
-        items: results,
+        name: name,
+        items: res,
         current_position: 0,
     };
     gui.add_page(pl);
