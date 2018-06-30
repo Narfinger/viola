@@ -58,6 +58,9 @@ pub trait PlaylistTabsExt {
     /// removes the items from the vector
     fn remove_items(&mut self, gtk::TreeSelection);
 
+    /// append the tracks to current playlists
+    fn append_to_playlist(&mut self, Vec<db::Track>);
+
     /// saves the playlist tabs to the database
     fn save(&self, &DBPool);
 }
@@ -132,6 +135,13 @@ impl PlaylistTabsExt for PlaylistTabs {
             }
         }
         self.tabs[index].lp = new_lp;
+    }
+
+    fn append_to_playlist(&mut self, t: Vec<db::Track>) {
+        let mut items = self.tabs[self.current_playlist.unwrap()].lp.items.clone();
+        let mut tp = t.clone();
+        items.append(&mut tp);
+        self.tabs[self.current_playlist.unwrap()].lp.items = items;
     }
 
     fn save(&self, pool: &DBPool) {

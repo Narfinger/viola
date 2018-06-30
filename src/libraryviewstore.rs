@@ -8,7 +8,7 @@ use std::ops::Deref;
 use loaded_playlist::LoadedPlaylist;
 use db::Track;
 
-use maingui::MainGuiPtrExt;
+use maingui::{MainGuiExt, MainGuiPtrExt};
 use types::*;
 
 pub struct LibraryView {
@@ -158,11 +158,12 @@ fn do_new(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
 }
 
 fn do_append(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
-
+    let (_, res) = get_tracks_for_selection(pool, tv).expect("Error in getting tracks");
+    gui.append_to_playlist(res);
 }
 
 fn do_replace(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
-
+    panic!("not yet implemented");
 }
 
 

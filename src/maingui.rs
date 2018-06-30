@@ -8,6 +8,7 @@ use gtk;
 use gtk::prelude::*;
 use pango;
 
+use db;
 use gstreamer_wrapper;
 use gstreamer_wrapper::{GStreamer, GStreamerExt, GStreamerAction};
 use playlist;
@@ -79,6 +80,7 @@ pub trait MainGuiExt {
     //fn get_active_treeview(&self) -> &gtk::TreeView;
     fn update_gui(&self, &PlayerStatus); //does not need pipeline
     fn set_playback(&self, &GStreamerAction);
+    fn append_to_playlist(&self, Vec<db::Track>);
     fn save(&self, &DBPool);
 }
 
@@ -156,6 +158,11 @@ impl MainGuiExt for MainGui {
 
     fn set_playback(&self, status: &GStreamerAction) {
         self.gstreamer.do_gstreamer_action(status);
+    }
+
+    fn append_to_playlist(&self, t: Vec<db::Track>) {
+        self.playlist_tabs.borrow_mut().append_to_playlist(t);
+        panic!("need to add modify the treeview");
     }
 
     fn save(&self, pool: &DBPool) {
