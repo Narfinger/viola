@@ -126,11 +126,12 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
 }
 
 fn search_changed(s: &gtk::SearchEntry, fmodel: &gtk::TreeModelFilter) {
+    panic!("this needs to be debugged");
     let model = fmodel.get_model().unwrap().downcast::<gtk::TreeStore>().unwrap();
     if let Some(text) = s.get_text() {
         let mut treeiter = model.get_iter_first();
         while let Some(ref t) = treeiter {
-            let modeltext = model.get_value(&t, 1).get::<String>().unwrap();
+            let modeltext = model.get_value(t, 0).get::<String>().unwrap();
             let val = modeltext.contains(&text); 
             model.set_value(&t, 3, &val.to_value());
             model.iter_next(&t);
