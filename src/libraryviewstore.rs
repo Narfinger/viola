@@ -85,8 +85,13 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
 
     //the model contains first a abbreviated string and in second column the whole string to construct the playlist
-    let model = gtk::TreeStore::new(&[String::static_type(), String::static_type(), i32::static_type()]);
- 
+    let model = gtk::TreeStore::new(&[String::static_type(), String::static_type(), i32::static_type(), bool::static_type()]);
+    let fmodel = gtk::TreeModelFilter::new(&model, None);
+    fmodel.set_visible_column(3);
+
+    let searchfield: gtk::SearchEntry = builder.read().unwrap().get_object("collectionsearch").unwrap();
+    searchfield.connect_search_changed(move |s| search_changed(s, &fmodel));
+
     let column = gtk::TreeViewColumn::new();
     let cell = gtk::CellRendererText::new();
 
@@ -118,6 +123,26 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
             idle_fill(&pc, &refcell, &model, &libview, &guic) 
         });
     }
+}
+
+fn search_changed(s: &gtk::SearchEntry, fmodel: &gtk::TreeModelFilter) {
+    let model = fmodel.get_model().unwrap().downcast::<gtk::TreeStore>().unwrap();
+    if let Some(text) = s.get_text() {
+        let mut treeiter = model.get_iter_first();
+        while let Some(ref t) = treeiter {
+            let modeltext = model.get_value(&t, 1).get::<String>().unwrap();
+            let val = modeltext.contains(&text); 
+            model.set_value(&t, 3, &val.to_value());
+            model.iter_next(&t);
+        }
+    } else {
+        let mut treeiter = model.get_iter_first();
+        while let Some(ref t) = treeiter {
+            model.set_value(&t, 3, &false.to_value());
+            model.iter_next(&t);
+        }
+    }
+    fmodel.refilter();
 }
 
 fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Option<(String, Vec<Track>)> {
