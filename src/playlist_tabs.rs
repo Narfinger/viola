@@ -142,6 +142,8 @@ impl PlaylistTabsExt for PlaylistTabs {
         let mut tp = t.clone();
         items.append(&mut tp);
         self.tabs[self.current_playlist.unwrap()].lp.items = items;
+
+
     }
 
     fn save(&self, pool: &DBPool) {
@@ -207,5 +209,32 @@ impl PlaylistControlsImmutable for PlaylistTabsPtr {
 
     fn next_or_eol(&self) -> Option<String> {
         self.borrow_mut().next_or_eol()
+    }
+}
+
+/// This only modifies the treeview, not any underlying structure
+fn append_treeview_from_vector(v: &Vec<db::Track>, model: &gtk::ListStore) {
+    for entry in v {
+        let length = format_duration(entry.length);
+        model.insert_with_values(
+            None,
+            &[0, 1, 2, 3, 4, 5, 6, 7],
+            &[
+                &entry
+                    .tracknumber
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| String::from("")),
+                &entry.title,
+                &entry.artist,
+                &entry.album,
+                &length,
+                &entry
+                    .year
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| String::from("")),
+                &entry.genre,
+                &gdk::RGBA { red: 1.0, green: 1.0, blue: 1.0, alpha: 0.0},
+            ],
+        );
     }
 }

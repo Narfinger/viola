@@ -162,6 +162,7 @@ impl MainGuiExt for MainGui {
 
     fn append_to_playlist(&self, t: Vec<db::Track>) {
         self.playlist_tabs.borrow_mut().append_to_playlist(t);
+
         panic!("need to add modify the treeview");
     }
 
@@ -217,7 +218,7 @@ impl MainGuiPtrExt for MainGuiPtr {
             });
         }
 
-        let tab = playlist_tabs::PlaylistTab { lp, treeview: tv, model };
+        let tab = playlist_tabs::PlaylistTab::load(lp, treeview: tv, model);
         (*self.playlist_tabs).borrow_mut().add_tab(tab);
     }
 
@@ -299,7 +300,7 @@ fn create_populated_treeview(gui: &MainGuiPtr, lp: &LoadedPlaylist) -> (gtk::Tre
             cell.set_property_alignment(pango::Alignment::Right);
         }
     }
-    let model = populate_model_with_playlist(lp);
+    let model = create_empty_model();
     treeview.set_model(Some(&model));
     //panic!("Do the connection");
     {
@@ -333,7 +334,7 @@ fn format_duration(d: i32) -> String {
     }
 }
 
-fn populate_model_with_playlist(lp: &LoadedPlaylist) -> gtk::ListStore  {
+fn create_empty_model() -> gtk::ListStore  {
     let model = gtk::ListStore::new(&[
         String::static_type(),
         String::static_type(),
@@ -344,30 +345,7 @@ fn populate_model_with_playlist(lp: &LoadedPlaylist) -> gtk::ListStore  {
         String::static_type(),
         gdk::RGBA::static_type(),
     ]);
-
-    for entry in &lp.items {
-        let length = format_duration(entry.length);
-    model.insert_with_values(
-        None,
-        &[0, 1, 2, 3, 4, 5, 6, 7],
-        &[
-            &entry
-                .tracknumber
-                .map(|s| s.to_string())
-                .unwrap_or_else(|| String::from("")),
-            &entry.title,
-            &entry.artist,
-            &entry.album,
-            &length,
-            &entry
-                .year
-                .map(|s| s.to_string())
-                .unwrap_or_else(|| String::from("")),
-            &entry.genre,
-            &gdk::RGBA { red: 1.0, green: 1.0, blue: 1.0, alpha: 0.0},
-        ],
-    );
-    }
-
+    //append_treeview_from_vector(&lp.items, &model);
+ 
     model
 }
