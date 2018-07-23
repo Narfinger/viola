@@ -2,7 +2,8 @@ use gtk;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::path::PathBuf;
-use gtk::{ListStoreExt, TreeModelExt, TreeSelectionExt};
+use gdk;
+use gtk::{ListStoreExt, ListStoreExtManual, TreeModelExt, TreeSelectionExt};
 
 use db;
 use loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
@@ -14,6 +15,11 @@ pub struct PlaylistTab {
     pub lp: LoadedPlaylist,
     pub treeview: gtk::TreeView,
     pub model: gtk::ListStore,
+}
+
+pub fn load_tab(lp: LoadedPlaylist, tv: gtk::TreeView, model: gtk::ListStore) -> PlaylistTab {
+    append_treeview_from_vector(&lp.items, &model);
+    PlaylistTab { lp: lp, treeview: tv, model: model } 
 }
 
 pub struct PlaylistTabs {
@@ -236,5 +242,20 @@ fn append_treeview_from_vector(v: &Vec<db::Track>, model: &gtk::ListStore) {
                 &gdk::RGBA { red: 1.0, green: 1.0, blue: 1.0, alpha: 0.0},
             ],
         );
+    }
+}
+
+fn format_duration(d: i32) -> String {
+    if d < 60 {
+        format!("{}", d)
+    } else if d < 60*60 {
+        let s = d % 60;
+        let m = d/60;
+        format!("{}:{:02}", m, s)
+    } else {
+        let s = d % 60;
+        let m = d/60 % (60*60);
+        let h = d/(60*60);
+        format!("{}:{:02}:{:02}", h,m,s)
     }
 }

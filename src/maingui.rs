@@ -218,7 +218,7 @@ impl MainGuiPtrExt for MainGuiPtr {
             });
         }
 
-        let tab = playlist_tabs::PlaylistTab::load(lp, treeview: tv, model);
+        let tab = playlist_tabs::load_tab(lp, tv, model);
         (*self.playlist_tabs).borrow_mut().add_tab(tab);
     }
 
@@ -317,21 +317,6 @@ fn create_populated_treeview(gui: &MainGuiPtr, lp: &LoadedPlaylist) -> (gtk::Tre
     }
     treeview.show();
     (treeview, model)
-}
-
-fn format_duration(d: i32) -> String {
-    if d < 60 {
-        format!("{}", d)
-    } else if d < 60*60 {
-        let s = d % 60;
-        let m = d/60;
-        format!("{}:{:02}", m, s)
-    } else {
-        let s = d % 60;
-        let m = d/60 % (60*60);
-        let h = d/(60*60);
-        format!("{}:{:02}:{:02}", h,m,s)
-    }
 }
 
 fn create_empty_model() -> gtk::ListStore  {
