@@ -148,8 +148,9 @@ impl PlaylistTabsExt for PlaylistTabs {
         let mut tp = t.clone();
         items.append(&mut tp);
         self.tabs[self.current_playlist.unwrap()].lp.items = items;
+        let model = &self.tabs[self.current_playlist.unwrap()].model;
 
-
+        append_treeview_from_vector(&t, model);
     }
 
     fn save(&self, pool: &DBPool) {
