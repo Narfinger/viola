@@ -37,7 +37,7 @@ impl From<i32> for LibraryLoadType {
     }
 }
 
-fn idle_fill< I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore, libview: &gtk::TreeView, gui: &MainGuiPtr) -> gtk::Continue 
+fn idle_fill< I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> gtk::Continue 
     where I: Iterator<Item = String> {
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
@@ -120,13 +120,15 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
         let pc = pool.clone();
         let guic = gui.clone();
         gtk::idle_add(move || {
-            idle_fill(&pc, &refcell, &model, &libview, &guic) 
+            idle_fill(&pc, &refcell, &model) 
         });
     }
 }
 
 fn search_changed(s: &gtk::SearchEntry, fmodel: &gtk::TreeModelFilter) {
     panic!("this needs to be debugged");
+    
+    
     let model = fmodel.get_model().unwrap().downcast::<gtk::TreeStore>().unwrap();
     if let Some(text) = s.get_text() {
         let mut treeiter = model.get_iter_first();
