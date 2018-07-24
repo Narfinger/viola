@@ -158,14 +158,14 @@ fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Option<(String
         .filter(artist.like(String::from("%") + &artist_name + "%"))
         .order(path)
         .into_boxed();
-    if m.iter_depth(&iter) == 1 {
+    if m.iter_depth(&iter) == 0 {
         Some((artist_name, query.load(db.deref()).expect("Error in query")))
     } else if m.iter_depth(&iter) == 1 {
-        let a = m.get_value(&iter, 2).get::<String>().unwrap();
+        let a = m.get_value(&iter, 1).get::<String>().unwrap();
         Some((a.clone(), query.filter(album.eq(a)).load(db.deref()).expect("Error in query")))
     } else if m.iter_depth(&iter) == 2 {
-        let a = m.get_value(&iter, 2).get::<String>().unwrap();
-        let t = m.get_value(&iter, 3).get::<String>().unwrap();
+        let a = m.get_value(&iter, 1).get::<String>().unwrap();
+        let t = m.get_value(&iter, 2).get::<String>().unwrap();
         Some((t.clone(), query.filter(album.eq(a)).filter(title.eq(t)).load(db.deref()).expect("Error in query")))
     } else {
         None

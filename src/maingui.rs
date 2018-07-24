@@ -162,8 +162,6 @@ impl MainGuiExt for MainGui {
 
     fn append_to_playlist(&self, t: Vec<db::Track>) {
         self.playlist_tabs.borrow_mut().append_to_playlist(t);
-
-        panic!("need to add modify the treeview");
     }
 
     fn save(&self, pool: &DBPool) {
