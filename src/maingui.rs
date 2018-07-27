@@ -108,10 +108,10 @@ impl MainGuiExt for MainGui {
                     let tabs = self.playlist_tabs.borrow();
                     let track = &tabs.current_track();
 
-                    self.title_label.set_markup(&track.title);
-                    self.artist_label.set_markup(&track.artist);
-                    self.album_label.set_markup(&track.album);
-                    self.status_label.set_markup("Playing");
+                    self.title_label.set_text(&track.title);
+                    self.artist_label.set_text(&track.artist);
+                    self.album_label.set_text(&track.album);
+                    self.status_label.set_text("Playing");
                     if let Some(ref p) = track.albumpath {
                         if let Ok(ref pp) = gdk_pixbuf::Pixbuf::new_from_file_at_size(p,200,200) {
                             self.cover.set_from_pixbuf(pp);
