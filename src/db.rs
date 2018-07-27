@@ -24,7 +24,7 @@ pub struct Track {
     pub albumpath: Option<String>,
 }
 
-#[derive(Insertable)]
+#[derive(Debug, Insertable)]
 #[table_name = "tracks"]
 pub struct NewTrack {
     title: String,
@@ -128,10 +128,12 @@ fn insert_track(s: &String, pool: &DBPool) -> Result<(), String> {
     use schema::tracks::dsl::*;
     
     let db = pool.get().unwrap();
+    
     let new_track = construct_track_from_path(s)?;
     let old_track_perhaps = tracks
                             .filter(path.eq(&new_track.path))
                             .get_result::<Track>(db.deref());
+    
     if let Ok(mut old_track) = old_track_perhaps {
         if tags_equal(&new_track, &old_track) {
             Ok(())
@@ -148,14 +150,14 @@ fn insert_track(s: &String, pool: &DBPool) -> Result<(), String> {
             old_track
                 .save_changes::<Track>(db.deref())
                 .map(|_| ())
-                .map_err(|_| "Error in updateing".into())
+                .map_err(|err| format!("Error in updateing for track {}, See full: {:?}", s, err).into())
         }
     } else {    
-        diesel::replace_into(tracks)
+        diesel::insert_into(tracks)
             .values(&new_track)
             .execute(db.deref())
             .map(|_| ())
-            .map_err(|_| "Insertion Error".into())
+            .map_err(|err| format!("Insertion Error for track {}, See full: {:?}", s, err).into())
     }
 }
 
@@ -192,19 +194,26 @@ pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
             let res = pb.wrap_iter(files.iter().map(|s| insert_track(s, pool)))
                 .collect::<Result<(), String>>();
             pb.finish_with_message("Done Updating");
+
+            if let Err(err) = res {
+                println!("Error in updating database");
+                println!("{}", err);
+                panic!("Aborting");
+            }
         }
 
         {
             println!("Deleting old database entries");
             let to_delete = old_files
                 .into_iter()
-                .filter(|v| files.contains(v))
+                .filter(|v| !files.contains(v))
                 .collect::<Vec<String>>();
             for i in to_delete {
+                println!("to delete: {}", i);
                 diesel::delete(tracks)
-                    .filter(path.eq(i))
+                    .filter(path.eq(&i))
                     .execute(db.deref())
-                    .expect("Error in deleting outdated database entries");
+                    .expect(&format!("Error in deleting outdated database entries: {}", &i));
             }
         }
     }
