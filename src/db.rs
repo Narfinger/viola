@@ -84,7 +84,7 @@ fn get_album_file(s: &str) -> Option<String> {
     .and_then(|s| s.to_str().map(String::from))
 }
 
-fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
+fn construct_track_from_path<'a>(s: &String) -> Result<NewTrack, String> {
     let taglibfile = taglib::File::new(&s);
     if let Ok(ataglib) = taglibfile {
         let tags = ataglib
@@ -102,7 +102,7 @@ fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
             genre: tags.genre(),
             tracknumber: number_zero_to_option(tags.track()),
             year: number_zero_to_option(tags.year()),
-            path: s,
+            path: s.clone(),
             length: properties.length() as i32,
             albumpath: album,
         })
@@ -111,38 +111,70 @@ fn construct_track_from_path(s: String) -> Result<NewTrack, String> {
     }
 }
 
-fn insert_track(s: String, pool: &DBPool) -> Result<(), String> {
+fn insert_track(s: &String, pool: &DBPool) -> Result<(), String> {
     use diesel::RunQueryDsl;
     use schema::tracks;
 
     let db = pool.get().unwrap();
-    let track = construct_track_from_path(s)?;
+    let new_track = construct_track_from_path(s)?;
+
+    panic!("do update or replace");
+    
     diesel::replace_into(tracks::table)
-        .values(&track)
+        .values(&new_track)
         .execute(db.deref())
         .map(|_| ())
         .map_err(|_| "Insertion Error".into())
 }
 
 pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
-    let files = walkdir::WalkDir::new(&path)
+     let files = walkdir::WalkDir::new(&path)
         .into_iter()
         .filter(check_file)
-        .map(|i| String::from(i.unwrap().path().to_str().unwrap()));
+        .map(|i| String::from(i.unwrap().path().to_str().unwrap()))
+        .collect::<Vec<String>>();
 
     let file_count = walkdir::WalkDir::new(&path)
         .into_iter()
         .filter(check_file)
         .map(|i| String::from(i.unwrap().path().to_str().unwrap()))
         .count();
-    /// TODO switch this to par_iter or something
-    let pb = ProgressBar::new(file_count as u64);
-    pb.set_message("Updating files");
-    pb.set_style(ProgressStyle::default_bar()
-                          .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7} ({percent}%)")
-                          .progress_chars("#>-"));
-    let res = pb.wrap_iter(files.into_iter().map(|s| insert_track(s, pool)))
-        .collect::<Result<(), String>>();
-    pb.finish_with_message("Done Updating");
-    res
+
+    let db = pool.get().unwrap();
+    {
+        use diesel::{ExpressionMethods, RunQueryDsl, QueryDsl, select};
+        use diesel::associations::HasTable;
+        use schema::tracks::dsl::*;
+        let old_files: Vec<String> = tracks
+            .select(path)
+            .load(db.deref())
+            .expect("Error in loading old files");
+
+        /// TODO switch this to par_iter or something
+        {
+            let pb = ProgressBar::new(file_count as u64);
+            pb.set_message("Updating files");
+            pb.set_style(ProgressStyle::default_bar()
+                                  .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7} ({percent}%)")
+                                  .progress_chars("#>-"));
+            let res = pb.wrap_iter(files.iter().map(|s| insert_track(s, pool)))
+                .collect::<Result<(), String>>();
+            pb.finish_with_message("Done Updating");
+        }
+
+        {
+            println!("Deleting old files");
+            let to_delete = old_files
+                .into_iter()
+                .filter(|v| files.contains(v))
+                .collect::<Vec<String>>();
+            for i in to_delete {
+                diesel::delete(tracks)
+                    .filter(path.eq(i))
+                    .execute(db.deref());
+            }
+        }
+    }
+
+    Ok(())
 }
