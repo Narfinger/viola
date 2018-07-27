@@ -10,7 +10,7 @@ use taglib;
 use types::{APP_INFO, DBPool};
 use walkdir;
 
-#[derive(Debug, Identifiable, Queryable, Clone)]
+#[derive(AsChangeset, Debug, Identifiable, Queryable, Clone)]
 pub struct Track {
     pub id: i32,
     pub title: String,
@@ -111,20 +111,52 @@ fn construct_track_from_path<'a>(s: &String) -> Result<NewTrack, String> {
     }
 }
 
-fn insert_track(s: &String, pool: &DBPool) -> Result<(), String> {
-    use diesel::RunQueryDsl;
-    use schema::tracks;
+fn tags_equal(nt: &NewTrack, ot: &Track) -> bool {
+    nt.title == ot.title &&
+    nt.artist == ot.artist &&
+    nt.album == ot.album &&
+    nt.genre == ot.genre &&
+    nt.tracknumber == ot.tracknumber &&
+    nt.year == ot.year &&
+    nt.length == ot.length &&
+    nt.albumpath == ot.albumpath
+}
 
+fn insert_track(s: &String, pool: &DBPool) -> Result<(), String> {
+    use diesel::{ExpressionMethods, RunQueryDsl, QueryDsl, SaveChangesDsl};
+    use diesel::associations::HasTable;
+    use schema::tracks::dsl::*;
+    
     let db = pool.get().unwrap();
     let new_track = construct_track_from_path(s)?;
+    let old_track_perhaps = tracks
+                            .filter(path.eq(&new_track.path))
+                            .get_result::<Track>(db.deref());
+    if let Ok(mut old_track) = old_track_perhaps {
+        if tags_equal(&new_track, &old_track) {
+            Ok(())
+        } else {
+            old_track.title     = new_track.title;
+            old_track.artist    = new_track.artist;
+            old_track.album     = new_track.album;
+            old_track.genre     = new_track.genre;
+            old_track.tracknumber = new_track.tracknumber;
+            old_track.year      = new_track.year;
+            old_track.length    = new_track.length;
+            old_track.albumpath = new_track.albumpath;
 
-    panic!("do update or replace");
-    
-    diesel::replace_into(tracks::table)
-        .values(&new_track)
-        .execute(db.deref())
-        .map(|_| ())
-        .map_err(|_| "Insertion Error".into())
+            old_track
+                .save_changes::<Track>(db.deref())
+                .map(|_| ())
+                .map_err(|_| "Error in updateing".into())
+        }
+    } else {    
+        diesel::replace_into(tracks)
+            .values(&new_track)
+            .execute(db.deref())
+            .map(|_| ())
+            .map_err(|_| "Insertion Error".into())
+    }
 }
 
 pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
@@ -163,7 +195,7 @@ pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
         }
 
         {
-            println!("Deleting old files");
+            println!("Deleting old database entries");
             let to_delete = old_files
                 .into_iter()
                 .filter(|v| files.contains(v))
@@ -171,7 +203,8 @@ pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
             for i in to_delete {
                 diesel::delete(tracks)
                     .filter(path.eq(i))
-                    .execute(db.deref());
+                    .execute(db.deref())
+                    .expect("Error in deleting outdated database entries");
             }
         }
     }
