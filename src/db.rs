@@ -84,7 +84,7 @@ fn get_album_file(s: &str) -> Option<String> {
     .and_then(|s| s.to_str().map(String::from))
 }
 
-fn construct_track_from_path<'a>(s: &String) -> Result<NewTrack, String> {
+fn construct_track_from_path(s: &str) -> Result<NewTrack, String> {
     let taglibfile = taglib::File::new(&s);
     if let Ok(ataglib) = taglibfile {
         let tags = ataglib
@@ -102,7 +102,7 @@ fn construct_track_from_path<'a>(s: &String) -> Result<NewTrack, String> {
             genre: tags.genre(),
             tracknumber: number_zero_to_option(tags.track()),
             year: number_zero_to_option(tags.year()),
-            path: s.clone(),
+            path: s.to_string(),
             length: properties.length() as i32,
             albumpath: album,
         })
@@ -122,9 +122,8 @@ fn tags_equal(nt: &NewTrack, ot: &Track) -> bool {
     nt.albumpath == ot.albumpath
 }
 
-fn insert_track(s: &String, pool: &DBPool) -> Result<(), String> {
+fn insert_track(s: &str, pool: &DBPool) -> Result<(), String> {
     use diesel::{ExpressionMethods, RunQueryDsl, QueryDsl, SaveChangesDsl};
-    use diesel::associations::HasTable;
     use schema::tracks::dsl::*;
     
     let db = pool.get().unwrap();
@@ -150,14 +149,14 @@ fn insert_track(s: &String, pool: &DBPool) -> Result<(), String> {
             old_track
                 .save_changes::<Track>(db.deref())
                 .map(|_| ())
-                .map_err(|err| format!("Error in updateing for track {}, See full: {:?}", s, err).into())
+                .map_err(|err| format!("Error in updateing for track {}, See full: {:?}", s, err))
         }
     } else {    
         diesel::insert_into(tracks)
             .values(&new_track)
             .execute(db.deref())
             .map(|_| ())
-            .map_err(|err| format!("Insertion Error for track {}, See full: {:?}", s, err).into())
+            .map_err(|err| format!("Insertion Error for track {}, See full: {:?}", s, err))
     }
 }
 
@@ -176,8 +175,7 @@ pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
 
     let db = pool.get().unwrap();
     {
-        use diesel::{ExpressionMethods, RunQueryDsl, QueryDsl, select};
-        use diesel::associations::HasTable;
+        use diesel::{ExpressionMethods, RunQueryDsl, QueryDsl};
         use schema::tracks::dsl::*;
         let old_files: Vec<String> = tracks
             .select(path)
@@ -213,7 +211,7 @@ pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
                 diesel::delete(tracks)
                     .filter(path.eq(&i))
                     .execute(db.deref())
-                    .expect(&format!("Error in deleting outdated database entries: {}", &i));
+                    .unwrap_or_else(|_| panic!("Error in deleting outdated database entries: {}", &i));
             }
         }
     }

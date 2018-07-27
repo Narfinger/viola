@@ -220,7 +220,7 @@ impl PlaylistControlsImmutable for PlaylistTabsPtr {
 }
 
 /// This only modifies the treeview, not any underlying structure
-fn append_treeview_from_vector(v: &Vec<db::Track>, model: &gtk::ListStore) {
+fn append_treeview_from_vector(v: &[db::Track], model: &gtk::ListStore) {
     for entry in v {
         let length = format_duration(entry.length);
         model.insert_with_values(

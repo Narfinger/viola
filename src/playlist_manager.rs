@@ -38,7 +38,7 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) -> PlaylistManag
     PlaylistManager {}
 }
 
-fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, sm: &Vec<SmartPlaylist>, tv: &gtk::TreeView, event: &gdk::Event) {
+fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, sm: &[SmartPlaylist], tv: &gtk::TreeView, event: &gdk::Event) {
     if event.get_event_type() == gdk::EventType::DoubleButtonPress {
         if let Ok(b) = event.clone().downcast::<gdk::EventButton>() {
             if b.get_button() == 1 {
@@ -50,7 +50,7 @@ fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, sm: &Vec<SmartPlaylist>, tv: &
     }
 }
 
-fn add_playlist(pool: &DBPool, sm: &Vec<SmartPlaylist>, index: i32) -> LoadedPlaylist {
+fn add_playlist(pool: &DBPool, sm: &[SmartPlaylist], index: i32) -> LoadedPlaylist {
     use diesel::{QueryDsl, RunQueryDsl};
     use schema::tracks::dsl::*;
     

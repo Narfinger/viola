@@ -318,7 +318,7 @@ fn create_populated_treeview(gui: &MainGuiPtr, lp: &LoadedPlaylist) -> (gtk::Tre
 }
 
 fn create_empty_model() -> gtk::ListStore  {
-    let model = gtk::ListStore::new(&[
+    gtk::ListStore::new(&[
         String::static_type(),
         String::static_type(),
         String::static_type(),
@@ -327,8 +327,5 @@ fn create_empty_model() -> gtk::ListStore  {
         String::static_type(),
         String::static_type(),
         gdk::RGBA::static_type(),
-    ]);
-    //append_treeview_from_vector(&lp.items, &model);
- 
-    model
+    ])
 }
