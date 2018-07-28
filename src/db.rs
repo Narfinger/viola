@@ -4,6 +4,8 @@ use indicatif::{ProgressBar, ProgressStyle};
 use diesel::r2d2;
 use rayon::prelude::*;
 use schema::tracks;
+use std::collections::HashSet;
+use std::iter::FromIterator;
 use std::ops::Deref;
 use std::path::Path;
 use taglib;
@@ -165,7 +167,7 @@ pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
         .into_iter()
         .filter(check_file)
         .map(|i| String::from(i.unwrap().path().to_str().unwrap()))
-        .collect::<Vec<String>>();
+        .collect::<HashSet<String>>();
 
     let file_count = walkdir::WalkDir::new(&path)
         .into_iter()
@@ -177,11 +179,12 @@ pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
     {
         use diesel::{ExpressionMethods, RunQueryDsl, QueryDsl};
         use schema::tracks::dsl::*;
-        let old_files: Vec<String> = tracks
+        let old_files: HashSet<String> = HashSet::from_iter(
+            tracks
             .select(path)
             .load(db.deref())
-            .expect("Error in loading old files");
-
+            .expect("Error in loading old files"));
+            
         /// TODO switch this to par_iter or something
         {
             let pb = ProgressBar::new(file_count as u64);
@@ -202,10 +205,13 @@ pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
 
         {
             println!("Deleting old database entries");
-            let to_delete = old_files
-                .into_iter()
-                .filter(|v| !files.contains(v))
-                .collect::<Vec<String>>();
+            let pb = ProgressBar::new_spinner();
+            pb.set_message("Computing Difference to old database");
+            let to_delete = old_files.difference(&files); 
+            pb.finish();
+
+            let pb = ProgressBar::new_spinner();
+            pb.set_message("Deleting old unused entries");
             for i in to_delete {
                 println!("to delete: {}", i);
                 diesel::delete(tracks)
@@ -213,6 +219,7 @@ pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
                     .execute(db.deref())
                     .unwrap_or_else(|_| panic!("Error in deleting outdated database entries: {}", &i));
             }
+            pb.finish_with_message("Done removing old entries");
         }
     }
 
