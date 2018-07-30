@@ -42,6 +42,9 @@ fn idle_fill< I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) ->
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
 
+    ///TODO replace this with const fn
+    let DEFAULT_VISIBILITY: &gtk::Value = &true.to_value();
+
     //panic!("does not work yet, iterator gets not changes");
     if let Some(a) = ats.borrow_mut().next() {
         let db = pool.get().unwrap();
@@ -54,7 +57,7 @@ fn idle_fill< I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) ->
                 .group_by(album)
                 .load(db.deref())
                 .expect("Error in db connection");
-            let artist_node = model.insert_with_values(None, None, &[0, 1, 2], &[&st, &a, &ARTIST_TYPE]);
+            let artist_node = model.insert_with_values(None, None, &[0, 1, 2, 3], &[&st, &a, &ARTIST_TYPE, DEFAULT_VISIBILITY]);
             for ab in albums {
                 let album_node = model.insert_with_values(Some(&artist_node), None, &[0, 1, 2], &[&ab, &ab, &ALBUM_TYPE]);
                 {
@@ -66,7 +69,7 @@ fn idle_fill< I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) ->
                     .load(db.deref())
                     .expect("Error in db connection");
                     for t in ts {
-                        model.insert_with_values(Some(&album_node), None, &[0, 1, 2], &[&t, &t, &TRACK_TYPE]);
+                        model.insert_with_values(Some(&album_node), None, &[0, 1, 2, 3], &[&t, &t, &TRACK_TYPE, DEFAULT_VISIBILITY]);
                     }
                 }
             }
