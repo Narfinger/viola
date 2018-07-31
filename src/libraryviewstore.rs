@@ -159,6 +159,7 @@ fn search_changed(s: &gtk::SearchEntry, builder: &BuilderPtr) {
         while valid {
             if let Some(ref t) = treeiter {
                 ///we need to go into children
+                panic!("we need to go into children");
                 let val = model.get_value(&t, 0).get::<String>().map(|s| s.contains(&text));
                 if val == Some(true) {
                     model.set_value(&t, 3, visible);
