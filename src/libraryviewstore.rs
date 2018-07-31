@@ -50,16 +50,23 @@ fn idle_fill< I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) ->
         let db = pool.get().unwrap();
         let st: String = a.chars().take(20).collect::<String>() + "..";
         {
-            let albums: Vec<String> = tracks
-                .select(album)
+            let albums: Vec<(String, Option<i32>)> = tracks
+                .select((album,year))
                 .order(year)
                 .filter(artist.like(String::from("%") + &a + "%"))
                 .group_by(album)
                 .load(db.deref())
                 .expect("Error in db connection");
             let artist_node = model.insert_with_values(None, None, &[0, 1, 2, 3], &[&st, &a, &ARTIST_TYPE, DEFAULT_VISIBILITY]);
-            for ab in albums {
-                let album_node = model.insert_with_values(Some(&artist_node), None, &[0, 1, 2], &[&ab, &ab, &ALBUM_TYPE]);
+            for (ab, y) in albums {
+                //add the year if it exists to the string we insert
+                let abstring = if let Some(yp) = y {
+                    yp.to_string() + " - " + &ab
+                } else {
+                    ab.to_string()
+                };
+
+                let album_node = model.insert_with_values(Some(&artist_node), None, &[0, 1, 2, 3], &[&abstring, &ab, &ALBUM_TYPE, DEFAULT_VISIBILITY]);
                 {
                     let ts: Vec<String> = tracks
                     .select(title)
