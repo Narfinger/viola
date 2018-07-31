@@ -140,8 +140,11 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
 fn search_changed(s: &gtk::SearchEntry, builder: &BuilderPtr) {
     //panic!("this needs to be debugged");
     
-    panic!("perhaps the idle needs to fill the filter model?");
-    panic!("Perhaps false and true are changed");
+    //panic!("perhaps the idle needs to fill the filter model?");
+    //panic!("Perhaps false and true are changed");
+
+    let visible: &gtk::Value = &true.to_value();
+    let invisible: &gtk::Value = &false.to_value();
 
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
 
@@ -149,9 +152,27 @@ fn search_changed(s: &gtk::SearchEntry, builder: &BuilderPtr) {
     let fmodel = libview.get_model().unwrap().downcast::<gtk::TreeModelFilter>().unwrap();
     let model = fmodel.get_model().unwrap().downcast::<gtk::TreeStore>().unwrap();
     
-    /*
+    
     if let Some(text) = s.get_text() {
         let mut treeiter = model.get_iter_first();
+        let mut valid = treeiter.is_some();
+        while valid {
+            if let Some(ref t) = treeiter {
+                ///we need to go into children
+                let val = model.get_value(&t, 0).get::<String>().map(|s| s.contains(&text));
+                if val == Some(true) {
+                    model.set_value(&t, 3, visible);
+                } else {
+                    model.set_value(&t, 3, invisible);
+                }
+                valid = model.iter_next(&t);
+            } else {
+                panic!("Invalid... why is it?");
+                println!("this is invalid?");
+            }
+        }
+
+        /*let mut treeiter = model.get_iter_first();
         while let Some(ref t) = treeiter {
             if let Some(modeltext) = model.get_value(t, 0).get::<String>() {
                 let val = !modeltext.contains(&text); 
@@ -160,16 +181,15 @@ fn search_changed(s: &gtk::SearchEntry, builder: &BuilderPtr) {
                 model.set_value(&t, 3, &true.to_value());
             }
             model.iter_next(&t);
-        }
+        }*/
     } else {
         let mut treeiter = model.get_iter_first();
         while let Some(ref t) = treeiter {
-            model.set_value(&t, 3, &true.to_value());
+            model.set_value(&t, 3, visible);
             model.iter_next(&t);
         }
     }
     fmodel.refilter();
-    */
 }
 
 fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Option<(String, Vec<Track>)> {
