@@ -37,7 +37,7 @@ impl From<i32> for LibraryLoadType {
     }
 }
 
-fn idle_fill< I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> gtk::Continue 
+fn idle_fill<I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> gtk::Continue 
     where I: Iterator<Item = String> {
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
@@ -137,21 +137,76 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
     }
 }
 
-fn search_changed(s: &gtk::SearchEntry, builder: &BuilderPtr) {
-    //panic!("this needs to be debugged");
-    
-    //panic!("perhaps the idle needs to fill the filter model?");
-    //panic!("Perhaps false and true are changed");
 
+/// This function will be called on idle if the search changed.
+/// Because there could be multiple functions added, we need to have the following safeguard
+/// s is the string the search started with
+/// field is the current field, if both are not the same, we abort this thread as somebody else should be running
+fn idle_search_changed(s: &str, field: &gtk::SearchEntry, treeiter: Rc<RefCell<Option<gtk::TreeIter>>>, fmodel: &gtk::TreeModelFilter, model: &gtk::TreeStore) -> gtk::Continue {
     let visible: &gtk::Value = &true.to_value();
     let invisible: &gtk::Value = &false.to_value();
 
+    // abort if another thread is running
+    if s != field.get_text().unwrap() {
+        return gtk::Continue(false);
+    }
+
+    panic!("Does not continue");
+    if treeiter.borrow().is_some() {
+        {
+            let tp = treeiter.borrow();
+            if let Some(ref t) = *tp {
+                if !s.is_empty() {
+                    ///we need to go into children
+                    //panic!("we need to go into children");
+                    let val = model.get_value(&t, 0).get::<String>().map(|s| s.contains(&s));
+                    println!("Looking at value: {:?}", model.get_value(&t, 0).get::<String>());
+                    if val == Some(true) {
+                        model.set_value(&t, 3, visible);
+                    } else {
+                        model.set_value(&t, 3, invisible);
+                    }
+                } else {
+                    model.set_value(&t, 3, visible);
+                }
+            }
+        }
+
+        // iterate into next and if either model.iter_next returns false or we are already at none, fill it with none
+        // then the next call should just cancel
+        let mut treeiter = treeiter.borrow_mut();
+        let val = if let Some(ref treeiter) = *treeiter {
+            model.iter_next(&treeiter)
+        } else {
+            false
+        };
+        if !val {
+            *treeiter = None;
+        }
+
+        gtk::Continue(true)   
+    } else {
+        println!("Doing refilter");
+        fmodel.refilter();
+        gtk::Continue(false)
+    }
+
+} 
+
+fn search_changed(s: &gtk::SearchEntry, builder: &BuilderPtr) {
+    
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
 
     
     let fmodel = libview.get_model().unwrap().downcast::<gtk::TreeModelFilter>().unwrap();
     let model = fmodel.get_model().unwrap().downcast::<gtk::TreeStore>().unwrap();
-    
+ 
+    let text = s.get_text().unwrap();
+    let sc = s.clone();
+    gtk::idle_add(move || {
+        idle_search_changed(&text, &sc, Rc::new(RefCell::new(model.get_iter_first())), &fmodel, &model) 
+    });
+    /*
     
     if let Some(text) = s.get_text() {
         let mut treeiter = model.get_iter_first();
@@ -172,17 +227,6 @@ fn search_changed(s: &gtk::SearchEntry, builder: &BuilderPtr) {
                 println!("this is invalid?");
             }
         }
-
-        /*let mut treeiter = model.get_iter_first();
-        while let Some(ref t) = treeiter {
-            if let Some(modeltext) = model.get_value(t, 0).get::<String>() {
-                let val = !modeltext.contains(&text); 
-                model.set_value(&t, 3, &val.to_value());
-            } else {
-                model.set_value(&t, 3, &true.to_value());
-            }
-            model.iter_next(&t);
-        }*/
     } else {
         let mut treeiter = model.get_iter_first();
         while let Some(ref t) = treeiter {
@@ -191,6 +235,7 @@ fn search_changed(s: &gtk::SearchEntry, builder: &BuilderPtr) {
         }
     }
     fmodel.refilter();
+    */
 }
 
 fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Option<(String, Vec<Track>)> {
