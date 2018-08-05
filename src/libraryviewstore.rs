@@ -165,8 +165,24 @@ fn idle_search_changed(s: Rc<String>, field: Rc<gtk::SearchEntry>, treeiter: Rc<
     } else {
         model.set_value(&treeiter, 3, visible);
     }
-    // iterate into next and if either model.iter_next returns false or we are already at none, fill it with none
-    // then the next call should just cancel
+
+    // check the children if they exist
+    {
+        let it = (*treeiter).clone();
+        if let Some(child_iter) = model.iter_children(Some(&it)) {
+            let ci = Rc::new(child_iter);
+            let sc = s.clone();
+            let fc = field.clone();
+            let fmc = fmodel.clone();
+            let mc = model.clone();
+            gtk::idle_add(move || {
+                idle_search_changed(sc.clone(), fc.clone(), ci.clone(), fmc.clone(), mc.clone()) 
+            });
+        }
+    }
+
+
+    // model.iter_next can return false, if that we do not spawn a new thread
     let val = model.iter_next(&treeiter);
     
     if val {
@@ -174,7 +190,7 @@ fn idle_search_changed(s: Rc<String>, field: Rc<gtk::SearchEntry>, treeiter: Rc<
             idle_search_changed(s.clone(), field.clone(), treeiter.clone(), fmodel.clone(), model.clone()) 
         });
     } else {
-        fmodel.refilter();
+        //fmodel.refilter();
     }
     gtk::Continue(false)
 } 
