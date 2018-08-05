@@ -155,8 +155,8 @@ fn idle_search_changed(s: Rc<String>, field: Rc<gtk::SearchEntry>, treeiter: Rc<
     if !s.is_empty() {
         ///we need to go into children
         //panic!("we need to go into children");
-        let val = model.get_value(&treeiter, 0).get::<String>().map(|s| s.to_lowercase().contains(&s));
-        println!("Looking at: {:?}, {:?}, {:?}", model.get_value(&treeiter, 0).get::<String>(), val, s);
+        let val = model.get_value(&treeiter, 1).get::<String>().map(|v| v.to_lowercase().contains(&*s));
+        println!("Looking at: {:?}, {:?}, {:?}", model.get_value(&treeiter, 1).get::<String>(), val, s);
         if val == Some(true) {
             model.set_value(&treeiter, 3, visible);
         } else {
