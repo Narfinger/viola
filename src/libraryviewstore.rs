@@ -142,76 +142,41 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
 /// Because there could be multiple functions added, we need to have the following safeguard
 /// s is the string the search started with
 /// field is the current field, if both are not the same, we abort this thread as somebody else should be running
-fn idle_search_changed(s: &str, field: &gtk::SearchEntry, treeiter: Rc<RefCell<Option<gtk::TreeIter>>>, fmodel: &gtk::TreeModelFilter, model: &gtk::TreeStore) -> gtk::Continue {
+fn idle_search_changed(s: Rc<String>, field: Rc<gtk::SearchEntry>, treeiter: Rc<gtk::TreeIter>, fmodel: Rc<gtk::TreeModelFilter>, model: Rc<gtk::TreeStore>) -> gtk::Continue {
     let visible: &gtk::Value = &true.to_value();
     let invisible: &gtk::Value = &false.to_value();
 
     // abort if another thread is running
-    if s != field.get_text().unwrap() {
+    if *s != field.get_text().unwrap().to_lowercase() {
+        println!("Killing this search thread because {:?}, {:?}", *s, field.get_text().unwrap());
         return gtk::Continue(false);
     }
-
-    //panic!("Does not continue");
-    if treeiter.borrow().is_some() {
-        {
-            let tp = treeiter.borrow();
-            if let Some(ref t) = *tp {
-                if !s.is_empty() {
-                    ///we need to go into children
-                    //panic!("we need to go into children");
-                    let val = model.get_value(&t, 0).get::<String>().map(|s| s.contains(&s));
-                    println!("Looking at value: {:?}", model.get_value(&t, 0).get::<String>());
-                    if val == Some(true) {
-                        model.set_value(&t, 3, visible);
-                    } else {
-                        model.set_value(&t, 3, invisible);
-                    }
-                } else {
-                    model.set_value(&t, 3, visible);
-                }
-            }
-        }
-
-        // iterate into next and if either model.iter_next returns false or we are already at none, fill it with none
-        // then the next call should just cancel
-        let iter = {
-            treeiter.borrow().clone()
-        };
-
-        let val = if let Some(i) = iter {
-            let val = model.iter_next(&i);
-            let mut t = treeiter.borrow_mut();
-            *t = Some(i);
-            val
-        } else {
-            false
-        };
-
-        if !val {
-            let mut t = treeiter.borrow_mut();
-            *t = None;
-        }
-
         
-        /*
-        if let Some(ref tp) = *t {
-            let val = model.iter_next(&tp);
-            if !val {
-                *t = None;
-            } else {
-               // *t = Some(*tp);
-            }
+    if !s.is_empty() {
+        ///we need to go into children
+        //panic!("we need to go into children");
+        let val = model.get_value(&treeiter, 0).get::<String>().map(|s| s.to_lowercase().contains(&s));
+        println!("Looking at: {:?}, {:?}, {:?}", model.get_value(&treeiter, 0).get::<String>(), val, s);
+        if val == Some(true) {
+            model.set_value(&treeiter, 3, visible);
         } else {
-            *t = None;
-        };
-        */
-        gtk::Continue(true)   
+            model.set_value(&treeiter, 3, invisible);
+        }
     } else {
-        println!("Doing refilter");
-        fmodel.refilter();
-        gtk::Continue(false)
+        model.set_value(&treeiter, 3, visible);
     }
-
+    // iterate into next and if either model.iter_next returns false or we are already at none, fill it with none
+    // then the next call should just cancel
+    let val = model.iter_next(&treeiter);
+    
+    if val {
+        gtk::idle_add(move || {
+            idle_search_changed(s.clone(), field.clone(), treeiter.clone(), fmodel.clone(), model.clone()) 
+        });
+    } else {
+        fmodel.refilter();
+    }
+    gtk::Continue(false)
 } 
 
 fn search_changed(s: &gtk::SearchEntry, builder: &BuilderPtr) {
@@ -219,14 +184,17 @@ fn search_changed(s: &gtk::SearchEntry, builder: &BuilderPtr) {
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
 
     
-    let fmodel = libview.get_model().unwrap().downcast::<gtk::TreeModelFilter>().unwrap();
-    let model = fmodel.get_model().unwrap().downcast::<gtk::TreeStore>().unwrap();
+    let fmodel = Rc::new(libview.get_model().unwrap().downcast::<gtk::TreeModelFilter>().unwrap());
+    let model = Rc::new(fmodel.get_model().unwrap().downcast::<gtk::TreeStore>().unwrap());
  
-    let text = s.get_text().unwrap();
-    let sc = s.clone();
+    let text = Rc::new(s.get_text().unwrap().to_lowercase());
+    let sc = Rc::new(s.clone());
+
     gtk::idle_add(move || {
-        idle_search_changed(&text, &sc, Rc::new(RefCell::new(model.get_iter_first())), &fmodel, &model) 
+        idle_search_changed(text.clone(), sc.clone(), Rc::new(model.get_iter_first().unwrap()), fmodel.clone(), model.clone()) 
     });
+    println!("added search_changed");
+    
     /*
     
     if let Some(text) = s.get_text() {
