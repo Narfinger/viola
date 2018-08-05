@@ -151,7 +151,7 @@ fn idle_search_changed(s: &str, field: &gtk::SearchEntry, treeiter: Rc<RefCell<O
         return gtk::Continue(false);
     }
 
-    panic!("Does not continue");
+    //panic!("Does not continue");
     if treeiter.borrow().is_some() {
         {
             let tp = treeiter.borrow();
@@ -174,16 +174,37 @@ fn idle_search_changed(s: &str, field: &gtk::SearchEntry, treeiter: Rc<RefCell<O
 
         // iterate into next and if either model.iter_next returns false or we are already at none, fill it with none
         // then the next call should just cancel
-        let mut treeiter = treeiter.borrow_mut();
-        let val = if let Some(ref treeiter) = *treeiter {
-            model.iter_next(&treeiter)
+        let iter = {
+            treeiter.borrow().clone()
+        };
+
+        let val = if let Some(i) = iter {
+            let val = model.iter_next(&i);
+            let mut t = treeiter.borrow_mut();
+            *t = Some(i);
+            val
         } else {
             false
         };
+
         if !val {
-            *treeiter = None;
+            let mut t = treeiter.borrow_mut();
+            *t = None;
         }
 
+        
+        /*
+        if let Some(ref tp) = *t {
+            let val = model.iter_next(&tp);
+            if !val {
+                *t = None;
+            } else {
+               // *t = Some(*tp);
+            }
+        } else {
+            *t = None;
+        };
+        */
         gtk::Continue(true)   
     } else {
         println!("Doing refilter");
