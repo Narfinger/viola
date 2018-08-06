@@ -5,6 +5,7 @@ use std::string::String;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::ops::Deref;
+use std::time::{Duration, Instant};
 use loaded_playlist::LoadedPlaylist;
 use db::Track;
 
@@ -58,6 +59,7 @@ fn idle_fill<I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> 
                 .load(db.deref())
                 .expect("Error in db connection");
             let artist_node = model.insert_with_values(None, None, &[0, 1, 2, 3], &[&st, &a, &ARTIST_TYPE, DEFAULT_VISIBILITY]);
+
             for (ab, y) in albums {
                 //add the year if it exists to the string we insert
                 let abstring = if let Some(yp) = y {
@@ -89,7 +91,7 @@ fn idle_fill<I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> 
 }
 
 pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
-    use diesel::{GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
+    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
     
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
@@ -119,8 +121,11 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
         .order(artist)
         .group_by(artist)
         .filter(artist.not_like(String::from("%") + "feat" + "%"))
+        .filter(artist.ne(""))
         .load(db.deref())
         .expect("Error in db connection");
+        
+
 
     {
         let pc = pool.clone();
