@@ -19,7 +19,7 @@ pub struct PlaylistTab {
 
 pub fn load_tab(lp: LoadedPlaylist, tv: gtk::TreeView, model: gtk::ListStore) -> PlaylistTab {
     append_treeview_from_vector(&lp.items, &model);
-    PlaylistTab { lp: lp, treeview: tv, model: model } 
+    PlaylistTab { lp, treeview: tv, model } 
 }
 
 pub struct PlaylistTabs {

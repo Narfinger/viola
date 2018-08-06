@@ -5,7 +5,6 @@ use std::string::String;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::ops::Deref;
-use std::time::{Duration, Instant};
 use loaded_playlist::LoadedPlaylist;
 use db::Track;
 
@@ -90,7 +89,7 @@ fn idle_fill<I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> 
     }
 }
 
-pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
+pub fn new(pool: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
     
@@ -135,7 +134,6 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) {
     let refcell = Rc::new(RefCell::new(artists.into_iter()));
     {
         let pc = pool.clone();
-        let guic = gui.clone();
         gtk::idle_add(move || {
             idle_fill(&pc, &refcell, &model) 
         });
@@ -158,10 +156,8 @@ fn idle_search_changed(s: Rc<String>, field: Rc<gtk::SearchEntry>, treeiter: Rc<
     }
         
     if !s.is_empty() {
-        ///we need to go into children
-        //panic!("we need to go into children");
         let val = model.get_value(&treeiter, 1).get::<String>().map(|v| v.to_lowercase().contains(&*s));
-        println!("Looking at: {:?}, {:?}, {:?}", model.get_value(&treeiter, 1).get::<String>(), val, s);
+        //println!("Looking at: {:?}, {:?}, {:?}", model.get_value(&treeiter, 1).get::<String>(), val, s);
         if val == Some(true) {
             model.set_value(&treeiter, 3, visible);
             
@@ -234,38 +230,6 @@ fn search_changed(s: &gtk::SearchEntry, builder: &BuilderPtr) {
     gtk::idle_add(move || {
         idle_search_changed(text.clone(), sc.clone(), Rc::new(model.get_iter_first().unwrap()), fmodel.clone(), model.clone()) 
     });
-    println!("added search_changed");
-    
-    /*
-    
-    if let Some(text) = s.get_text() {
-        let mut treeiter = model.get_iter_first();
-        let mut valid = treeiter.is_some();
-        while valid {
-            if let Some(ref t) = treeiter {
-                ///we need to go into children
-                panic!("we need to go into children");
-                let val = model.get_value(&t, 0).get::<String>().map(|s| s.contains(&text));
-                if val == Some(true) {
-                    model.set_value(&t, 3, visible);
-                } else {
-                    model.set_value(&t, 3, invisible);
-                }
-                valid = model.iter_next(&t);
-            } else {
-                panic!("Invalid... why is it?");
-                println!("this is invalid?");
-            }
-        }
-    } else {
-        let mut treeiter = model.get_iter_first();
-        while let Some(ref t) = treeiter {
-            model.set_value(&t, 3, visible);
-            model.iter_next(&t);
-        }
-    }
-    fmodel.refilter();
-    */
 }
 
 fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Option<(String, Vec<Track>)> {
@@ -298,7 +262,7 @@ fn do_new(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
     let (name, res) = get_tracks_for_selection(pool, tv).expect("Error in getting tracks");
     let pl =LoadedPlaylist {
         id: None,
-        name: name,
+        name,
         items: res,
         current_position: 0,
     };
@@ -310,7 +274,7 @@ fn do_append(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
     gui.append_to_playlist(res);
 }
 
-fn do_replace(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
+fn do_replace(_pool: &DBPool, _gui: &MainGuiPtr, _tv: &gtk::TreeView) {
     panic!("not yet implemented");
 }
 

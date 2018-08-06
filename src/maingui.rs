@@ -186,7 +186,7 @@ impl MainGuiPtrExt for MainGuiPtr {
     }
 
     fn add_page(&self, lp: LoadedPlaylist) {
-        let (tv, model) = create_populated_treeview(&self, &lp);
+        let (tv, model) = create_populated_treeview(&self);
         let scw = gtk::ScrolledWindow::new(None, None);
         scw.add(&tv);
         let label = gtk::Label::new(Some(lp.name.as_str()));
@@ -271,7 +271,7 @@ fn key_signal_handler(gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) 
     gtk::Inhibit(false)
 }
 
-fn create_populated_treeview(gui: &MainGuiPtr, lp: &LoadedPlaylist) -> (gtk::TreeView, gtk::ListStore) {
+fn create_populated_treeview(gui: &MainGuiPtr) -> (gtk::TreeView, gtk::ListStore) {
     let treeview = gtk::TreeView::new();
     treeview.get_selection().set_mode(gtk::SelectionMode::Multiple);
 

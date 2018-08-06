@@ -76,7 +76,7 @@ pub fn build_gui(application: &gtk::Application, pool: &DBPool) {
         }));
     }
 
-    let libview = libraryviewstore::new(pool.clone(), &builder, gui.clone());
+    let libview = libraryviewstore::new(&pool.clone(), &builder, &gui.clone());
     let plmview = playlist_manager::new(pool.clone(), &builder, gui.clone());
 
     window.maximize();
