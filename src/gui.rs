@@ -1,13 +1,13 @@
+use gtk;
 use gtk::prelude::*;
 use std::sync::Arc;
 use std::sync::RwLock;
-use gtk;
 
 use gstreamer_wrapper::GStreamerAction;
 use libraryviewstore;
-use playlist_manager;
 use maingui;
-use maingui::{ MainGuiExt, MainGuiPtrExt};
+use maingui::{MainGuiExt, MainGuiPtrExt};
+use playlist_manager;
 use types::*;
 
 macro_rules! clone {
@@ -38,7 +38,7 @@ pub fn build_gui(application: &gtk::Application, pool: &DBPool) {
     let window: gtk::ApplicationWindow = builder.read().unwrap().get_object("mainwindow").unwrap();
     //let pipeline = gstreamer_init(current_playlist.clone()).unwrap();
     let gui = maingui::new(&pool, &builder);
-  
+
     {
         // Play Button
         let button: gtk::Button = builder.read().unwrap().get_object("playButton").unwrap();
@@ -83,7 +83,7 @@ pub fn build_gui(application: &gtk::Application, pool: &DBPool) {
     window.set_application(application);
     window.set_title("Viola");
     window.connect_delete_event(clone!(window, gui, pool => move |_, _| {
-        gui.save(&pool);       
+        gui.save(&pool);
         window.destroy();
         Inhibit(false)
     }));

@@ -1,18 +1,18 @@
 //! The main gui parts.
 
-use std::rc::Rc;
-use std::cell::RefCell;
 use gdk;
 use gdk_pixbuf;
 use gtk;
 use gtk::prelude::*;
 use pango;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use db;
 use gstreamer_wrapper;
-use gstreamer_wrapper::{GStreamer, GStreamerExt, GStreamerAction};
-use playlist;
+use gstreamer_wrapper::{GStreamer, GStreamerAction, GStreamerExt};
 use loaded_playlist::LoadedPlaylist;
+use playlist;
 use playlist_tabs;
 use playlist_tabs::PlaylistTabsExt;
 use types::*;
@@ -41,7 +41,11 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
 
     let g = Rc::new(MainGui {
         pool: pool.clone(),
-        notebook: builder.read().unwrap().get_object("playlistNotebook").unwrap(),
+        notebook: builder
+            .read()
+            .unwrap()
+            .get_object("playlistNotebook")
+            .unwrap(),
         title_label: builder.read().unwrap().get_object("titleLabel").unwrap(),
         artist_label: builder.read().unwrap().get_object("artistLabel").unwrap(),
         album_label: builder.read().unwrap().get_object("albumLabel").unwrap(),
@@ -65,7 +69,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
 
     {
         let gc = g.clone();
-    
+
         g.notebook.connect_switch_page(move |_, _, index| {
             gc.page_changed(index);
         });
@@ -113,35 +117,48 @@ impl MainGuiExt for MainGui {
                     self.album_label.set_text(&track.album);
                     self.status_label.set_text("Playing");
                     if let Some(ref p) = track.albumpath {
-                        if let Ok(ref pp) = gdk_pixbuf::Pixbuf::new_from_file_at_size(p,200,200) {
+                        if let Ok(ref pp) = gdk_pixbuf::Pixbuf::new_from_file_at_size(p, 200, 200) {
                             self.cover.set_from_pixbuf(pp);
                         } else {
                             println!("error creating pixbuf");
                         }
-
                     } else {
                         self.cover.clear();
                     }
 
                     //highlight row
                     let pos = self.playlist_tabs.borrow().current_position();
-                    let model: gtk::ListStore = treeview.get_model().unwrap().downcast::<gtk::ListStore>().unwrap();
+                    let model: gtk::ListStore = treeview
+                        .get_model()
+                        .unwrap()
+                        .downcast::<gtk::ListStore>()
+                        .unwrap();
                     let path = gtk::TreePath::new_from_indicesv(&[pos, 7]);
                     let treeiter = model.get_iter(&path).unwrap();
                     //let (_, selection) = treeselection.get_selected().unwrap();
                     {
                         let cell = self.last_marked.borrow();
                         if let Some(ref previous_row) = *cell {
-                            let color = gdk::RGBA {red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0};
+                            let color = gdk::RGBA {
+                                red: 0.0,
+                                green: 0.0,
+                                blue: 0.0,
+                                alpha: 0.0,
+                            };
                             let c = gdk_pixbuf::Value::from(&color);
                             model.set_value(&previous_row, 7, &c);
                         }
                     }
-                    let color = gdk::RGBA { red: 0.6, green: 0.0, blue: 0.3, alpha: 0.6};
+                    let color = gdk::RGBA {
+                        red: 0.6,
+                        green: 0.0,
+                        blue: 0.3,
+                        alpha: 0.6,
+                    };
                     let c = gdk_pixbuf::Value::from(&color);
                     model.set_value(&treeiter, 7, &c);
 
-                    *self.last_marked.borrow_mut() = Some(treeiter);                    
+                    *self.last_marked.borrow_mut() = Some(treeiter);
                 }
                 PlayerStatus::Paused => {
                     self.status_label.set_markup("Paused");
@@ -181,7 +198,9 @@ pub trait MainGuiPtrExt {
 
 impl MainGuiPtrExt for MainGuiPtr {
     fn page_changed(&self, index: u32) {
-        (*self.playlist_tabs).borrow_mut().set_current_playlist(index as i32);
+        (*self.playlist_tabs)
+            .borrow_mut()
+            .set_current_playlist(index as i32);
         //panic!("NOT YET IMPLEMENTED");
     }
 
@@ -193,11 +212,11 @@ impl MainGuiPtrExt for MainGuiPtr {
 
         ///FIXME we should use one of the enum but it doesn't exist yet?
         let icon = gtk::Image::new_from_icon_name("window-close", 32);
-        let button = gtk::ToolButton::new(&icon,"");
+        let button = gtk::ToolButton::new(&icon, "");
         button.set_icon_name("window-close");
         button.show();
 
-        let b = gtk::Box::new(gtk::Orientation::Horizontal,20);
+        let b = gtk::Box::new(gtk::Orientation::Horizontal, 20);
         b.pack_start(&label, false, false, 0);
         b.pack_start(&button, false, false, 0);
 
@@ -211,9 +230,7 @@ impl MainGuiPtrExt for MainGuiPtr {
 
         {
             let s = self.clone();
-            button.connect_clicked(move |_| {
-                    s.delete_page(index)
-            });
+            button.connect_clicked(move |_| s.delete_page(index));
         }
 
         let tab = playlist_tabs::load_tab(lp, tv, model);
@@ -241,13 +258,14 @@ impl MainGuiPtrExt for MainGuiPtr {
 /// Handles mouse button presses in treeviews/playlistviews
 fn button_signal_handler(gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> gtk::Inhibit {
     if event.get_event_type() == gdk::EventType::DoubleButtonPress {
-          let (vec, _) = tv.get_selection().get_selected_rows();
-          if vec.len() == 1 {
-              let pos = vec[0].get_indices()[0];
-              gui.gstreamer.do_gstreamer_action(&GStreamerAction::Play(pos));
-              gui.update_gui(&PlayerStatus::Playing);
-          }
-          gtk::Inhibit(true)
+        let (vec, _) = tv.get_selection().get_selected_rows();
+        if vec.len() == 1 {
+            let pos = vec[0].get_indices()[0];
+            gui.gstreamer
+                .do_gstreamer_action(&GStreamerAction::Play(pos));
+            gui.update_gui(&PlayerStatus::Playing);
+        }
+        gtk::Inhibit(true)
     } else {
         gtk::Inhibit(false)
     }
@@ -263,7 +281,9 @@ fn key_signal_handler(gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) 
         if let Ok(b) = event.clone().downcast::<gdk::EventKey>() {
             //println!("event key {}", b.get_keyval());
             if b.get_keyval() == DELETE_KEY {
-                gui.playlist_tabs.borrow_mut().remove_items(tv.get_selection());
+                gui.playlist_tabs
+                    .borrow_mut()
+                    .remove_items(tv.get_selection());
                 tv.get_selection().unselect_all();
             }
         }
@@ -273,7 +293,9 @@ fn key_signal_handler(gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) 
 
 fn create_populated_treeview(gui: &MainGuiPtr) -> (gtk::TreeView, gtk::ListStore) {
     let treeview = gtk::TreeView::new();
-    treeview.get_selection().set_mode(gtk::SelectionMode::Multiple);
+    treeview
+        .get_selection()
+        .set_mode(gtk::SelectionMode::Multiple);
 
     for &(id, title, width) in &[
         (0, "#", 50),
@@ -303,21 +325,18 @@ fn create_populated_treeview(gui: &MainGuiPtr) -> (gtk::TreeView, gtk::ListStore
     //panic!("Do the connection");
     {
         let guic = gui.clone();
-        treeview.connect_button_press_event(move |tv, event| {
-            button_signal_handler(&guic, tv, event)
-        });
+        treeview
+            .connect_button_press_event(move |tv, event| button_signal_handler(&guic, tv, event));
     }
     {
         let guic = gui.clone();
-        treeview.connect_key_press_event(move |tv, event| {
-            key_signal_handler(&guic, tv, event)
-        });
+        treeview.connect_key_press_event(move |tv, event| key_signal_handler(&guic, tv, event));
     }
     treeview.show();
     (treeview, model)
 }
 
-fn create_empty_model() -> gtk::ListStore  {
+fn create_empty_model() -> gtk::ListStore {
     gtk::ListStore::new(&[
         String::static_type(),
         String::static_type(),

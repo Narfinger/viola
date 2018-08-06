@@ -1,19 +1,17 @@
+use db::Track;
 use gdk;
 use gtk;
 use gtk::prelude::*;
-use std::string::String;
-use std::rc::Rc;
+use loaded_playlist::LoadedPlaylist;
 use std::cell::RefCell;
 use std::ops::Deref;
-use loaded_playlist::LoadedPlaylist;
-use db::Track;
+use std::rc::Rc;
+use std::string::String;
 
 use maingui::{MainGuiExt, MainGuiPtrExt};
 use types::*;
 
-pub struct LibraryView {
-    
-}
+pub struct LibraryView {}
 
 const ARTIST_TYPE: i32 = 1;
 const ALBUM_TYPE: i32 = 2;
@@ -37,8 +35,10 @@ impl From<i32> for LibraryLoadType {
     }
 }
 
-fn idle_fill<I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> gtk::Continue 
-    where I: Iterator<Item = String> {
+fn idle_fill<I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> gtk::Continue
+where
+    I: Iterator<Item = String>,
+{
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
 
@@ -51,13 +51,18 @@ fn idle_fill<I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> 
         let st: String = a.chars().take(20).collect::<String>() + "..";
         {
             let albums: Vec<(String, Option<i32>)> = tracks
-                .select((album,year))
+                .select((album, year))
                 .order(year)
                 .filter(artist.like(String::from("%") + &a + "%"))
                 .group_by(album)
                 .load(db.deref())
                 .expect("Error in db connection");
-            let artist_node = model.insert_with_values(None, None, &[0, 1, 2, 3], &[&st, &a, &ARTIST_TYPE, DEFAULT_VISIBILITY]);
+            let artist_node = model.insert_with_values(
+                None,
+                None,
+                &[0, 1, 2, 3],
+                &[&st, &a, &ARTIST_TYPE, DEFAULT_VISIBILITY],
+            );
 
             for (ab, y) in albums {
                 //add the year if it exists to the string we insert
@@ -67,17 +72,27 @@ fn idle_fill<I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> 
                     ab.to_string()
                 };
 
-                let album_node = model.insert_with_values(Some(&artist_node), None, &[0, 1, 2, 3], &[&abstring, &ab, &ALBUM_TYPE, DEFAULT_VISIBILITY]);
+                let album_node = model.insert_with_values(
+                    Some(&artist_node),
+                    None,
+                    &[0, 1, 2, 3],
+                    &[&abstring, &ab, &ALBUM_TYPE, DEFAULT_VISIBILITY],
+                );
                 {
                     let ts: Vec<String> = tracks
-                    .select(title)
-                    .order(tracknumber)
-                    .filter(artist.like(String::from("%") + &a + "%"))
-                    .filter(album.eq(ab))
-                    .load(db.deref())
-                    .expect("Error in db connection");
+                        .select(title)
+                        .order(tracknumber)
+                        .filter(artist.like(String::from("%") + &a + "%"))
+                        .filter(album.eq(ab))
+                        .load(db.deref())
+                        .expect("Error in db connection");
                     for t in ts {
-                        model.insert_with_values(Some(&album_node), None, &[0, 1, 2, 3], &[&t, &t, &TRACK_TYPE, DEFAULT_VISIBILITY]);
+                        model.insert_with_values(
+                            Some(&album_node),
+                            None,
+                            &[0, 1, 2, 3],
+                            &[&t, &t, &TRACK_TYPE, DEFAULT_VISIBILITY],
+                        );
                     }
                 }
             }
@@ -92,15 +107,24 @@ fn idle_fill<I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> 
 pub fn new(pool: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
-    
+
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
 
     //the model contains first a abbreviated string and in second column the whole string to construct the playlist
-    let model = gtk::TreeStore::new(&[String::static_type(), String::static_type(), i32::static_type(), bool::static_type()]);
+    let model = gtk::TreeStore::new(&[
+        String::static_type(),
+        String::static_type(),
+        i32::static_type(),
+        bool::static_type(),
+    ]);
     let fmodel = gtk::TreeModelFilter::new(&model, None);
     fmodel.set_visible_column(3);
 
-    let searchfield: gtk::SearchEntry = builder.read().unwrap().get_object("collectionsearch").unwrap();
+    let searchfield: gtk::SearchEntry = builder
+        .read()
+        .unwrap()
+        .get_object("collectionsearch")
+        .unwrap();
     {
         let bc = builder.clone();
         searchfield.connect_search_changed(move |s| search_changed(s, &bc));
@@ -123,44 +147,52 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
         .filter(artist.ne(""))
         .load(db.deref())
         .expect("Error in db connection");
-        
-
 
     {
         let pc = pool.clone();
         let guic = gui.clone();
-        libview.connect_event_after(move |s,e| { signalhandler(&pc, &guic, s, e) });
+        libview.connect_event_after(move |s, e| signalhandler(&pc, &guic, s, e));
     }
     let refcell = Rc::new(RefCell::new(artists.into_iter()));
     {
         let pc = pool.clone();
-        gtk::idle_add(move || {
-            idle_fill(&pc, &refcell, &model) 
-        });
+        gtk::idle_add(move || idle_fill(&pc, &refcell, &model));
     }
 }
-
 
 /// This function will be called on idle if the search changed.
 /// Because there could be multiple functions added, we need to have the following safeguard
 /// s is the string the search started with
 /// field is the current field, if both are not the same, we abort this thread as somebody else should be running
-fn idle_search_changed(s: Rc<String>, field: Rc<gtk::SearchEntry>, treeiter: Rc<gtk::TreeIter>, fmodel: Rc<gtk::TreeModelFilter>, model: Rc<gtk::TreeStore>) -> gtk::Continue {
+fn idle_search_changed(
+    s: Rc<String>,
+    field: Rc<gtk::SearchEntry>,
+    treeiter: Rc<gtk::TreeIter>,
+    fmodel: Rc<gtk::TreeModelFilter>,
+    model: Rc<gtk::TreeStore>,
+) -> gtk::Continue {
     let visible: &gtk::Value = &true.to_value();
     let invisible: &gtk::Value = &false.to_value();
 
     // abort if another thread is running
     if *s != field.get_text().unwrap().to_lowercase() {
-        println!("Killing this search thread because {:?}, {:?}", *s, field.get_text().unwrap());
+        println!(
+            "Killing this search thread because {:?}, {:?}",
+            *s,
+            field.get_text().unwrap()
+        );
         return gtk::Continue(false);
     }
-        
+
     if !s.is_empty() {
-        let val = model.get_value(&treeiter, 1).get::<String>().map(|v| v.to_lowercase().contains(&*s));
+        let val = model
+            .get_value(&treeiter, 1)
+            .get::<String>()
+            .map(|v| v.to_lowercase().contains(&*s));
         //println!("Looking at: {:?}, {:?}, {:?}", model.get_value(&treeiter, 1).get::<String>(), val, s);
         if val == Some(true) {
             model.set_value(&treeiter, 3, visible);
-            
+
             // set parents to visible
             {
                 let mut it = (*treeiter).clone();
@@ -197,47 +229,70 @@ fn idle_search_changed(s: Rc<String>, field: Rc<gtk::SearchEntry>, treeiter: Rc<
             let fmc = fmodel.clone();
             let mc = model.clone();
             gtk::idle_add(move || {
-                idle_search_changed(sc.clone(), fc.clone(), ci.clone(), fmc.clone(), mc.clone()) 
+                idle_search_changed(sc.clone(), fc.clone(), ci.clone(), fmc.clone(), mc.clone())
             });
         }
     }
 
-
     // model.iter_next can return false, if that we do not spawn a new thread
     let val = model.iter_next(&treeiter);
-    
+
     if val {
         gtk::idle_add(move || {
-            idle_search_changed(s.clone(), field.clone(), treeiter.clone(), fmodel.clone(), model.clone()) 
+            idle_search_changed(
+                s.clone(),
+                field.clone(),
+                treeiter.clone(),
+                fmodel.clone(),
+                model.clone(),
+            )
         });
     } else {
         //fmodel.refilter();
     }
     gtk::Continue(false)
-} 
+}
 
 fn search_changed(s: &gtk::SearchEntry, builder: &BuilderPtr) {
-    
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
 
-    
-    let fmodel = Rc::new(libview.get_model().unwrap().downcast::<gtk::TreeModelFilter>().unwrap());
-    let model = Rc::new(fmodel.get_model().unwrap().downcast::<gtk::TreeStore>().unwrap());
- 
+    let fmodel = Rc::new(
+        libview
+            .get_model()
+            .unwrap()
+            .downcast::<gtk::TreeModelFilter>()
+            .unwrap(),
+    );
+    let model = Rc::new(
+        fmodel
+            .get_model()
+            .unwrap()
+            .downcast::<gtk::TreeStore>()
+            .unwrap(),
+    );
+
     let text = Rc::new(s.get_text().unwrap().to_lowercase());
     let sc = Rc::new(s.clone());
 
     gtk::idle_add(move || {
-        idle_search_changed(text.clone(), sc.clone(), Rc::new(model.get_iter_first().unwrap()), fmodel.clone(), model.clone()) 
+        idle_search_changed(
+            text.clone(),
+            sc.clone(),
+            Rc::new(model.get_iter_first().unwrap()),
+            fmodel.clone(),
+            model.clone(),
+        )
     });
 }
 
 fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Option<(String, Vec<Track>)> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
-    
+
     let (model, iter) = tv.get_selection().get_selected().unwrap();
-    let m = model.downcast::<gtk::TreeStore>().expect("Error in downcast");
+    let m = model
+        .downcast::<gtk::TreeStore>()
+        .expect("Error in downcast");
     let artist_name = m.get_value(&iter, 1).get::<String>().unwrap();
     let db = pool.get().expect("DB problem");
     let query = tracks
@@ -248,11 +303,24 @@ fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Option<(String
         Some((artist_name, query.load(db.deref()).expect("Error in query")))
     } else if m.iter_depth(&iter) == 1 {
         let a = m.get_value(&iter, 1).get::<String>().unwrap();
-        Some((a.clone(), query.filter(album.eq(a)).load(db.deref()).expect("Error in query")))
+        Some((
+            a.clone(),
+            query
+                .filter(album.eq(a))
+                .load(db.deref())
+                .expect("Error in query"),
+        ))
     } else if m.iter_depth(&iter) == 2 {
         let a = m.get_value(&iter, 1).get::<String>().unwrap();
         let t = m.get_value(&iter, 2).get::<String>().unwrap();
-        Some((t.clone(), query.filter(album.eq(a)).filter(title.eq(t)).load(db.deref()).expect("Error in query")))
+        Some((
+            t.clone(),
+            query
+                .filter(album.eq(a))
+                .filter(title.eq(t))
+                .load(db.deref())
+                .expect("Error in query"),
+        ))
     } else {
         None
     }
@@ -260,7 +328,7 @@ fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Option<(String
 
 fn do_new(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
     let (name, res) = get_tracks_for_selection(pool, tv).expect("Error in getting tracks");
-    let pl =LoadedPlaylist {
+    let pl = LoadedPlaylist {
         id: None,
         name,
         items: res,
@@ -278,7 +346,6 @@ fn do_replace(_pool: &DBPool, _gui: &MainGuiPtr, _tv: &gtk::TreeView) {
     panic!("not yet implemented");
 }
 
-
 fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) {
     if event.get_event_type() == gdk::EventType::ButtonPress {
         println!("button press");
@@ -291,7 +358,7 @@ fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gd
                     let pc = pool.clone();
                     let gc = gui.clone();
                     let tvc = tv.clone();
-                    menuitem.connect_activate(move |_| do_new(&pc,&gc, &tvc));
+                    menuitem.connect_activate(move |_| do_new(&pc, &gc, &tvc));
                     menu.append(&menuitem);
                 }
                 {
@@ -299,7 +366,7 @@ fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gd
                     let pc = pool.clone();
                     let gc = gui.clone();
                     let tvc = tv.clone();
-                    menuitem.connect_activate(move |_| do_replace(&pc,&gc, &tvc));
+                    menuitem.connect_activate(move |_| do_replace(&pc, &gc, &tvc));
                     menu.append(&menuitem);
                 }
                 {
@@ -307,7 +374,7 @@ fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gd
                     let pc = pool.clone();
                     let gc = gui.clone();
                     let tvc = tv.clone();
-                    menuitem.connect_activate(move |_| do_append(&pc,&gc, &tvc));
+                    menuitem.connect_activate(move |_| do_append(&pc, &gc, &tvc));
                     menu.append(&menuitem);
                 }
                 menu.show_all();

@@ -1,19 +1,21 @@
 use app_dirs::*;
+use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::SqliteConnection;
 use gstreamer::Element;
 use gtk::Builder;
-use diesel::r2d2::{Pool, ConnectionManager};
-use std::sync::Arc;
-use std::rc::{Rc, Weak};
-use std::sync::RwLock;
 use std::cell::RefCell;
+use std::rc::{Rc, Weak};
+use std::sync::Arc;
+use std::sync::RwLock;
 
+use gstreamer_wrapper::GStreamerMessage;
 use maingui::MainGui;
 use playlist_tabs::PlaylistTabs;
-use gstreamer_wrapper::GStreamerMessage;
 
-pub const APP_INFO: AppInfo = AppInfo{name: "viola", author: "Narfinger"};
-
+pub const APP_INFO: AppInfo = AppInfo {
+    name: "viola",
+    author: "Narfinger",
+};
 
 pub type BuilderPtr = Arc<RwLock<Builder>>;
 pub type GstreamerPipeline = Arc<RwLock<Element>>;

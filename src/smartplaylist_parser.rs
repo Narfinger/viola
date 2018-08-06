@@ -1,11 +1,11 @@
-use toml;
-use std::ops::Deref;
-use std::fs;
-use std::collections::HashMap;
-use diesel::{QueryDsl, RunQueryDsl};
 use diesel::sqlite::Sqlite;
-use schema::tracks::dsl::*;
+use diesel::{QueryDsl, RunQueryDsl};
 use preferences::prefs_base_dir;
+use schema::tracks::dsl::*;
+use std::collections::HashMap;
+use std::fs;
+use std::ops::Deref;
+use toml;
 
 use loaded_playlist::LoadedPlaylist;
 use types::*;
@@ -40,17 +40,20 @@ pub enum Tag {
 
 fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
     fn query_insert(v: Option<Vec<String>>, tag: Tag, m: &mut HashMap<Tag, Vec<String>>) {
-    if let Some(p) = v {
-        if !p.is_empty() {
-            m.insert(tag, p);
+        if let Some(p) = v {
+            if !p.is_empty() {
+                m.insert(tag, p);
+            }
         }
-    } 
-} 
+    }
     let mut query = HashMap::new();
-    query_insert(smp.dir_exclude,   Tag::DirExclude, &mut query);
-    query_insert(smp.dir_include,   Tag::DirInclude, &mut query);
+    query_insert(smp.dir_exclude, Tag::DirExclude, &mut query);
+    query_insert(smp.dir_include, Tag::DirInclude, &mut query);
     query_insert(smp.genre_include, Tag::GenreInclude, &mut query);
-    SmartPlaylist {name: smp.name, query }
+    SmartPlaylist {
+        name: smp.name,
+        query,
+    }
 }
 
 pub trait LoadSmartPlaylist {
@@ -65,8 +68,10 @@ impl LoadSmartPlaylist for SmartPlaylist {
         use db::Track;
         use diesel::{ExpressionMethods, TextExpressionMethods};
 
-        let mut res = self.query.iter().map(|(k,v)| {
-            match k {
+        let mut res = self
+            .query
+            .iter()
+            .map(|(k, v)| match k {
                 Tag::ArtistInclude => {
                     let mut s = tracks.into_boxed::<Sqlite>();
                     for value in v {
@@ -75,7 +80,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
                     let db = pool.get().expect("DB Error");
                     println!("Query ArtistInclude: {:?}", debug_query(&s));
                     s.load(db.deref()).expect("Error in loading smart playlist")
-                },
+                }
                 Tag::DirInclude => {
                     let mut s = tracks.into_boxed::<Sqlite>();
                     for value in v {
@@ -84,7 +89,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
                     let db = pool.get().expect("DB Error");
                     println!("Query DirInclude: {:?}", debug_query(&s));
                     s.load(db.deref()).expect("Error in loading smart playlist")
-                },
+                }
                 Tag::DirExclude => {
                     let mut s = tracks.into_boxed::<Sqlite>();
                     for value in v {
@@ -93,7 +98,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
                     let db = pool.get().expect("DB Error");
                     println!("Query DirExclude: {:?}", debug_query(&s));
                     s.load(db.deref()).expect("Error in loading smart playlist")
-                },
+                }
                 Tag::GenreInclude => {
                     let mut s = tracks.into_boxed::<Sqlite>();
                     for value in v {
@@ -102,11 +107,9 @@ impl LoadSmartPlaylist for SmartPlaylist {
                     let db = pool.get().expect("DB Error");
                     println!("Query GenreInclude: {:?}", debug_query(&s));
                     s.load(db.deref()).expect("Error in loading smart playlist")
-                },
-            }
-        })
-        .flat_map(|v| v.into_iter())
-        .collect::<Vec<Track>>();
+                }
+            }).flat_map(|v| v.into_iter())
+            .collect::<Vec<Track>>();
         res.sort_unstable_by(|u, v| u.path.cmp(&v.path));
 
         LoadedPlaylist {
@@ -122,7 +125,10 @@ fn read_file(file: &str) -> Vec<SmartPlaylist> {
     let string = fs::read_to_string(file).unwrap();
     let s = toml::from_str::<SmartPlaylistConfig>(&string).expect("Could not parse");
 
-    s.smartplaylist.into_iter().map(construct_smartplaylist).collect()
+    s.smartplaylist
+        .into_iter()
+        .map(construct_smartplaylist)
+        .collect()
 }
 
 pub fn construct_smartplaylists_from_config() -> Vec<SmartPlaylist> {
@@ -139,7 +145,6 @@ pub fn construct_smartplaylists_from_config() -> Vec<SmartPlaylist> {
 
 #[test]
 fn test_query_output() {
-
     let string = fs::read_to_string("tests/playlists.toml").unwrap();
     println!("{}\n\n", string);
     let s = toml::from_str::<SmartPlaylistConfig>(&string).unwrap();

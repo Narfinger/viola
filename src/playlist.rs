@@ -54,11 +54,7 @@ fn create_loaded_from_playlist(
     let mut unsorted = r.iter().map(get_ordering).collect::<Vec<(i32, &Track)>>();
     unsorted.sort_unstable_by(|&(i, _), &(j, _)| i.cmp(&j));
 
-    let sorted = unsorted
-        .iter()
-        .map(only_tracks)
-        .cloned()
-        .collect();
+    let sorted = unsorted.iter().map(only_tracks).cloned().collect();
     Ok(LoadedPlaylist {
         id: Some(pl.id),
         name: pl.name.clone(),
@@ -83,8 +79,7 @@ pub fn restore_playlists(pool: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::r
                 .load(db.deref())?;
 
             create_loaded_from_playlist(pl, &t)
-        })
-        .collect()
+        }).collect()
 }
 
 pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
@@ -101,7 +96,7 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
             .execute(db.deref())
             .expect("Error in playlist update");
     }
-    
+
     let playlist: Playlist = if let Some(id) = pl.id {
         playlists
             .find(id)
@@ -121,7 +116,7 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
             .first(db.deref())
             .expect("DB Erorr")
     };
-    
+
     //deleting old tracks
     diesel::delete(playlisttracks)
         .filter(playlist_id.eq(playlist.id))
@@ -130,13 +125,15 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
     //inserting new tracks
 
     println!("starting to gather");
-    let vals = pl.items.iter().enumerate().map(|(index, track)| {
-        NewPlaylistTrack {
+    let vals = pl
+        .items
+        .iter()
+        .enumerate()
+        .map(|(index, track)| NewPlaylistTrack {
             playlist_id: playlist.id,
             track_id: track.id,
             playlist_order: index as i32,
-        }
-    }).collect::<Vec<NewPlaylistTrack>>();
+        }).collect::<Vec<NewPlaylistTrack>>();
     println!("collected and inserting");
     diesel::insert_into(playlisttracks)
         .values(&vals)
@@ -146,9 +143,9 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
 }
 
 pub fn delete_with_id(pool: &DBPool, index: i32) {
-    use schema;
     use diesel;
     use diesel::{ExpressionMethods, RunQueryDsl};
+    use schema;
     use schema::playlists::dsl::*;
     use schema::playlisttracks::dsl::*;
 
@@ -160,7 +157,7 @@ pub fn delete_with_id(pool: &DBPool, index: i32) {
         .filter(schema::playlists::dsl::id.eq(index))
         .execute(db.deref())
         .expect("Error in database deletion");
-    
+
     diesel::delete(playlisttracks)
         .filter(playlist_id.eq(index))
         .execute(db.deref())

@@ -1,16 +1,16 @@
+use gdk;
 use gtk;
-use std::rc::Rc;
+use gtk::{ListStoreExt, ListStoreExtManual, TreeModelExt, TreeSelectionExt};
 use std::cell::RefCell;
 use std::path::PathBuf;
-use gdk;
-use gtk::{ListStoreExt, ListStoreExtManual, TreeModelExt, TreeSelectionExt};
+use std::rc::Rc;
 
 use db;
 use loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
 use playlist;
 use types::*;
 
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct PlaylistTab {
     pub lp: LoadedPlaylist,
     pub treeview: gtk::TreeView,
@@ -19,7 +19,11 @@ pub struct PlaylistTab {
 
 pub fn load_tab(lp: LoadedPlaylist, tv: gtk::TreeView, model: gtk::ListStore) -> PlaylistTab {
     append_treeview_from_vector(&lp.items, &model);
-    PlaylistTab { lp, treeview: tv, model } 
+    PlaylistTab {
+        lp,
+        treeview: tv,
+        model,
+    }
 }
 
 pub struct PlaylistTabs {
@@ -35,11 +39,10 @@ impl Drop for PlaylistTabs {
 
 pub fn new() -> PlaylistTabsPtr {
     println!("implemente restoring");
-    Rc::new(
-        RefCell::new(
-            PlaylistTabs { current_playlist: None, tabs: Vec::new() }
-        )
-    )
+    Rc::new(RefCell::new(PlaylistTabs {
+        current_playlist: None,
+        tabs: Vec::new(),
+    }))
 }
 
 pub trait PlaylistTabsExt {
@@ -78,7 +81,9 @@ impl PlaylistTabsExt for PlaylistTabs {
     }
 
     fn current_position(&self) -> i32 {
-        self.tabs[self.current_playlist.unwrap()].lp.current_position
+        self.tabs[self.current_playlist.unwrap()]
+            .lp
+            .current_position
     }
 
     fn id(&self, index: i32) -> Option<i32> {
@@ -109,19 +114,23 @@ impl PlaylistTabsExt for PlaylistTabs {
         let (vecpath, _) = selection.get_selected_rows();
         let index = self.current_playlist.unwrap();
 
-        let mut rows = vecpath.into_iter().flat_map(|mut v| v.get_indices_with_depth()).collect::<Vec<i32>>();
+        let mut rows = vecpath
+            .into_iter()
+            .flat_map(|mut v| v.get_indices_with_depth())
+            .collect::<Vec<i32>>();
         // sort descending
-        rows.sort_unstable_by(|x,y| y.cmp(x));
+        rows.sort_unstable_by(|x, y| y.cmp(x));
 
         let mut new_lp = self.tabs[index].lp.clone();
 
-        {   //model needs to go out of scope
+        {
+            //model needs to go out of scope
             let model = &self.tabs[index].model;
             let mut position_adjustment = 0;
             let mut invalid_position = false;
             for i in rows {
                 if i < new_lp.current_position {
-                    position_adjustment += 1; 
+                    position_adjustment += 1;
                 } else if i == new_lp.current_position {
                     invalid_position = true;
                 }
@@ -179,7 +188,7 @@ impl PlaylistControls for PlaylistTabs {
         self.tabs[self.current_playlist.unwrap()].lp.next()
     }
 
-    fn set(&mut self, i: i32) -> String  {
+    fn set(&mut self, i: i32) -> String {
         self.tabs[self.current_playlist.unwrap()].lp.set(i)
     }
 
@@ -195,7 +204,6 @@ pub trait PlaylistControlsImmutable {
     fn set(&self, i32) -> String;
     fn next_or_eol(&self) -> Option<String>;
 }
-
 
 impl PlaylistControlsImmutable for PlaylistTabsPtr {
     fn get_current_uri(&self) -> String {
@@ -240,7 +248,12 @@ fn append_treeview_from_vector(v: &[db::Track], model: &gtk::ListStore) {
                     .map(|s| s.to_string())
                     .unwrap_or_else(|| String::from("")),
                 &entry.genre,
-                &gdk::RGBA { red: 1.0, green: 1.0, blue: 1.0, alpha: 0.0},
+                &gdk::RGBA {
+                    red: 1.0,
+                    green: 1.0,
+                    blue: 1.0,
+                    alpha: 0.0,
+                },
             ],
         );
     }
@@ -249,14 +262,14 @@ fn append_treeview_from_vector(v: &[db::Track], model: &gtk::ListStore) {
 fn format_duration(d: i32) -> String {
     if d < 60 {
         format!("{}", d)
-    } else if d < 60*60 {
+    } else if d < 60 * 60 {
         let s = d % 60;
-        let m = d/60;
+        let m = d / 60;
         format!("{}:{:02}", m, s)
     } else {
         let s = d % 60;
-        let m = d/60 % (60*60);
-        let h = d/(60*60);
-        format!("{}:{:02}:{:02}", h,m,s)
+        let m = d / 60 % (60 * 60);
+        let h = d / (60 * 60);
+        format!("{}:{:02}:{:02}", h, m, s)
     }
 }

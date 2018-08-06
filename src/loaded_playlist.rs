@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use db::Track;
+use std::path::PathBuf;
 
 #[derive(Clone, Debug)]
 pub struct LoadedPlaylist {
@@ -32,9 +32,7 @@ pub trait PlaylistControls {
 impl PlaylistControls for LoadedPlaylist {
     fn get_current_path(&self) -> PathBuf {
         let mut pb = PathBuf::new();
-        pb.push(
-            &self.items[self.current_position as usize]
-            .path);
+        pb.push(&self.items[self.current_position as usize].path);
         pb
     }
 
@@ -52,7 +50,6 @@ impl PlaylistControls for LoadedPlaylist {
         self.current_position -= 1 % self.items.len() as i32;
         self.get_current_uri()
     }
-
 
     fn next(&mut self) -> String {
         self.current_position += 1 % self.items.len() as i32;
@@ -73,4 +70,3 @@ impl PlaylistControls for LoadedPlaylist {
         }
     }
 }
-

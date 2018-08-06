@@ -21,23 +21,26 @@ extern crate toml;
 extern crate walkdir;
 
 pub mod db;
-pub mod loaded_playlist;
-pub mod gui;
 pub mod gstreamer_wrapper;
+pub mod gui;
 pub mod libraryviewstore;
+pub mod loaded_playlist;
 pub mod maingui;
 pub mod playlist;
-pub mod playlist_tabs;
 pub mod playlist_manager;
+pub mod playlist_tabs;
 pub mod schema;
 pub mod smartplaylist_parser;
 pub mod types;
 
 use clap::{App, Arg};
 use gio::ApplicationExt;
-use preferences::{AppInfo, PreferencesMap, Preferences, prefs_base_dir};
+use preferences::{prefs_base_dir, AppInfo, Preferences, PreferencesMap};
 
-const APP_INFO: AppInfo = AppInfo{name: "viola", author: "narfinger"};
+const APP_INFO: AppInfo = AppInfo {
+    name: "viola",
+    author: "narfinger",
+};
 const PREFS_KEY: &str = "viola_prefs";
 
 fn main() {
@@ -48,29 +51,29 @@ fn main() {
             Arg::with_name("update")
                 .short("u")
                 .long("update")
-                .help("Updates the database"))
-        .arg(
+                .help("Updates the database"),
+        ).arg(
             Arg::with_name("fastupdate")
                 .short("f")
                 .long("fastupdate")
-                .help("Does a fast update of the database, doing a heuristic on time modified"))
-        .arg(
+                .help("Does a fast update of the database, doing a heuristic on time modified"),
+        ).arg(
             Arg::with_name("music_dir")
                 .short("m")
                 .takes_value(true)
                 .long("music_dir")
-                .help("Set the music directory"))
-        .arg(
+                .help("Set the music directory"),
+        ).arg(
             Arg::with_name("configpath")
                 .short("c")
                 .long("config")
-                .help("Shows the config path"))
-        .arg(
+                .help("Shows the config path"),
+        ).arg(
             Arg::with_name("editsmartplaylists")
                 .short("e")
                 .long("editsmartplaylists")
-                .help("Opens an editor to edit the smartplaylist file"))
-        .get_matches();
+                .help("Opens an editor to edit the smartplaylist file"),
+        ).get_matches();
 
     let pool = db::setup_db_connection();
     if matches.is_present("update") {
@@ -89,14 +92,19 @@ fn main() {
     } else if let Some(new_music_dir) = matches.value_of("music_dir") {
         let mut prefs = PreferencesMap::<String>::new();
         prefs.insert(String::from("music_dir"), String::from(new_music_dir));
-        prefs.save(&APP_INFO, PREFS_KEY).expect("Error in saving preferences");
+        prefs
+            .save(&APP_INFO, PREFS_KEY)
+            .expect("Error in saving preferences");
         println!("saved music directory");
     } else if matches.is_present("configpath") {
-        let mut p =  prefs_base_dir().expect("Base dir cannot be founds");
+        let mut p = prefs_base_dir().expect("Base dir cannot be founds");
         p.push("viola");
         let s = p.to_str().expect("Error in convert");
-        println!("The config path can be found under {}.\n Please add the file smartplaylists.toml\
-        if you want to add smartplaylists", s);
+        println!(
+            "The config path can be found under {}.\n Please add the file smartplaylists.toml\
+             if you want to add smartplaylists",
+            s
+        );
     } else if matches.is_present("editsmartplaylists") {
         let mut path = prefs_base_dir().expect("Could not find base dir");
         path.push("viola");
