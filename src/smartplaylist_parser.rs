@@ -78,7 +78,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
                         s = s.or_filter(artist.eq(value));
                     }
                     let db = pool.get().expect("DB Error");
-                    println!("Query ArtistInclude: {:?}", debug_query(&s));
+                    //println!("Query ArtistInclude: {:?}", debug_query(&s));
                     s.load(db.deref()).expect("Error in loading smart playlist")
                 }
                 Tag::DirInclude => {
@@ -87,7 +87,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
                         s = s.or_filter(path.like(String::from("%") + &value + "%"));
                     }
                     let db = pool.get().expect("DB Error");
-                    println!("Query DirInclude: {:?}", debug_query(&s));
+                    //println!("Query DirInclude: {:?}", debug_query(&s));
                     s.load(db.deref()).expect("Error in loading smart playlist")
                 }
                 Tag::DirExclude => {
@@ -96,7 +96,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
                         s = s.or_filter(path.not_like(String::from("%") + &value + "%"));
                     }
                     let db = pool.get().expect("DB Error");
-                    println!("Query DirExclude: {:?}", debug_query(&s));
+                    //println!("Query DirExclude: {:?}", debug_query(&s));
                     s.load(db.deref()).expect("Error in loading smart playlist")
                 }
                 Tag::GenreInclude => {
@@ -105,7 +105,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
                         s = s.or_filter(genre.eq(value));
                     }
                     let db = pool.get().expect("DB Error");
-                    println!("Query GenreInclude: {:?}", debug_query(&s));
+                    //println!("Query GenreInclude: {:?}", debug_query(&s));
                     s.load(db.deref()).expect("Error in loading smart playlist")
                 }
             }).flat_map(|v| v.into_iter())

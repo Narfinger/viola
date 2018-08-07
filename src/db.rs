@@ -211,15 +211,18 @@ pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
             println!("Deleting old database entries");
             let pb = ProgressBar::new_spinner();
             pb.set_message("Computing Difference to old database");
-            let to_delete = old_files.difference(&files);
+            let to_delete: Vec<&String> = old_files.difference(&files).collect();
             pb.finish();
-
-            let pb = ProgressBar::new_spinner();
-            pb.set_message("Deleting old unused entries");
-            for i in to_delete {
-                println!("to delete: {}", i);
+        
+            let pb2 = ProgressBar::new(to_delete.len() as u64);
+            pb2.set_style(ProgressStyle::default_bar()
+                                  .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7} {percent}    %)")
+                                  .progress_chars("#>-"));
+            pb2.set_message("Deleting old unused entries");
+            for i in pb2.wrap_iter(to_delete.iter()) {
+                //println!("to delete: {}", i);
                 diesel::delete(tracks)
-                    .filter(path.eq(&i))
+                    .filter(path.eq(i))
                     .execute(db.deref())
                     .unwrap_or_else(|_| {
                         panic!("Error in deleting outdated database entries: {}", &i)
