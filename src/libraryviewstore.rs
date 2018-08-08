@@ -285,14 +285,25 @@ fn search_changed(s: &gtk::SearchEntry, builder: &BuilderPtr) {
     });
 }
 
+fn get_model_and_iter_for_selection(tv: &gtk::TreeView) -> (gtk::TreeStore, gtk::TreeIter) {
+    let (model, iter) = tv.get_selection().get_selected().unwrap();
+    let filtermodel = model.downcast::<gtk::TreeModelFilter>()
+        .expect("Error in TreeModelFilter downcast");
+    let m = filtermodel
+        .get_model()
+        .expect("No base model for TreeModelFilter")
+        .downcast::<gtk::TreeStore>()
+        .expect("Error in TreeStore downcast");
+    let realiter = filtermodel.convert_iter_to_child_iter(&iter);
+
+    (m, realiter)
+}
+
 fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Option<(String, Vec<Track>)> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
 
-    let (model, iter) = tv.get_selection().get_selected().unwrap();
-    let m = model
-        .downcast::<gtk::TreeStore>()
-        .expect("Error in downcast");
+    let (m, iter) = get_model_and_iter_for_selection(tv);
     let artist_name = m.get_value(&iter, 1).get::<String>().unwrap();
     let db = pool.get().expect("DB problem");
     let query = tracks
