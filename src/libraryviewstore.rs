@@ -313,11 +313,14 @@ fn get_model_and_iter_for_selection(tv: &gtk::TreeView) -> (gtk::TreeStore, gtk:
     (m, realiter)
 }
 
-fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Option<(String, Vec<Track>)> {
+fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Result<(String, Vec<Track>), String> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
 
     let (m, iter) = get_model_and_iter_for_selection(tv);
+
+    println!("Iter depth: {}", m.iter_depth(&iter));
+
     let artist_name = m.get_value(&iter, 1).get::<String>().unwrap();
     let db = pool.get().expect("DB problem");
     let query = tracks
@@ -325,10 +328,10 @@ fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Option<(String
         .order(path)
         .into_boxed();
     if m.iter_depth(&iter) == 0 {
-        Some((artist_name, query.load(db.deref()).expect("Error in query")))
+        Ok((artist_name, query.load(db.deref()).expect("Error in query")))
     } else if m.iter_depth(&iter) == 1 {
         let a = m.get_value(&iter, 1).get::<String>().unwrap();
-        Some((
+        Ok((
             a.clone(),
             query
                 .filter(album.eq(a))
@@ -336,9 +339,9 @@ fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Option<(String
                 .expect("Error in query"),
         ))
     } else if m.iter_depth(&iter) == 2 {
-        let a = m.get_value(&iter, 1).get::<String>().unwrap();
-        let t = m.get_value(&iter, 2).get::<String>().unwrap();
-        Some((
+        let a = m.get_value(&iter, 0).get::<String>().unwrap();
+        let t = m.get_value(&iter, 1).get::<String>().unwrap();
+        Ok((
             t.clone(),
             query
                 .filter(album.eq(a))
@@ -347,7 +350,7 @@ fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Option<(String
                 .expect("Error in query"),
         ))
     } else {
-        None
+        Err(format!("Found iter depth: {}", m.iter_depth(&iter)))
     }
 }
 
