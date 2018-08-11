@@ -353,8 +353,9 @@ fn do_append(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
     gui.append_to_playlist(res);
 }
 
-fn do_replace(_pool: &DBPool, _gui: &MainGuiPtr, _tv: &gtk::TreeView) {
-    panic!("not yet implemented");
+fn do_replace(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
+    let (_, res) = get_tracks_for_selection(pool, tv).expect("Error in getting tracks");
+    gui.replace_playlist(res);
 }
 
 fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) {

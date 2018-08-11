@@ -70,6 +70,9 @@ pub trait PlaylistTabsExt {
     /// append the tracks to current playlists
     fn append_to_playlist(&mut self, Vec<db::Track>);
 
+    /// replaces all currents track in current playlist
+    fn replace_playlist(&mut self, Vec<db::Track>);
+
     /// saves the playlist tabs to the database
     fn save(&self, &DBPool);
 }
@@ -160,6 +163,17 @@ impl PlaylistTabsExt for PlaylistTabs {
         let model = &self.tabs[self.current_playlist.unwrap()].model;
 
         append_treeview_from_vector(&t, model);
+    }
+
+    fn replace_playlist(&mut self, t: Vec<db::Track>) {
+        {
+            let model = &self.tabs[self.current_playlist.unwrap()].model;
+            model.clear();
+            append_treeview_from_vector(&t, model);
+        }
+        
+        self.tabs[self.current_playlist.unwrap()].lp.items = t;
+        self.tabs[self.current_playlist.unwrap()].lp.current_position = 0;
     }
 
     fn save(&self, pool: &DBPool) {

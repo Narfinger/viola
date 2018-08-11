@@ -62,7 +62,7 @@ impl PlaylistControls for LoadedPlaylist {
     }
 
     fn next_or_eol(&mut self) -> Option<String> {
-        if self.current_position >= self.items.len() as i32 {
+        if self.current_position -1 >= self.items.len() as i32 {
             self.current_position = 0;
             None
         } else {

@@ -85,6 +85,7 @@ pub trait MainGuiExt {
     fn update_gui(&self, &PlayerStatus); //does not need pipeline
     fn set_playback(&self, &GStreamerAction);
     fn append_to_playlist(&self, Vec<db::Track>);
+    fn replace_playlist(&self, Vec<db::Track>);
     fn save(&self, &DBPool);
 }
 
@@ -179,6 +180,10 @@ impl MainGuiExt for MainGui {
 
     fn append_to_playlist(&self, t: Vec<db::Track>) {
         self.playlist_tabs.borrow_mut().append_to_playlist(t);
+    }
+
+    fn replace_playlist(&self, t: Vec<db::Track>) {
+        self.playlist_tabs.borrow_mut().replace_playlist(t);
     }
 
     fn save(&self, pool: &DBPool) {
