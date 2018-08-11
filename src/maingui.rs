@@ -7,6 +7,7 @@ use gtk::prelude::*;
 use pango;
 use std::cell::RefCell;
 use std::rc::Rc;
+use serde_json;
 
 use db;
 use gstreamer_wrapper;
@@ -327,7 +328,6 @@ fn create_populated_treeview(gui: &MainGuiPtr) -> (gtk::TreeView, gtk::ListStore
     }
     let model = create_empty_model();
     treeview.set_model(Some(&model));
-    //panic!("Do the connection");
     {
         let guic = gui.clone();
         treeview
@@ -338,6 +338,29 @@ fn create_populated_treeview(gui: &MainGuiPtr) -> (gtk::TreeView, gtk::ListStore
         treeview.connect_key_press_event(move |tv, event| key_signal_handler(&guic, tv, event));
     }
     treeview.show();
+
+    // setup drop target
+    {
+        let targets = vec![gtk::TargetEntry::new("text/plain", gtk::TargetFlags::SAME_APP, 0)];
+        treeview.drag_dest_set(gtk::DestDefaults::ALL, &targets, gdk::DragAction::COPY);
+        treeview.connect_drag_data_received(|treeview, _, x, y, s, _, _| {
+            println!("the drop in plain: {}", s.get_text().unwrap());
+            let track = serde_json::from_str::<Vec<db::Track>>(&s.get_text().expect("Error in droping"));
+            if let Ok(t) = track {
+                let (path, _) = treeview.get_dest_row_at_pos(x, y).expect("Could not get position");
+                let model = treeview.get_model().expect("No model").downcast::<gtk::ListStore>().expect("Error in downcast");
+
+                println!("We would have dropped {:?}", t);
+                panic!("not yet implemented");
+                //panic!("dropping not yet implemented");
+            } else {
+                println!("We could not decode the drop, something is wrong, {:?}", track);
+            }
+
+            //w.set_text(&s.get_text().expect("Couldn't get text"));
+        });
+    }
+
     (treeview, model)
 }
 

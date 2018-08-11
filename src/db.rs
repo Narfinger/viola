@@ -12,7 +12,7 @@ use taglib;
 use types::{DBPool, APP_INFO};
 use walkdir;
 
-#[derive(AsChangeset, Debug, Identifiable, Queryable, Clone)]
+#[derive(AsChangeset, Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]
 pub struct Track {
     pub id: i32,
     pub title: String,

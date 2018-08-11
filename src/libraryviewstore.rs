@@ -7,6 +7,7 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
 use std::string::String;
+use serde_json;
 
 use maingui::{MainGuiExt, MainGuiPtrExt};
 use types::*;
@@ -109,6 +110,19 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
     use schema::tracks::dsl::*;
 
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
+    // setup drag drop
+    {   
+        let pc = pool.clone();
+        let targets = vec![gtk::TargetEntry::new("text/plain", gtk::TargetFlags::SAME_APP, 0)];
+        libview.drag_source_set(gdk::ModifierType::MODIFIER_MASK, &targets, gdk::DragAction::COPY);
+        libview.connect_drag_data_get(move |w, _, s, _, _| {
+
+            let (_, t) = get_tracks_for_selection(&pc, &w).expect("Could not get tracks");
+            let data = serde_json::to_string(&t).expect("Error in formating drop data");
+            s.set_text(&data);
+        });
+    }
+
 
     //the model contains first a abbreviated string and in second column the whole string to construct the playlist
     let model = gtk::TreeStore::new(&[
