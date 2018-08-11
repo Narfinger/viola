@@ -87,6 +87,7 @@ pub trait MainGuiExt {
     fn set_playback(&self, &GStreamerAction);
     fn append_to_playlist(&self, Vec<db::Track>);
     fn replace_playlist(&self, Vec<db::Track>);
+    fn insert_tracks(&self, i32, Vec<db::Track>);
     fn save(&self, &DBPool);
 }
 
@@ -185,6 +186,10 @@ impl MainGuiExt for MainGui {
 
     fn replace_playlist(&self, t: Vec<db::Track>) {
         self.playlist_tabs.borrow_mut().replace_playlist(t);
+    }
+
+    fn insert_tracks(&self, index: i32, t: Vec<db::Track>) {
+        self.playlist_tabs.borrow_mut().insert_tracks(index, t);
     }
 
     fn save(&self, pool: &DBPool) {
@@ -298,6 +303,7 @@ fn key_signal_handler(gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) 
 }
 
 fn create_populated_treeview(gui: &MainGuiPtr) -> (gtk::TreeView, gtk::ListStore) {
+    println!("this should not be here, as it duplicates code from playlist_tabs");
     let treeview = gtk::TreeView::new();
     treeview
         .get_selection()
@@ -342,17 +348,20 @@ fn create_populated_treeview(gui: &MainGuiPtr) -> (gtk::TreeView, gtk::ListStore
     // setup drop target
     {
         let targets = vec![gtk::TargetEntry::new("text/plain", gtk::TargetFlags::SAME_APP, 0)];
+        let guic = gui.clone();
         treeview.drag_dest_set(gtk::DestDefaults::ALL, &targets, gdk::DragAction::COPY);
-        treeview.connect_drag_data_received(|treeview, _, x, y, s, _, _| {
+        treeview.connect_drag_data_received(move |treeview, _, x, y, s, _, _| {
             println!("the drop in plain: {}", s.get_text().unwrap());
             let track = serde_json::from_str::<Vec<db::Track>>(&s.get_text().expect("Error in droping"));
             if let Ok(t) = track {
-                let (path, _) = treeview.get_dest_row_at_pos(x, y).expect("Could not get position");
-                let model = treeview.get_model().expect("No model").downcast::<gtk::ListStore>().expect("Error in downcast");
+                let (mut path, _) = treeview.get_dest_row_at_pos(x, y).expect("Could not get position");
+                //let model = treeview.get_model().expect("No model").downcast::<gtk::ListStore>().expect("Error in downcast");
 
-                println!("We would have dropped {:?}", t);
-                panic!("not yet implemented");
-                //panic!("dropping not yet implemented");
+                if let Some(mut p) = path {
+                    guic.insert_tracks(p.get_indices_with_depth()[0], t);
+                } else {
+                    println!("We could not get a valid path for drag");
+                }
             } else {
                 println!("We could not decode the drop, something is wrong, {:?}", track);
             }

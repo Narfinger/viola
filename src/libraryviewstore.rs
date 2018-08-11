@@ -321,31 +321,46 @@ fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Result<(String
 
     println!("Iter depth: {}", m.iter_depth(&iter));
 
-    let artist_name = m.get_value(&iter, 1).get::<String>().unwrap();
     let db = pool.get().expect("DB problem");
     let query = tracks
-        .filter(artist.like(String::from("%") + &artist_name + "%"))
         .order(path)
         .into_boxed();
     if m.iter_depth(&iter) == 0 {
-        Ok((artist_name, query.load(db.deref()).expect("Error in query")))
-    } else if m.iter_depth(&iter) == 1 {
-        let a = m.get_value(&iter, 1).get::<String>().unwrap();
+        let artist_name = m.get_value(&iter, 1).get::<String>().unwrap();
+        println!("artist: {}", artist_name);
         Ok((
-            a.clone(),
+            artist_name.clone(), 
             query
-                .filter(album.eq(a))
+                .filter(artist.like(String::from("%") + &artist_name + "%"))
+                .load(db.deref())
+                .expect("Error in query"),
+            ))
+    } else if m.iter_depth(&iter) == 1 {
+        let parent_artist = m.iter_parent(&iter).expect("We do not have a parent, this is strange");
+        let artist_name = m.get_value(&parent_artist, 1).get::<String>().unwrap();
+        let album_name = m.get_value(&iter, 1).get::<String>().unwrap();
+        println!("doing with artist {}, album \"{}\"", artist_name, album_name);
+        Ok((
+            album_name.clone(),
+            query
+                .filter(artist.like(String::from("%") + &artist_name + "%"))
+                .filter(album.eq(album_name))
                 .load(db.deref())
                 .expect("Error in query"),
         ))
     } else if m.iter_depth(&iter) == 2 {
-        let a = m.get_value(&iter, 0).get::<String>().unwrap();
-        let t = m.get_value(&iter, 1).get::<String>().unwrap();
+        let parent_album = m.iter_parent(&iter).expect("We do not have a parent, this is strange");
+        let parent_artist = m.iter_parent(&parent_album).expect("We do not have a parent, this is strange");
+
+        let artist_name = m.get_value(&parent_artist, 1).get::<String>().unwrap();
+        let album_name = m.get_value(&parent_album, 1).get::<String>().unwrap();
+        let track_name = m.get_value(&iter, 1).get::<String>().unwrap();
         Ok((
-            t.clone(),
+            track_name.clone(),
             query
-                .filter(album.eq(a))
-                .filter(title.eq(t))
+                .filter(artist.like(String::from("%") + &artist_name + "%"))
+                .filter(album.eq(album_name))
+                .filter(title.eq(track_name))
                 .load(db.deref())
                 .expect("Error in query"),
         ))

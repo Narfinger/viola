@@ -73,6 +73,9 @@ pub trait PlaylistTabsExt {
     /// replaces all currents track in current playlist
     fn replace_playlist(&mut self, Vec<db::Track>);
 
+    /// insert the tracks at the integer given
+    fn insert_tracks(&mut self, i32, Vec<db::Track>);
+
     /// saves the playlist tabs to the database
     fn save(&self, &DBPool);
 }
@@ -174,6 +177,23 @@ impl PlaylistTabsExt for PlaylistTabs {
         
         self.tabs[self.current_playlist.unwrap()].lp.items = t;
         self.tabs[self.current_playlist.unwrap()].lp.current_position = 0;
+    }
+
+    fn insert_tracks(&mut self, index: i32, tracks: Vec<db::Track>) {
+        let mut items = self.tabs[self.current_playlist.unwrap()].lp.items.clone();
+        let mut i = index;
+        for t in tracks {
+            items.insert(i as usize ,t);
+            i += 1;
+        }
+
+        {
+            let model = &self.tabs[self.current_playlist.unwrap()].model;
+            model.clear();
+            append_treeview_from_vector(&items, model);
+        }
+        self.tabs[self.current_playlist.unwrap()].lp.items = items;
+        
     }
 
     fn save(&self, pool: &DBPool) {
