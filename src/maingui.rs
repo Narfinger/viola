@@ -216,9 +216,6 @@ impl MainGuiPtrExt for MainGuiPtr {
     }
 
     fn add_page(&self, lp: LoadedPlaylist) {
-        let (tv, model) = create_populated_treeview(&self);
-        let scw = gtk::ScrolledWindow::new(None, None);
-        scw.add(&tv);
         let label = gtk::Label::new(Some(lp.name.as_str()));
 
         ///FIXME we should use one of the enum but it doesn't exist yet?
@@ -231,20 +228,16 @@ impl MainGuiPtrExt for MainGuiPtr {
         b.pack_start(&label, false, false, 0);
         b.pack_start(&button, false, false, 0);
 
+        let (scw, tab) = playlist_tabs::load_tab(lp);
         let index = self.notebook.append_page(&scw, Some(&b));
-        /*{
-            let mut cp = self.current_playlist.write().unwrap();
-            *cp = lp;
-        }*/
         b.show_all();
-        scw.show();
+        scw.show_all();
 
         {
             let s = self.clone();
             button.connect_clicked(move |_| s.delete_page(index));
         }
 
-        let tab = playlist_tabs::load_tab(lp, tv, model);
         (*self.playlist_tabs).borrow_mut().add_tab(tab);
     }
 
@@ -300,88 +293,4 @@ fn key_signal_handler(gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) 
         }
     }
     gtk::Inhibit(false)
-}
-
-fn create_populated_treeview(gui: &MainGuiPtr) -> (gtk::TreeView, gtk::ListStore) {
-    println!("this should not be here, as it duplicates code from playlist_tabs");
-    let treeview = gtk::TreeView::new();
-    treeview
-        .get_selection()
-        .set_mode(gtk::SelectionMode::Multiple);
-
-    for &(id, title, width) in &[
-        (0, "#", 50),
-        (1, "Title", 500),
-        (2, "Artist", 200),
-        (3, "Album", 200),
-        (4, "Length", 200),
-        (5, "Year", 200),
-        (6, "Genre", 200),
-    ] {
-        let column = gtk::TreeViewColumn::new();
-        let cell = gtk::CellRendererText::new();
-        column.pack_start(&cell, true);
-        // Association of the view's column with the model's `id` column.
-        column.add_attribute(&cell, "text", id);
-        column.add_attribute(&cell, "background-rgba", 7);
-        column.set_title(title);
-        column.set_resizable(id > 0);
-        column.set_fixed_width(width);
-        treeview.append_column(&column);
-        if id == 4 {
-            cell.set_property_alignment(pango::Alignment::Right);
-        }
-    }
-    let model = create_empty_model();
-    treeview.set_model(Some(&model));
-    {
-        let guic = gui.clone();
-        treeview
-            .connect_button_press_event(move |tv, event| button_signal_handler(&guic, tv, event));
-    }
-    {
-        let guic = gui.clone();
-        treeview.connect_key_press_event(move |tv, event| key_signal_handler(&guic, tv, event));
-    }
-    treeview.show();
-
-    // setup drop target
-    {
-        let targets = vec![gtk::TargetEntry::new("text/plain", gtk::TargetFlags::SAME_APP, 0)];
-        let guic = gui.clone();
-        treeview.drag_dest_set(gtk::DestDefaults::ALL, &targets, gdk::DragAction::COPY);
-        treeview.connect_drag_data_received(move |treeview, _, x, y, s, _, _| {
-            println!("the drop in plain: {}", s.get_text().unwrap());
-            let track = serde_json::from_str::<Vec<db::Track>>(&s.get_text().expect("Error in droping"));
-            if let Ok(t) = track {
-                let (mut path, _) = treeview.get_dest_row_at_pos(x, y).expect("Could not get position");
-                //let model = treeview.get_model().expect("No model").downcast::<gtk::ListStore>().expect("Error in downcast");
-
-                if let Some(mut p) = path {
-                    guic.insert_tracks(p.get_indices_with_depth()[0], t);
-                } else {
-                    println!("We could not get a valid path for drag");
-                }
-            } else {
-                println!("We could not decode the drop, something is wrong, {:?}", track);
-            }
-
-            //w.set_text(&s.get_text().expect("Couldn't get text"));
-        });
-    }
-
-    (treeview, model)
-}
-
-fn create_empty_model() -> gtk::ListStore {
-    gtk::ListStore::new(&[
-        String::static_type(),
-        String::static_type(),
-        String::static_type(),
-        String::static_type(),
-        String::static_type(),
-        String::static_type(),
-        String::static_type(),
-        gdk::RGBA::static_type(),
-    ])
 }

@@ -4,6 +4,8 @@ use gtk::{ListStoreExt, ListStoreExtManual, TreeModelExt, TreeSelectionExt};
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
+use pango;
+use gtk::prelude::*;
 
 use db;
 use loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
@@ -17,13 +19,58 @@ pub struct PlaylistTab {
     pub model: gtk::ListStore,
 }
 
-pub fn load_tab(lp: LoadedPlaylist, tv: gtk::TreeView, model: gtk::ListStore) -> PlaylistTab {
-    append_treeview_from_vector(&lp.items, &model);
-    PlaylistTab {
-        lp,
-        treeview: tv,
-        model,
+/// Loads a playlist, returning the ScrolledWindow, containing the treeview and creating a PlaylistTab
+pub fn load_tab(lp: LoadedPlaylist) -> (gtk::ScrolledWindow, PlaylistTab) {
+    let model = gtk::ListStore::new(&[
+        String::static_type(),
+        String::static_type(),
+        String::static_type(),
+        String::static_type(),
+        String::static_type(),
+        String::static_type(),
+        String::static_type(),
+        gdk::RGBA::static_type(),
+    ]);
+    let treeview = gtk::TreeView::new();
+    treeview
+        .get_selection()
+        .set_mode(gtk::SelectionMode::Multiple);
+
+    for &(id, title, width) in &[
+        (0, "#", 50),
+        (1, "Title", 500),
+        (2, "Artist", 200),
+        (3, "Album", 200),
+        (4, "Length", 200),
+        (5, "Year", 200),
+        (6, "Genre", 200),
+    ] {
+        let column = gtk::TreeViewColumn::new();
+        let cell = gtk::CellRendererText::new();
+        column.pack_start(&cell, true);
+        // Association of the view's column with the model's `id` column.
+        column.add_attribute(&cell, "text", id);
+        column.add_attribute(&cell, "background-rgba", 7);
+        column.set_title(title);
+        column.set_resizable(id > 0);
+        column.set_fixed_width(width);
+        treeview.append_column(&column);
+        if id == 4 {
+            cell.set_property_alignment(pango::Alignment::Right);
+        }
     }
+    treeview.set_model(Some(&model));
+    
+    append_treeview_from_vector(&lp.items, &model);
+    let scw = gtk::ScrolledWindow::new(None, None);
+    scw.add(&treeview);
+
+    (scw, 
+        PlaylistTab {
+            lp,
+            treeview,
+            model,
+        })
 }
 
 pub struct PlaylistTabs {
