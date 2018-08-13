@@ -40,10 +40,10 @@ pub fn load_tab(lp: LoadedPlaylist) -> (gtk::ScrolledWindow, PlaylistTab) {
         (0, "#", 50),
         (1, "Title", 500),
         (2, "Artist", 200),
-        (3, "Album", 200),
-        (4, "Length", 200),
-        (5, "Year", 200),
-        (6, "Genre", 200),
+        (3, "Album", 300),
+        (4, "Length", 150),
+        (5, "Year", 100),
+        (6, "Genre", 150),
     ] {
         let column = gtk::TreeViewColumn::new();
         let cell = gtk::CellRendererText::new();
@@ -55,8 +55,9 @@ pub fn load_tab(lp: LoadedPlaylist) -> (gtk::ScrolledWindow, PlaylistTab) {
         column.set_resizable(id > 0);
         column.set_fixed_width(width);
         treeview.append_column(&column);
-        if id == 4 {
-            cell.set_property_alignment(pango::Alignment::Right);
+        //center the column for length and year
+        if (id == 4) | (id == 5) {
+            cell.set_property_xalign(0.5);
         }
     }
     treeview.set_model(Some(&model));
