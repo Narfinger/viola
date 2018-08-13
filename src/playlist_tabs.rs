@@ -19,8 +19,11 @@ pub struct PlaylistTab {
     pub model: gtk::ListStore,
 }
 
+/// FIXME: clean up this section and make the various traits into different files
+
 /// Loads a playlist, returning the ScrolledWindow, containing the treeview and creating a PlaylistTab
-pub fn load_tab(lp: LoadedPlaylist) -> (gtk::ScrolledWindow, PlaylistTab) {
+pub fn load_tab(tabs: &PlaylistTabsPtr, lp: LoadedPlaylist) -> (gtk::ScrolledWindow, PlaylistTab) {
+    /// FIXME clean this up
     let model = gtk::ListStore::new(&[
         String::static_type(),
         String::static_type(),
@@ -62,16 +65,38 @@ pub fn load_tab(lp: LoadedPlaylist) -> (gtk::ScrolledWindow, PlaylistTab) {
     }
     treeview.set_model(Some(&model));
     
+    {
+        let tabsc = tabs.clone();
+        treeview.connect_key_press_event(move |tv, event| key_signal_handler(&tabsc, &tv, event));
+    }
+    
     append_treeview_from_vector(&lp.items, &model);
     let scw = gtk::ScrolledWindow::new(None, None);
     scw.add(&treeview);
 
-    (scw, 
-        PlaylistTab {
-            lp,
-            treeview,
-            model,
-        })
+    let tab = PlaylistTab {lp, treeview, model };
+
+    (scw, tab)
+}
+
+//yes... this is werid, I don't know why there are not constants
+const DELETE_KEY: u32 = 65535;
+
+/// Handles keyboard presses in treeviews/playlistviews
+fn key_signal_handler(tabs: &PlaylistTabsPtr, tv: &gtk::TreeView, event: &gdk::Event) -> gtk::Inhibit {
+    //println!("key {:?}", event.get_event_type());
+    if event.get_event_type() == gdk::EventType::KeyPress {
+        if let Ok(b) = event.clone().downcast::<gdk::EventKey>() {
+            //println!("event key {}", b.get_keyval());
+            if b.get_keyval() == DELETE_KEY {
+                tabs
+                    .borrow_mut()
+                    .remove_items(tv.get_selection());
+                tv.get_selection().unselect_all();
+            }
+        }
+    }
+    gtk::Inhibit(false)
 }
 
 pub struct PlaylistTabs {

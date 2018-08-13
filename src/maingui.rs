@@ -228,7 +228,7 @@ impl MainGuiPtrExt for MainGuiPtr {
         b.pack_start(&label, false, false, 0);
         b.pack_start(&button, false, false, 0);
 
-        let (scw, tab) = playlist_tabs::load_tab(lp);
+        let (scw, tab) = playlist_tabs::load_tab(&self.playlist_tabs, lp);
         let index = self.notebook.append_page(&scw, Some(&b));
         b.show_all();
         scw.show_all();
@@ -273,24 +273,4 @@ fn button_signal_handler(gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Even
     } else {
         gtk::Inhibit(false)
     }
-}
-
-//yes... this is werid, I don't know why there are not constants
-const DELETE_KEY: u32 = 65535;
-
-/// Handles keyboard presses in treeviews/playlistviews
-fn key_signal_handler(gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> gtk::Inhibit {
-    //println!("key {:?}", event.get_event_type());
-    if event.get_event_type() == gdk::EventType::KeyPress {
-        if let Ok(b) = event.clone().downcast::<gdk::EventKey>() {
-            //println!("event key {}", b.get_keyval());
-            if b.get_keyval() == DELETE_KEY {
-                gui.playlist_tabs
-                    .borrow_mut()
-                    .remove_items(tv.get_selection());
-                tv.get_selection().unselect_all();
-            }
-        }
-    }
-    gtk::Inhibit(false)
 }
