@@ -171,6 +171,10 @@ impl MainGuiExt for MainGui {
                     self.artist_label.set_markup("");
                     self.album_label.set_markup("");
                     self.status_label.set_markup("Playing");
+                    self.cover.clear();
+
+                    //clear playling line
+                    panic!("need to clear playling line");
                 }
             }
         }
@@ -205,6 +209,7 @@ pub trait MainGuiPtrExt {
     fn add_page(&self, LoadedPlaylist);
     fn delete_page(&self, u32);
     fn restore(&self, &DBPool);
+    fn signal_handler(self, tv: &gtk::TreeView, event: &gdk::Event) -> gtk::Inhibit;
 }
 
 impl MainGuiPtrExt for MainGuiPtr {
@@ -212,7 +217,6 @@ impl MainGuiPtrExt for MainGuiPtr {
         (*self.playlist_tabs)
             .borrow_mut()
             .set_current_playlist(index as i32);
-        //panic!("NOT YET IMPLEMENTED");
     }
 
     fn add_page(&self, lp: LoadedPlaylist) {
@@ -228,7 +232,7 @@ impl MainGuiPtrExt for MainGuiPtr {
         b.pack_start(&label, false, false, 0);
         b.pack_start(&button, false, false, 0);
 
-        let (scw, tab) = playlist_tabs::load_tab(&self.playlist_tabs, lp);
+        let (scw, tab) = playlist_tabs::load_tab(&self.playlist_tabs, self.clone(), lp);
         let index = self.notebook.append_page(&scw, Some(&b));
         b.show_all();
         scw.show_all();
@@ -257,20 +261,21 @@ impl MainGuiPtrExt for MainGuiPtr {
             self.add_page(lp);
         }
     }
-}
 
-/// Handles mouse button presses in treeviews/playlistviews
-fn button_signal_handler(gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) -> gtk::Inhibit {
-    if event.get_event_type() == gdk::EventType::DoubleButtonPress {
-        let (vec, _) = tv.get_selection().get_selected_rows();
-        if vec.len() == 1 {
-            let pos = vec[0].get_indices()[0];
-            gui.gstreamer
-                .do_gstreamer_action(&GStreamerAction::Play(pos));
-            gui.update_gui(&PlayerStatus::Playing);
+    /// Handles mouse button presses in treeviews/playlistviews
+    fn signal_handler(self, tv: &gtk::TreeView, event: &gdk::Event) -> gtk::Inhibit {
+        if event.get_event_type() == gdk::EventType::DoubleButtonPress {
+            let (vec, _) = tv.get_selection().get_selected_rows();
+            if vec.len() == 1 {
+                let pos = vec[0].get_indices()[0];
+                self.gstreamer
+                    .do_gstreamer_action(&GStreamerAction::Play(pos));
+                self.update_gui(&PlayerStatus::Playing);
+            }
+            gtk::Inhibit(true)
+        } else {
+            gtk::Inhibit(false)
         }
-        gtk::Inhibit(true)
-    } else {
-        gtk::Inhibit(false)
+
     }
 }

@@ -10,6 +10,7 @@ use gtk::prelude::*;
 use db;
 use loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
 use playlist;
+use maingui::MainGuiPtrExt;
 use types::*;
 
 #[derive(Clone, Debug)]
@@ -22,7 +23,7 @@ pub struct PlaylistTab {
 /// FIXME: clean up this section and make the various traits into different files
 
 /// Loads a playlist, returning the ScrolledWindow, containing the treeview and creating a PlaylistTab
-pub fn load_tab(tabs: &PlaylistTabsPtr, lp: LoadedPlaylist) -> (gtk::ScrolledWindow, PlaylistTab) {
+pub fn load_tab(tabs: &PlaylistTabsPtr, gui: MainGuiPtr, lp: LoadedPlaylist) -> (gtk::ScrolledWindow, PlaylistTab) {
     /// FIXME clean this up
     let model = gtk::ListStore::new(&[
         String::static_type(),
@@ -69,6 +70,10 @@ pub fn load_tab(tabs: &PlaylistTabsPtr, lp: LoadedPlaylist) -> (gtk::ScrolledWin
         let tabsc = tabs.clone();
         treeview.connect_key_press_event(move |tv, event| key_signal_handler(&tabsc, &tv, event));
     }
+
+    {
+        treeview.connect_button_press_event(move |tv, event| { gui.clone().signal_handler(tv, event) });
+    }
     
     append_treeview_from_vector(&lp.items, &model);
     let scw = gtk::ScrolledWindow::new(None, None);
@@ -78,6 +83,7 @@ pub fn load_tab(tabs: &PlaylistTabsPtr, lp: LoadedPlaylist) -> (gtk::ScrolledWin
 
     (scw, tab)
 }
+
 
 //yes... this is werid, I don't know why there are not constants
 const DELETE_KEY: u32 = 65535;
