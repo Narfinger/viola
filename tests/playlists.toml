@@ -10,3 +10,4 @@ dir_exclude = []
 dir_include = []
 artist_include = ["Mega Drive", "Magic Sword"]
 genre_include = ["Synthwave", "Retrowave"]
+random = true

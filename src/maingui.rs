@@ -214,6 +214,7 @@ pub trait MainGuiPtrExt {
 
 impl MainGuiPtrExt for MainGuiPtr {
     fn page_changed(&self, index: u32) {
+        println!("Page changed to {}", index);
         (*self.playlist_tabs)
             .borrow_mut()
             .set_current_playlist(index as i32);
@@ -246,10 +247,10 @@ impl MainGuiPtrExt for MainGuiPtr {
     }
 
     fn delete_page(&self, index: u32) {
+        println!("deleting the page {}", index);
         let db_id = (*self.playlist_tabs).borrow().id(index as i32);
         (*self.playlist_tabs).borrow_mut().remove_tab(index as i32);
         self.notebook.remove_page(Some(index));
-        println!("deleting the page");
         //deleting in database
         if let Some(i) = db_id {
             playlist::delete_with_id(&self.pool, i as i32);

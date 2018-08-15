@@ -13,6 +13,7 @@ extern crate open;
 extern crate pango;
 extern crate preferences;
 extern crate rayon;
+extern crate rand;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
