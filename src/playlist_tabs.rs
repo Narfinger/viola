@@ -4,7 +4,6 @@ use gtk::{ListStoreExt, ListStoreExtManual, TreeModelExt, TreeSelectionExt};
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
-use pango;
 use gtk::prelude::*;
 
 use db;
@@ -126,7 +125,7 @@ pub fn new() -> PlaylistTabsPtr {
 
 pub trait PlaylistTabsExt {
     /// Returns the current track
-    fn current_track<'a>(&'a self) -> &'a db::Track;
+    fn current_track(&self) -> &db::Track;
 
     /// returns the current position in the current playlist
     fn current_position(&self) -> i32;
@@ -160,7 +159,7 @@ pub trait PlaylistTabsExt {
 }
 
 impl PlaylistTabsExt for PlaylistTabs {
-    fn current_track<'a>(&'a self) -> &'a db::Track {
+    fn current_track(&self) -> &db::Track {
         let pos = self.current_playlist.unwrap();
         self.tabs[pos as usize].lp.get_current_track()
     }

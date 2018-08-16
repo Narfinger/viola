@@ -4,10 +4,8 @@ use gdk;
 use gdk_pixbuf;
 use gtk;
 use gtk::prelude::*;
-use pango;
 use std::cell::RefCell;
 use std::rc::Rc;
-use serde_json;
 
 use db;
 use gstreamer_wrapper;

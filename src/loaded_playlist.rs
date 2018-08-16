@@ -15,7 +15,7 @@ pub trait LoadedPlaylistExt {
 }
 
 impl LoadedPlaylistExt for LoadedPlaylist {
-    fn get_current_track<'a>(&'a self) -> &'a Track {
+    fn get_current_track(&self) -> &Track {
         &self.items[self.current_position as usize]
     }
 }

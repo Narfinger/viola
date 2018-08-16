@@ -2,7 +2,6 @@ use app_dirs::*;
 use diesel;
 use diesel::r2d2;
 use indicatif::{ProgressBar, ProgressStyle};
-use rayon::prelude::*;
 use schema::tracks;
 use std::collections::HashSet;
 use std::iter::FromIterator;

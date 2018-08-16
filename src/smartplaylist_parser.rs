@@ -1,5 +1,5 @@
 use diesel::sqlite::Sqlite;
-use diesel::{QueryDsl, QueryResult, RunQueryDsl};
+use diesel::{QueryDsl, RunQueryDsl};
 use preferences::prefs_base_dir;
 use rand::{thread_rng, Rng};
 use schema::tracks::dsl::*;
@@ -100,7 +100,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
         use db::Track;
         use diesel::{ExpressionMethods, TextExpressionMethods};
 
-        let included = self
+        let mut filtered = self
             .include_query
             .iter()
             .map(|(k, v)| match k {
@@ -132,22 +132,12 @@ impl LoadSmartPlaylist for SmartPlaylist {
                     s.load(db.deref()).expect("Error in loading smart playlist")
                 }
             }).flat_map(|v| v.into_iter())
-            .collect::<Vec<Track>>();
-
-        println!("it would be nice to have this into one iterator instead of two");
-        println!("self: {:?}", self);
-        println!("length of included {}", included.len());
-        let mut filtered = if self.exclude_query.is_empty() {
-            included
-        } else {
-            included
-            .into_iter()
-            .filter(|t| {   // remember this keeps elements with true and removes other elements
+            .filter(|t| {  // remember this keeps elements with true and removes other elements
+                self.exclude_query.is_empty() | 
                 !matched_with_exclude(t, &self.exclude_query)
             })
-            .collect::<Vec<Track>>()
-        };
-        
+            .collect::<Vec<Track>>();
+
         if self.random {
             let mut rng = thread_rng();
             rng.shuffle(&mut filtered);
