@@ -212,7 +212,7 @@ pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
             pb.set_message("Computing Difference to old database");
             let to_delete: Vec<&String> = old_files.difference(&files).collect();
             pb.finish();
-        
+
             let pb2 = ProgressBar::new(to_delete.len() as u64);
             pb2.set_style(ProgressStyle::default_bar()
                                   .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7} {percent}    %)")

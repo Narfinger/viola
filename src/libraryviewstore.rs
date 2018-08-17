@@ -3,11 +3,11 @@ use gdk;
 use gtk;
 use gtk::prelude::*;
 use loaded_playlist::LoadedPlaylist;
+use serde_json;
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::rc::Rc;
 use std::string::String;
-use serde_json;
 
 use maingui::{MainGuiExt, MainGuiPtrExt};
 use types::*;
@@ -111,18 +111,24 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
 
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
     // setup drag drop
-    {   
+    {
         let pc = pool.clone();
-        let targets = vec![gtk::TargetEntry::new("text/plain", gtk::TargetFlags::SAME_APP, 0)];
-        libview.drag_source_set(gdk::ModifierType::MODIFIER_MASK, &targets, gdk::DragAction::COPY);
+        let targets = vec![gtk::TargetEntry::new(
+            "text/plain",
+            gtk::TargetFlags::SAME_APP,
+            0,
+        )];
+        libview.drag_source_set(
+            gdk::ModifierType::MODIFIER_MASK,
+            &targets,
+            gdk::DragAction::COPY,
+        );
         libview.connect_drag_data_get(move |w, _, s, _, _| {
-
             let (_, t) = get_tracks_for_selection(&pc, &w).expect("Could not get tracks");
             let data = serde_json::to_string(&t).expect("Error in formating drop data");
             s.set_text(&data);
         });
     }
-
 
     //the model contains first a abbreviated string and in second column the whole string to construct the playlist
     let model = gtk::TreeStore::new(&[
@@ -301,7 +307,8 @@ fn search_changed(s: &gtk::SearchEntry, builder: &BuilderPtr) {
 
 fn get_model_and_iter_for_selection(tv: &gtk::TreeView) -> (gtk::TreeStore, gtk::TreeIter) {
     let (model, iter) = tv.get_selection().get_selected().unwrap();
-    let filtermodel = model.downcast::<gtk::TreeModelFilter>()
+    let filtermodel = model
+        .downcast::<gtk::TreeModelFilter>()
         .expect("Error in TreeModelFilter downcast");
     let m = filtermodel
         .get_model()
@@ -313,7 +320,10 @@ fn get_model_and_iter_for_selection(tv: &gtk::TreeView) -> (gtk::TreeStore, gtk:
     (m, realiter)
 }
 
-fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Result<(String, Vec<Track>), String> {
+fn get_tracks_for_selection(
+    pool: &DBPool,
+    tv: &gtk::TreeView,
+) -> Result<(String, Vec<Track>), String> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
 
@@ -322,24 +332,27 @@ fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Result<(String
     println!("Iter depth: {}", m.iter_depth(&iter));
 
     let db = pool.get().expect("DB problem");
-    let query = tracks
-        .order(path)
-        .into_boxed();
+    let query = tracks.order(path).into_boxed();
     if m.iter_depth(&iter) == 0 {
         let artist_name = m.get_value(&iter, 1).get::<String>().unwrap();
         println!("artist: {}", artist_name);
         Ok((
-            artist_name.clone(), 
+            artist_name.clone(),
             query
                 .filter(artist.like(String::from("%") + &artist_name + "%"))
                 .load(db.deref())
                 .expect("Error in query"),
-            ))
+        ))
     } else if m.iter_depth(&iter) == 1 {
-        let parent_artist = m.iter_parent(&iter).expect("We do not have a parent, this is strange");
+        let parent_artist = m
+            .iter_parent(&iter)
+            .expect("We do not have a parent, this is strange");
         let artist_name = m.get_value(&parent_artist, 1).get::<String>().unwrap();
         let album_name = m.get_value(&iter, 1).get::<String>().unwrap();
-        println!("doing with artist {}, album \"{}\"", artist_name, album_name);
+        println!(
+            "doing with artist {}, album \"{}\"",
+            artist_name, album_name
+        );
         Ok((
             album_name.clone(),
             query
@@ -349,8 +362,12 @@ fn get_tracks_for_selection(pool: &DBPool, tv: &gtk::TreeView) -> Result<(String
                 .expect("Error in query"),
         ))
     } else if m.iter_depth(&iter) == 2 {
-        let parent_album = m.iter_parent(&iter).expect("We do not have a parent, this is strange");
-        let parent_artist = m.iter_parent(&parent_album).expect("We do not have a parent, this is strange");
+        let parent_album = m
+            .iter_parent(&iter)
+            .expect("We do not have a parent, this is strange");
+        let parent_artist = m
+            .iter_parent(&parent_album)
+            .expect("We do not have a parent, this is strange");
 
         let artist_name = m.get_value(&parent_artist, 1).get::<String>().unwrap();
         let album_name = m.get_value(&parent_album, 1).get::<String>().unwrap();

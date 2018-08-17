@@ -275,6 +275,5 @@ impl MainGuiPtrExt for MainGuiPtr {
         } else {
             gtk::Inhibit(false)
         }
-
     }
 }

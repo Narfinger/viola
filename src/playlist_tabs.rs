@@ -1,15 +1,15 @@
 use gdk;
 use gtk;
+use gtk::prelude::*;
 use gtk::{ListStoreExt, ListStoreExtManual, TreeModelExt, TreeSelectionExt};
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
-use gtk::prelude::*;
 
 use db;
 use loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
-use playlist;
 use maingui::MainGuiPtrExt;
+use playlist;
 use types::*;
 
 #[derive(Clone, Debug)]
@@ -22,7 +22,11 @@ pub struct PlaylistTab {
 /// FIXME: clean up this section and make the various traits into different files
 
 /// Loads a playlist, returning the ScrolledWindow, containing the treeview and creating a PlaylistTab
-pub fn load_tab(tabs: &PlaylistTabsPtr, gui: MainGuiPtr, lp: LoadedPlaylist) -> (gtk::ScrolledWindow, PlaylistTab) {
+pub fn load_tab(
+    tabs: &PlaylistTabsPtr,
+    gui: MainGuiPtr,
+    lp: LoadedPlaylist,
+) -> (gtk::ScrolledWindow, PlaylistTab) {
     /// FIXME clean this up
     let model = gtk::ListStore::new(&[
         String::static_type(),
@@ -64,39 +68,44 @@ pub fn load_tab(tabs: &PlaylistTabsPtr, gui: MainGuiPtr, lp: LoadedPlaylist) -> 
         }
     }
     treeview.set_model(Some(&model));
-    
+
     {
         let tabsc = tabs.clone();
         treeview.connect_key_press_event(move |tv, event| key_signal_handler(&tabsc, &tv, event));
     }
 
     {
-        treeview.connect_button_press_event(move |tv, event| { gui.clone().signal_handler(tv, event) });
+        treeview.connect_button_press_event(move |tv, event| gui.clone().signal_handler(tv, event));
     }
-    
+
     append_treeview_from_vector(&lp.items, &model);
     let scw = gtk::ScrolledWindow::new(None, None);
     scw.add(&treeview);
 
-    let tab = PlaylistTab {lp, treeview, model };
+    let tab = PlaylistTab {
+        lp,
+        treeview,
+        model,
+    };
 
     (scw, tab)
 }
-
 
 //yes... this is werid, I don't know why there are not constants
 const DELETE_KEY: u32 = 65535;
 
 /// Handles keyboard presses in treeviews/playlistviews
-fn key_signal_handler(tabs: &PlaylistTabsPtr, tv: &gtk::TreeView, event: &gdk::Event) -> gtk::Inhibit {
+fn key_signal_handler(
+    tabs: &PlaylistTabsPtr,
+    tv: &gtk::TreeView,
+    event: &gdk::Event,
+) -> gtk::Inhibit {
     //println!("key {:?}", event.get_event_type());
     if event.get_event_type() == gdk::EventType::KeyPress {
         if let Ok(b) = event.clone().downcast::<gdk::EventKey>() {
             //println!("event key {}", b.get_keyval());
             if b.get_keyval() == DELETE_KEY {
-                tabs
-                    .borrow_mut()
-                    .remove_items(tv.get_selection());
+                tabs.borrow_mut().remove_items(tv.get_selection());
                 tv.get_selection().unselect_all();
             }
         }
@@ -252,16 +261,18 @@ impl PlaylistTabsExt for PlaylistTabs {
             model.clear();
             append_treeview_from_vector(&t, model);
         }
-        
+
         self.tabs[self.current_playlist.unwrap()].lp.items = t;
-        self.tabs[self.current_playlist.unwrap()].lp.current_position = 0;
+        self.tabs[self.current_playlist.unwrap()]
+            .lp
+            .current_position = 0;
     }
 
     fn insert_tracks(&mut self, index: i32, tracks: Vec<db::Track>) {
         let mut items = self.tabs[self.current_playlist.unwrap()].lp.items.clone();
         let mut i = index;
         for t in tracks {
-            items.insert(i as usize ,t);
+            items.insert(i as usize, t);
             i += 1;
         }
 
@@ -271,7 +282,6 @@ impl PlaylistTabsExt for PlaylistTabs {
             append_treeview_from_vector(&items, model);
         }
         self.tabs[self.current_playlist.unwrap()].lp.items = items;
-        
     }
 
     fn save(&self, pool: &DBPool) {

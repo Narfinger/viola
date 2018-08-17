@@ -5,8 +5,8 @@ use rand::{thread_rng, Rng};
 use schema::tracks::dsl::*;
 use std::collections::HashMap;
 use std::fs;
-use std::ops::Deref;
 use std::hash::Hash;
+use std::ops::Deref;
 use toml;
 
 use db::Track;
@@ -59,7 +59,7 @@ fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
     }
 
     let random = smp.random.unwrap_or(false);
-    
+
     let mut include_query = HashMap::new();
     query_insert(smp.dir_include, IncludeTag::Dir, &mut include_query);
     query_insert(smp.genre_include, IncludeTag::Genre, &mut include_query);
@@ -80,15 +80,8 @@ pub trait LoadSmartPlaylist {
 }
 
 fn matched_with_exclude(t: &Track, h: &HashMap<ExcludeTag, Vec<String>>) -> bool {
-    h
-    .iter()
-    .any(|(k,v)| match k {
-        ExcludeTag::Dir => {
-            v.iter()
-                .any(|value| {
-                    t.path.contains(value)
-                })
-        }
+    h.iter().any(|(k, v)| match k {
+        ExcludeTag::Dir => v.iter().any(|value| t.path.contains(value)),
     })
 }
 
@@ -132,11 +125,10 @@ impl LoadSmartPlaylist for SmartPlaylist {
                     s.load(db.deref()).expect("Error in loading smart playlist")
                 }
             }).flat_map(|v| v.into_iter())
-            .filter(|t| {  // remember this keeps elements with true and removes other elements
-                self.exclude_query.is_empty() | 
-                !matched_with_exclude(t, &self.exclude_query)
-            })
-            .collect::<Vec<Track>>();
+            .filter(|t| {
+                // remember this keeps elements with true and removes other elements
+                self.exclude_query.is_empty() | !matched_with_exclude(t, &self.exclude_query)
+            }).collect::<Vec<Track>>();
 
         if self.random {
             let mut rng = thread_rng();
