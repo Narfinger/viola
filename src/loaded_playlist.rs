@@ -1,5 +1,8 @@
-use db::Track;
 use std::path::PathBuf;
+use gtk;
+
+use db::Track;
+use types::DBPool;
 
 #[derive(Clone, Debug)]
 pub struct LoadedPlaylist {
@@ -26,7 +29,7 @@ pub trait PlaylistControls {
     fn previous(&mut self) -> String;
     fn next(&mut self) -> String;
     fn set(&mut self, i32) -> String;
-    fn next_or_eol(&mut self) -> Option<String>;
+    fn next_or_eol(&mut self, &DBPool) -> Option<String>;
 }
 
 impl PlaylistControls for LoadedPlaylist {
@@ -61,8 +64,21 @@ impl PlaylistControls for LoadedPlaylist {
         self.get_current_uri()
     }
 
-    fn next_or_eol(&mut self) -> Option<String> {
+    fn next_or_eol(&mut self, pool: &DBPool) -> Option<String> {
+        {
+            let track = self.items.get(self.current_position as usize);
+            //update playlist counter
+            let dbc = pool.clone();
+            if let Some(t) = track {
+                let id = t.id;
+                gtk::idle_add(move ||
+                    update_playcount(id, &dbc)
+                );
+            }
+        }
+
         let next_pos = self.current_position + 1;
+
         if self.items.get(next_pos as usize).is_some() {
             Some(self.next())
         } else {
@@ -70,4 +86,20 @@ impl PlaylistControls for LoadedPlaylist {
             None
         }
     }
+}
+
+fn update_playcount(t_id: i32, pool: &DBPool) -> gtk::Continue {
+    use schema::tracks::dsl::*;
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
+    let db = pool.get().unwrap();
+
+    if let Ok(mut track) = tracks.filter(id.eq(t_id)).first::<Track>(&db) {
+        track.playcount += 1;
+        if let Err(_) =  track.save_changes::<Track>(&db) {
+            println!("Some problem with updating play status (cannot update)");
+        }
+    } else {
+        println!("Some problem with updating play status (gettin track)");
+    }
+    gtk::Continue(false)
 }

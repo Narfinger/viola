@@ -27,6 +27,7 @@ table! {
         path -> Text,
         length -> Integer,
         albumpath -> Nullable<Text>,
+        playcount -> Integer,
     }
 }
 

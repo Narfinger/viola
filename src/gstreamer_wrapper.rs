@@ -16,6 +16,7 @@ pub struct GStreamer {
     sender: Sender<GStreamerMessage>,
     /// Handles if we get the almost finished signal
     finish_reicv: Receiver<()>,
+    pool: DBPool,
 }
 
 impl Drop for GStreamer {
@@ -47,7 +48,7 @@ impl From<gstreamer::State> for GStreamerMessage {
 }
 
 pub fn new(
-    current_playlist: PlaylistTabsPtr,
+    current_playlist: PlaylistTabsPtr, pool: DBPool,
 ) -> Result<(Rc<GStreamer>, Receiver<GStreamerMessage>), String> {
     gstreamer::init().unwrap();
     let pipeline =
@@ -69,6 +70,7 @@ pub fn new(
         current_playlist,
         sender: tx,
         finish_reicv,
+        pool,
     });
 
     //panic!("this would leave us with a circ reference");
@@ -170,7 +172,7 @@ impl GStreamerExt for GStreamer {
         if self.finish_reicv.try_recv().is_ok() {
             //println!("next is: {:?}", self.current_playlist.next_or_eol());
             //self.current_playlist.next_or_eol();
-            let res = self.current_playlist.next_or_eol();
+            let res = self.current_playlist.next_or_eol(&self.pool);
             match res {
                 None => {
                     self.sender

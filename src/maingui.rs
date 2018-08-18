@@ -34,7 +34,7 @@ pub struct MainGui {
 /// Constructs a new gui, given a BuilderPtr and a loaded playlist.
 pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
     let pltabs = playlist_tabs::new();
-    let (gst, recv) = gstreamer_wrapper::new(pltabs.clone()).unwrap();
+    let (gst, recv) = gstreamer_wrapper::new(pltabs.clone(), pool.clone()).unwrap();
     let p: gtk::Paned = builder.read().unwrap().get_object("paned").unwrap();
     p.set_position(80);
 

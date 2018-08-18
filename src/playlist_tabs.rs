@@ -314,8 +314,8 @@ impl PlaylistControls for PlaylistTabs {
         self.tabs[self.current_playlist.unwrap()].lp.set(i)
     }
 
-    fn next_or_eol(&mut self) -> Option<String> {
-        self.tabs[self.current_playlist.unwrap()].lp.next_or_eol()
+    fn next_or_eol(&mut self, pool: &DBPool) -> Option<String> {
+        self.tabs[self.current_playlist.unwrap()].lp.next_or_eol(pool)
     }
 }
 
@@ -324,7 +324,7 @@ pub trait PlaylistControlsImmutable {
     fn previous(&self) -> String;
     fn next(&self) -> String;
     fn set(&self, i32) -> String;
-    fn next_or_eol(&self) -> Option<String>;
+    fn next_or_eol(&self, &DBPool) -> Option<String>;
 }
 
 impl PlaylistControlsImmutable for PlaylistTabsPtr {
@@ -344,8 +344,8 @@ impl PlaylistControlsImmutable for PlaylistTabsPtr {
         self.borrow_mut().set(i)
     }
 
-    fn next_or_eol(&self) -> Option<String> {
-        self.borrow_mut().next_or_eol()
+    fn next_or_eol(&self, pool: &DBPool) -> Option<String> {
+        self.borrow_mut().next_or_eol(pool)
     }
 }
 

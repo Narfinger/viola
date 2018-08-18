@@ -23,6 +23,7 @@ pub struct Track {
     pub path: String,
     pub length: i32,
     pub albumpath: Option<String>,
+    pub playcount: i32,
 }
 
 #[derive(Debug, Insertable)]
