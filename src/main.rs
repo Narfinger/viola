@@ -25,6 +25,8 @@ extern crate walkdir;
 
 pub mod db;
 pub mod dbus_adapter;
+pub mod dbus_mpris_mediaplayer;
+pub mod dbus_mpris_player;
 pub mod gstreamer_wrapper;
 pub mod gui;
 pub mod libraryviewstore;
