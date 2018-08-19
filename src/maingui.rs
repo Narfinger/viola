@@ -134,7 +134,7 @@ impl MainGuiExt for MainGui {
                         .unwrap()
                         .downcast::<gtk::ListStore>()
                         .unwrap();
-                    let path = gtk::TreePath::new_from_indicesv(&[pos, 7]);
+                    let path = gtk::TreePath::new_from_indicesv(&[pos, COLOR_COLUMN as i32]);
                     let treeiter = model.get_iter(&path).unwrap();
                     //let (_, selection) = treeselection.get_selected().unwrap();
                     {
@@ -147,7 +147,7 @@ impl MainGuiExt for MainGui {
                                 alpha: 0.0,
                             };
                             let c = gdk_pixbuf::Value::from(&color);
-                            model.set_value(&previous_row, 7, &c);
+                            model.set_value(&previous_row, COLOR_COLUMN, &c);
                         }
                     }
                     let color = gdk::RGBA {
@@ -157,7 +157,7 @@ impl MainGuiExt for MainGui {
                         alpha: 0.6,
                     };
                     let c = gdk_pixbuf::Value::from(&color);
-                    model.set_value(&treeiter, 7, &c);
+                    model.set_value(&treeiter, COLOR_COLUMN, &c);
 
                     *self.last_marked.borrow_mut() = Some(treeiter);
                 }

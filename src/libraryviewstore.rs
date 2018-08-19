@@ -196,11 +196,11 @@ fn idle_search_changed(
 
     // abort if another thread is running
     if *s != field.get_text().unwrap().to_lowercase() {
-        println!(
-            "Killing this search thread because {:?}, {:?}",
-            *s,
-            field.get_text().unwrap()
-        );
+        //println!(
+        //    "Killing this search thread because {:?}, {:?}",
+        //    *s,
+        //    field.get_text().unwrap()
+        //);
         return gtk::Continue(false);
     }
 
@@ -222,7 +222,7 @@ fn idle_search_changed(
                     model.set_value(&it, 3, visible);
 
                     let v = model.get_value(&it, 1).get::<String>().unwrap();
-                    println!("Doing parents {}", v);
+                    //println!("Doing parents {}", v);
 
                     if let Some(v) = val {
                         valid = true;

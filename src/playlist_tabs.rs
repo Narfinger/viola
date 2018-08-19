@@ -36,6 +36,7 @@ pub fn load_tab(
         String::static_type(),
         String::static_type(),
         String::static_type(),
+        String::static_type(),
         gdk::RGBA::static_type(),
     ]);
     let treeview = gtk::TreeView::new();
@@ -51,20 +52,23 @@ pub fn load_tab(
         (4, "Length", 150),
         (5, "Year", 100),
         (6, "Genre", 150),
+        (7, "#", 50)
     ] {
         let column = gtk::TreeViewColumn::new();
         let cell = gtk::CellRendererText::new();
         column.pack_start(&cell, true);
         // Association of the view's column with the model's `id` column.
         column.add_attribute(&cell, "text", id);
-        column.add_attribute(&cell, "background-rgba", 7);
+        column.add_attribute(&cell, "background-rgba", COLOR_COLUMN as i32);
         column.set_title(title);
         column.set_resizable(id > 0);
         column.set_fixed_width(width);
         treeview.append_column(&column);
         //center the column for length and year
-        if (id == 4) | (id == 5) {
+        if (id == LENGTH_COLUMN) | (id == YEAR_COLUMN) {
             cell.set_property_xalign(0.5);
+        } else if id == PLAYCOUNT_COLUMN {
+            cell.set_property_xalign(1.0);
         }
     }
     treeview.set_model(Some(&model));
@@ -355,7 +359,7 @@ fn append_treeview_from_vector(v: &[db::Track], model: &gtk::ListStore) {
         let length = format_duration(entry.length);
         model.insert_with_values(
             None,
-            &[0, 1, 2, 3, 4, 5, 6, 7],
+            &[0, 1, 2, 3, 4, 5, 6, 7, 8],
             &[
                 &entry
                     .tracknumber
@@ -370,6 +374,7 @@ fn append_treeview_from_vector(v: &[db::Track], model: &gtk::ListStore) {
                     .map(|s| s.to_string())
                     .unwrap_or_else(|| String::from("")),
                 &entry.genre,
+                &entry.playcount.unwrap_or(0),
                 &gdk::RGBA {
                     red: 1.0,
                     green: 1.0,
