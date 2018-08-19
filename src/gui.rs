@@ -3,6 +3,7 @@ use gtk::prelude::*;
 use std::sync::Arc;
 use std::sync::RwLock;
 
+use dbus_adapter;
 use gstreamer_wrapper::GStreamerAction;
 use libraryviewstore;
 use maingui;
@@ -91,6 +92,9 @@ pub fn build_gui(application: &gtk::Application, pool: &DBPool) {
     window.show_all();
     println!("Restoring tabs");
     gui.restore(&pool);
+
+    println!("Starting dbus");
+    dbus_adapter::setup(&gui);
 
     println!("\n\n\n Current Bugs:");
 }

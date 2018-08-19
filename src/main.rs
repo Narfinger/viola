@@ -1,6 +1,7 @@
 extern crate app_dirs;
 #[macro_use]
 extern crate clap;
+extern crate dbus;
 #[macro_use]
 extern crate diesel;
 extern crate gdk;
@@ -23,6 +24,7 @@ extern crate toml;
 extern crate walkdir;
 
 pub mod db;
+pub mod dbus_adapter;
 pub mod gstreamer_wrapper;
 pub mod gui;
 pub mod libraryviewstore;
