@@ -10,7 +10,7 @@ CREATE TABLE tracks (
     path VARCHAR UNIQUE NOT NULL,
     length Integer NOT NULL,
     albumpath VARCHAR,
-    playcount Integer NOT NULL
+    playcount Integer
 );
 
 CREATE TABLE playlists (

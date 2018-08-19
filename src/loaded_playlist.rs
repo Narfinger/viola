@@ -94,7 +94,7 @@ fn update_playcount(t_id: i32, pool: &DBPool) -> gtk::Continue {
     let db = pool.get().unwrap();
 
     if let Ok(mut track) = tracks.filter(id.eq(t_id)).first::<Track>(&db) {
-        track.playcount += 1;
+        track.playcount = Some(1 + track.playcount.unwrap_or(0));
         if let Err(_) =  track.save_changes::<Track>(&db) {
             println!("Some problem with updating play status (cannot update)");
         }
