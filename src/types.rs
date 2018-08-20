@@ -8,7 +8,7 @@ use std::rc::{Rc, Weak};
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use gstreamer_wrapper::GStreamerMessage;
+use gstreamer_wrapper::{GStreamerMessage, GStreamer};
 use maingui::MainGui;
 use playlist_tabs::PlaylistTabs;
 
@@ -23,6 +23,7 @@ pub const PLAYCOUNT_COLUMN: i32 = 7;
 pub const COLOR_COLUMN: u32 = 8; 
 
 pub type BuilderPtr = Arc<RwLock<Builder>>;
+pub type GStreamerPtr = Arc<GStreamer>;
 pub type GstreamerPipeline = Arc<RwLock<Element>>;
 pub type MainGuiPtr = Rc<MainGui>;
 pub type MainGuiWeakPtr = Weak<MainGui>;
