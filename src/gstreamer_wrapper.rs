@@ -49,7 +49,7 @@ impl From<gstreamer::State> for GStreamerMessage {
 
 pub fn new(
     current_playlist: PlaylistTabsPtr, pool: DBPool,
-) -> Result<(Rc<GStreamer>, Receiver<GStreamerMessage>), String> {
+) -> Result<(GStreamerPtr, Receiver<GStreamerMessage>), String> {
     gstreamer::init().unwrap();
     let pipeline =
         gstreamer::parse_launch("playbin").map_err(|_| String::from("Cannot do gstreamer"))?;
@@ -65,7 +65,7 @@ pub fn new(
             None
         }).expect("Error in connecting");
 
-    let res = Rc::new(GStreamer {
+    let res = Arc::new(GStreamer {
         pipeline,
         current_playlist,
         sender: tx,
