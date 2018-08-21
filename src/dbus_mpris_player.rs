@@ -192,14 +192,15 @@ where
     D: tree::DataType,
     D::Method: Default,
     D::Property: Default,
-    T: OrgMprisMediaPlayer2Player<Err=tree::MethodErr>,
-    F: 'static + for <'z> Fn(& 'z tree::MethodInfo<tree::MTFn<D>, D>) -> & 'z T,
+    T: AsRef<OrgMprisMediaPlayer2Player<Err=tree::MethodErr>>,
+    F: 'static + Fn(&tree::MethodInfo<tree::MTFn<D>, D>) -> T,
 {
     let i = factory.interface("org.mpris.MediaPlayer2.Player", data);
     let f = ::std::sync::Arc::new(f);
     let fclone = f.clone();
     let h = move |minfo: &tree::MethodInfo<tree::MTFn<D>, D>| {
-        let d = fclone(minfo);
+        let dd = fclone(minfo);
+        let d = dd.as_ref();
         try!(d.next());
         let rm = minfo.msg.method_return();
         Ok(vec!(rm))
@@ -209,7 +210,8 @@ where
 
     let fclone = f.clone();
     let h = move |minfo: &tree::MethodInfo<tree::MTFn<D>, D>| {
-        let d = fclone(minfo);
+        let dd = fclone(minfo);
+        let d = dd.as_ref();
         try!(d.previous());
         let rm = minfo.msg.method_return();
         Ok(vec!(rm))
@@ -219,7 +221,8 @@ where
 
     let fclone = f.clone();
     let h = move |minfo: &tree::MethodInfo<tree::MTFn<D>, D>| {
-        let d = fclone(minfo);
+        let dd = fclone(minfo);
+        let d = dd.as_ref();
         try!(d.pause());
         let rm = minfo.msg.method_return();
         Ok(vec!(rm))
@@ -229,7 +232,8 @@ where
 
     let fclone = f.clone();
     let h = move |minfo: &tree::MethodInfo<tree::MTFn<D>, D>| {
-        let d = fclone(minfo);
+        let dd = fclone(minfo);
+        let d = dd.as_ref();
         try!(d.play_pause());
         let rm = minfo.msg.method_return();
         Ok(vec!(rm))
@@ -239,7 +243,8 @@ where
 
     let fclone = f.clone();
     let h = move |minfo: &tree::MethodInfo<tree::MTFn<D>, D>| {
-        let d = fclone(minfo);
+        let dd = fclone(minfo);
+        let d = dd.as_ref();
         try!(d.stop());
         let rm = minfo.msg.method_return();
         Ok(vec!(rm))
@@ -249,7 +254,8 @@ where
 
     let fclone = f.clone();
     let h = move |minfo: &tree::MethodInfo<tree::MTFn<D>, D>| {
-        let d = fclone(minfo);
+        let dd = fclone(minfo);
+        let d = dd.as_ref();
         try!(d.play());
         let rm = minfo.msg.method_return();
         Ok(vec!(rm))
@@ -261,7 +267,8 @@ where
     let h = move |minfo: &tree::MethodInfo<tree::MTFn<D>, D>| {
         let mut i = minfo.msg.iter_init();
         let offset: i64 = try!(i.read());
-        let d = fclone(minfo);
+        let dd = fclone(minfo);
+        let d = dd.as_ref();
         try!(d.seek(offset));
         let rm = minfo.msg.method_return();
         Ok(vec!(rm))
@@ -275,7 +282,8 @@ where
         let mut i = minfo.msg.iter_init();
         let track_id: dbus::Path = try!(i.read());
         let position: i64 = try!(i.read());
-        let d = fclone(minfo);
+        let dd = fclone(minfo);
+        let d = dd.as_ref();
         try!(d.set_position(track_id, position));
         let rm = minfo.msg.method_return();
         Ok(vec!(rm))
@@ -289,7 +297,8 @@ where
     let h = move |minfo: &tree::MethodInfo<tree::MTFn<D>, D>| {
         let mut i = minfo.msg.iter_init();
         let uri: &str = try!(i.read());
-        let d = fclone(minfo);
+        let dd = fclone(minfo);
+        let d = dd.as_ref();
         try!(d.open_uri(uri));
         let rm = minfo.msg.method_return();
         Ok(vec!(rm))
@@ -303,7 +312,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_playback_status()));
         Ok(())
     });
@@ -314,14 +324,16 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_loop_status()));
         Ok(())
     });
     let fclone = f.clone();
     let p = p.on_set(move |iter, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         try!(d.set_loop_status(try!(iter.read())));
         Ok(())
     });
@@ -332,14 +344,16 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_rate()));
         Ok(())
     });
     let fclone = f.clone();
     let p = p.on_set(move |iter, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         try!(d.set_rate(try!(iter.read())));
         Ok(())
     });
@@ -350,14 +364,16 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_shuffle()));
         Ok(())
     });
     let fclone = f.clone();
     let p = p.on_set(move |iter, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         try!(d.set_shuffle(try!(iter.read())));
         Ok(())
     });
@@ -368,7 +384,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_metadata()));
         Ok(())
     });
@@ -379,14 +396,16 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_volume()));
         Ok(())
     });
     let fclone = f.clone();
     let p = p.on_set(move |iter, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         try!(d.set_volume(try!(iter.read())));
         Ok(())
     });
@@ -397,7 +416,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_position()));
         Ok(())
     });
@@ -408,7 +428,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_minimum_rate()));
         Ok(())
     });
@@ -419,7 +440,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_maximum_rate()));
         Ok(())
     });
@@ -430,7 +452,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_can_go_next()));
         Ok(())
     });
@@ -441,7 +464,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_can_go_previous()));
         Ok(())
     });
@@ -452,7 +476,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_can_play()));
         Ok(())
     });
@@ -463,7 +488,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_can_pause()));
         Ok(())
     });
@@ -474,7 +500,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_can_seek()));
         Ok(())
     });
@@ -485,7 +512,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_can_control()));
         Ok(())
     });

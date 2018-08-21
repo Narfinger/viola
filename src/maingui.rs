@@ -28,7 +28,7 @@ pub struct MainGui {
     cover: gtk::Image,
     last_marked: RefCell<Option<gtk::TreeIter>>,
     playlist_tabs: PlaylistTabsPtr,
-    gstreamer: GStreamerPtr,
+    pub gstreamer: GStreamerPtr,
 }
 
 /// Constructs a new gui, given a BuilderPtr and a loaded playlist.

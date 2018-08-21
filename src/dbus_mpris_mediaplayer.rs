@@ -84,14 +84,15 @@ where
     D: tree::DataType,
     D::Method: Default,
     D::Property: Default,
-    T: OrgMprisMediaPlayer2<Err=tree::MethodErr>,
-    F: 'static + for <'z> Fn(& 'z tree::MethodInfo<tree::MTFn<D>, D>) -> & 'z T,
+    T: AsRef<OrgMprisMediaPlayer2<Err=tree::MethodErr>>,
+    F: 'static + Fn(&tree::MethodInfo<tree::MTFn<D>, D>) -> T,
 {
     let i = factory.interface("org.mpris.MediaPlayer2", data);
     let f = ::std::sync::Arc::new(f);
     let fclone = f.clone();
     let h = move |minfo: &tree::MethodInfo<tree::MTFn<D>, D>| {
-        let d = fclone(minfo);
+        let dd = fclone(minfo);
+        let d = dd.as_ref();
         try!(d.raise());
         let rm = minfo.msg.method_return();
         Ok(vec!(rm))
@@ -101,7 +102,8 @@ where
 
     let fclone = f.clone();
     let h = move |minfo: &tree::MethodInfo<tree::MTFn<D>, D>| {
-        let d = fclone(minfo);
+        let dd = fclone(minfo);
+        let d = dd.as_ref();
         try!(d.quit());
         let rm = minfo.msg.method_return();
         Ok(vec!(rm))
@@ -114,7 +116,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_can_quit()));
         Ok(())
     });
@@ -125,14 +128,16 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_fullscreen()));
         Ok(())
     });
     let fclone = f.clone();
     let p = p.on_set(move |iter, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         try!(d.set_fullscreen(try!(iter.read())));
         Ok(())
     });
@@ -143,7 +148,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_can_set_fullscreen()));
         Ok(())
     });
@@ -154,7 +160,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_can_raise()));
         Ok(())
     });
@@ -165,7 +172,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_has_track_list()));
         Ok(())
     });
@@ -176,7 +184,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_identity()));
         Ok(())
     });
@@ -187,7 +196,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_desktop_entry()));
         Ok(())
     });
@@ -198,7 +208,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_supported_uri_schemes()));
         Ok(())
     });
@@ -209,7 +220,8 @@ where
     let fclone = f.clone();
     let p = p.on_get(move |a, pinfo| {
         let minfo = pinfo.to_method_info();
-        let d = fclone(&minfo);
+        let dd = fclone(&minfo);
+        let d = dd.as_ref();
         a.append(try!(d.get_supported_mime_types()));
         Ok(())
     });

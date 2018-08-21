@@ -4,6 +4,7 @@ use dbus::arg;
 use dbus::tree;
 use std::thread;
 use std;
+use std::rc::Rc;
 
 use dbus_mpris_player::{OrgMprisMediaPlayer2Player, org_mpris_media_player2_player_server};
 use gstreamer_wrapper::{GStreamerAction, GStreamerExt};
@@ -160,7 +161,11 @@ pub fn setup(gui: &MainGuiPtr) -> () {
     let c = Connection::get_private(BusType::Session).expect("Cannot get connection");
     c.register_name("com.mpris.MediaPlayer2", NameFlag::ReplaceExisting as u32).expect("Cannot register name");
     let f = Factory::new_fn::<()>();
-    let myInterface = org_mpris_media_player2_player_server(&f, ());
+    //let myInterface = org_mpris_media_player2_player_server(&f, ());
+
+
+    let myRc = Rc::new(DBusAdapter { gstreamer: gui.gstreamer.clone() });
+    let myInterface = org_mpris_media_player2_player_server(&f, (), move |_| myRc.clone());
     //thread::spawn(move || {
     //    build(gui)
     //});

@@ -2,7 +2,7 @@ use gstreamer;
 use gstreamer::ElementExt;
 use gtk;
 use gtk::ObjectExt;
-use std::rc::Rc;
+use std::sync::Arc;
 use std::sync::mpsc::{channel, sync_channel, Receiver, Sender};
 
 use loaded_playlist::PlaylistControls;
