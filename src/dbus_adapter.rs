@@ -16,6 +16,7 @@ struct DBusAdapter {
 
 impl OrgMprisMediaPlayer2Player for DBusAdapter {
     type Err = MethodErr;
+
     fn next(&self) -> Result<(), Self::Err> {
         self.gstreamer.do_gstreamer_action(&GStreamerAction::Next);
         Ok(())
@@ -158,17 +159,14 @@ impl OrgMprisMediaPlayer2Player for DBusAdapter {
 }
 
 pub fn setup(gui: &MainGuiPtr) -> () {
-    let c = Connection::get_private(BusType::Session).expect("Cannot get connection");
-    c.register_name("com.mpris.MediaPlayer2", NameFlag::ReplaceExisting as u32).expect("Cannot register name");
+ 
     let f = Factory::new_fn::<()>();
-    //let myInterface = org_mpris_media_player2_player_server(&f, ());
-
-
-    let myRc = Rc::new(DBusAdapter { gstreamer: gui.gstreamer.clone() });
-    let myInterface = org_mpris_media_player2_player_server(&f, (), move |_| myRc.clone());
-    //thread::spawn(move || {
-    //    build(gui)
-    //});
+    let dba = Rc::new(DBusAdapter{ gstreamer: gui.gstreamer });
+    let i1 = org_mpris_media_player2_player_server(&f, (), move |_| dba.clone());
+    let t = f.tree(()).add(f.object_path("/test", ()).add(i1));
+    let c = Connection::get_private(BusType::Session).unwrap();
+    t.set_registered(&c, true).unwrap();
+    let cname = c.unique_name();
 }
 
 
