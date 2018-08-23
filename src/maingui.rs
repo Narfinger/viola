@@ -63,7 +63,17 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         }
         gtk::Continue(true)
     });
-
+    
+    {
+        let guic = g.clone();
+        let poolc = pool.clone();
+        gtk::timeout_add_seconds(60*30, move || {
+            use playlist_tabs::PlaylistTabsExt;
+            println!("autosaving database");
+            guic.save(&poolc);
+            gtk::Continue(true)
+        });
+    }
     //g.add_page(loaded_playlist);
 
     {
