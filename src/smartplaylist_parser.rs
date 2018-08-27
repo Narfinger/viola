@@ -93,7 +93,13 @@ impl LoadSmartPlaylist for SmartPlaylist {
         use db::Track;
         use diesel::{ExpressionMethods, TextExpressionMethods};
 
-        let mut filtered = self
+        let basic: Vec<Track> = if self.include_query.is_empty() {
+            let db = pool.get().expect("DB Error");
+            tracks
+                .load(&db)
+                .expect("Error in loading smart playlist")
+        } else {
+            self
             .include_query
             .iter()
             .map(|(k, v)| match k {
@@ -125,10 +131,17 @@ impl LoadSmartPlaylist for SmartPlaylist {
                     s.load(db.deref()).expect("Error in loading smart playlist")
                 }
             }).flat_map(|v| v.into_iter())
+            .collect::<Vec<Track>>()
+        };
+
+        let mut filtered = basic
+            .iter()
             .filter(|t| {
                 // remember this keeps elements with true and removes other elements
                 self.exclude_query.is_empty() | !matched_with_exclude(t, &self.exclude_query)
-            }).collect::<Vec<Track>>();
+            })
+            .cloned()
+            .collect::<Vec<Track>>();
 
         if self.random {
             let mut rng = thread_rng();
