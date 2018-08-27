@@ -84,6 +84,7 @@ pub fn load_tab(
 
     append_treeview_from_vector(&lp.items, &model);
     let scw = gtk::ScrolledWindow::new(None, None);
+    scw.set_overlay_scrolling(false);
     scw.add(&treeview);
 
     let tab = PlaylistTab {
