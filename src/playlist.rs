@@ -70,13 +70,13 @@ pub fn restore_playlists(pool: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::r
     use schema::tracks::dsl::*;
 
     let db = pool.get().unwrap();
-    let pls = playlists.load::<Playlist>(db.deref())?;
+    let pls = playlists.load::<Playlist>(&db)?;
     pls.iter()
         .map(|pl| {
             let t: Vec<(Track, PlaylistTrack)> = tracks
                 .inner_join(playlisttracks)
                 .filter(playlist_id.eq(pl.id))
-                .load(db.deref())?;
+                .load(&db)?;
 
             create_loaded_from_playlist(pl, &t)
         }).collect()
@@ -93,14 +93,14 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
         // the playlist is already in the database
         diesel::update(playlists.find(id))
             .set(current_position.eq(pl.current_position))
-            .execute(db.deref())
+            .execute(&db)
             .expect("Error in playlist update");
     }
 
     let playlist: Playlist = if let Some(id) = pl.id {
         playlists
             .find(id)
-            .first::<Playlist>(db.deref())
+            .first::<Playlist>(&db)
             .expect("DB Error")
     } else {
         let t = vec![NewPlaylist {
@@ -113,14 +113,14 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
             .expect("Database error");
         playlists
             .filter(name.eq(&pl.name))
-            .first(db.deref())
+            .first(&db)
             .expect("DB Erorr")
     };
 
     //deleting old tracks
     diesel::delete(playlisttracks)
         .filter(playlist_id.eq(playlist.id))
-        .execute(db.deref())
+        .execute(&db)
         .expect("Error in database deletion");
     //inserting new tracks
 
@@ -155,12 +155,12 @@ pub fn delete_with_id(pool: &DBPool, index: i32) {
 
     diesel::delete(playlists)
         .filter(schema::playlists::dsl::id.eq(index))
-        .execute(db.deref())
+        .execute(&db)
         .expect("Error in database deletion");
 
     diesel::delete(playlisttracks)
         .filter(playlist_id.eq(index))
-        .execute(db.deref())
+        .execute(&db)
         .expect("Error in database deletion");
 }
 

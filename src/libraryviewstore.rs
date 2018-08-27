@@ -56,7 +56,7 @@ where
                 .order(year)
                 .filter(artist.like(String::from("%") + &a + "%"))
                 .group_by(album)
-                .load(db.deref())
+                .load(&db)
                 .expect("Error in db connection");
             let artist_node = model.insert_with_values(
                 None,
@@ -85,7 +85,7 @@ where
                         .order(tracknumber)
                         .filter(artist.like(String::from("%") + &a + "%"))
                         .filter(album.eq(ab))
-                        .load(db.deref())
+                        .load(&db)
                         .expect("Error in db connection");
                     for t in ts {
                         model.insert_with_values(
@@ -165,7 +165,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
         .group_by(artist)
         .filter(artist.not_like(String::from("%") + "feat" + "%"))
         .filter(artist.ne(""))
-        .load(db.deref())
+        .load(&db)
         .expect("Error in db connection");
 
     {
@@ -340,7 +340,7 @@ fn get_tracks_for_selection(
             artist_name.clone(),
             query
                 .filter(artist.like(String::from("%") + &artist_name + "%"))
-                .load(db.deref())
+                .load(&db)
                 .expect("Error in query"),
         ))
     } else if m.iter_depth(&iter) == 1 {
@@ -358,7 +358,7 @@ fn get_tracks_for_selection(
             query
                 .filter(artist.like(String::from("%") + &artist_name + "%"))
                 .filter(album.eq(album_name))
-                .load(db.deref())
+                .load(&db)
                 .expect("Error in query"),
         ))
     } else if m.iter_depth(&iter) == 2 {
@@ -378,7 +378,7 @@ fn get_tracks_for_selection(
                 .filter(artist.like(String::from("%") + &artist_name + "%"))
                 .filter(album.eq(album_name))
                 .filter(title.eq(track_name))
-                .load(db.deref())
+                .load(&db)
                 .expect("Error in query"),
         ))
     } else {

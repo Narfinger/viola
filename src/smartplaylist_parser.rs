@@ -110,7 +110,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
                     }
                     let db = pool.get().expect("DB Error");
                     //println!("Query ArtistInclude: {:?}", debug_query(&s));
-                    s.load(db.deref()).expect("Error in loading smart playlist")
+                    s.load(&db).expect("Error in loading smart playlist")
                 }
                 IncludeTag::Dir => {
                     let mut s = tracks.into_boxed::<Sqlite>();
@@ -119,7 +119,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
                     }
                     let db = pool.get().expect("DB Error");
                     //println!("Query DirInclude: {:?}", debug_query(&s));
-                    s.load(db.deref()).expect("Error in loading smart playlist")
+                    s.load(&db).expect("Error in loading smart playlist")
                 }
                 IncludeTag::Genre => {
                     let mut s = tracks.into_boxed::<Sqlite>();
@@ -128,7 +128,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
                     }
                     let db = pool.get().expect("DB Error");
                     //println!("Query GenreInclude: {:?}", debug_query(&s));
-                    s.load(db.deref()).expect("Error in loading smart playlist")
+                    s.load(&db).expect("Error in loading smart playlist")
                 }
             }).flat_map(|v| v.into_iter())
             .collect::<Vec<Track>>()
