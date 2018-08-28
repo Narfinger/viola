@@ -4,6 +4,7 @@ use dbus::arg;
 use dbus::tree;
 use std::thread;
 use std;
+use gtk;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::fmt;
@@ -188,43 +189,37 @@ fn create_iface() -> Interface<MTFn<TData>, TData> {
     })
 }
 
-/*
-fn create_tree(devices: &Arc<DBusAdapter>, iface: &Arc<Interface<MTFn<TData>, TData>>) -> tree::Tree<MTFn<TData>, TData> {
+fn create_tree(device: &Arc<DBusAdapter>, iface: &Arc<Interface<MTFn<TData>, TData>>) -> tree::Tree<MTFn<TData>, TData> {
     let f = tree::Factory::new_fn();
     let mut tree = f.tree(());
-    tree = tree.add(f.object_path(dev.path.clone(), dev.clone())
+    tree = tree.add(f.object_path("/Player", device.clone())
         .introspectable()
         .add(iface.clone())
         );
     tree 
 }
-*/
 
 fn setup_single(gstreamer: GStreamerPtr) -> Result<(),String> {
     println!("setuing up dbus");
     let dbusadapter = Arc::new(DBusAdapter {gstreamer: gstreamer });
     let iface = create_iface();
-    let f = tree::Factory::new_fn();
-    let tree: tree::Tree<MTFn<TData>, TData> = f.tree(());
-    //tree.add(f.object_path(dbusadapter, dbusadapter));
+    let tree = create_tree(&dbusadapter, &Arc::new(iface));
     
     let c = Connection::get_private(BusType::Session).map_err(|_| String::from("Error in getting bus"))?;
     c.register_name("org.viola", 0).map_err(|_| String::from("could not register"))?;
     tree.set_registered(&c, true).map_err(|_| String::from("Could not register to tree"))?;
     c.add_handler(tree);
-    loop {
-        // Wait for incoming messages. This will block up to one second.
-        // Discard the result - relevant messages have already been handled.
-        c.incoming(1000).next();
-    }
+    gtk::idle_add(move || {
+        c.incoming(10).next();
+        gtk::Continue(true)
+    });
+    println!("Done setting up dbus");
     Ok(())
 }
 
 pub fn setup(gui: &MainGuiPtr) {
     let gst = gui.gstreamer.clone();
-    thread::spawn(move || {
-        setup_single(gst);
-    });
+    setup_single(gst);
 }
 
 
