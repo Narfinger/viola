@@ -84,6 +84,7 @@ impl OrgMprisMediaPlayer2Player for DBusAdapter {
 
     fn get_playback_status(&self) -> Result<String, Self::Err> {
         //self.gstreamer.do_gstreamer_action(GStreamerAction::Playing);
+        panic!("not yet implemented");
         Ok(String::from("NOTHING"))
     }
 
@@ -120,6 +121,7 @@ impl OrgMprisMediaPlayer2Player for DBusAdapter {
     fn get_metadata(&self) -> Result<std::collections::HashMap<String, arg::Variant<Box<arg::RefArg>>>, Self::Err> {
         //self.gstreamer.do_gstreamer_action(GStreamerAction::Playing);
         let hm = std::collections::HashMap::new();
+        panic!("not yet implemented");
         Ok(hm)
     }
 
