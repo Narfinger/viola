@@ -160,6 +160,11 @@ impl GStreamerExt for GStreamer {
 
         //sending to gstreamer
         if let Err(e) = self.pipeline.set_state(gstreamer_action).into_result() {
+            if let Some(bus) = self.pipeline.get_bus() {
+                while let Some(msg) = bus.pop() {
+                    println!("we found messages on the bus {:?}", msg);
+                }
+            }
             panic!(
                 "Error in setting gstreamer state playing, found the following error {:?}",
                 e
