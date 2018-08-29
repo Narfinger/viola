@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use gtk;
+use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
 use db::Track;
 use types::DBPool;
@@ -43,9 +44,8 @@ impl PlaylistControls for LoadedPlaylist {
         println!("loading from playlist with name: {}", self.name);
         format!(
             "file:////{}",
-            self.items[self.current_position as usize]
-                .path
-                .replace(" ", "%20")
+            utf8_percent_encode(&self.items[self.current_position as usize].path
+            , DEFAULT_ENCODE_SET).to_string()
         )
     }
 

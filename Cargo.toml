@@ -23,6 +23,7 @@ serde = "1.0"                      # A generic serialization/deserialization fra
 open = "1.2"
 rand = "0.5"
 toml = "0.4"
+url = "1.7"
 walkdir = "2"
 
 

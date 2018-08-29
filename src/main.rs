@@ -20,6 +20,7 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate taglib;
 extern crate toml;
+extern crate url;
 extern crate walkdir;
 
 pub mod db;
