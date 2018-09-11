@@ -5,7 +5,6 @@ use gtk::prelude::*;
 use loaded_playlist::LoadedPlaylist;
 use serde_json;
 use std::cell::RefCell;
-use std::ops::Deref;
 use std::rc::Rc;
 use std::string::String;
 

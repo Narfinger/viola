@@ -5,7 +5,6 @@ use indicatif::{ProgressBar, ProgressStyle};
 use schema::tracks;
 use std::collections::HashSet;
 use std::iter::FromIterator;
-use std::ops::Deref;
 use std::path::Path;
 use taglib;
 use types::{DBPool, APP_INFO};

@@ -1,7 +1,6 @@
 use gdk;
 use gtk;
 use gtk::prelude::*;
-use gtk::{ListStoreExt, ListStoreExtManual, TreeModelExt, TreeSelectionExt};
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;

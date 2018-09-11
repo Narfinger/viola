@@ -4,7 +4,6 @@ use gtk::prelude::*;
 use loaded_playlist::LoadedPlaylist;
 use smartplaylist_parser;
 use smartplaylist_parser::{LoadSmartPlaylist, SmartPlaylist};
-use std::ops::Deref;
 use std::string::String;
 
 use maingui::MainGuiPtrExt;
