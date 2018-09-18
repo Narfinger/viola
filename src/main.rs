@@ -110,8 +110,7 @@ fn main() {
         );
     } else if matches.is_present("editsmartplaylists") {
         let mut path = prefs_base_dir().expect("Could not find base dir");
-        path.push("viola");
-        path.push("smartplaylists.toml");
+        path.extend(&["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else {
         use gio::ApplicationExtManual;
