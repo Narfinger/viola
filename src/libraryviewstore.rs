@@ -99,7 +99,7 @@ where
         }
         gtk::Continue(true)
     } else {
-        println!("Done");
+        info!("Done");
         gtk::Continue(false)
     }
 }
@@ -328,13 +328,13 @@ fn get_tracks_for_selection(
 
     let (m, iter) = get_model_and_iter_for_selection(tv);
 
-    println!("Iter depth: {}", m.iter_depth(&iter));
+    info!("Iter depth: {}", m.iter_depth(&iter));
 
     let db = pool.get().expect("DB problem");
     let query = tracks.order(path).into_boxed();
     if m.iter_depth(&iter) == 0 {
         let artist_name = m.get_value(&iter, 1).get::<String>().unwrap();
-        println!("artist: {}", artist_name);
+        info!("artist: {}", artist_name);
         Ok((
             artist_name.clone(),
             query
@@ -348,7 +348,7 @@ fn get_tracks_for_selection(
             .expect("We do not have a parent, this is strange");
         let artist_name = m.get_value(&parent_artist, 1).get::<String>().unwrap();
         let album_name = m.get_value(&iter, 1).get::<String>().unwrap();
-        println!(
+        info!(
             "doing with artist {}, album \"{}\"",
             artist_name, album_name
         );
@@ -408,9 +408,9 @@ fn do_replace(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
 
 fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) {
     if event.get_event_type() == gdk::EventType::ButtonPress {
-        println!("button press");
+        info!("button press");
         if let Ok(b) = event.clone().downcast::<gdk::EventButton>() {
-            println!("the button: {}", b.get_button());
+            info!("the button: {}", b.get_button());
             if b.get_button() == 3 {
                 let mut menu = gtk::Menu::new();
                 {

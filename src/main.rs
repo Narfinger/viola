@@ -3,6 +3,9 @@ extern crate app_dirs;
 extern crate clap;
 #[macro_use]
 extern crate diesel;
+extern crate env_logger;
+#[macro_use]
+extern crate log;
 extern crate gdk;
 extern crate gdk_pixbuf;
 extern crate gio;
@@ -78,17 +81,20 @@ fn main() {
                 .help("Opens an editor to edit the smartplaylist file"),
         ).get_matches();
 
+    env_logger::init();
+
+
     let pool = db::setup_db_connection();
     if matches.is_present("update") {
-        println!("Updating Database");
+        info!("Updating Database");
         if let Ok(preferences) = PreferencesMap::<String>::load(&APP_INFO, PREFS_KEY) {
             if let Some(music_dir) = preferences.get("music_dir") {
                 db::build_db(music_dir, &pool.clone()).unwrap();
             } else {
-                println!("Could not find music_dir");
+                error!("Could not find music_dir");
             }
         } else {
-            println!("could not find settings file");
+            error!("could not find settings file");
         }
     } else if matches.is_present("fastupdate") {
         panic!("not yet implemented");
@@ -98,12 +104,12 @@ fn main() {
         prefs
             .save(&APP_INFO, PREFS_KEY)
             .expect("Error in saving preferences");
-        println!("saved music directory");
+        info!("saved music directory");
     } else if matches.is_present("configpath") {
         let mut p = prefs_base_dir().expect("Base dir cannot be founds");
         p.push("viola");
         let s = p.to_str().expect("Error in convert");
-        println!(
+        error!(
             "The config path can be found under {}.\n Please add the file smartplaylists.toml\
              if you want to add smartplaylists",
             s

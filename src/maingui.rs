@@ -69,7 +69,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         let poolc = pool.clone();
         gtk::timeout_add_seconds(60*30, move || {
             use playlist_tabs::PlaylistTabsExt;
-            println!("autosaving database");
+            info!("autosaving database");
             guic.save(&poolc);
             gtk::Continue(true)
         });
@@ -131,7 +131,7 @@ impl MainGuiExt for MainGui {
                         if let Ok(ref pp) = gdk_pixbuf::Pixbuf::new_from_file_at_size(p, 200, 200) {
                             self.cover.set_from_pixbuf(pp);
                         } else {
-                            println!("error creating pixbuf");
+                            error!("error creating pixbuf");
                         }
                     } else {
                         self.cover.clear();
@@ -222,7 +222,7 @@ pub trait MainGuiPtrExt {
 
 impl MainGuiPtrExt for MainGuiPtr {
     fn page_changed(&self, index: u32) {
-        println!("Page changed to {}", index);
+        info!("Page changed to {}", index);
         (*self.playlist_tabs)
             .borrow_mut()
             .set_current_playlist(index as i32);
@@ -255,7 +255,7 @@ impl MainGuiPtrExt for MainGuiPtr {
     }
 
     fn delete_page(&self, index: u32) {
-        println!("deleting the page {}", index);
+        info!("deleting the page {}", index);
         let db_id = (*self.playlist_tabs).borrow().id(index as i32);
         (*self.playlist_tabs).borrow_mut().remove_tab(index as i32);
         self.notebook.remove_page(Some(index));

@@ -129,7 +129,6 @@ impl Drop for PlaylistTabs {
 }
 
 pub fn new() -> PlaylistTabsPtr {
-    println!("implemente restoring");
     Rc::new(RefCell::new(PlaylistTabs {
         current_playlist: None,
         tabs: Vec::new(),

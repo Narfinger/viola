@@ -104,7 +104,7 @@ impl GStreamerExt for GStreamer {
                 if gstreamer::State::Playing
                     == self.pipeline.get_state(gstreamer::ClockTime(Some(1000))).1
                 {
-                    println!("Doing");
+                    info!("Doing");
                     self.pipeline
                         .set_state(gstreamer::State::Paused)
                         .into_result()
@@ -162,7 +162,7 @@ impl GStreamerExt for GStreamer {
         if let Err(e) = self.pipeline.set_state(gstreamer_action).into_result() {
             if let Some(bus) = self.pipeline.get_bus() {
                 while let Some(msg) = bus.pop() {
-                    println!("we found messages on the bus {:?}", msg);
+                    info!("we found messages on the bus {:?}", msg);
                 }
             }
             panic!(
@@ -188,7 +188,7 @@ impl GStreamerExt for GStreamer {
                         .expect("Error in gstreamer sending message to gui");
                 }
                 Some(i) => {
-                    println!("Next should play {:?}", &i);
+                    info!("Next should play {:?}", &i);
                     self.pipeline
                         .set_state(gstreamer::State::Ready)
                         .into_result()

@@ -29,7 +29,7 @@ macro_rules! clone {
 
 pub fn build_gui(application: &gtk::Application, pool: &DBPool) {
     if gtk::init().is_err() {
-        println!("Failed to initialize GTK.");
+        error!("Failed to initialize GTK.");
         return;
     }
     let glade_src = include_str!("../ui/main.glade");
@@ -89,8 +89,6 @@ pub fn build_gui(application: &gtk::Application, pool: &DBPool) {
     }));
 
     window.show_all();
-    println!("Restoring tabs");
+    info!("Restoring tabs");
     gui.restore(&pool);
-
-    println!("\n\n\n Current Bugs:");
 }

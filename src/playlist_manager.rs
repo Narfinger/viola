@@ -62,7 +62,7 @@ fn add_playlist(pool: &DBPool, sm: &[SmartPlaylist], index: i32) -> LoadedPlayli
     use diesel::{QueryDsl, RunQueryDsl};
     use schema::tracks::dsl::*;
 
-    println!("You selected index: {}", index);
+    info!("You selected index: {}", index);
     if index == 0 {
         let db = pool.get().expect("DB problem");
         let results = tracks

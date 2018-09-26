@@ -124,7 +124,7 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
         .expect("Error in database deletion");
     //inserting new tracks
 
-    println!("starting to gather");
+    info!("starting to gather");
     let vals = pl
         .items
         .iter()
@@ -134,12 +134,12 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
             track_id: track.id,
             playlist_order: index as i32,
         }).collect::<Vec<NewPlaylistTrack>>();
-    println!("collected and inserting");
+    info!("collected and inserting");
     diesel::insert_into(playlisttracks)
         .values(&vals)
         .execute(db.deref())
         .expect("Database error");
-    println!("done");
+    info!("done");
 }
 
 pub fn delete_with_id(pool: &DBPool, index: i32) {
@@ -151,7 +151,7 @@ pub fn delete_with_id(pool: &DBPool, index: i32) {
 
     let db = pool.get().unwrap();
 
-    println!("index for deleting: {}", index);
+    info!("index for deleting: {}", index);
 
     diesel::delete(playlists)
         .filter(schema::playlists::dsl::id.eq(index))

@@ -200,14 +200,14 @@ pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
             pb.finish_with_message("Done Updating");
 
             if let Err(err) = res {
-                println!("Error in updating database");
-                println!("{}", err);
+                error!("Error in updating database");
+                error!("{}", err);
                 panic!("Aborting");
             }
         }
 
         {
-            println!("Deleting old database entries");
+            info!("Deleting old database entries");
             let pb = ProgressBar::new_spinner();
             pb.set_message("Computing Difference to old database");
             let to_delete: Vec<&String> = old_files.difference(&files).collect();

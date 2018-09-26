@@ -41,7 +41,7 @@ impl PlaylistControls for LoadedPlaylist {
     }
 
     fn get_current_uri(&self) -> String {
-        println!("loading from playlist with name: {}", self.name);
+        info!("loading from playlist with name: {}", self.name);
         format!(
             "file:////{}",
             utf8_percent_encode(&self.items[self.current_position as usize].path
@@ -96,10 +96,10 @@ fn update_playcount(t_id: i32, pool: &DBPool) -> gtk::Continue {
     if let Ok(mut track) = tracks.filter(id.eq(t_id)).first::<Track>(&db) {
         track.playcount = Some(1 + track.playcount.unwrap_or(0));
         if let Err(_) =  track.save_changes::<Track>(&db) {
-            println!("Some problem with updating play status (cannot update)");
+            error!("Some problem with updating play status (cannot update)");
         }
     } else {
-        println!("Some problem with updating play status (gettin track)");
+        error!("Some problem with updating play status (gettin track)");
     }
     gtk::Continue(false)
 }
