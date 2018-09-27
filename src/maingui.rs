@@ -91,6 +91,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
 /// The main indication is: This are all functions that do not need to have gtk callbacks.
 pub trait MainGuiExt {
     //fn get_active_treeview(&self) -> &gtk::TreeView;
+    fn clear_play_marker(&self);
     fn update_gui(&self, &PlayerStatus); //does not need pipeline
     fn set_playback(&self, &GStreamerAction);
     fn append_to_playlist(&self, Vec<db::Track>);
@@ -105,6 +106,31 @@ impl MainGuiExt for MainGui {
     //    println!("The page: {:?}", cur_page);
     //    &self.playlist_tabs.borrow()[cur_page as usize].treeview
     //}
+
+    fn clear_play_marker(&self) {
+        if let Some(cur_page) = self.notebook.get_current_page() {
+            let treeview = &self.playlist_tabs.borrow().tabs[cur_page as usize].treeview;
+            let pos = self.playlist_tabs.borrow().current_position();
+            let model: gtk::ListStore = treeview
+                .get_model()
+                .unwrap()
+                .downcast::<gtk::ListStore>()
+                .unwrap();
+            {
+                let cell = self.last_marked.borrow();
+                if let Some(ref previous_row) = *cell {
+                    let color = gdk::RGBA {
+                        red: 0.0,
+                        green: 0.0,
+                        blue: 0.0,
+                        alpha: 0.0,
+                    };
+                    let c = gdk_pixbuf::Value::from(&color);
+                    model.set_value(&previous_row, COLOR_COLUMN, &c);
+                }
+            }
+        }
+    }
 
     /// General purpose function to update the GuiPtr on any change
     fn update_gui(&self, status: &PlayerStatus) {
@@ -146,20 +172,9 @@ impl MainGuiExt for MainGui {
                         .unwrap();
                     let path = gtk::TreePath::new_from_indicesv(&[pos, COLOR_COLUMN as i32]);
                     let treeiter = model.get_iter(&path).unwrap();
-                    //let (_, selection) = treeselection.get_selected().unwrap();
-                    {
-                        let cell = self.last_marked.borrow();
-                        if let Some(ref previous_row) = *cell {
-                            let color = gdk::RGBA {
-                                red: 0.0,
-                                green: 0.0,
-                                blue: 0.0,
-                                alpha: 0.0,
-                            };
-                            let c = gdk_pixbuf::Value::from(&color);
-                            model.set_value(&previous_row, COLOR_COLUMN, &c);
-                        }
-                    }
+    
+                    self.clear_play_marker();
+
                     let color = gdk::RGBA {
                         red: 0.6,
                         green: 0.0,
@@ -181,8 +196,7 @@ impl MainGuiExt for MainGui {
                     self.status_label.set_markup("Playing");
                     self.cover.clear();
 
-                    //clear playling line
-                    panic!("need to clear playling line");
+                    self.clear_play_marker();
                 }
             }
         }
