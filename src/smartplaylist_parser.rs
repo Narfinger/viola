@@ -64,25 +64,28 @@ fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
         }
     };
 
+    macro_rules! vec_option_insert {
+        ($value: expr, $vec: expr, $pushto: expr) => {
+            if let Some(v) = insert_vec_value($vec) {
+                $pushto.push($value(v));
+            }
+            
+        };
+    }
+
     let random = smp.random.unwrap_or(false);
     let mut include_query = Vec::new();
-    if let Some(v) = insert_vec_value(smp.dir_include) {
-        include_query.push(IncludeTag::Dir(v));
-    }
-    if let Some(v) = insert_vec_value(smp.artist_include) {
-        include_query.push(IncludeTag::Artist(v));
-    }
-    if let Some(v) = insert_vec_value(smp.genre_include) {
-        include_query.push(IncludeTag::Genre(v));
-    }
+    
+    vec_option_insert!(IncludeTag::Artist, smp.dir_include, include_query);
+    vec_option_insert!(IncludeTag::Artist, smp.artist_include, include_query);
+    vec_option_insert!(IncludeTag::Genre,  smp.genre_include, include_query);
+
     if let Some(v) = smp.play_count_include {
         include_query.push(IncludeTag::PlayCount(v));
     }
 
     let mut exclude_query = Vec::new();
-    if let Some(v) = insert_vec_value(smp.dir_exclude) {
-        exclude_query.push(ExcludeTag::Dir(v));
-    }
+    vec_option_insert!(ExcludeTag::Dir, smp.dir_exclude, exclude_query);
 
     SmartPlaylist {
         name: smp.name,
