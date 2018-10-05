@@ -33,6 +33,7 @@ pub enum PlayerStatus {
     Playing,
     Paused,
     Stopped,
+    ChangedDuration((u64, u64)),
 }
 
 impl From<GStreamerMessage> for PlayerStatus {
@@ -41,6 +42,7 @@ impl From<GStreamerMessage> for PlayerStatus {
             GStreamerMessage::Pausing => PlayerStatus::Paused,
             GStreamerMessage::Stopped => PlayerStatus::Stopped,
             GStreamerMessage::Playing => PlayerStatus::Playing,
+            GStreamerMessage::ChangedDuration(i) => PlayerStatus::ChangedDuration(i),
         }
     }
 }

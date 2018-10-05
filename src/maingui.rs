@@ -25,6 +25,8 @@ pub struct MainGui {
     artist_label: gtk::Label,
     album_label: gtk::Label,
     status_label: gtk::Label,
+    elapsed_label: gtk::Label,
+    total_label: gtk::Label,
     cover: gtk::Image,
     last_marked: RefCell<Option<gtk::TreeIter>>,
     playlist_tabs: PlaylistTabsPtr,
@@ -49,6 +51,8 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         artist_label: builder.read().unwrap().get_object("artistLabel").unwrap(),
         album_label: builder.read().unwrap().get_object("albumLabel").unwrap(),
         status_label: builder.read().unwrap().get_object("statusLabel").unwrap(),
+        elapsed_label: builder.read().unwrap().get_object("elapsedLabel").unwrap(),
+        total_label: builder.read().unwrap().get_object("totalLabel").unwrap(),
         cover: builder.read().unwrap().get_object("coverImage").unwrap(),
         last_marked: RefCell::new(None),
         playlist_tabs: pltabs,
@@ -161,6 +165,8 @@ impl MainGuiExt for MainGui {
                     } else {
                         self.cover.clear();
                     }
+                    self.elapsed_label.set_text("0:00");
+                    self.total_label.set_text(&format_duration(track.length as u64, track.length as u64));
 
                     //highlight row
                     let pos = self.playlist_tabs.borrow().current_position();
@@ -193,9 +199,13 @@ impl MainGuiExt for MainGui {
                     self.artist_label.set_markup("");
                     self.album_label.set_markup("");
                     self.status_label.set_markup("Playing");
+                    self.elapsed_label.set_text("0:00");
                     self.cover.clear();
 
                     self.clear_play_marker();
+                }
+                PlayerStatus::ChangedDuration((i, total)) => {
+                    self.elapsed_label.set_text(&format_duration(i, total));
                 }
             }
         }
@@ -219,6 +229,21 @@ impl MainGuiExt for MainGui {
 
     fn save(&self, pool: &DBPool) {
         self.playlist_tabs.borrow().save(pool);
+    }
+}
+
+/// takes the current_position and formats it according to the complete position, given in seconds
+fn format_duration(current_position: u64, total: u64) -> String {
+    let s = current_position % 60;
+    let m = current_position / 60 % (60 * 60);
+    let h = current_position / (60 * 60);
+    warn!("current, total {}/{}", current_position, total);
+    if total >= 60*60 {
+        format!("{}:{:02}:{:02}", h, m, s)
+    } else if total >= 60 {
+        format!("{}:{:02}", m, s)
+    } else {
+        format!("{}", s)
     }
 }
 

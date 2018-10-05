@@ -1,5 +1,5 @@
 use gstreamer;
-use gstreamer::ElementExt;
+use gstreamer::{ElementExt, ElementExtManual};
 use gtk;
 use gtk::ObjectExt;
 use std::rc::Rc;
@@ -32,6 +32,7 @@ pub enum GStreamerMessage {
     Pausing,
     Stopped,
     Playing,
+    ChangedDuration((u64, u64)), //in seconds
 }
 
 impl From<gstreamer::State> for GStreamerMessage {
@@ -174,6 +175,21 @@ impl GStreamerExt for GStreamer {
 
     /// poll the message bus and on eos start new
     fn gstreamer_message_handler(&self) -> gtk::Continue {
+        //update gui for running time
+        {
+            let cltime_opt: Option<gstreamer::ClockTime> = self.pipeline.query_position();
+            let cltotal_opt: Option<gstreamer::ClockTime> = self.pipeline.query_duration();
+            if let Some(cltime) = cltime_opt {
+                let total = cltotal_opt.unwrap().seconds().unwrap_or(0);
+                warn!("total: {}", total);
+                self.sender
+                    .send(GStreamerMessage::ChangedDuration((cltime.seconds().unwrap_or(0), total)))
+                    .expect("Error in gstreamer sending message to gui");
+                
+                }
+
+            }
+
         if self.finish_reicv.try_recv().is_ok() {
             //println!("next is: {:?}", self.current_playlist.next_or_eol());
             //self.current_playlist.next_or_eol();
@@ -207,57 +223,5 @@ impl GStreamerExt for GStreamer {
             };
         }
         gtk::Continue(true)
-
-        /*
-        let bus = self.pipeline.get_bus().unwrap();
-        if let Some(msg) = bus.pop() {
-            use gstreamer::MessageView;
-            match msg.view() {
-                MessageView::Error(err) => {
-                    eprintln!("Error received {}", err.get_error());
-                    eprintln!("Debugging information: {:?}", err.get_debug());
-                }
-                MessageView::StateChanged(state_changed) => {
-                    //println!(
-                    //    "Pipeline state changed from {:?} to {:?}",
-                    //    state_changed.get_old(),
-                    //    state_changed.get_current()
-                    //);
-                    //sender.send(GStreamerMessage::Playing).expect("Error in gstreamer sending message to gui");
-                }
-                MessageView::Eos(..) => {
-                    use playlist_tabs::PlaylistTabsExt;
-                    println!("current playing: {}, new playing: {:?}", self.current_playlist.borrow().current_track().title, self.current_playlist.next_or_eol());
-                    let res = self.current_playlist.next_or_eol();
-                    match res {
-                        None => { 
-                            self.sender.send(GStreamerMessage::Stopped).expect("Message Queue Error");
-                            self.sender.send(GStreamerMessage::Stopped).expect("Error in gstreamer sending message to gui");
-                            },
-                        Some(i) => {
-                            println!("Next should play");
-                            self.pipeline
-                                .set_state(gstreamer::State::Ready)
-                                .into_result()
-                                .expect("Error in changing gstreamer state to ready");
-                            self.pipeline
-                                .set_property("uri", &i)
-                                .expect("Error setting new url for gstreamer");
-                            self.pipeline
-                                .set_state(gstreamer::State::Playing)
-                                .into_result()
-                                .expect("Error in changing gstreamer state to playing");
-                            self.sender.send(GStreamerMessage::Playing).expect("Error in gstreamer sending message to gui");
-                        }
-                    }
-                    println!("Eos found");
-                }
-                _ => (),
-            }
-            
-
-        }
-        gtk::Continue(true)
-        */
     }
 }
