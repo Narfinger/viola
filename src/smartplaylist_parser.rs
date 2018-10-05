@@ -98,7 +98,7 @@ pub trait LoadSmartPlaylist {
     fn load(&self, &DBPool) -> LoadedPlaylist;
 }
 
-fn matched_with_exclude(t: &Track, h: &Vec<ExcludeTag>) -> bool {
+fn matched_with_exclude(t: &Track, h: &[ExcludeTag]) -> bool {
     h.iter().any(|k| match k {
         ExcludeTag::Dir(v) => v.iter().any(|value| t.path.contains(value)),
     })
