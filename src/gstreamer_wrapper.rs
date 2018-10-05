@@ -90,6 +90,7 @@ pub enum GStreamerAction {
     Previous,
     /// This means we selected one specific track
     Play(i32),
+    Seek(u64),
 }
 
 pub trait GStreamerExt {
@@ -100,6 +101,16 @@ pub trait GStreamerExt {
 impl GStreamerExt for GStreamer {
     fn do_gstreamer_action(&self, action: &GStreamerAction) {
         //we need to set the state to paused and ready
+
+        error!("We do not implement seek yet");
+        match *action {
+            GStreamerAction::Seek(i) => {
+                let t = gstreamer::ClockTime::from_seconds(i);
+                self.pipeline.seek_simple(gstreamer::SeekFlags::NONE, t);
+            }
+            _ => {}
+        };
+
         match *action {
             GStreamerAction::Play(_) | GStreamerAction::Previous | GStreamerAction::Next => {
                 if gstreamer::State::Playing
@@ -133,6 +144,7 @@ impl GStreamerExt for GStreamer {
             GStreamerAction::Previous => Some(self.current_playlist.previous()),
             GStreamerAction::Next => Some(self.current_playlist.next()),
             GStreamerAction::Play(i) => Some(self.current_playlist.set(i)),
+            GStreamerAction::Seek(i) => None, 
         };
         //setting the url
         if let Some(u) = url {

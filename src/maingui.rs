@@ -27,6 +27,7 @@ pub struct MainGui {
     status_label: gtk::Label,
     elapsed_label: gtk::Label,
     total_label: gtk::Label,
+    time_scale: gtk::Scale,
     cover: gtk::Image,
     last_marked: RefCell<Option<gtk::TreeIter>>,
     playlist_tabs: PlaylistTabsPtr,
@@ -53,6 +54,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         status_label: builder.read().unwrap().get_object("statusLabel").unwrap(),
         elapsed_label: builder.read().unwrap().get_object("elapsedLabel").unwrap(),
         total_label: builder.read().unwrap().get_object("totalLabel").unwrap(),
+        time_scale: builder.read().unwrap().get_object("timeScale").unwrap(),
         cover: builder.read().unwrap().get_object("coverImage").unwrap(),
         last_marked: RefCell::new(None),
         playlist_tabs: pltabs,
@@ -78,6 +80,14 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         });
     }
     //g.add_page(loaded_playlist);
+    {
+        let gc = g.clone();
+        g.time_scale.connect_change_value(move |_, _, pos| {
+            gc.change_time_scale(pos);
+            gtk::Inhibit(true)
+        });
+    }
+
 
     {
         let gc = g.clone();
@@ -97,6 +107,7 @@ pub trait MainGuiExt {
     fn clear_play_marker(&self);
     fn update_gui(&self, &PlayerStatus); //does not need pipeline
     fn set_playback(&self, &GStreamerAction);
+    fn change_time_scale(&self, f64);
     fn append_to_playlist(&self, Vec<db::Track>);
     fn replace_playlist(&self, Vec<db::Track>);
     fn insert_tracks(&self, i32, Vec<db::Track>);
@@ -167,6 +178,7 @@ impl MainGuiExt for MainGui {
                     }
                     self.elapsed_label.set_text("0:00");
                     self.total_label.set_text(&format_duration(track.length as u64, track.length as u64));
+                    self.time_scale.set_range(0 as f64, track.length as f64);
 
                     //highlight row
                     let pos = self.playlist_tabs.borrow().current_position();
@@ -206,6 +218,7 @@ impl MainGuiExt for MainGui {
                 }
                 PlayerStatus::ChangedDuration((i, total)) => {
                     self.elapsed_label.set_text(&format_duration(i, total));
+                    self.time_scale.set_value(i as f64);
                 }
             }
         }
@@ -213,6 +226,11 @@ impl MainGuiExt for MainGui {
 
     fn set_playback(&self, status: &GStreamerAction) {
         self.gstreamer.do_gstreamer_action(status);
+    }
+
+    fn change_time_scale(&self, pos: f64) {
+        let p = pos.trunc() as u64;
+        self.gstreamer.do_gstreamer_action(&GStreamerAction::Seek(p));
     }
 
     fn append_to_playlist(&self, t: Vec<db::Track>) {
