@@ -17,8 +17,8 @@ use types::*;
 pub struct SmartPlaylist {
     pub name: String,
     random: bool,
-    include_query: HashMap<IncludeTag, Vec<String>>,
-    exclude_query: HashMap<ExcludeTag, Vec<String>>,
+    include_query: Vec<IncludeTag>,
+    exclude_query: Vec<ExcludeTag>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -35,37 +35,54 @@ struct SmartPlaylistParsed {
     dir_include: Option<Vec<String>>,
     artist_include: Option<Vec<String>>,
     genre_include: Option<Vec<String>>,
+    play_count_include: Option<i32>,
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum IncludeTag {
-    Dir,
-    Artist,
-    Genre,
+    Dir(Vec<String>),
+    Artist(Vec<String>),
+    Genre(Vec<String>),
+    PlayCount(i32),
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ExcludeTag {
-    Dir,
+    Dir(Vec<String>),
 }
 
 fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
-    fn query_insert<T: Eq + Hash>(v: Option<Vec<String>>, tag: T, m: &mut HashMap<T, Vec<String>>) {
-        if let Some(p) = v {
-            if !p.is_empty() {
-                m.insert(tag, p);
+    fn insert_vec_value(v: Option<Vec<String>>) -> Option<Vec<String>> {
+        if let Some(value) = v {
+            if !value.is_empty() {
+                Some(value)
+            } else {
+                None
             }
+        } else {
+            None
         }
-    }
+    };
 
     let random = smp.random.unwrap_or(false);
+    let mut include_query = Vec::new();
+    if let Some(v) = insert_vec_value(smp.dir_include) {
+        include_query.push(IncludeTag::Dir(v));
+    }
+    if let Some(v) = insert_vec_value(smp.artist_include) {
+        include_query.push(IncludeTag::Artist(v));
+    }
+    if let Some(v) = insert_vec_value(smp.genre_include) {
+        include_query.push(IncludeTag::Genre(v));
+    }
+    if let Some(v) = smp.play_count_include {
+        include_query.push(IncludeTag::PlayCount(v));
+    }
 
-    let mut include_query = HashMap::new();
-    query_insert(smp.dir_include, IncludeTag::Dir, &mut include_query);
-    query_insert(smp.genre_include, IncludeTag::Genre, &mut include_query);
-
-    let mut exclude_query = HashMap::new();
-    query_insert(smp.dir_exclude, ExcludeTag::Dir, &mut exclude_query);
+    let mut exclude_query = Vec::new();
+    if let Some(v) = insert_vec_value(smp.dir_exclude) {
+        exclude_query.push(ExcludeTag::Dir(v));
+    }
 
     SmartPlaylist {
         name: smp.name,
@@ -79,9 +96,9 @@ pub trait LoadSmartPlaylist {
     fn load(&self, &DBPool) -> LoadedPlaylist;
 }
 
-fn matched_with_exclude(t: &Track, h: &HashMap<ExcludeTag, Vec<String>>) -> bool {
-    h.iter().any(|(k, v)| match k {
-        ExcludeTag::Dir => v.iter().any(|value| t.path.contains(value)),
+fn matched_with_exclude(t: &Track, h: &Vec<ExcludeTag>) -> bool {
+    h.iter().any(|k| match k {
+        ExcludeTag::Dir(v) => v.iter().any(|value| t.path.contains(value)),
     })
 }
 
@@ -102,8 +119,8 @@ impl LoadSmartPlaylist for SmartPlaylist {
             self
             .include_query
             .iter()
-            .map(|(k, v)| match k {
-                IncludeTag::Artist => {
+            .map(|k| match k {
+                IncludeTag::Artist(v) => {
                     let mut s = tracks.into_boxed::<Sqlite>();
                     for value in v {
                         s = s.or_filter(artist.eq(value));
@@ -112,7 +129,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
                     //println!("Query ArtistInclude: {:?}", debug_query(&s));
                     s.load(&db).expect("Error in loading smart playlist")
                 }
-                IncludeTag::Dir => {
+                IncludeTag::Dir(v) => {
                     let mut s = tracks.into_boxed::<Sqlite>();
                     for value in v {
                         s = s.or_filter(path.like(String::from("%") + &value + "%"));
@@ -121,13 +138,20 @@ impl LoadSmartPlaylist for SmartPlaylist {
                     //println!("Query DirInclude: {:?}", debug_query(&s));
                     s.load(&db).expect("Error in loading smart playlist")
                 }
-                IncludeTag::Genre => {
+                IncludeTag::Genre(v) => {
                     let mut s = tracks.into_boxed::<Sqlite>();
                     for value in v {
                         s = s.or_filter(genre.eq(value));
                     }
                     let db = pool.get().expect("DB Error");
                     //println!("Query GenreInclude: {:?}", debug_query(&s));
+                    s.load(&db).expect("Error in loading smart playlist")
+                }
+                IncludeTag::PlayCount(v) => {
+                    let mut s = tracks.into_boxed::<Sqlite>();
+                    s = s.or_filter(playcount.eq(v));   
+                    
+                    let db = pool.get().expect("DB Error");
                     s.load(&db).expect("Error in loading smart playlist")
                 }
             }).flat_map(|v| v.into_iter())
