@@ -271,8 +271,11 @@ impl MainGuiPtrExt for MainGuiPtr {
     fn delete_page(&self, index: u32) {
         info!("deleting the page {}", index);
         let db_id = (*self.playlist_tabs).borrow().id(index as i32);
-        (*self.playlist_tabs).borrow_mut().remove_tab(index as i32);
+        let new_index = (*self.playlist_tabs).borrow_mut().remove_tab(index as i32);
         self.notebook.remove_page(Some(index));
+
+        self.page_changed(new_index);
+        self.notebook.set_current_page(Some(new_index));
         //deleting in database
         if let Some(i) = db_id {
             playlist::delete_with_id(&self.pool, i as i32);

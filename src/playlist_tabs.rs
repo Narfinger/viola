@@ -4,6 +4,7 @@ use gtk::prelude::*;
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
+use std::fmt;
 
 use db;
 use loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
@@ -104,10 +105,8 @@ fn key_signal_handler(
     tv: &gtk::TreeView,
     event: &gdk::Event,
 ) -> gtk::Inhibit {
-    //println!("key {:?}", event.get_event_type());
     if event.get_event_type() == gdk::EventType::KeyPress {
         if let Ok(b) = event.clone().downcast::<gdk::EventKey>() {
-            //println!("event key {}", b.get_keyval());
             if b.get_keyval() == DELETE_KEY {
                 tabs.borrow_mut().remove_items(tv.get_selection());
                 tv.get_selection().unselect_all();
@@ -151,8 +150,8 @@ pub trait PlaylistTabsExt {
     /// add a new tab
     fn add_tab(&mut self, PlaylistTab);
 
-    /// remove the tab given by the index
-    fn remove_tab(&mut self, i32) -> Option<i32>;
+    /// remove the tab given by the index, returns 
+    fn remove_tab(&mut self, i32) -> u32;
 
     /// removes the items from the vector
     fn remove_items(&mut self, gtk::TreeSelection);
@@ -197,13 +196,12 @@ impl PlaylistTabsExt for PlaylistTabs {
         }
     }
 
-    fn remove_tab(&mut self, index: i32) -> Option<i32> {
+    fn remove_tab(&mut self, index: i32) -> u32 {
+        info!("removing tab with: {}", index);
+        info!("this is our list so far: {:?}", self.tabs);
         self.tabs.remove(index as usize);
-        if self.current_playlist.unwrap() >= self.tabs.len() {
-            Some(0)
-        } else {
-            None
-        }
+        
+        0
     }
 
     fn remove_items(&mut self, selection: gtk::TreeSelection) {
