@@ -220,7 +220,7 @@ fn idle_search_changed(
                     let val = model.iter_parent(&it);
                     model.set_value(&it, 3, visible);
 
-                    let v = model.get_value(&it, 1).get::<String>().unwrap();
+                    //let v = model.get_value(&it, 1).get::<String>().unwrap();
                     //println!("Doing parents {}", v);
 
                     if let Some(v) = val {

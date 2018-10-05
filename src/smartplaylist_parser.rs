@@ -3,10 +3,7 @@ use diesel::{QueryDsl, RunQueryDsl};
 use preferences::prefs_base_dir;
 use rand::{thread_rng, Rng};
 use schema::tracks::dsl::*;
-use std::collections::HashMap;
 use std::fs;
-use std::hash::Hash;
-use std::ops::Deref;
 use toml;
 
 use db::Track;
@@ -52,6 +49,7 @@ pub enum ExcludeTag {
 }
 
 fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
+    /// returns None if the option is none or the vector in it empty
     fn insert_vec_value(v: Option<Vec<String>>) -> Option<Vec<String>> {
         if let Some(value) = v {
             if !value.is_empty() {
@@ -64,6 +62,7 @@ fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
         }
     };
 
+    /// Inserts `vec` into `pushto` with the tag `value`
     macro_rules! vec_option_insert {
         ($value: expr, $vec: expr, $pushto: expr) => {
             if let Some(v) = insert_vec_value($vec) {

@@ -68,7 +68,6 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         let guic = g.clone();
         let poolc = pool.clone();
         gtk::timeout_add_seconds(60*30, move || {
-            use playlist_tabs::PlaylistTabsExt;
             info!("autosaving database");
             guic.save(&poolc);
             gtk::Continue(true)
@@ -110,7 +109,7 @@ impl MainGuiExt for MainGui {
     fn clear_play_marker(&self) {
         if let Some(cur_page) = self.notebook.get_current_page() {
             let treeview = &self.playlist_tabs.borrow().tabs[cur_page as usize].treeview;
-            let pos = self.playlist_tabs.borrow().current_position();
+            //let pos = self.playlist_tabs.borrow().current_position();
             let model: gtk::ListStore = treeview
                 .get_model()
                 .unwrap()
