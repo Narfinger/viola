@@ -75,7 +75,7 @@ fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
     let random = smp.random.unwrap_or(false);
     let mut include_query = Vec::new();
     
-    vec_option_insert!(IncludeTag::Artist, smp.dir_include, include_query);
+    vec_option_insert!(IncludeTag::Dir, smp.dir_include, include_query);
     vec_option_insert!(IncludeTag::Artist, smp.artist_include, include_query);
     vec_option_insert!(IncludeTag::Genre,  smp.genre_include, include_query);
 
