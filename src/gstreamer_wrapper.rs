@@ -106,7 +106,7 @@ impl GStreamerExt for GStreamer {
         match *action {
             GStreamerAction::Seek(i) => {
                 let t = gstreamer::ClockTime::from_seconds(i);
-                self.pipeline.seek_simple(gstreamer::SeekFlags::NONE, t);
+                self.pipeline.seek_simple(gstreamer::SeekFlags::NONE, t).expect("Could not seek");
             }
             _ => {}
         };
@@ -144,7 +144,7 @@ impl GStreamerExt for GStreamer {
             GStreamerAction::Previous => Some(self.current_playlist.previous()),
             GStreamerAction::Next => Some(self.current_playlist.next()),
             GStreamerAction::Play(i) => Some(self.current_playlist.set(i)),
-            GStreamerAction::Seek(i) => None, 
+            GStreamerAction::Seek(_) => None, 
         };
         //setting the url
         if let Some(u) = url {

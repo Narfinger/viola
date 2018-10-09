@@ -82,6 +82,27 @@ pub fn load_tab(
         treeview.connect_button_press_event(move |tv, event| gui.clone().signal_handler(tv, event));
     }
 
+    //drag&drop
+    {
+        let mut flags = gtk::TargetFlags::empty();
+        flags.insert(gtk::TargetFlags::SAME_WIDGET);
+        let entry = gtk::TargetEntry::new("PlaylistBox", flags, 1);
+        treeview.drag_source_set(gdk::ModifierType::BUTTON1_MASK, &[entry], gdk::DragAction::MOVE);
+
+        /*
+        treeview.connect_drag_data_get(move |tv, dc, sd, x, y| {
+            gtk::Inhibit(true)
+        })
+        
+        treeview.connect_drag_data_received(move |tv, dc, x, y, sd, u, v| {
+            gtk::Inhibit(true)
+        })
+        */
+
+
+    }
+
+
     append_treeview_from_vector(&lp.items, &model);
     let scw = gtk::ScrolledWindow::new(None, None);
     scw.set_overlay_scrolling(false);
