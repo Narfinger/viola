@@ -192,16 +192,17 @@ impl GStreamerExt for GStreamer {
             let cltime_opt: Option<gstreamer::ClockTime> = self.pipeline.query_position();
             let cltotal_opt: Option<gstreamer::ClockTime> = self.pipeline.query_duration();
             if let Some(cltime) = cltime_opt {
-                let total = cltotal_opt.unwrap().seconds().unwrap_or(0);
-                warn!("total: {}", total);
-                self.sender
-                    .send(GStreamerMessage::ChangedDuration((cltime.seconds().unwrap_or(0), total)))
-                    .expect("Error in gstreamer sending message to gui");
+                if let Some(cl) = cltotal_opt {
+                    let total = cl.seconds().unwrap_or(0);
+                    warn!("total: {}", total);
+                    self.sender
+                        .send(GStreamerMessage::ChangedDuration((cltime.seconds().unwrap_or(0), total)))
+                        .expect("Error in gstreamer sending message to gui");
                 
                 }
-
             }
-
+            
+        }
         if self.finish_reicv.try_recv().is_ok() {
             //println!("next is: {:?}", self.current_playlist.next_or_eol());
             //self.current_playlist.next_or_eol();
