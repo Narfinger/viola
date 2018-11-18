@@ -151,7 +151,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
                 }
                 IncludeTag::PlayCount(v) => {
                     let mut s = tracks.into_boxed::<Sqlite>();
-                    s = s.or_filter(playcount.eq(v));   
+                    s = s.or_filter(playcount.ge(v));   
                     
                     let db = pool.get().expect("DB Error");
                     s.load(&db).expect("Error in loading smart playlist")

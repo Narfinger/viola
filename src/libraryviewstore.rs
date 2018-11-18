@@ -179,6 +179,49 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
     }
 }
 
+fn idle_make_parents_visible_from_search(s: Rc<String>,
+    field: Rc<gtk::SearchEntry>,
+    treeiter: Rc<gtk::TreeIter>,
+    fmodel: Rc<gtk::TreeModelFilter>,
+    model: Rc<gtk::TreeStore>,
+) -> gtk::Continue {
+    let visible: &gtk::Value = &true.to_value();
+    //let invisible: &gtk::Value = &false.to_value();
+
+
+    return gtk::Continue(false);
+
+    // abort if another thread is running
+    if *s != field.get_text().unwrap().to_lowercase() {
+        //println!(
+        //    "Killing this search thread because {:?}, {:?}",
+        //    *s,
+        //    field.get_text().unwrap()
+        //);
+        return gtk::Continue(false);
+    }
+    
+    //Setting parents visible after we gone through it all.
+    //This needs to be after because it interfers otherwise with the already visible set parents
+    if model.get_value(&treeiter, 3).get::<bool>().unwrap() {
+        let mut itt = (*treeiter).clone();  //make a new iterator because we will modify it
+        let mut check_more_parents = true;
+        while check_more_parents {
+            let parent = model.iter_parent(&treeiter);
+            model.set_value(&itt, 3, visible);
+            //let v = model.get_value(&it, 1).get::<String>().unwrap();
+            //println!("Doing parents {}", v);
+            if let Some(parent) = parent {
+                check_more_parents = true;
+                itt = parent;
+            } else {
+                check_more_parents = false;
+            }
+        }
+    }
+    gtk::Continue(false)
+}
+
 /// This function will be called on idle if the search changed.
 /// Because there could be multiple functions added, we need to have the following safeguard
 /// s is the string the search started with
@@ -209,31 +252,31 @@ fn idle_search_changed(
             .get::<String>()
             .map(|v| v.to_lowercase().contains(&*s));
         //println!("Looking at: {:?}, {:?}, {:?}", model.get_value(&treeiter, 1).get::<String>(), val, s);
+        let parent_visible = {
+            let it = (*treeiter).clone();
+            
+            //is parent visible?
+            let parent = model
+                        .iter_parent(&it)
+                        .and_then(|pit| model.get_value(&pit, 3).get::<bool>());
+            //is parent of parent visible?
+            let pparent = model
+                        .iter_parent(&it)
+                        .and_then(|pit| model
+                                        .iter_parent(&pit)
+                                        .and_then(|ppit| model.get_value(&ppit,3).get::<bool>()));
+
+            (parent == Some(true)) & (pparent == Some(true))
+        };
+
         if val == Some(true) {
             model.set_value(&treeiter, 3, visible);
-
-            // set parents to visible
-            {
-                let mut it = (*treeiter).clone();
-                let mut valid = true;
-                while valid {
-                    let val = model.iter_parent(&it);
-                    model.set_value(&it, 3, visible);
-
-                    //let v = model.get_value(&it, 1).get::<String>().unwrap();
-                    //println!("Doing parents {}", v);
-
-                    if let Some(v) = val {
-                        valid = true;
-                        it = v;
-                    } else {
-                        valid = false;
-                    }
-                }
-            }
+        } else if parent_visible {
+            model.set_value(&treeiter, 3, visible);
         } else {
             model.set_value(&treeiter, 3, invisible);
         }
+
     } else {
         model.set_value(&treeiter, 3, visible);
     }
@@ -249,6 +292,23 @@ fn idle_search_changed(
             let mc = model.clone();
             gtk::idle_add(move || {
                 idle_search_changed(sc.clone(), fc.clone(), ci.clone(), fmc.clone(), mc.clone())
+            });
+        } else {
+            //now we need to enable the parents we might have made invisible
+            //if we do not find a valid next, this means we are at the end of the iterator and gone through all the elements
+            let sc = s.clone();
+            let fc = field.clone();
+            let fmc = fmodel.clone();
+            let mc = model.clone();
+            let tc = treeiter.clone();
+            gtk::idle_add(move || {
+                idle_make_parents_visible_from_search(
+                    sc.clone(),
+                    fc.clone(),
+                    tc.clone(),
+                    fmc.clone(),
+                    mc.clone(),
+                )
             });
         }
     }
