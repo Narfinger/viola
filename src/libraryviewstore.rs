@@ -182,14 +182,10 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
 fn idle_make_parents_visible_from_search(s: Rc<String>,
     field: Rc<gtk::SearchEntry>,
     treeiter: Rc<gtk::TreeIter>,
-    fmodel: Rc<gtk::TreeModelFilter>,
     model: Rc<gtk::TreeStore>,
 ) -> gtk::Continue {
     let visible: &gtk::Value = &true.to_value();
     //let invisible: &gtk::Value = &false.to_value();
-
-
-    return gtk::Continue(false);
 
     // abort if another thread is running
     if *s != field.get_text().unwrap().to_lowercase() {
@@ -200,14 +196,13 @@ fn idle_make_parents_visible_from_search(s: Rc<String>,
         //);
         return gtk::Continue(false);
     }
-    
     //Setting parents visible after we gone through it all.
     //This needs to be after because it interfers otherwise with the already visible set parents
     if model.get_value(&treeiter, 3).get::<bool>().unwrap() {
         let mut itt = (*treeiter).clone();  //make a new iterator because we will modify it
         let mut check_more_parents = true;
         while check_more_parents {
-            let parent = model.iter_parent(&treeiter);
+            let parent = model.iter_parent(&itt);
             model.set_value(&itt, 3, visible);
             //let v = model.get_value(&it, 1).get::<String>().unwrap();
             //println!("Doing parents {}", v);
@@ -266,7 +261,7 @@ fn idle_search_changed(
                                         .iter_parent(&pit)
                                         .and_then(|ppit| model.get_value(&ppit,3).get::<bool>()));
 
-            (parent == Some(true)) & (pparent == Some(true))
+            (parent == Some(true)) | (pparent == Some(true))
         };
 
         if val == Some(true) {
@@ -283,6 +278,7 @@ fn idle_search_changed(
 
     // check the children if they exist
     {
+        let olditer = Rc::new((*treeiter).clone());
         let it = (*treeiter).clone();
         if let Some(child_iter) = model.iter_children(Some(&it)) {
             let ci = Rc::new(child_iter);
@@ -298,15 +294,13 @@ fn idle_search_changed(
             //if we do not find a valid next, this means we are at the end of the iterator and gone through all the elements
             let sc = s.clone();
             let fc = field.clone();
-            let fmc = fmodel.clone();
             let mc = model.clone();
-            let tc = treeiter.clone();
+            let tc = olditer.clone();
             gtk::idle_add(move || {
                 idle_make_parents_visible_from_search(
                     sc.clone(),
                     fc.clone(),
                     tc.clone(),
-                    fmc.clone(),
                     mc.clone(),
                 )
             });
