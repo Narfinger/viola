@@ -189,30 +189,49 @@ fn idle_make_parents_visible_from_search(s: Rc<String>,
 
     // abort if another thread is running
     if *s != field.get_text().unwrap().to_lowercase() {
-        //println!(
-        //    "Killing this search thread because {:?}, {:?}",
-        //    *s,
-        //    field.get_text().unwrap()
-        //);
         return gtk::Continue(false);
     }
-    //Setting parents visible after we gone through it all.
-    //This needs to be after because it interfers otherwise with the already visible set parents
-    if model.get_value(&treeiter, 3).get::<bool>().unwrap() {
-        let mut itt = (*treeiter).clone();  //make a new iterator because we will modify it
-        let mut check_more_parents = true;
-        while check_more_parents {
-            let parent = model.iter_parent(&itt);
-            model.set_value(&itt, 3, visible);
-            //let v = model.get_value(&it, 1).get::<String>().unwrap();
-            //println!("Doing parents {}", v);
-            if let Some(parent) = parent {
-                check_more_parents = true;
-                itt = parent;
-            } else {
-                check_more_parents = false;
-            }
-        }
+    let mut parent = model.iter_parent(&treeiter);  //make a new iterator because we will modify it
+    while let Some(p) = parent {
+        model.set_value(&p, 3, visible);
+        parent = model.iter_parent(&p);
+    }
+    gtk::Continue(false)
+}
+
+fn idle_make_children_visible_from_search(s: Rc<String>,
+    field: Rc<gtk::SearchEntry>,
+    treeiter: Rc<gtk::TreeIter>,
+    model: Rc<gtk::TreeStore>,
+) -> gtk::Continue {
+    let visible: &gtk::Value = &true.to_value();
+    //let invisible: &gtk::Value = &false.to_value();
+
+    // abort if another thread is running
+    if *s != field.get_text().unwrap().to_lowercase() {
+        return gtk::Continue(false);
+    }
+
+    let current_tree = (*treeiter).clone();  //make a new iterator because we will modify it
+    let mut child_iterator = model.iter_children(&current_tree);
+    while let Some(child) = child_iterator {
+        model.set_value(&child, 3, visible);
+
+        //recursively
+        {
+            let childcopy = Rc::new(child.clone());
+            let sc = s.clone();
+            let fc = field.clone();
+            let mc = model.clone();
+            gtk::idle_add(move || {
+                idle_make_children_visible_from_search(sc.clone(), fc.clone(), childcopy.clone(), mc.clone())
+            });
+        }        
+        child_iterator = if model.iter_next(&child) {
+            Some(child)
+        } else {
+            None
+        };
     }
     gtk::Continue(false)
 }
@@ -246,65 +265,62 @@ fn idle_search_changed(
             .get_value(&treeiter, 1)
             .get::<String>()
             .map(|v| v.to_lowercase().contains(&*s));
-        //println!("Looking at: {:?}, {:?}, {:?}", model.get_value(&treeiter, 1).get::<String>(), val, s);
-        let parent_visible = {
-            let it = (*treeiter).clone();
-            
-            //is parent visible?
-            let parent = model
-                        .iter_parent(&it)
-                        .and_then(|pit| model.get_value(&pit, 3).get::<bool>());
-            //is parent of parent visible?
-            let pparent = model
-                        .iter_parent(&it)
-                        .and_then(|pit| model
-                                        .iter_parent(&pit)
-                                        .and_then(|ppit| model.get_value(&ppit,3).get::<bool>()));
-
-            (parent == Some(true)) | (pparent == Some(true))
-        };
 
         if val == Some(true) {
             model.set_value(&treeiter, 3, visible);
-        } else if parent_visible {
-            model.set_value(&treeiter, 3, visible);
-        } else {
+            {   //parents visible
+                let sc = s.clone();
+                let fc = field.clone();
+                let mc = model.clone();
+                let tc = Rc::new((*treeiter).clone());
+                gtk::idle_add(move || {
+                    idle_make_parents_visible_from_search(
+                        sc.clone(),
+                        fc.clone(),
+                        tc.clone(),
+                        mc.clone(),
+                    )
+                });
+            }
+            {   //childrens visible
+                let sc = s.clone();
+                let fc = field.clone();
+                let mc = model.clone();
+                let tc = Rc::new((*treeiter).clone());
+                gtk::idle_add(move || {
+                    idle_make_children_visible_from_search(
+                        sc.clone(),
+                        fc.clone(),
+                        tc.clone(),
+                        mc.clone(),
+                    )
+                });
+            }
+        } else { //if we are not matched now, we might match a child, so go into children
             model.set_value(&treeiter, 3, invisible);
+            let itt = (*treeiter).clone();
+            if let Some(c) = model.iter_children(Some(&itt)) {
+                let cc = Rc::new(c);
+                let sc = s.clone();
+                let fc = field.clone();
+                let fmc = fmodel.clone();
+                let mc = model.clone();
+                gtk::idle_add(move || {
+                    idle_search_changed(sc.clone(), fc.clone(), cc.clone(), fmc.clone(), mc.clone())
+                });
+            }
         }
-
     } else {
         model.set_value(&treeiter, 3, visible);
-    }
-
-    // check the children if they exist
-    {
-        let olditer = Rc::new((*treeiter).clone());
-        let it = (*treeiter).clone();
-        if let Some(child_iter) = model.iter_children(Some(&it)) {
-            let ci = Rc::new(child_iter);
-            let sc = s.clone();
-            let fc = field.clone();
-            let fmc = fmodel.clone();
-            let mc = model.clone();
-            gtk::idle_add(move || {
-                idle_search_changed(sc.clone(), fc.clone(), ci.clone(), fmc.clone(), mc.clone())
-            });
-        } else {
-            //now we need to enable the parents we might have made invisible
-            //if we do not find a valid next, this means we are at the end of the iterator and gone through all the elements
-            let sc = s.clone();
-            let fc = field.clone();
-            let mc = model.clone();
-            let tc = olditer.clone();
-            gtk::idle_add(move || {
-                idle_make_parents_visible_from_search(
-                    sc.clone(),
-                    fc.clone(),
-                    tc.clone(),
-                    mc.clone(),
-                )
-            });
-        }
+        
+        //set everything to visible
+        let it = Rc::new((*treeiter).clone());
+        let sc = s.clone();
+        let fc = field.clone();
+        let mc = model.clone();
+        gtk::idle_add(move || {
+            idle_make_children_visible_from_search(sc.clone(), fc.clone(), it.clone(), mc.clone())
+        });
     }
 
     // model.iter_next can return false, if that we do not spawn a new thread
