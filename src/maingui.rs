@@ -91,9 +91,15 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
 
     {
         let gc = g.clone();
-
         g.notebook.connect_switch_page(move |_, _, index| {
             gc.page_changed(index);
+        });
+    }
+
+    {
+        let gc = g.clone();
+        g.notebook.connect_page_removed(move |_, _widget, index| {
+            gc.delete_page(index);
         });
     }
 
@@ -301,10 +307,11 @@ impl MainGuiPtrExt for MainGuiPtr {
         let index = self.notebook.append_page(&scw, Some(&b));
         b.show_all();
         scw.show_all();
-
         {
             let s = self.clone();
-            button.connect_clicked(move |_| s.delete_page(index));
+            // the deletion of the data structures behind it happens in the remove signal of gtknotebook
+            // this just deletes the notebook page itself
+            button.connect_clicked(move |_| s.notebook.remove_page(Some(index)));
         }
 
         (*self.playlist_tabs).borrow_mut().add_tab(tab);

@@ -142,6 +142,18 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
     info!("done");
 }
 
+pub fn clear_all(pool: &DBPool) {
+    use diesel;
+    use diesel::{ExpressionMethods, RunQueryDsl};
+    use schema;
+    use schema::playlists::dsl::*;
+    use schema::playlisttracks::dsl::*;
+
+    let db = pool.get().unwrap();
+    diesel::delete(playlists).execute(&db).expect("Error in cleaning playlists");
+    diesel::delete(playlisttracks).execute(&db).expect("Error in cleaning playlisttracks");
+}
+
 pub fn delete_with_id(pool: &DBPool, index: i32) {
     use diesel;
     use diesel::{ExpressionMethods, RunQueryDsl};
