@@ -1,5 +1,4 @@
 use app_dirs::*;
-use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::SqliteConnection;
 use gstreamer::Element;
 use gtk::Builder;
@@ -26,7 +25,7 @@ pub type BuilderPtr = Arc<RwLock<Builder>>;
 pub type GstreamerPipeline = Arc<RwLock<Element>>;
 pub type MainGuiPtr = Rc<MainGui>;
 pub type MainGuiWeakPtr = Weak<MainGui>;
-pub type DBPool = Pool<ConnectionManager<SqliteConnection>>;
+pub type DBPool = Rc<SqliteConnection>;
 pub type PlaylistTabsPtr = Rc<RefCell<PlaylistTabs>>;
 
 pub enum PlayerStatus {

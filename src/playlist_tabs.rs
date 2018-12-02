@@ -4,7 +4,7 @@ use gtk::prelude::*;
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
-use std::fmt;
+use diesel::Connection;
 
 use db;
 use loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
@@ -306,9 +306,16 @@ impl PlaylistTabsExt for PlaylistTabs {
         self.tabs[self.current_playlist.unwrap()].lp.items = items;
     }
 
-    fn save(&self, pool: &DBPool) {
-        for lp in &self.tabs {
-            playlist::update_playlist(pool, &lp.lp);
+    fn save(&self, db: &DBPool) {
+        let result = db.transaction::<_, diesel::result::Error, _>(|| {
+            for lp in &self.tabs {
+                playlist::update_playlist(db, &lp.lp)?;
+            }
+            Ok(())
+        });
+
+        if result.is_err() {
+            warn!("Error in saving the playlists");
         }
     }
 }

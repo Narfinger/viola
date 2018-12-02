@@ -4,6 +4,7 @@ use preferences::prefs_base_dir;
 use rand::{thread_rng, Rng};
 use schema::tracks::dsl::*;
 use std::fs;
+use std::ops::Deref;
 use toml;
 
 use db::Track;
@@ -108,14 +109,13 @@ use diesel::debug_query;
 impl LoadSmartPlaylist for SmartPlaylist {
     /// This is kind of weird because we need to construct the vector instead of the query.
     /// I would love to use union of queries but it doesn't seem to work in diesel
-    fn load(&self, pool: &DBPool) -> LoadedPlaylist {
+    fn load(&self, db: &DBPool) -> LoadedPlaylist {
         use db::Track;
         use diesel::{ExpressionMethods, TextExpressionMethods};
 
         let basic: Vec<Track> = if self.include_query.is_empty() {
-            let db = pool.get().expect("DB Error");
             tracks
-                .load(&db)
+                .load(db.deref())
                 .expect("Error in loading smart playlist")
         } else {
             self
@@ -127,34 +127,30 @@ impl LoadSmartPlaylist for SmartPlaylist {
                     for value in v {
                         s = s.or_filter(artist.eq(value));
                     }
-                    let db = pool.get().expect("DB Error");
                     //println!("Query ArtistInclude: {:?}", debug_query(&s));
-                    s.load(&db).expect("Error in loading smart playlist")
+                    s.load(db.deref()).expect("Error in loading smart playlist")
                 }
                 IncludeTag::Dir(v) => {
                     let mut s = tracks.into_boxed::<Sqlite>();
                     for value in v {
                         s = s.or_filter(path.like(String::from("%") + &value + "%"));
                     }
-                    let db = pool.get().expect("DB Error");
                     //println!("Query DirInclude: {:?}", debug_query(&s));
-                    s.load(&db).expect("Error in loading smart playlist")
+                    s.load(db.deref()).expect("Error in loading smart playlist")
                 }
                 IncludeTag::Genre(v) => {
                     let mut s = tracks.into_boxed::<Sqlite>();
                     for value in v {
                         s = s.or_filter(genre.eq(value));
                     }
-                    let db = pool.get().expect("DB Error");
                     //println!("Query GenreInclude: {:?}", debug_query(&s));
-                    s.load(&db).expect("Error in loading smart playlist")
+                    s.load(db.deref()).expect("Error in loading smart playlist")
                 }
                 IncludeTag::PlayCount(v) => {
                     let mut s = tracks.into_boxed::<Sqlite>();
                     s = s.or_filter(playcount.ge(v));   
                     
-                    let db = pool.get().expect("DB Error");
-                    s.load(&db).expect("Error in loading smart playlist")
+                    s.load(db.deref()).expect("Error in loading smart playlist")
                 }
             }).flat_map(|v| v.into_iter())
             .collect::<Vec<Track>>()

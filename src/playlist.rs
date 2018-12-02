@@ -63,45 +63,41 @@ fn create_loaded_from_playlist(
     })
 }
 
-pub fn restore_playlists(pool: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::result::Error> {
+pub fn restore_playlists(db: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::result::Error> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     use schema::playlists::dsl::*;
     use schema::playlisttracks::dsl::*;
     use schema::tracks::dsl::*;
 
-    let db = pool.get().unwrap();
-    let pls = playlists.load::<Playlist>(&db)?;
+    let pls = playlists.load::<Playlist>(db.deref())?;
     pls.iter()
         .map(|pl| {
             let t: Vec<(Track, PlaylistTrack)> = tracks
                 .inner_join(playlisttracks)
                 .filter(playlist_id.eq(pl.id))
-                .load(&db)?;
+                .load(db.deref())?;
 
             create_loaded_from_playlist(pl, &t)
         }).collect()
 }
 
-pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
+pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::result::Error> {
     use diesel;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     use schema::playlists::dsl::*;
     use schema::playlisttracks::dsl::*;
 
-    let db = pool.get().unwrap();
     if let Some(id) = pl.id {
         // the playlist is already in the database
         diesel::update(playlists.find(id))
             .set(current_position.eq(pl.current_position))
-            .execute(&db)
-            .expect("Error in playlist update");
+            .execute(db.deref())?;
     }
 
     let playlist: Playlist = if let Some(id) = pl.id {
         playlists
             .find(id)
-            .first::<Playlist>(&db)
-            .expect("DB Error")
+            .first::<Playlist>(db.deref())?
     } else {
         let t = vec![NewPlaylist {
             name: pl.name.clone(),
@@ -109,19 +105,17 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
         }];
         diesel::insert_into(playlists)
             .values(&t)
-            .execute(db.deref())
-            .expect("Database error");
+            .execute(db.deref())?;
         playlists
             .filter(name.eq(&pl.name))
-            .first(&db)
-            .expect("DB Erorr")
+            .first(db.deref())?
     };
 
     //deleting old tracks
     diesel::delete(playlisttracks)
         .filter(playlist_id.eq(playlist.id))
-        .execute(&db)
-        .expect("Error in database deletion");
+        .execute(db.deref())?;
+
     //inserting new tracks
 
     info!("starting to gather");
@@ -137,42 +131,40 @@ pub fn update_playlist(pool: &DBPool, pl: &LoadedPlaylist) {
     info!("collected and inserting");
     diesel::insert_into(playlisttracks)
         .values(&vals)
-        .execute(db.deref())
-        .expect("Database error");
+        .execute(db.deref())?;
     info!("done");
+
+    Ok(())
 }
 
-pub fn clear_all(pool: &DBPool) {
+pub fn clear_all(db: &DBPool) {
+    use diesel;
+    use diesel::RunQueryDsl;
+    use schema::playlists::dsl::*;
+    use schema::playlisttracks::dsl::*;
+
+    diesel::delete(playlists).execute(db.deref()).expect("Error in cleaning playlists");
+    diesel::delete(playlisttracks).execute(db.deref()).expect("Error in cleaning playlisttracks");
+}
+
+pub fn delete_with_id(db: &DBPool, index: i32) {
     use diesel;
     use diesel::{ExpressionMethods, RunQueryDsl};
     use schema;
     use schema::playlists::dsl::*;
     use schema::playlisttracks::dsl::*;
 
-    let db = pool.get().unwrap();
-    diesel::delete(playlists).execute(&db).expect("Error in cleaning playlists");
-    diesel::delete(playlisttracks).execute(&db).expect("Error in cleaning playlisttracks");
-}
-
-pub fn delete_with_id(pool: &DBPool, index: i32) {
-    use diesel;
-    use diesel::{ExpressionMethods, RunQueryDsl};
-    use schema;
-    use schema::playlists::dsl::*;
-    use schema::playlisttracks::dsl::*;
-
-    let db = pool.get().unwrap();
-
+    
     info!("index for deleting: {}", index);
 
     diesel::delete(playlists)
         .filter(schema::playlists::dsl::id.eq(index))
-        .execute(&db)
+        .execute(db.deref())
         .expect("Error in database deletion");
 
     diesel::delete(playlisttracks)
         .filter(playlist_id.eq(index))
-        .execute(&db)
+        .execute(db.deref())
         .expect("Error in database deletion");
 }
 

@@ -7,6 +7,7 @@ use serde_json;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::string::String;
+use std::ops::Deref;
 
 use maingui::{MainGuiExt, MainGuiPtrExt};
 use types::*;
@@ -35,7 +36,7 @@ impl From<i32> for LibraryLoadType {
     }
 }
 
-fn idle_fill<I>(pool: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> gtk::Continue
+fn idle_fill<I>(db: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> gtk::Continue
 where
     I: Iterator<Item = String>,
 {
@@ -47,7 +48,6 @@ where
 
     //panic!("does not work yet, iterator gets not changes");
     if let Some(a) = ats.borrow_mut().next() {
-        let db = pool.get().unwrap();
         let st: String = a.chars().take(20).collect::<String>() + "..";
         {
             let albums: Vec<(String, Option<i32>)> = tracks
@@ -55,7 +55,7 @@ where
                 .order(year)
                 .filter(artist.like(String::from("%") + &a + "%"))
                 .group_by(album)
-                .load(&db)
+                .load(db.deref())
                 .expect("Error in db connection");
             let artist_node = model.insert_with_values(
                 None,
@@ -84,7 +84,7 @@ where
                         .order(tracknumber)
                         .filter(artist.like(String::from("%") + &a + "%"))
                         .filter(album.eq(ab))
-                        .load(&db)
+                        .load(db.deref())
                         .expect("Error in db connection");
                     for t in ts {
                         model.insert_with_values(
@@ -104,14 +104,14 @@ where
     }
 }
 
-pub fn new(pool: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
+pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use schema::tracks::dsl::*;
 
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
     // setup drag drop
     {
-        let pc = pool.clone();
+        let dbc = db.clone();
         let targets = vec![gtk::TargetEntry::new(
             "text/plain",
             gtk::TargetFlags::SAME_APP,
@@ -123,7 +123,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
             gdk::DragAction::COPY,
         );
         libview.connect_drag_data_get(move |w, _, s, _, _| {
-            let (_, t) = get_tracks_for_selection(&pc, &w).expect("Could not get tracks");
+            let (_, t) = get_tracks_for_selection(&dbc, &w).expect("Could not get tracks");
             let data = serde_json::to_string(&t).expect("Error in formating drop data");
             s.set_text(&data);
         });
@@ -157,38 +157,37 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
 
     libview.set_model(Some(&fmodel));
 
-    let db = pool.get().unwrap();
     let artists: Vec<String> = tracks
         .select(artist)
         .order(artist)
         .group_by(artist)
         .filter(artist.not_like(String::from("%") + "feat" + "%"))
         .filter(artist.ne(""))
-        .load(&db)
+        .load(db.deref())
         .expect("Error in db connection");
 
     {
-        let pc = pool.clone();
+        let dbc = db.clone();
         let guic = gui.clone();
-        libview.connect_event_after(move |s, e| signalhandler(&pc, &guic, s, e));
+        libview.connect_event_after(move |s, e| signalhandler(&dbc, &guic, s, e));
     }
     let refcell = Rc::new(RefCell::new(artists.into_iter()));
     {
-        let pc = pool.clone();
-        gtk::idle_add(move || idle_fill(&pc, &refcell, &model));
+        let dbc = db.clone();
+        gtk::idle_add(move || idle_fill(&dbc, &refcell, &model));
     }
 }
 
-fn idle_make_parents_visible_from_search(s: Rc<String>,
-    field: Rc<gtk::SearchEntry>,
-    treeiter: Rc<gtk::TreeIter>,
-    model: Rc<gtk::TreeStore>,
+fn idle_make_parents_visible_from_search(s: &Rc<String>,
+    field: &Rc<gtk::SearchEntry>,
+    treeiter: &Rc<gtk::TreeIter>,
+    model: &Rc<gtk::TreeStore>,
 ) -> gtk::Continue {
     let visible: &gtk::Value = &true.to_value();
     //let invisible: &gtk::Value = &false.to_value();
 
     // abort if another thread is running
-    if *s != field.get_text().unwrap().to_lowercase() {
+    if s.deref() != &field.get_text().unwrap().to_lowercase() {
         return gtk::Continue(false);
     }
     let mut parent = model.iter_parent(&treeiter);  //make a new iterator because we will modify it
@@ -199,20 +198,20 @@ fn idle_make_parents_visible_from_search(s: Rc<String>,
     gtk::Continue(false)
 }
 
-fn idle_make_children_visible_from_search(s: Rc<String>,
-    field: Rc<gtk::SearchEntry>,
-    treeiter: Rc<gtk::TreeIter>,
-    model: Rc<gtk::TreeStore>,
+fn idle_make_children_visible_from_search(s: &Rc<String>,
+    field: &Rc<gtk::SearchEntry>,
+    treeiter: &Rc<gtk::TreeIter>,
+    model: &Rc<gtk::TreeStore>,
 ) -> gtk::Continue {
     let visible: &gtk::Value = &true.to_value();
     //let invisible: &gtk::Value = &false.to_value();
 
     // abort if another thread is running
-    if *s != field.get_text().unwrap().to_lowercase() {
+    if s.deref() != &field.get_text().unwrap().to_lowercase() {
         return gtk::Continue(false);
     }
 
-    let current_tree = (*treeiter).clone();  //make a new iterator because we will modify it
+    let current_tree = (*treeiter.deref()).clone();  //make a new iterator because we will modify it
     let mut child_iterator = model.iter_children(&current_tree);
     while let Some(child) = child_iterator {
         model.set_value(&child, 3, visible);
@@ -224,7 +223,7 @@ fn idle_make_children_visible_from_search(s: Rc<String>,
             let fc = field.clone();
             let mc = model.clone();
             gtk::idle_add(move || {
-                idle_make_children_visible_from_search(sc.clone(), fc.clone(), childcopy.clone(), mc.clone())
+                idle_make_children_visible_from_search(&sc, &fc, &childcopy, &mc)
             });
         }        
         child_iterator = if model.iter_next(&child) {
@@ -275,10 +274,10 @@ fn idle_search_changed(
                 let tc = Rc::new((*treeiter).clone());
                 gtk::idle_add(move || {
                     idle_make_parents_visible_from_search(
-                        sc.clone(),
-                        fc.clone(),
-                        tc.clone(),
-                        mc.clone(),
+                        &sc.clone(),
+                        &fc.clone(),
+                        &tc.clone(),
+                        &mc.clone(),
                     )
                 });
             }
@@ -289,10 +288,10 @@ fn idle_search_changed(
                 let tc = Rc::new((*treeiter).clone());
                 gtk::idle_add(move || {
                     idle_make_children_visible_from_search(
-                        sc.clone(),
-                        fc.clone(),
-                        tc.clone(),
-                        mc.clone(),
+                        &sc,
+                        &fc,
+                        &tc,
+                        &mc,
                     )
                 });
             }
@@ -319,7 +318,7 @@ fn idle_search_changed(
         let fc = field.clone();
         let mc = model.clone();
         gtk::idle_add(move || {
-            idle_make_children_visible_from_search(sc.clone(), fc.clone(), it.clone(), mc.clone())
+            idle_make_children_visible_from_search(&sc, &fc, &it, &mc)
         });
     }
 
@@ -390,7 +389,7 @@ fn get_model_and_iter_for_selection(tv: &gtk::TreeView) -> (gtk::TreeStore, gtk:
 }
 
 fn get_tracks_for_selection(
-    pool: &DBPool,
+    db: &DBPool,
     tv: &gtk::TreeView,
 ) -> Result<(String, Vec<Track>), String> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, TextExpressionMethods};
@@ -400,7 +399,6 @@ fn get_tracks_for_selection(
 
     info!("Iter depth: {}", m.iter_depth(&iter));
 
-    let db = pool.get().expect("DB problem");
     let query = tracks.order(path).into_boxed();
     if m.iter_depth(&iter) == 0 {
         let artist_name = m.get_value(&iter, 1).get::<String>().unwrap();
@@ -409,7 +407,7 @@ fn get_tracks_for_selection(
             artist_name.clone(),
             query
                 .filter(artist.like(String::from("%") + &artist_name + "%"))
-                .load(&db)
+                .load(db.deref())
                 .expect("Error in query"),
         ))
     } else if m.iter_depth(&iter) == 1 {
@@ -427,7 +425,7 @@ fn get_tracks_for_selection(
             query
                 .filter(artist.like(String::from("%") + &artist_name + "%"))
                 .filter(album.eq(album_name))
-                .load(&db)
+                .load(db.deref())
                 .expect("Error in query"),
         ))
     } else if m.iter_depth(&iter) == 2 {
@@ -447,7 +445,7 @@ fn get_tracks_for_selection(
                 .filter(artist.like(String::from("%") + &artist_name + "%"))
                 .filter(album.eq(album_name))
                 .filter(title.eq(track_name))
-                .load(&db)
+                .load(db.deref())
                 .expect("Error in query"),
         ))
     } else {

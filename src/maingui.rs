@@ -184,7 +184,7 @@ impl MainGuiExt for MainGui {
                     }
                     self.elapsed_label.set_text("0:00");
                     self.total_label.set_text(&format_duration(track.length as u64, track.length as u64));
-                    self.time_scale.set_range(0 as f64, track.length as f64);
+                    self.time_scale.set_range(f64::from(0), f64::from(track.length));
 
                     //highlight row
                     let pos = self.playlist_tabs.borrow().current_position();

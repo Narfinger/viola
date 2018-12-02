@@ -1,11 +1,13 @@
 use app_dirs::*;
 use diesel;
-use diesel::r2d2;
+use diesel::{Connection, SqliteConnection};
+use std::rc::Rc;
 use indicatif::{ProgressBar, ProgressStyle};
 use schema::tracks;
 use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::path::Path;
+use std::ops::Deref;
 use taglib;
 use types::{DBPool, APP_INFO};
 use walkdir;
@@ -43,12 +45,7 @@ pub fn setup_db_connection() -> DBPool {
     let mut db_file =
         get_app_root(AppDataType::UserConfig, &APP_INFO).expect("Could not get app root");
     db_file.push("music.db");
-    let manager = diesel::r2d2::ConnectionManager::<diesel::SqliteConnection>::new(
-        db_file.to_str().expect("Error in converting string"),
-    );
-    r2d2::Pool::builder()
-        .build(manager)
-        .expect("Failed to create pool.")
+    Rc::new(SqliteConnection::establish(&db_file.to_str().unwrap()).expect("Could not open database"))
 }
 
 fn check_file(s: &Result<walkdir::DirEntry, walkdir::Error>) -> bool {
@@ -125,16 +122,14 @@ fn tags_equal(nt: &NewTrack, ot: &Track) -> bool {
         && nt.albumpath == ot.albumpath
 }
 
-fn insert_track(s: &str, pool: &DBPool) -> Result<(), String> {
+fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
     use schema::tracks::dsl::*;
-
-    let db = pool.get().unwrap();
 
     let new_track = construct_track_from_path(s)?;
     let old_track_perhaps = tracks
         .filter(path.eq(&new_track.path))
-        .get_result::<Track>(&db);
+        .get_result::<Track>(db.deref());
 
     if let Ok(mut old_track) = old_track_perhaps {
         if tags_equal(&new_track, &old_track) {
@@ -157,13 +152,13 @@ fn insert_track(s: &str, pool: &DBPool) -> Result<(), String> {
     } else {
         diesel::insert_into(tracks)
             .values(&new_track)
-            .execute(&db)
+            .execute(db.deref())
             .map(|_| ())
             .map_err(|err| format!("Insertion Error for track {}, See full: {:?}", s, err))
     }
 }
 
-pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
+pub fn build_db(path: &str, db: &DBPool) -> Result<(), String> {
     let files = walkdir::WalkDir::new(&path)
         .into_iter()
         .filter(check_file)
@@ -176,14 +171,13 @@ pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
         .map(|i| String::from(i.unwrap().path().to_str().unwrap()))
         .count();
 
-    let db = pool.get().unwrap();
     {
         use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
         use schema::tracks::dsl::*;
         let old_files: HashSet<String> = HashSet::from_iter(
             tracks
                 .select(path)
-                .load(&db)
+                .load(db.deref())
                 .expect("Error in loading old files"),
         );
 
@@ -195,7 +189,7 @@ pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
                                   .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7} ({percent}%)")
                                   .progress_chars("#>-"));
             let res = pb
-                .wrap_iter(files.iter().map(|s| insert_track(s, pool)))
+                .wrap_iter(files.iter().map(|s| insert_track(s, db)))
                 .collect::<Result<(), String>>();
             pb.finish_with_message("Done Updating");
 
@@ -222,7 +216,7 @@ pub fn build_db(path: &str, pool: &DBPool) -> Result<(), String> {
                 //println!("to delete: {}", i);
                 diesel::delete(tracks)
                     .filter(path.eq(i))
-                    .execute(&db)
+                    .execute(db.deref())
                     .unwrap_or_else(|_| {
                         panic!("Error in deleting outdated database entries: {}", &i)
                     });

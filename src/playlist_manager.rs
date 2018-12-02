@@ -5,6 +5,7 @@ use loaded_playlist::LoadedPlaylist;
 use smartplaylist_parser;
 use smartplaylist_parser::{LoadSmartPlaylist, SmartPlaylist};
 use std::string::String;
+use std::ops::Deref;
 
 use maingui::MainGuiPtrExt;
 use types::*;
@@ -58,16 +59,15 @@ fn signalhandler(
     }
 }
 
-fn add_playlist(pool: &DBPool, sm: &[SmartPlaylist], index: i32) -> LoadedPlaylist {
+fn add_playlist(db: &DBPool, sm: &[SmartPlaylist], index: i32) -> LoadedPlaylist {
     use diesel::{QueryDsl, RunQueryDsl};
     use schema::tracks::dsl::*;
 
     info!("You selected index: {}", index);
     if index == 0 {
-        let db = pool.get().expect("DB problem");
         let results = tracks
             .order(path)
-            .load(&db)
+            .load(db.deref())
             .expect("Problem loading playlist");
 
         LoadedPlaylist {
@@ -78,6 +78,6 @@ fn add_playlist(pool: &DBPool, sm: &[SmartPlaylist], index: i32) -> LoadedPlayli
         }
     } else {
         let i = index - 1 as i32;
-        sm[i as usize].load(pool)
+        sm[i as usize].load(db)
     }
 }

@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::ops::Deref;
 use gtk;
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
@@ -88,12 +89,12 @@ impl PlaylistControls for LoadedPlaylist {
     }
 }
 
-fn update_playcount(t_id: i32, pool: &DBPool) -> gtk::Continue {
+fn update_playcount(t_id: i32, db: &DBPool) -> gtk::Continue {
     use schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
-    let db = pool.get().unwrap();
 
-    if let Ok(mut track) = tracks.filter(id.eq(t_id)).first::<Track>(&db) {
+
+    if let Ok(mut track) = tracks.filter(id.eq(t_id)).first::<Track>(db.deref()) {
         track.playcount = Some(1 + track.playcount.unwrap_or(0));
         if track.save_changes::<Track>(&db).is_err() {
             error!("Some problem with updating play status (cannot update)");
