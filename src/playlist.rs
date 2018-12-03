@@ -31,7 +31,7 @@ pub struct PlaylistTrack {
     playlist_order: i32,
 }
 
-#[derive(Insertable, Associations)]
+#[derive(Debug, Insertable, Associations)]
 #[table_name = "playlisttracks"]
 struct NewPlaylistTrack {
     playlist_id: i32,
@@ -129,6 +129,7 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
             playlist_order: index as i32,
         }).collect::<Vec<NewPlaylistTrack>>();
     info!("collected and inserting");
+    info!("All values {:?}", vals);
     diesel::insert_into(playlisttracks)
         .values(&vals)
         .execute(db.deref())?;

@@ -314,8 +314,8 @@ impl PlaylistTabsExt for PlaylistTabs {
             Ok(())
         });
 
-        if result.is_err() {
-            warn!("Error in saving the playlists");
+        if let Err(e) = result {
+            error!("Error in saving the playlists {:?}", e);
         }
     }
 }
