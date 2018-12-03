@@ -4,6 +4,7 @@ use gdk;
 use gdk_pixbuf;
 use gtk;
 use gtk::prelude::*;
+
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -100,6 +101,13 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         let gc = g.clone();
         g.notebook.connect_page_removed(move |_, _widget, index| {
             gc.delete_page(index);
+        });
+    }
+
+    {   //notebook needs to not have any signals emitted because it deleted tabs sometimes
+        let gc = g.clone();
+        g.notebook.connect_destroy(move |_| {
+            gc.notebook.stop_signal_emission("delete_page");
         });
     }
 

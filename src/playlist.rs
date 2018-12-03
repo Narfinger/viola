@@ -87,6 +87,8 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
     use schema::playlists::dsl::*;
     use schema::playlisttracks::dsl::*;
 
+    info!("playlist id {:?}", pl.id);
+
     if let Some(id) = pl.id {
         // the playlist is already in the database
         diesel::update(playlists.find(id))
@@ -155,7 +157,7 @@ pub fn delete_with_id(db: &DBPool, index: i32) {
     use schema::playlists::dsl::*;
     use schema::playlisttracks::dsl::*;
 
-    
+    panic!("this is called from somewhere");
     info!("index for deleting: {}", index);
 
     diesel::delete(playlists)
