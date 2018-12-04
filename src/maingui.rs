@@ -107,7 +107,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
     {   //notebook needs to not have any signals emitted because it deleted tabs sometimes
         let gc = g.clone();
         g.notebook.connect_destroy(move |_| {
-            gc.notebook.stop_signal_emission("delete_page");
+            gc.notebook.stop_signal_emission("delete-page");
         });
     }
 

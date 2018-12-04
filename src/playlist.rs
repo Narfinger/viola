@@ -157,7 +157,6 @@ pub fn delete_with_id(db: &DBPool, index: i32) {
     use schema::playlists::dsl::*;
     use schema::playlisttracks::dsl::*;
 
-    panic!("this is called from somewhere");
     info!("index for deleting: {}", index);
 
     diesel::delete(playlists)
