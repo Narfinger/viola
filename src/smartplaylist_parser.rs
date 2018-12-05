@@ -1,7 +1,7 @@
 use diesel::sqlite::Sqlite;
 use diesel::{QueryDsl, RunQueryDsl};
 use preferences::prefs_base_dir;
-use rand::{thread_rng, Rng};
+use rand::prelude::*;
 use schema::tracks::dsl::*;
 use std::fs;
 use std::ops::Deref;
@@ -167,7 +167,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
 
         if self.random {
             let mut rng = thread_rng();
-            rng.shuffle(&mut filtered);
+            filtered.shuffle(&mut rng);
         } else {
             filtered.sort_unstable_by(|u, v| u.path.cmp(&v.path));
         }

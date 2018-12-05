@@ -9,6 +9,7 @@ extern crate log;
 extern crate gdk;
 extern crate gdk_pixbuf;
 extern crate gio;
+extern crate glib;
 extern crate gstreamer;
 extern crate gtk;
 extern crate indicatif;

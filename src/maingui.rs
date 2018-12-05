@@ -2,6 +2,7 @@
 
 use gdk;
 use gdk_pixbuf;
+use glib;
 use gtk;
 use gtk::prelude::*;
 
@@ -97,19 +98,25 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         });
     }
 
-    {
-        let gc = g.clone();
-        g.notebook.connect_page_removed(move |_, _widget, index| {
-            gc.delete_page(index);
-        });
-    }
+    //signal handling in gtk-rs is really stupid
+    //let page_removed_signal_id = {
+    //    let gc = g.clone();
+    //    g.notebook.connect_page_removed(move |_, _widget, index| {
+    //        gc.delete_page(index);
+    //    })
+    //};
 
-    {   //notebook needs to not have any signals emitted because it deleted tabs sometimes
-        let gc = g.clone();
-        g.notebook.connect_destroy(move |_| {
-            gc.notebook.stop_signal_emission("delete-page");
-        });
-    }
+    //{   //notebook needs to not have any signals emitted because it deleted tabs sometimes
+    //    //we need to build an rc of it because the  
+    //    let gc = g.clone();
+    //    let id = page_removed_signal_id;
+    //    g.notebook.connect_destroy(move |_| {
+    //        glib::signal::signal_stop_emission_by_name(
+    //            &gc.notebook,
+    //            "page-removed"
+    //        );
+    //    });
+    //}
 
     g
 }
@@ -317,9 +324,16 @@ impl MainGuiPtrExt for MainGuiPtr {
         scw.show_all();
         {
             let s = self.clone();
-            // the deletion of the data structures behind it happens in the remove signal of gtknotebook
-            // this just deletes the notebook page itself
-            button.connect_clicked(move |_| s.notebook.remove_page(Some(index)));
+            // the deletion of the data structures needs to happen here because signals are complicated in gtk
+            // sometimes the notebook-page-removed signal happens on destruction of the guy
+            // in the current gtk-rs it is really difficult to block that signal from being emitted
+            button.connect_clicked(move |_| { 
+                s.notebook.remove_page(Some(index));
+                
+                //this deletes the data structure behind the playlist
+                s.delete_page(index);
+                
+            });
         }
 
         (*self.playlist_tabs).borrow_mut().add_tab(tab);
