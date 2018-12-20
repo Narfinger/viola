@@ -3,13 +3,13 @@ use diesel;
 use diesel::{Connection, SqliteConnection};
 use std::rc::Rc;
 use indicatif::{ProgressBar, ProgressStyle};
-use schema::tracks;
+use crate::schema::tracks;
 use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::path::Path;
 use std::ops::Deref;
 use taglib;
-use types::{DBPool, APP_INFO};
+use crate::types::{DBPool, APP_INFO};
 use walkdir;
 
 #[derive(AsChangeset, Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]
@@ -124,7 +124,7 @@ fn tags_equal(nt: &NewTrack, ot: &Track) -> bool {
 
 fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
-    use schema::tracks::dsl::*;
+    use crate::schema::tracks::dsl::*;
 
     let new_track = construct_track_from_path(s)?;
     let old_track_perhaps = tracks
@@ -173,7 +173,7 @@ pub fn build_db(path: &str, db: &DBPool) -> Result<(), String> {
 
     {
         use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
-        use schema::tracks::dsl::*;
+        use crate::schema::tracks::dsl::*;
         let old_files: HashSet<String> = HashSet::from_iter(
             tracks
                 .select(path)

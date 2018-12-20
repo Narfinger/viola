@@ -9,14 +9,14 @@ use gtk::prelude::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use db;
-use gstreamer_wrapper;
-use gstreamer_wrapper::{GStreamer, GStreamerAction, GStreamerExt};
-use loaded_playlist::LoadedPlaylist;
-use playlist;
-use playlist_tabs;
-use playlist_tabs::PlaylistTabsExt;
-use types::*;
+use crate::db;
+use crate::gstreamer_wrapper;
+use crate::gstreamer_wrapper::{GStreamer, GStreamerAction, GStreamerExt};
+use crate::loaded_playlist::LoadedPlaylist;
+use crate::playlist;
+use crate::playlist_tabs;
+use crate::playlist_tabs::PlaylistTabsExt;
+use crate::types::*;
 
 /// Gui is the main struct for calling things on the gui or in the gstreamer. It will take care that
 /// everything is the correct state. You should probably interface it with a GuiPtr.
@@ -126,13 +126,13 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
 pub trait MainGuiExt {
     //fn get_active_treeview(&self) -> &gtk::TreeView;
     fn clear_play_marker(&self);
-    fn update_gui(&self, &PlayerStatus); //does not need pipeline
-    fn set_playback(&self, &GStreamerAction);
-    fn change_time_scale(&self, f64);
-    fn append_to_playlist(&self, Vec<db::Track>);
-    fn replace_playlist(&self, Vec<db::Track>);
-    fn insert_tracks(&self, i32, Vec<db::Track>);
-    fn save(&self, &DBPool);
+    fn update_gui(&self, _: &PlayerStatus); //does not need pipeline
+    fn set_playback(&self, _: &GStreamerAction);
+    fn change_time_scale(&self, _: f64);
+    fn append_to_playlist(&self, _: Vec<db::Track>);
+    fn replace_playlist(&self, _: Vec<db::Track>);
+    fn insert_tracks(&self, _: i32, _: Vec<db::Track>);
+    fn save(&self, _: &DBPool);
 }
 
 impl MainGuiExt for MainGui {
@@ -290,10 +290,10 @@ fn format_duration(current_position: u64, total: u64) -> String {
 /// will generally setup a gtk callback. As gtk callbacks have a static lifetime, we need the lifetime guarantees
 /// of GuiPtr instead of just a reference.
 pub trait MainGuiPtrExt {
-    fn page_changed(&self, u32);
-    fn add_page(&self, LoadedPlaylist);
-    fn delete_page(&self, u32);
-    fn restore(&self, &DBPool);
+    fn page_changed(&self, _: u32);
+    fn add_page(&self, _: LoadedPlaylist);
+    fn delete_page(&self, _: u32);
+    fn restore(&self, _: &DBPool);
     fn signal_handler(self, tv: &gtk::TreeView, event: &gdk::Event) -> gtk::Inhibit;
 }
 
@@ -343,10 +343,9 @@ impl MainGuiPtrExt for MainGuiPtr {
         info!("deleting the page {}", index);
         let db_id = (*self.playlist_tabs).borrow().id(index as i32);
         let new_index = (*self.playlist_tabs).borrow_mut().remove_tab(index as i32);
-        self.notebook.remove_page(Some(index));
 
-        self.page_changed(new_index);
-        self.notebook.set_current_page(Some(new_index));
+        self.page_changed(0);
+        self.notebook.set_current_page(Some(0));
         //deleting in database
         if let Some(i) = db_id {
             playlist::delete_with_id(&self.pool, i as i32);

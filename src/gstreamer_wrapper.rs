@@ -5,9 +5,9 @@ use gtk::ObjectExt;
 use std::rc::Rc;
 use std::sync::mpsc::{channel, sync_channel, Receiver, Sender};
 
-use loaded_playlist::PlaylistControls;
-use playlist_tabs::PlaylistControlsImmutable;
-use types::*;
+use crate::loaded_playlist::PlaylistControls;
+use crate::playlist_tabs::PlaylistControlsImmutable;
+use crate::types::*;
 
 pub struct GStreamer {
     pipeline: gstreamer::Element,
@@ -94,7 +94,7 @@ pub enum GStreamerAction {
 }
 
 pub trait GStreamerExt {
-    fn do_gstreamer_action(&self, &GStreamerAction);
+    fn do_gstreamer_action(&self, _: &GStreamerAction);
     fn gstreamer_message_handler(&self) -> gtk::Continue;
 }
 

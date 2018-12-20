@@ -2,6 +2,7 @@
 name = "viola"
 version = "0.1.0"
 authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
+edition = "2018"
 
 [dependencies]
 app_dirs = "1.2"         # Put your app's data in the right place on every platform

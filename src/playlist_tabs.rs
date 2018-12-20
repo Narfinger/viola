@@ -6,11 +6,11 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use diesel::Connection;
 
-use db;
-use loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
-use maingui::MainGuiPtrExt;
-use playlist;
-use types::*;
+use crate::db;
+use crate::loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
+use crate::maingui::MainGuiPtrExt;
+use crate::playlist;
+use crate::types::*;
 
 #[derive(Clone, Debug)]
 pub struct PlaylistTab {
@@ -163,31 +163,31 @@ pub trait PlaylistTabsExt {
     fn current_position(&self) -> i32;
 
     /// gets the playlist id (if it exists)
-    fn id(&self, i32) -> Option<i32>;
+    fn id(&self, _: i32) -> Option<i32>;
 
     /// set the current playlist, used for changing tabs
-    fn set_current_playlist(&mut self, i32);
+    fn set_current_playlist(&mut self, _: i32);
 
     /// add a new tab
-    fn add_tab(&mut self, PlaylistTab);
+    fn add_tab(&mut self, _: PlaylistTab);
 
     /// remove the tab given by the index, returns 
-    fn remove_tab(&mut self, i32) -> u32;
+    fn remove_tab(&mut self, _: i32) -> u32;
 
     /// removes the items from the vector
-    fn remove_items(&mut self, gtk::TreeSelection);
+    fn remove_items(&mut self, _: gtk::TreeSelection);
 
     /// append the tracks to current playlists
-    fn append_to_playlist(&mut self, Vec<db::Track>);
+    fn append_to_playlist(&mut self, _: Vec<db::Track>);
 
     /// replaces all currents track in current playlist
-    fn replace_playlist(&mut self, Vec<db::Track>);
+    fn replace_playlist(&mut self, _: Vec<db::Track>);
 
     /// insert the tracks at the integer given
-    fn insert_tracks(&mut self, i32, Vec<db::Track>);
+    fn insert_tracks(&mut self, _: i32, _: Vec<db::Track>);
 
     /// saves the playlist tabs to the database
-    fn save(&self, &DBPool);
+    fn save(&self, _: &DBPool);
 }
 
 impl PlaylistTabsExt for PlaylistTabs {
@@ -352,8 +352,8 @@ pub trait PlaylistControlsImmutable {
     fn get_current_uri(&self) -> String;
     fn previous(&self) -> String;
     fn next(&self) -> String;
-    fn set(&self, i32) -> String;
-    fn next_or_eol(&self, &DBPool) -> Option<String>;
+    fn set(&self, _: i32) -> String;
+    fn next_or_eol(&self, _: &DBPool) -> Option<String>;
 }
 
 impl PlaylistControlsImmutable for PlaylistTabsPtr {

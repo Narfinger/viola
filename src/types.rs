@@ -7,9 +7,9 @@ use std::rc::{Rc, Weak};
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use gstreamer_wrapper::GStreamerMessage;
-use maingui::MainGui;
-use playlist_tabs::PlaylistTabs;
+use crate::gstreamer_wrapper::GStreamerMessage;
+use crate::maingui::MainGui;
+use crate::playlist_tabs::PlaylistTabs;
 
 pub const APP_INFO: AppInfo = AppInfo {
     name: "viola",

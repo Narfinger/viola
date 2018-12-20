@@ -1,16 +1,16 @@
-use db::Track;
+use crate::db::Track;
 use gdk;
 use gtk;
 use gtk::prelude::*;
-use loaded_playlist::LoadedPlaylist;
+use crate::loaded_playlist::LoadedPlaylist;
 use serde_json;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::string::String;
 use std::ops::Deref;
 
-use maingui::{MainGuiExt, MainGuiPtrExt};
-use types::*;
+use crate::maingui::{MainGuiExt, MainGuiPtrExt};
+use crate::types::*;
 
 pub struct LibraryView {}
 
@@ -41,7 +41,7 @@ where
     I: Iterator<Item = String>,
 {
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
-    use schema::tracks::dsl::*;
+    use crate::schema::tracks::dsl::*;
 
     ///TODO replace this with const fn
     let DEFAULT_VISIBILITY: &gtk::Value = &true.to_value();
@@ -106,7 +106,7 @@ where
 
 pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
-    use schema::tracks::dsl::*;
+    use crate::schema::tracks::dsl::*;
 
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
     // setup drag drop
@@ -393,7 +393,7 @@ fn get_tracks_for_selection(
     tv: &gtk::TreeView,
 ) -> Result<(String, Vec<Track>), String> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, TextExpressionMethods};
-    use schema::tracks::dsl::*;
+    use crate::schema::tracks::dsl::*;
 
     let (m, iter) = get_model_and_iter_for_selection(tv);
 

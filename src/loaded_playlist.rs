@@ -3,8 +3,8 @@ use std::ops::Deref;
 use gtk;
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
-use db::Track;
-use types::DBPool;
+use crate::db::Track;
+use crate::types::DBPool;
 
 #[derive(Clone, Debug)]
 pub struct LoadedPlaylist {
@@ -30,8 +30,8 @@ pub trait PlaylistControls {
     fn get_current_uri(&self) -> String;
     fn previous(&mut self) -> String;
     fn next(&mut self) -> String;
-    fn set(&mut self, i32) -> String;
-    fn next_or_eol(&mut self, &DBPool) -> Option<String>;
+    fn set(&mut self, _: i32) -> String;
+    fn next_or_eol(&mut self, _: &DBPool) -> Option<String>;
 }
 
 impl PlaylistControls for LoadedPlaylist {
@@ -90,7 +90,7 @@ impl PlaylistControls for LoadedPlaylist {
 }
 
 fn update_playcount(t_id: i32, db: &DBPool) -> gtk::Continue {
-    use schema::tracks::dsl::*;
+    use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
 
 

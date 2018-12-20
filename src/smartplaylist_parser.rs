@@ -2,14 +2,14 @@ use diesel::sqlite::Sqlite;
 use diesel::{QueryDsl, RunQueryDsl};
 use preferences::prefs_base_dir;
 use rand::prelude::*;
-use schema::tracks::dsl::*;
+use crate::schema::tracks::dsl::*;
 use std::fs;
 use std::ops::Deref;
 use toml;
 
-use db::Track;
-use loaded_playlist::LoadedPlaylist;
-use types::*;
+use crate::db::Track;
+use crate::loaded_playlist::LoadedPlaylist;
+use crate::types::*;
 
 #[derive(Debug)]
 pub struct SmartPlaylist {
@@ -96,7 +96,7 @@ fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
 }
 
 pub trait LoadSmartPlaylist {
-    fn load(&self, &DBPool) -> LoadedPlaylist;
+    fn load(&self, _: &DBPool) -> LoadedPlaylist;
 }
 
 fn matched_with_exclude(t: &Track, h: &[ExcludeTag]) -> bool {
@@ -110,7 +110,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
     /// This is kind of weird because we need to construct the vector instead of the query.
     /// I would love to use union of queries but it doesn't seem to work in diesel
     fn load(&self, db: &DBPool) -> LoadedPlaylist {
-        use db::Track;
+        use crate::db::Track;
         use diesel::{ExpressionMethods, TextExpressionMethods};
 
         let basic: Vec<Track> = if self.include_query.is_empty() {

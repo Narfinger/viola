@@ -1,14 +1,14 @@
 use gdk;
 use gtk;
 use gtk::prelude::*;
-use loaded_playlist::LoadedPlaylist;
-use smartplaylist_parser;
-use smartplaylist_parser::{LoadSmartPlaylist, SmartPlaylist};
+use crate::loaded_playlist::LoadedPlaylist;
+use crate::smartplaylist_parser;
+use crate::smartplaylist_parser::{LoadSmartPlaylist, SmartPlaylist};
 use std::string::String;
 use std::ops::Deref;
 
-use maingui::MainGuiPtrExt;
-use types::*;
+use crate::maingui::MainGuiPtrExt;
+use crate::types::*;
 
 pub struct PlaylistManager {}
 
@@ -61,7 +61,7 @@ fn signalhandler(
 
 fn add_playlist(db: &DBPool, sm: &[SmartPlaylist], index: i32) -> LoadedPlaylist {
     use diesel::{QueryDsl, RunQueryDsl};
-    use schema::tracks::dsl::*;
+    use crate::schema::tracks::dsl::*;
 
     info!("You selected index: {}", index);
     if index == 0 {

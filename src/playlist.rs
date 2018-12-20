@@ -1,10 +1,10 @@
 use diesel;
-use schema::{playlists, playlisttracks};
+use crate::schema::{playlists, playlisttracks};
 use std::ops::Deref;
 
-use db::Track;
-use loaded_playlist::LoadedPlaylist;
-use types::DBPool;
+use crate::db::Track;
+use crate::loaded_playlist::LoadedPlaylist;
+use crate::types::DBPool;
 
 #[derive(Identifiable, Queryable, Associations)]
 struct Playlist {
@@ -65,9 +65,9 @@ fn create_loaded_from_playlist(
 
 pub fn restore_playlists(db: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::result::Error> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
-    use schema::playlists::dsl::*;
-    use schema::playlisttracks::dsl::*;
-    use schema::tracks::dsl::*;
+    use crate::schema::playlists::dsl::*;
+    use crate::schema::playlisttracks::dsl::*;
+    use crate::schema::tracks::dsl::*;
 
     let pls = playlists.load::<Playlist>(db.deref())?;
     pls.iter()
@@ -84,8 +84,8 @@ pub fn restore_playlists(db: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::res
 pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::result::Error> {
     use diesel;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
-    use schema::playlists::dsl::*;
-    use schema::playlisttracks::dsl::*;
+    use crate::schema::playlists::dsl::*;
+    use crate::schema::playlisttracks::dsl::*;
 
     info!("playlist id {:?}", pl.id);
 
@@ -143,8 +143,8 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
 pub fn clear_all(db: &DBPool) {
     use diesel;
     use diesel::RunQueryDsl;
-    use schema::playlists::dsl::*;
-    use schema::playlisttracks::dsl::*;
+    use crate::schema::playlists::dsl::*;
+    use crate::schema::playlisttracks::dsl::*;
 
     diesel::delete(playlists).execute(db.deref()).expect("Error in cleaning playlists");
     diesel::delete(playlisttracks).execute(db.deref()).expect("Error in cleaning playlisttracks");
@@ -153,9 +153,9 @@ pub fn clear_all(db: &DBPool) {
 pub fn delete_with_id(db: &DBPool, index: i32) {
     use diesel;
     use diesel::{ExpressionMethods, RunQueryDsl};
-    use schema;
-    use schema::playlists::dsl::*;
-    use schema::playlisttracks::dsl::*;
+    use crate::schema;
+    use crate::schema::playlists::dsl::*;
+    use crate::schema::playlisttracks::dsl::*;
 
     info!("index for deleting: {}", index);
 

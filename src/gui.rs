@@ -3,12 +3,12 @@ use gtk::prelude::*;
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use gstreamer_wrapper::GStreamerAction;
-use libraryviewstore;
-use maingui;
-use maingui::{MainGuiExt, MainGuiPtrExt};
-use playlist_manager;
-use types::*;
+use crate::gstreamer_wrapper::GStreamerAction;
+use crate::libraryviewstore;
+use crate::maingui;
+use crate::maingui::{MainGuiExt, MainGuiPtrExt};
+use crate::playlist_manager;
+use crate::types::*;
 
 macro_rules! clone {
     (@param _) => ( _ );
@@ -76,8 +76,8 @@ pub fn build_gui(application: &gtk::Application, pool: &DBPool) {
         }));
     }
 
-    let libview = libraryviewstore::new(&pool.clone(), &builder, &gui.clone());
-    let plmview = playlist_manager::new(pool.clone(), &builder, gui.clone());
+    let _libview = libraryviewstore::new(&pool.clone(), &builder, &gui.clone());
+    let _plmview = playlist_manager::new(pool.clone(), &builder, gui.clone());
 
     window.maximize();
     window.set_application(application);
