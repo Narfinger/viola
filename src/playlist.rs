@@ -89,16 +89,16 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
 
     info!("playlist id {:?}", pl.id);
 
-    if let Some(id) = pl.id {
+    if let Some(pid) = pl.id {
         // the playlist is already in the database
-        diesel::update(playlists.find(id))
+        diesel::update(playlists.find(pid))
             .set(current_position.eq(pl.current_position))
             .execute(db.deref())?;
     }
 
-    let playlist: Playlist = if let Some(id) = pl.id {
+    let playlist: Playlist = if let Some(pid) = pl.id {
         playlists
-            .find(id)
+            .find(pid)
             .first::<Playlist>(db.deref())?
     } else {
         let t = vec![NewPlaylist {

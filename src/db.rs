@@ -145,7 +145,7 @@ fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
             old_track.albumpath = new_track.albumpath;
 
             old_track
-                .save_changes::<Track>(&db)
+                .save_changes::<Track>(db.deref())
                 .map(|_| ())
                 .map_err(|err| format!("Error in updateing for track {}, See full: {:?}", s, err))
         }
