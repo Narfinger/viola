@@ -5,6 +5,7 @@ use crate::loaded_playlist::LoadedPlaylist;
 use crate::smartplaylist_parser;
 use crate::smartplaylist_parser::{LoadSmartPlaylist, SmartPlaylist};
 use std::string::String;
+use std::cell::Cell;
 use std::ops::Deref;
 
 use crate::maingui::MainGuiPtrExt;
@@ -71,7 +72,7 @@ fn add_playlist(db: &DBPool, sm: &[SmartPlaylist], index: i32) -> LoadedPlaylist
             .expect("Problem loading playlist");
 
         LoadedPlaylist {
-            id: None,
+            id: Cell::new(None),
             name: String::from("Full Collection"),
             items: results,
             current_position: 0,

@@ -4,7 +4,7 @@ use gtk;
 use gtk::prelude::*;
 use crate::loaded_playlist::LoadedPlaylist;
 use serde_json;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::string::String;
 use std::ops::Deref;
@@ -456,7 +456,7 @@ fn get_tracks_for_selection(
 fn do_new(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
     let (name, res) = get_tracks_for_selection(pool, tv).expect("Error in getting tracks");
     let pl = LoadedPlaylist {
-        id: None,
+        id: Cell::new(None),
         name,
         items: res,
         current_position: 0,
@@ -480,7 +480,7 @@ fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gd
         if let Ok(b) = event.clone().downcast::<gdk::EventButton>() {
             info!("the button: {}", b.get_button());
             if b.get_button() == 3 {
-                let mut menu = gtk::Menu::new();
+                let menu = gtk::Menu::new();
                 {
                     let menuitem = gtk::MenuItem::new_with_label("New");
                     let pc = pool.clone();

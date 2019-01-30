@@ -1,6 +1,7 @@
 use diesel;
 use crate::schema::{playlists, playlisttracks};
 use std::ops::Deref;
+use std::cell::Cell;
 
 use crate::db::Track;
 use crate::loaded_playlist::LoadedPlaylist;
@@ -56,7 +57,7 @@ fn create_loaded_from_playlist(
 
     let sorted = unsorted.iter().map(only_tracks).cloned().collect();
     Ok(LoadedPlaylist {
-        id: Some(pl.id),
+        id: Cell::new(Some(pl.id)),
         name: pl.name.clone(),
         items: sorted,
         current_position: pl.current_position,
@@ -89,14 +90,14 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
 
     info!("playlist id {:?}", pl.id);
 
-    if let Some(pid) = pl.id {
+    if let Some(pid) = pl.id.get() {
         // the playlist is already in the database
         diesel::update(playlists.find(pid))
             .set(current_position.eq(pl.current_position))
             .execute(db.deref())?;
     }
 
-    let playlist: Playlist = if let Some(pid) = pl.id {
+    let playlist: Playlist = if let Some(pid) = pl.id.get() {
         playlists
             .find(pid)
             .first::<Playlist>(db.deref())?
@@ -135,6 +136,9 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
     diesel::insert_into(playlisttracks)
         .values(&vals)
         .execute(db.deref())?;
+
+    pl.id.set(Some(playlist.id));
+
     info!("done");
 
     Ok(())

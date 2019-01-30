@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use std::ops::Deref;
+use std::cell::Cell;
 use gtk;
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
@@ -9,7 +10,7 @@ use crate::types::DBPool;
 #[derive(Clone, Debug)]
 pub struct LoadedPlaylist {
     /// The id we have in the database for it. If none, means this was not yet saved
-    pub id: Option<i32>,
+    pub id: Cell<Option<i32>>,
     pub name: String,
     pub items: Vec<Track>,
     pub current_position: i32,

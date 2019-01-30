@@ -203,7 +203,7 @@ impl PlaylistTabsExt for PlaylistTabs {
     }
 
     fn id(&self, index: i32) -> Option<i32> {
-        self.tabs[index as usize].lp.id
+        self.tabs[index as usize].lp.id.get()
     }
 
     fn set_current_playlist(&mut self, index: i32) {

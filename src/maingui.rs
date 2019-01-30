@@ -2,7 +2,6 @@
 
 use gdk;
 use gdk_pixbuf;
-use glib;
 use gtk;
 use gtk::prelude::*;
 
@@ -342,7 +341,7 @@ impl MainGuiPtrExt for MainGuiPtr {
     fn delete_page(&self, index: u32) {
         info!("deleting the page {}", index);
         let db_id = (*self.playlist_tabs).borrow().id(index as i32);
-        let new_index = (*self.playlist_tabs).borrow_mut().remove_tab(index as i32);
+        //let new_index = (*self.playlist_tabs).borrow_mut().remove_tab(index as i32);
 
         self.page_changed(0);
         self.notebook.set_current_page(Some(0));

@@ -5,6 +5,7 @@ use rand::prelude::*;
 use crate::schema::tracks::dsl::*;
 use std::fs;
 use std::ops::Deref;
+use std::cell::Cell;
 use toml;
 
 use crate::db::Track;
@@ -105,7 +106,6 @@ fn matched_with_exclude(t: &Track, h: &[ExcludeTag]) -> bool {
     })
 }
 
-use diesel::debug_query;
 impl LoadSmartPlaylist for SmartPlaylist {
     /// This is kind of weird because we need to construct the vector instead of the query.
     /// I would love to use union of queries but it doesn't seem to work in diesel
@@ -173,7 +173,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
         }
 
         LoadedPlaylist {
-            id: None,
+            id: Cell::new(None),
             name: self.name.clone(),
             items: filtered,
             current_position: 0,
