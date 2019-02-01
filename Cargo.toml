@@ -1,17 +1,18 @@
 [package]
 name = "viola"
 version = "0.1.0"
+license = "GPL-3.0-only"
 authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
 app_dirs = "1.2"         # Put your app's data in the right place on every platform
 clap = "2.32"                    # A simple to use, efficient, and full featured  Command Line Argument Parser 
-diesel = { version = "1.3", features = ["sqlite", "r2d2"] }
+diesel = { version = "1.4", features = ["sqlite", "r2d2"] }
 error-chain = "0.12"
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 env_logger = "0.6"
-indicatif = "0.10"    # A progress bar and cli reporting library for Rust
+indicatif = "0.11"    # A progress bar and cli reporting library for Rust
 taglib = {git = "https://github.com/ebassi/taglib-rust.git", rev="513dabf"}        # Rust bindings for TagLib
 gdk = "0.9"               # Rust bindings for the GDK 3 library
 gdk-pixbuf = "0.5"        # Rust bindings for the GdkPixbuf library 
