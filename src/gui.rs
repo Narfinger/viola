@@ -3,6 +3,7 @@ use gtk::prelude::*;
 use std::sync::Arc;
 use std::sync::RwLock;
 
+use crate::albumviewstore;
 use crate::gstreamer_wrapper::GStreamerAction;
 use crate::libraryviewstore;
 use crate::maingui;
@@ -77,6 +78,7 @@ pub fn build_gui(application: &gtk::Application, pool: &DBPool) {
     }
 
     let _libview = libraryviewstore::new(&pool.clone(), &builder, &gui.clone());
+    let _albumview = albumviewstore::new(&pool.clone(), &builder, &gui.clone());
     let _plmview = playlist_manager::new(pool.clone(), &builder, gui.clone());
 
     window.maximize();

@@ -27,6 +27,8 @@ extern crate toml;
 extern crate url;
 extern crate walkdir;
 
+
+pub mod albumviewstore;
 pub mod db;
 pub mod gstreamer_wrapper;
 pub mod gui;
