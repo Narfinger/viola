@@ -136,7 +136,7 @@ fn idle_search_changed(
     gtk::Continue(false)
 }
 
-fn get_model_and_iter_for_selection(tv: &gtk::TreeView) -> (gtk::TreeStore, gtk::TreeIter) {
+fn get_model_and_iter_for_selection(tv: &gtk::TreeView) -> (gtk::ListStore, gtk::TreeIter) {
     let (model, iter) = tv.get_selection().get_selected().unwrap();
     let filtermodel = model
         .downcast::<gtk::TreeModelFilter>()
@@ -144,7 +144,7 @@ fn get_model_and_iter_for_selection(tv: &gtk::TreeView) -> (gtk::TreeStore, gtk:
     let m = filtermodel
         .get_model()
         .expect("No base model for TreeModelFilter")
-        .downcast::<gtk::TreeStore>()
+        .downcast::<gtk::ListStore>()
         .expect("Error in TreeStore downcast");
     let realiter = filtermodel.convert_iter_to_child_iter(&iter);
 
