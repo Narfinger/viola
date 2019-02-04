@@ -66,11 +66,11 @@ fn idle_fill<I>(ats: &Rc<RefCell<I>>, model: &gtk::ListStore) -> gtk::Continue
     where  I: Iterator<Item = String> {
 
     if let Some(a) = ats.borrow_mut().next() {
-        let st: String = a.chars().take(20).collect::<String>() + "..";
+        //let st: String = a.chars().take(20).collect::<String>() + "..";
         model.insert_with_values(
             None,
             &[0,1,2],
-            &[&st, &a, &true]
+            &[&a, &a, &true]
         );
         Continue(true)
     } else {
@@ -109,12 +109,12 @@ fn idle_search_changed(
             .map(|v| v.to_lowercase().contains(&*s));
 
         if val == Some(true) {
-            model.set_value(&treeiter, 3, visible);
+            model.set_value(&treeiter, 2, visible);
         } else {
-            model.set_value(&treeiter, 3, invisible);
+            model.set_value(&treeiter, 2, invisible);
         }
     } else {
-        model.set_value(&treeiter, 3, visible);
+        model.set_value(&treeiter, 2, visible);
     }
 
     // model.iter_next can return false, if that we do not spawn a new thread
