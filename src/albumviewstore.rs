@@ -18,9 +18,9 @@ pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
     let albumview: gtk::TreeView = builder.read().unwrap().get_object("albumview").unwrap();
 
     //the model contains first a abbreviated string and in second column the whole string to construct the playlist
-    let model = gtk::ListStore::new(&[String::static_type(), String::static_type(), bool::static_type()]);
+    let model = gtk::ListStore::new(&[String::static_type(), bool::static_type()]);
     let fmodel = gtk::TreeModelFilter::new(&model, None);
-    fmodel.set_visible_column(2);
+    fmodel.set_visible_column(1);
 
     let searchfield: gtk::SearchEntry = builder
         .read()
@@ -66,11 +66,10 @@ fn idle_fill<I>(ats: &Rc<RefCell<I>>, model: &gtk::ListStore) -> gtk::Continue
     where  I: Iterator<Item = String> {
 
     if let Some(a) = ats.borrow_mut().next() {
-        //let st: String = a.chars().take(20).collect::<String>() + "..";
         model.insert_with_values(
             None,
-            &[0,1,2],
-            &[&a, &a, &true]
+            &[0,1],
+            &[&a, &true]
         );
         Continue(true)
     } else {
@@ -94,11 +93,6 @@ fn idle_search_changed(
 
     // abort if another thread is running
     if *s != field.get_text().unwrap().to_lowercase() {
-        //println!(
-        //    "Killing this search thread because {:?}, {:?}",
-        //    *s,
-        //    field.get_text().unwrap()
-        //);
         return gtk::Continue(false);
     }
 
@@ -109,12 +103,12 @@ fn idle_search_changed(
             .map(|v| v.to_lowercase().contains(&*s));
 
         if val == Some(true) {
-            model.set_value(&treeiter, 2, visible);
+            model.set_value(&treeiter, 1, visible);
         } else {
-            model.set_value(&treeiter, 2, invisible);
+            model.set_value(&treeiter, 1, invisible);
         }
     } else {
-        model.set_value(&treeiter, 2, visible);
+        model.set_value(&treeiter, 1, visible);
     }
 
     // model.iter_next can return false, if that we do not spawn a new thread
@@ -191,7 +185,7 @@ fn get_tracks_for_selection(
     use crate::schema::tracks::dsl::*;
 
     let (m, iter) = get_model_and_iter_for_selection(tv);
-    let album_name = m.get_value(&iter, 1).get::<String>().unwrap();
+    let album_name = m.get_value(&iter, 0).get::<String>().unwrap();
     let query = tracks.order(path);
 
     Ok((album_name.to_owned(),
