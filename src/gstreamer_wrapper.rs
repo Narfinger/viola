@@ -101,8 +101,6 @@ pub trait GStreamerExt {
 impl GStreamerExt for GStreamer {
     fn do_gstreamer_action(&self, action: &GStreamerAction) {
         //we need to set the state to paused and ready
-
-        error!("We do not implement seek yet");
         match *action {
             GStreamerAction::Seek(i) => {
                 let t = gstreamer::ClockTime::from_seconds(i);
