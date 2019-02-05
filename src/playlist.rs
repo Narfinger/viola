@@ -132,7 +132,7 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
             playlist_order: index as i32,
         }).collect::<Vec<NewPlaylistTrack>>();
     info!("collected and inserting");
-    info!("All values {:?}", vals);
+    //info!("All values {:?}", vals);
     diesel::insert_into(playlisttracks)
         .values(&vals)
         .execute(db.deref())?;

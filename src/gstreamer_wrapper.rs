@@ -114,7 +114,7 @@ impl GStreamerExt for GStreamer {
         match *action {
             GStreamerAction::Play(_) | GStreamerAction::Previous | GStreamerAction::Next => {
                 if gstreamer::State::Playing
-                    == self.pipeline.get_state(gstreamer::ClockTime(Some(1000))).1
+                    == self.pipeline.get_state(gstreamer::ClockTime(Some(5))).1
                 {
                     info!("Doing");
                     self.pipeline
@@ -134,7 +134,7 @@ impl GStreamerExt for GStreamer {
             GStreamerAction::Playing => Some(self.current_playlist.borrow().get_current_uri()),
             GStreamerAction::Pausing => {
                 if gstreamer::State::Playing
-                    != self.pipeline.get_state(gstreamer::ClockTime(Some(1000))).1
+                    != self.pipeline.get_state(gstreamer::ClockTime(Some(5))).1
                 {
                     Some(self.current_playlist.borrow().get_current_uri())
                 } else {
@@ -159,7 +159,7 @@ impl GStreamerExt for GStreamer {
         //which gstreamer action
         let gstreamer_action = if (*action == GStreamerAction::Pausing)
             & (gstreamer::State::Playing
-                == self.pipeline.get_state(gstreamer::ClockTime(Some(1000))).1)
+                == self.pipeline.get_state(gstreamer::ClockTime(Some(5))).1)
         {
             gstreamer::State::Paused
         } else {
@@ -194,7 +194,7 @@ impl GStreamerExt for GStreamer {
             if let Some(cltime) = cltime_opt {
                 if let Some(cl) = cltotal_opt {
                     let total = cl.seconds().unwrap_or(0);
-                    warn!("total: {}", total);
+                    //warn!("total: {}", total);
                     self.sender
                         .send(GStreamerMessage::ChangedDuration((cltime.seconds().unwrap_or(0), total)))
                         .expect("Error in gstreamer sending message to gui");

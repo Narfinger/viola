@@ -275,7 +275,7 @@ fn format_duration(current_position: u64, total: u64) -> String {
     let s = current_position % 60;
     let m = current_position / 60 % (60 * 60);
     let h = current_position / (60 * 60);
-    warn!("current, total {}/{}", current_position, total);
+    //warn!("current, total {}/{}", current_position, total);
     if total >= 60*60 {
         format!("{}:{:02}:{:02}", h, m, s)
     } else if total >= 60 {
