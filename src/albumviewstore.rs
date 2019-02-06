@@ -43,7 +43,7 @@ pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
     let albums: Vec<String> = tracks
         .select(album)
         .order(album)
-        .filter(artist.ne(""))
+        .filter(album.ne(""))
         .distinct()
         .load(db.deref())
         .expect("Error in db connection");
