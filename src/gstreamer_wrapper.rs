@@ -3,6 +3,7 @@ use gstreamer::{ElementExt, ElementExtManual};
 use gtk;
 use gtk::ObjectExt;
 use std::rc::Rc;
+use std::cell::Cell;
 use std::sync::mpsc::{channel, sync_channel, Receiver, Sender};
 
 use crate::loaded_playlist::PlaylistControls;
@@ -17,6 +18,7 @@ pub struct GStreamer {
     /// Handles if we get the almost finished signal
     finish_reicv: Receiver<()>,
     pool: DBPool,
+    repeat_once: Cell<bool>,
 }
 
 impl Drop for GStreamer {
@@ -72,6 +74,7 @@ pub fn new(
         sender: tx,
         finish_reicv,
         pool,
+        repeat_once: Cell::new(false),
     });
 
     //panic!("this would leave us with a circ reference");
@@ -91,6 +94,7 @@ pub enum GStreamerAction {
     /// This means we selected one specific track
     Play(i32),
     Seek(u64),
+    RepeatOnce, // Repeat the current playing track after it finishes
 }
 
 pub trait GStreamerExt {
@@ -100,6 +104,11 @@ pub trait GStreamerExt {
 
 impl GStreamerExt for GStreamer {
     fn do_gstreamer_action(&self, action: &GStreamerAction) {
+        if *action == GStreamerAction::RepeatOnce {
+            self.repeat_once.set(true);
+            return;
+        }
+
         //we need to set the state to paused and ready
         match *action {
             GStreamerAction::Seek(i) => {
@@ -129,6 +138,7 @@ impl GStreamerExt for GStreamer {
         }
         //getting correct url or None
         let url = match *action {
+            GStreamerAction::RepeatOnce => None, //this is captured above but matches need to be complete
             GStreamerAction::Playing => Some(self.current_playlist.borrow().get_current_uri()),
             GStreamerAction::Pausing => {
                 if gstreamer::State::Playing
@@ -202,9 +212,14 @@ impl GStreamerExt for GStreamer {
             
         }
         if self.finish_reicv.try_recv().is_ok() {
-            //println!("next is: {:?}", self.current_playlist.next_or_eol());
-            //self.current_playlist.next_or_eol();
-            let res = self.current_playlist.next_or_eol(&self.pool);
+            let res = if self.repeat_once.take() {
+                info!("we are repeat playing");
+                self.repeat_once.set(false);
+                Some(self.current_playlist.get_current_uri())
+            } else {
+                self.current_playlist.next_or_eol(&self.pool)
+            };
+
             match res {
                 None => {
                     self.sender
