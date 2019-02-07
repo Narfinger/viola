@@ -98,7 +98,7 @@ fn idle_search_changed(
 
     if !s.is_empty() {
         let val = model
-            .get_value(&treeiter, 1)
+            .get_value(&treeiter, 0)
             .get::<String>()
             .map(|v| v.to_lowercase().contains(&*s));
 
