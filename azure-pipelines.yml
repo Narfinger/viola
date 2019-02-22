@@ -11,6 +11,7 @@ pool:
   vmImage: 'Ubuntu-16.04'
 
 steps:
+- script: apt-get install pango-dev
 - script: curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
   displayName: 'Install rustc'
 - script: |
