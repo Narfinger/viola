@@ -506,7 +506,7 @@ fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gd
                     menu.append(&menuitem);
                 }
                 menu.show_all();
-                gtk::MenuExt::popup_at_pointer(&menu, event);
+                gtk::GtkMenuExt::popup_at_pointer(&menu, event);
             }
         }
     }

@@ -14,12 +14,12 @@ log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"
 env_logger = "0.6"
 indicatif = "0.11"    # A progress bar and cli reporting library for Rust
 taglib = {git = "https://github.com/ebassi/taglib-rust.git", rev="513dabf"}        # Rust bindings for TagLib
-gdk = "0.9"               # Rust bindings for the GDK 3 library
-gdk-pixbuf = "0.5"        # Rust bindings for the GdkPixbuf library 
-glib = "0.6.0"                          # Rust bindings for the GLib library
-gio = "0.5"             # Rust bindings for the Gio library    
-gstreamer = "0.12"               # Rust bindings for GStreamer    
-pango = "0.5.0"                         # Rust bindings for the Pango library 
+gdk = "0.10"               # Rust bindings for the GDK 3 library
+gdk-pixbuf = "0.6"        # Rust bindings for the GdkPixbuf library 
+glib = "0.7"                          # Rust bindings for the GLib library
+gio = "0.6"             # Rust bindings for the Gio library    
+gstreamer = "0.13"               # Rust bindings for GStreamer    
+pango = "0.6"                         # Rust bindings for the Pango library 
 preferences = "1.1"         # Read and write user-specific application data (in stable Rust)
 rayon = "1.0"               # Simple work-stealing parallelism for Rust   
 serde_derive = "1.0"                   # Macros 1.1 implementation of #[derive(Serialize, Deserialize)]
@@ -33,5 +33,5 @@ walkdir = "2"
 
 
 [dependencies.gtk]
-version = "0.5"
+version = "0.6"
 features = ["v3_22"]

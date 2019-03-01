@@ -25,7 +25,6 @@ impl Drop for GStreamer {
     fn drop(&mut self) {
         self.pipeline
             .set_state(gstreamer::State::Null)
-            .into_result()
             .expect("Error in setting gstreamer state: Null");
     }
 }
@@ -126,11 +125,9 @@ impl GStreamerExt for GStreamer {
                     info!("Doing");
                     self.pipeline
                         .set_state(gstreamer::State::Paused)
-                        .into_result()
                         .expect("Error in gstreamer state set, paused");
                     self.pipeline
                         .set_state(gstreamer::State::Ready)
-                        .into_result()
                         .expect("Error in gstreamer state set, ready");
                 }
             }
@@ -180,7 +177,7 @@ impl GStreamerExt for GStreamer {
             .expect("Error in sending updated state");
 
         //sending to gstreamer
-        if let Err(e) = self.pipeline.set_state(gstreamer_action).into_result() {
+        if let Err(e) = self.pipeline.set_state(gstreamer_action) {
             if let Some(bus) = self.pipeline.get_bus() {
                 while let Some(msg) = bus.pop() {
                     info!("we found messages on the bus {:?}", msg);
@@ -233,14 +230,12 @@ impl GStreamerExt for GStreamer {
                     info!("Next should play {:?}", &i);
                     self.pipeline
                         .set_state(gstreamer::State::Ready)
-                        .into_result()
                         .expect("Error in changing gstreamer state to ready");
                     self.pipeline
                         .set_property("uri", &i)
                         .expect("Error setting new url for gstreamer");
                     self.pipeline
                         .set_state(gstreamer::State::Playing)
-                        .into_result()
                         .expect("Error in changing gstreamer state to playing");
                     self.sender
                         .send(GStreamerMessage::Playing)

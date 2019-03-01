@@ -30,6 +30,7 @@ pub struct MainGui {
     total_label: gtk::Label,
     time_scale: gtk::Scale,
     cover: gtk::Image,
+    repeat_once: gtk::Image,
     last_marked: RefCell<Option<gtk::TreeIter>>,
     playlist_tabs: PlaylistTabsPtr,
     gstreamer: Rc<GStreamer>,
@@ -57,6 +58,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         total_label: builder.read().unwrap().get_object("totalLabel").unwrap(),
         time_scale: builder.read().unwrap().get_object("timeScale").unwrap(),
         cover: builder.read().unwrap().get_object("coverImage").unwrap(),
+        repeat_once: builder.read().unwrap().get_object("repeatOnceImage").unwrap(),
         last_marked: RefCell::new(None),
         playlist_tabs: pltabs,
         gstreamer: gst.clone(),
@@ -171,6 +173,7 @@ impl MainGuiExt for MainGui {
         if let Some(cur_page) = self.notebook.get_current_page() {
             let treeview = &self.playlist_tabs.borrow().tabs[cur_page as usize].treeview;
             //let treeselection = treeview.get_selection();
+            self.repeat_once.clear();
             match *status {
                 PlayerStatus::Playing => {
                     //if state == gstreamer::State::Paused || state == gstreamer::State::Playing {
@@ -245,6 +248,9 @@ impl MainGuiExt for MainGui {
     }
 
     fn set_playback(&self, status: &GStreamerAction) {
+        if *status == GStreamerAction::RepeatOnce {
+            self.repeat_once.set_from_icon_name("gtk-undelete", gtk::IconSize::SmallToolbar);
+        }
         self.gstreamer.do_gstreamer_action(status);
     }
 
@@ -308,7 +314,7 @@ impl MainGuiPtrExt for MainGuiPtr {
         let label = gtk::Label::new(Some(lp.name.as_str()));
 
         ///FIXME we should use one of the enum but it doesn't exist yet?
-        let icon = gtk::Image::new_from_icon_name("window-close", 32);
+        let icon = gtk::Image::new_from_icon_name("window-close", gtk::IconSize::SmallToolbar);
         let button = gtk::ToolButton::new(&icon, "");
         button.set_icon_name("window-close");
         button.show();

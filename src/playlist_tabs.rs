@@ -104,7 +104,8 @@ pub fn load_tab(
 
 
     append_treeview_from_vector(&lp.items, &model);
-    let scw = gtk::ScrolledWindow::new(None, None);
+    let n: Option<&gtk::Adjustment> = None;
+    let scw = gtk::ScrolledWindow::new(n,n);
     scw.set_overlay_scrolling(false);
     scw.add(&treeview);
 
