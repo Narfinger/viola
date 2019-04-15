@@ -4,8 +4,9 @@ use gtk;
 use gtk::ObjectExt;
 use std::rc::Rc;
 use std::cell::Cell;
-use std::sync::Mutex;
-use std::sync::mpsc::{channel, sync_channel, Receiver, Sender};
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
+use std::sync::mpsc::{channel, sync_channel,Receiver, Sender};
 
 use crate::loaded_playlist::PlaylistControls;
 use crate::playlist_tabs::PlaylistControlsImmutable;
@@ -17,7 +18,7 @@ pub struct GStreamer {
     /// Handles gstreamer changes to the gui
     sender: Sender<GStreamerMessage>,
     /// Handles if we get the almost finished signal
-    finish_reicv: Receiver<()>,
+    finish_bool: Arc<AtomicBool>,
     pool: DBPool,
     repeat_once: Cell<bool>,
 }
@@ -58,21 +59,22 @@ pub fn new(
         gstreamer::parse_launch("playbin").map_err(|_| String::from("Cannot do gstreamer"))?;
 
     let (tx, rx) = channel::<GStreamerMessage>();
-    let (finish_send, finish_reicv) = sync_channel::<()>(0);
+    let finish_bool = Arc::new(AtomicBool::new(false));
 
-    pipeline
-        .connect("about-to-finish", true, move |_| {
-            finish_send
-                .send(())
-                .expect("Error in sending almost_finished signal");
-            None
-        }).expect("Error in connecting");
-
+    {
+        let fc = finish_bool.clone();
+        pipeline
+            .connect("about-to-finish", true, move |_| {
+                //this signal seems to be called multiple times
+                fc.store(true, std::sync::atomic::Ordering::Relaxed);
+                None
+            }).expect("Error in connecting");
+    }
     let res = Rc::new(GStreamer {
         pipeline,
         current_playlist,
         sender: tx,
-        finish_reicv,
+        finish_bool,
         pool,
         repeat_once: Cell::new(false),
     });
@@ -210,7 +212,7 @@ impl GStreamerExt for GStreamer {
             }
 
         }
-        if self.finish_reicv.try_recv().is_ok() {
+        if self.finish_bool.load(std::sync::atomic::Ordering::Relaxed) {
             let res = if self.repeat_once.take() {
                 info!("we are repeat playing");
                 self.repeat_once.set(false);
@@ -243,6 +245,7 @@ impl GStreamerExt for GStreamer {
                         .expect("Error in gstreamer sending message to gui");
                 }
             };
+            self.finish_bool.store(false, std::sync::atomic::Ordering::Relaxed);
         }
         gtk::Continue(true)
     }
