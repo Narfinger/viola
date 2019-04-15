@@ -70,13 +70,13 @@ fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
             if let Some(v) = insert_vec_value($vec) {
                 $pushto.push($value(v));
             }
-            
+
         };
     }
 
     let random = smp.random.unwrap_or(false);
     let mut include_query = Vec::new();
-    
+
     vec_option_insert!(IncludeTag::Dir, smp.dir_include, include_query);
     vec_option_insert!(IncludeTag::Artist, smp.artist_include, include_query);
     vec_option_insert!(IncludeTag::Genre,  smp.genre_include, include_query);
@@ -148,11 +148,11 @@ impl LoadSmartPlaylist for SmartPlaylist {
                 }
                 IncludeTag::PlayCount(v) => {
                     let mut s = tracks.into_boxed::<Sqlite>();
-                    s = s.or_filter(playcount.ge(v));   
-                    
+                    s = s.or_filter(playcount.ge(v));
+
                     s.load(db.deref()).expect("Error in loading smart playlist")
                 }
-            }).flat_map(|v| v.into_iter())
+            }).flat_map(std::iter::IntoIterator::into_iter)
             .collect::<Vec<Track>>()
         };
 

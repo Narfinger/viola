@@ -104,10 +104,10 @@ fn construct_track_from_path(s: &str) -> Result<NewTrack, String> {
         let album = get_album_file(&s);
         //tracknumber and year return 0 if none set
         Ok(NewTrack {
-            title: tags.title().unwrap_or(String::new()),
-            artist: tags.artist().unwrap_or(String::new()),
-            album: tags.album().unwrap_or(String::new()),
-            genre: tags.genre().unwrap_or(String::new()),
+            title: tags.title().unwrap_or_default(),
+            artist: tags.artist().unwrap_or_default(),
+            album: tags.album().unwrap_or_default(),
+            genre: tags.genre().unwrap_or_default(),
             tracknumber: convert_to_i32_option(tags.track()),
             year: convert_to_i32_option(tags.year()),
             path: s.to_string(),
