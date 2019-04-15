@@ -7,27 +7,27 @@ edition = "2018"
 
 [dependencies]
 app_dirs = "1.2"         # Put your app's data in the right place on every platform
-clap = "2.32"                    # A simple to use, efficient, and full featured  Command Line Argument Parser 
+clap = "2.33"                    # A simple to use, efficient, and full featured  Command Line Argument Parser
 diesel = { version = "1.4", features = ["sqlite", "r2d2"] }
 error-chain = "0.12"
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 env_logger = "0.6"
 indicatif = "0.11"    # A progress bar and cli reporting library for Rust
-taglib = {git = "https://github.com/ebassi/taglib-rust.git", rev="513dabf"}        # Rust bindings for TagLib
+taglib = "1.0"        # Rust bindings for TagLib
 gdk = "0.10"               # Rust bindings for the GDK 3 library
-gdk-pixbuf = "0.6"        # Rust bindings for the GdkPixbuf library 
+gdk-pixbuf = "0.6"        # Rust bindings for the GdkPixbuf library
 glib = "0.7"                          # Rust bindings for the GLib library
-gio = "0.6"             # Rust bindings for the Gio library    
-gstreamer = "0.13"               # Rust bindings for GStreamer    
-pango = "0.6"                         # Rust bindings for the Pango library 
+gio = "0.6"             # Rust bindings for the Gio library
+gstreamer = "0.13"               # Rust bindings for GStreamer
+pango = "0.6"                         # Rust bindings for the Pango library
 preferences = "1.1"         # Read and write user-specific application data (in stable Rust)
-rayon = "1.0"               # Simple work-stealing parallelism for Rust   
+rayon = "1.0"               # Simple work-stealing parallelism for Rust
 serde_derive = "1.0"                   # Macros 1.1 implementation of #[derive(Serialize, Deserialize)]
 serde_json = "1.0"
 serde = "1.0"                      # A generic serialization/deserialization framework
 open = "1.2"
 rand = "0.6"
-toml = "0.4"
+toml = "0.5"
 url = "1.7"
 walkdir = "2"
 
