@@ -5,14 +5,14 @@ jobs:
             - image: circleci/rust:latest
         steps:
             - checkout
-            - run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libgstreamer1.0-dev libsqlite3-dev libtag1-dev libtag1
+            - run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libgstreamer1.0-dev libsqlite3-dev libtag1-dev libtagc0-dev
             - run: cargo build
     test:
         docker:
             - image: circleci/rust:latest
         steps:
             - checkout
-            - run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libgstreamer1.0-dev libsqlite3-dev libtag1-dev libtag1
+            - run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libgstreamer1.0-dev libsqlite3-dev libtag1-dev libtagc0-dev
             - run: cargo test
 workflows:
     version: 2
