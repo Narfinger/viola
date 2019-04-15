@@ -4,6 +4,7 @@ use gtk;
 use gtk::ObjectExt;
 use std::rc::Rc;
 use std::cell::Cell;
+use std::sync::Mutex;
 use std::sync::mpsc::{channel, sync_channel, Receiver, Sender};
 
 use crate::loaded_playlist::PlaylistControls;
@@ -57,7 +58,7 @@ pub fn new(
         gstreamer::parse_launch("playbin").map_err(|_| String::from("Cannot do gstreamer"))?;
 
     let (tx, rx) = channel::<GStreamerMessage>();
-    let (finish_send, finish_reicv) = sync_channel::<()>(1);
+    let (finish_send, finish_reicv) = sync_channel::<()>(0);
 
     pipeline
         .connect("about-to-finish", true, move |_| {
@@ -103,6 +104,7 @@ pub trait GStreamerExt {
 
 impl GStreamerExt for GStreamer {
     fn do_gstreamer_action(&self, action: &GStreamerAction) {
+        info!("Gstreamer action {:?}", action);
         if *action == GStreamerAction::RepeatOnce {
             self.repeat_once.set(true);
             return;
@@ -149,7 +151,7 @@ impl GStreamerExt for GStreamer {
             GStreamerAction::Previous => Some(self.current_playlist.previous()),
             GStreamerAction::Next => Some(self.current_playlist.next()),
             GStreamerAction::Play(i) => Some(self.current_playlist.set(i)),
-            GStreamerAction::Seek(_) => None, 
+            GStreamerAction::Seek(_) => None,
         };
         //setting the url
         if let Some(u) = url {
@@ -203,10 +205,10 @@ impl GStreamerExt for GStreamer {
                     self.sender
                         .send(GStreamerMessage::ChangedDuration((cltime.seconds().unwrap_or(0), total)))
                         .expect("Error in gstreamer sending message to gui");
-                
+
                 }
             }
-            
+
         }
         if self.finish_reicv.try_recv().is_ok() {
             let res = if self.repeat_once.take() {
@@ -216,7 +218,6 @@ impl GStreamerExt for GStreamer {
             } else {
                 self.current_playlist.next_or_eol(&self.pool)
             };
-
             match res {
                 None => {
                     self.sender
