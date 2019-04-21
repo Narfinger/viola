@@ -8,6 +8,7 @@ use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::path::Path;
 use std::ops::Deref;
+use std::{thread, time};
 use taglib;
 use crate::types::{DBPool, APP_INFO};
 use walkdir;
@@ -130,6 +131,24 @@ fn tags_equal(nt: &NewTrack, ot: &Track) -> bool {
         && nt.albumpath == ot.albumpath
 }
 
+fn insert_track_with_error_retries(s: &str, db: &DBPool) -> Result<(), String> {
+    let mut i = 2;
+    let mut res = Err("retry".into());
+    while res.is_err() {
+        res = insert_track(s,db);
+        i -= 1;
+        if res.is_ok() {
+            return res;
+        } else if i>0 {
+            let ten_millis = time::Duration::from_millis(10);
+            thread::sleep(ten_millis);
+        } else if i<=0 {
+            return res;
+        }
+    }
+    res
+}
+
 fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
     use crate::schema::tracks::dsl::*;
@@ -197,7 +216,7 @@ pub fn build_db(path: &str, db: &DBPool) -> Result<(), String> {
                                   .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7} ({percent}%)")
                                   .progress_chars("#>-"));
             let res = pb
-                .wrap_iter(files.iter().map(|s| insert_track(s, db)))
+                .wrap_iter(files.iter().map(|s| insert_track_with_error_retries(s, db)))
                 .collect::<Result<(), String>>();
             pb.finish_with_message("Done Updating");
 
