@@ -83,7 +83,6 @@ pub fn restore_playlists(db: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::res
 }
 
 pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::result::Error> {
-    use diesel;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     use crate::schema::playlists::dsl::*;
     use crate::schema::playlisttracks::dsl::*;
@@ -145,7 +144,6 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
 }
 
 pub fn clear_all(db: &DBPool) {
-    use diesel;
     use diesel::RunQueryDsl;
     use crate::schema::playlists::dsl::*;
     use crate::schema::playlisttracks::dsl::*;
@@ -155,7 +153,6 @@ pub fn clear_all(db: &DBPool) {
 }
 
 pub fn delete_with_id(db: &DBPool, index: i32) {
-    use diesel;
     use diesel::{ExpressionMethods, RunQueryDsl};
     use crate::schema;
     use crate::schema::playlists::dsl::*;

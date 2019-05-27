@@ -110,7 +110,6 @@ impl LoadSmartPlaylist for SmartPlaylist {
     /// This is kind of weird because we need to construct the vector instead of the query.
     /// I would love to use union of queries but it doesn't seem to work in diesel
     fn load(&self, db: &DBPool) -> LoadedPlaylist {
-        use crate::db::Track;
         use diesel::{ExpressionMethods, TextExpressionMethods};
 
         let basic: Vec<Track> = if self.include_query.is_empty() {
@@ -164,6 +163,8 @@ impl LoadSmartPlaylist for SmartPlaylist {
             })
             .cloned()
             .collect::<Vec<Track>>();
+
+        filtered.dedup();
 
         if self.random {
             let mut rng = thread_rng();

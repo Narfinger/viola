@@ -28,6 +28,12 @@ pub struct Track {
     pub playcount: Option<i32>,
 }
 
+impl PartialEq for Track {
+    fn eq(&self, other: &Self) -> bool {
+        self.path == other.path
+    }
+}
+
 #[derive(Debug, Insertable)]
 #[table_name = "tracks"]
 pub struct NewTrack {

@@ -6,7 +6,7 @@ use std::rc::Rc;
 use std::cell::Cell;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
-use std::sync::mpsc::{channel, sync_channel,Receiver, Sender};
+use std::sync::mpsc::{channel,Receiver, Sender};
 
 use crate::loaded_playlist::PlaylistControls;
 use crate::playlist_tabs::PlaylistControlsImmutable;
