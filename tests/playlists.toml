@@ -1,6 +1,7 @@
 test = ""
 [[smartplaylist]]
 name = "Test1"
+album_include = ["Frozen Synapse Original Soundtrack"]
 dir_exclude = ["test1", "test2"]
 dir_include = ["1a - Test"]
 

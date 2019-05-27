@@ -32,6 +32,7 @@ struct SmartPlaylistParsed {
     random: Option<bool>,
     dir_exclude: Option<Vec<String>>,
     dir_include: Option<Vec<String>>,
+    album_include: Option<Vec<String>>,
     artist_include: Option<Vec<String>>,
     genre_include: Option<Vec<String>>,
     play_count_include: Option<i32>,
@@ -40,6 +41,7 @@ struct SmartPlaylistParsed {
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum IncludeTag {
     Dir(Vec<String>),
+    Album(Vec<String>),
     Artist(Vec<String>),
     Genre(Vec<String>),
     PlayCount(i32),
@@ -79,6 +81,7 @@ fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
 
     vec_option_insert!(IncludeTag::Dir, smp.dir_include, include_query);
     vec_option_insert!(IncludeTag::Artist, smp.artist_include, include_query);
+    vec_option_insert!(IncludeTag::Album, smp.album_include, include_query);
     vec_option_insert!(IncludeTag::Genre,  smp.genre_include, include_query);
 
     if let Some(v) = smp.play_count_include {
@@ -121,6 +124,13 @@ impl LoadSmartPlaylist for SmartPlaylist {
             .include_query
             .iter()
             .map(|k| match k {
+                IncludeTag::Album(v) => {
+                    let mut s = tracks.into_boxed::<Sqlite>();
+                    for value in v {
+                        s = s.or_filter(album.eq(value))
+                    }
+                    s.load(db.deref()).expect("Error in loading smart playlist")
+                }
                 IncludeTag::Artist(v) => {
                     let mut s = tracks.into_boxed::<Sqlite>();
                     for value in v {

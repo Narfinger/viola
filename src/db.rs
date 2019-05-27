@@ -70,6 +70,7 @@ fn check_file(s: &Result<walkdir::DirEntry, walkdir::Error>) -> bool {
 }
 
 /// gets a number and returns None if the number is zero, otherwise the number converted to i32
+/*
 fn number_zero_to_option(i: u32) -> Option<i32> {
     if i == 0 {
         None
@@ -77,6 +78,7 @@ fn number_zero_to_option(i: u32) -> Option<i32> {
         Some(i as i32)
     }
 }
+*/
 
 fn get_album_file(s: &str) -> Option<String> {
     let p = Path::new(s);
