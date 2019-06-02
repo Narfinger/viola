@@ -22,10 +22,10 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
-extern crate taglib;
 extern crate toml;
 extern crate url;
 extern crate walkdir;
+//extern crate jwalk;
 
 
 pub mod albumviewstore;

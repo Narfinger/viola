@@ -11,7 +11,9 @@ use std::ops::Deref;
 use std::{thread, time};
 use taglib;
 use crate::types::{DBPool, APP_INFO};
-use walkdir;
+//use jwalk::{WalkDir, DirEntry};
+use walkdir::{WalkDir, DirEntry};
+
 
 #[derive(AsChangeset, Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]
 pub struct Track {
@@ -55,9 +57,9 @@ pub fn setup_db_connection() -> DBPool {
     Rc::new(SqliteConnection::establish(&db_file.to_str().unwrap()).expect("Could not open database"))
 }
 
-fn check_file(s: &Result<walkdir::DirEntry, walkdir::Error>) -> bool {
+fn is_valid_file(s: &Result<DirEntry, walkdir::Error>) -> bool {
     if let Ok(ref sp) = *s {
-        if sp.file_type().is_file() {
+        if sp.metadata().unwrap().file_type().is_file() {
             Some(true) == sp.path().extension().map(|ex| {
                 vec!["ogg", "flac", "mp3", "wma", "aac", "opus"].contains(&ex.to_str().unwrap())
             })
@@ -67,18 +69,8 @@ fn check_file(s: &Result<walkdir::DirEntry, walkdir::Error>) -> bool {
     } else {
         false
     }
-}
 
-/// gets a number and returns None if the number is zero, otherwise the number converted to i32
-/*
-fn number_zero_to_option(i: u32) -> Option<i32> {
-    if i == 0 {
-        None
-    } else {
-        Some(i as i32)
-    }
 }
-*/
 
 fn get_album_file(s: &str) -> Option<String> {
     let p = Path::new(s);
@@ -193,18 +185,15 @@ fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
     }
 }
 
+/// Tested on 01-06-2019 with jwalk and walkdir. walkdir was faster on my machine
 pub fn build_db(path: &str, db: &DBPool) -> Result<(), String> {
     let files = walkdir::WalkDir::new(&path)
         .into_iter()
-        .filter(check_file)
+        .filter(is_valid_file)
         .map(|i| String::from(i.unwrap().path().to_str().unwrap()))
         .collect::<HashSet<String>>();
 
-    let file_count = walkdir::WalkDir::new(&path)
-        .into_iter()
-        .filter(check_file)
-        .map(|i| String::from(i.unwrap().path().to_str().unwrap()))
-        .count();
+    let file_count = files.len();
 
     {
         use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};

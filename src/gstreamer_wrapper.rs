@@ -82,7 +82,7 @@ pub fn new(
     //panic!("this would leave us with a circ reference");
 
     let resc = res.clone();
-    gtk::timeout_add(500, move || resc.gstreamer_message_handler());
+    gtk::timeout_add(250, move || resc.gstreamer_message_handler());
     Ok((res, rx))
 }
 
