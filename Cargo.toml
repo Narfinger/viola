@@ -20,6 +20,7 @@ gdk-pixbuf = "0.6"        # Rust bindings for the GdkPixbuf library
 glib = "0.7"                          # Rust bindings for the GLib library
 gio = "0.6"             # Rust bindings for the Gio library
 gstreamer = "0.13"               # Rust bindings for GStreamer
+gstreamer-player = "0.13"
 pango = "0.6"                         # Rust bindings for the Pango library
 preferences = "1.1"         # Read and write user-specific application data (in stable Rust)
 rayon = "1.0"               # Simple work-stealing parallelism for Rust

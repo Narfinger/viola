@@ -11,6 +11,7 @@ extern crate gdk_pixbuf;
 extern crate gio;
 extern crate glib;
 extern crate gstreamer;
+extern crate gstreamer_player;
 extern crate gtk;
 extern crate indicatif;
 extern crate open;
@@ -61,28 +62,33 @@ fn main() {
                 .short("u")
                 .long("update")
                 .help("Updates the database"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("fastupdate")
                 .short("f")
                 .long("fastupdate")
                 .help("Does a fast update of the database, doing a heuristic on time modified"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("music_dir")
                 .short("m")
                 .takes_value(true)
                 .long("music_dir")
                 .help("Set the music directory"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("configpath")
                 .short("c")
                 .long("config")
                 .help("Shows the config path"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("editsmartplaylists")
                 .short("e")
                 .long("editsmartplaylists")
                 .help("Opens an editor to edit the smartplaylist file"),
-        ).get_matches();
+        )
+        .get_matches();
 
     env_logger::init();
 
