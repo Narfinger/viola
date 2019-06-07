@@ -12,7 +12,7 @@ use std::{thread, time};
 use taglib;
 use crate::types::{DBPool, APP_INFO};
 //use jwalk::{WalkDir, DirEntry};
-use walkdir::{WalkDir, DirEntry};
+use walkdir::{DirEntry};
 
 
 #[derive(AsChangeset, Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]

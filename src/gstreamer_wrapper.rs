@@ -1,15 +1,13 @@
 use gstreamer;
-use gstreamer::{ElementExt, ElementExtManual};
+use gstreamer::{ElementExtManual};
 use gtk;
-use gtk::ObjectExt;
 use gstreamer_player;
 use crate::gtk::Cast;
 
-use std::cell::Cell;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{channel, sync_channel, Receiver, Sender};
 
 
 use crate::loaded_playlist::PlaylistControls;
@@ -25,17 +23,14 @@ pub struct GStreamer {
     /// Handles if we get the almost finished signal
     finish_bool: Arc<AtomicBool>,
     pool: DBPool,
-    repeat_once: Cell<bool>,
+    repeat_once: Arc<AtomicBool>,
 }
 
-/*
 impl Drop for GStreamer {
     fn drop(&mut self) {
-        self.pipeline
-            .set_state(gstreamer::State::Null)
-            .expect("Error in setting gstreamer state: Null");
+        self.player.stop();
     }
-}*/
+}
 
 pub enum GStreamerMessage {
     Pausing,
@@ -68,25 +63,11 @@ pub fn new(
         None,
         Some(&dispatcher.upcast::<gstreamer_player::PlayerSignalDispatcher>()),
     );
-
-    //let pipeline =
-    //    gstreamer::parse_launch("playbin").map_err(|_| String::from("Cannot do gstreamer"))?;
-
+    let (eos_tx, eos_rx) = sync_channel::<()>(1);
+    player.connect_end_of_stream(move |_| eos_tx.send(()).expect("Error in propagation eos"));
 
     let (tx, rx) = channel::<GStreamerMessage>();
     let finish_bool = Arc::new(AtomicBool::new(false));
-
-    /*
-    {
-        let fc = finish_bool.clone();
-        pipeline
-            .connect("about-to-finish", true, move |_| {
-                //this signal seems to be called multiple times
-                fc.store(true, std::sync::atomic::Ordering::Relaxed);
-                None
-            })
-            .expect("Error in connecting");
-    }*/
 
     let res = Rc::new(GStreamer {
         player,
@@ -94,17 +75,21 @@ pub fn new(
         sender: tx,
         finish_bool,
         pool,
-        repeat_once: Cell::new(false),
+        repeat_once: Arc::new(AtomicBool::new(false)),
     });
 
 
-    player.connect_end_of_stream(|player| {
-        res.end_of_stream();
-    });
-    //panic!("this would leave us with a circ reference");
 
     let resc = res.clone();
     gtk::timeout_add(250, move || resc.gstreamer_message_handler());
+    let resc = res.clone();
+    gtk::timeout_add(250, move || {
+        if eos_rx.try_recv().is_ok() {
+            resc.end_of_stream();
+        }
+        gtk::Continue(true)
+    });
+
     Ok((res, rx))
 }
 
@@ -131,7 +116,7 @@ impl GStreamerExt for GStreamer {
     fn do_gstreamer_action(&self, action: &GStreamerAction) {
         info!("Gstreamer action {:?}", action);
         if *action == GStreamerAction::RepeatOnce {
-            self.repeat_once.set(true);
+            self.repeat_once.store(true, std::sync::atomic::Ordering::Relaxed);
             return;
         }
 
@@ -207,9 +192,10 @@ impl GStreamerExt for GStreamer {
                 .expect("Error in gstreamer sending message to gui");
         }
         if self.finish_bool.load(std::sync::atomic::Ordering::Relaxed) {
-            let res = if self.repeat_once.take() {
+
+            let res = if self.repeat_once.load(std::sync::atomic::Ordering::Relaxed) {
                 info!("we are repeat playing");
-                self.repeat_once.set(false);
+                self.repeat_once.store(false, std::sync::atomic::Ordering::Relaxed);
                 Some(self.current_playlist.get_current_uri())
             } else {
                 self.current_playlist.next_or_eol(&self.pool)
@@ -247,4 +233,5 @@ impl GStreamerExt for GStreamer {
                 .send(GStreamerMessage::Stopped)
                 .expect("Error in sending updated state");
         }
+    }
 }
