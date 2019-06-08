@@ -1,14 +1,13 @@
-use gstreamer;
-use gstreamer::{ElementExtManual};
-use gtk;
-use gstreamer_player;
 use crate::gtk::Cast;
+use gstreamer::ElementExtManual;
+use gstreamer_player;
+use gtk;
 
 use std::rc::Rc;
-use std::sync::Arc;
+
 use std::sync::atomic::AtomicBool;
 use std::sync::mpsc::{channel, sync_channel, Receiver, Sender};
-
+use std::sync::Arc;
 
 use crate::loaded_playlist::PlaylistControls;
 use crate::playlist_tabs::PlaylistControlsImmutable;
@@ -79,7 +78,6 @@ pub fn new(
     });
 
 
-
     let resc = res.clone();
     gtk::timeout_add(250, move || resc.gstreamer_message_handler());
     let resc = res.clone();
@@ -116,7 +114,8 @@ impl GStreamerExt for GStreamer {
     fn do_gstreamer_action(&self, action: &GStreamerAction) {
         info!("Gstreamer action {:?}", action);
         if *action == GStreamerAction::RepeatOnce {
-            self.repeat_once.store(true, std::sync::atomic::Ordering::Relaxed);
+            self.repeat_once
+                .store(true, std::sync::atomic::Ordering::Relaxed);
             return;
         }
 
@@ -126,7 +125,11 @@ impl GStreamerExt for GStreamer {
             GStreamerAction::Playing => Some(self.current_playlist.borrow().get_current_uri()),
             GStreamerAction::Pausing => {
                 if gstreamer::State::Playing
-                    != self.player.get_pipeline().get_state(gstreamer::ClockTime(Some(5))).1
+                    != self
+                        .player
+                        .get_pipeline()
+                        .get_state(gstreamer::ClockTime(Some(5)))
+                        .1
                 {
                     Some(self.current_playlist.borrow().get_current_uri())
                 } else {
@@ -140,9 +143,13 @@ impl GStreamerExt for GStreamer {
         };
 
         match *action {
-           GStreamerAction::Previous | GStreamerAction::Next => {
+            GStreamerAction::Previous | GStreamerAction::Next => {
                 if gstreamer::State::Playing
-                    == self.player.get_pipeline().get_state(gstreamer::ClockTime(Some(5))).1
+                    == self
+                        .player
+                        .get_pipeline()
+                        .get_state(gstreamer::ClockTime(Some(5)))
+                        .1
                 {
                     info!("Doing");
                     self.player.stop();
@@ -162,7 +169,11 @@ impl GStreamerExt for GStreamer {
         //switch gstreamer play/pause
         let gstreamer_action = if (*action == GStreamerAction::Pausing)
             & (gstreamer::State::Playing
-                == self.player.get_pipeline().get_state(gstreamer::ClockTime(Some(5))).1)
+                == self
+                    .player
+                    .get_pipeline()
+                    .get_state(gstreamer::ClockTime(Some(5)))
+                    .1)
         {
             self.player.pause();
             gstreamer::State::Paused
@@ -181,9 +192,9 @@ impl GStreamerExt for GStreamer {
     fn gstreamer_message_handler(&self) -> gtk::Continue {
         //update gui for running time
         {
-            let cltime  = self.player.get_position();
+            let cltime = self.player.get_position();
             let cltotal = self.player.get_duration();
-            let total = cltime.seconds().unwrap_or(0);
+            let total = cltotal.seconds().unwrap_or(0);
             self.sender
                 .send(GStreamerMessage::ChangedDuration((
                     cltime.seconds().unwrap_or(0),
@@ -195,7 +206,8 @@ impl GStreamerExt for GStreamer {
 
             let res = if self.repeat_once.load(std::sync::atomic::Ordering::Relaxed) {
                 info!("we are repeat playing");
-                self.repeat_once.store(false, std::sync::atomic::Ordering::Relaxed);
+                self.repeat_once
+                    .store(false, std::sync::atomic::Ordering::Relaxed);
                 Some(self.current_playlist.get_current_uri())
             } else {
                 self.current_playlist.next_or_eol(&self.pool)
@@ -229,7 +241,7 @@ impl GStreamerExt for GStreamer {
                 .expect("Error in sending updated state");
         } else {
             self.player.stop();
-             self.sender
+            self.sender
                 .send(GStreamerMessage::Stopped)
                 .expect("Error in sending updated state");
         }
