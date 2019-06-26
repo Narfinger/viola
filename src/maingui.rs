@@ -72,7 +72,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         }
         gtk::Continue(true)
     });
-    
+
     {
         let guic = g.clone();
         let poolc = pool.clone();
@@ -108,7 +108,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
     //};
 
     //{   //notebook needs to not have any signals emitted because it deleted tabs sometimes
-    //    //we need to build an rc of it because the  
+    //    //we need to build an rc of it because the
     //    let gc = g.clone();
     //    let id = page_removed_signal_id;
     //    g.notebook.connect_destroy(move |_| {
@@ -192,7 +192,7 @@ impl MainGuiExt for MainGui {
                     self.status_label.set_text("Playing");
                     if let Some(ref p) = track.albumpath {
                         if let Ok(ref pp) = gdk_pixbuf::Pixbuf::new_from_file_at_size(p, 200, 200) {
-                            self.cover.set_from_pixbuf(pp);
+                            self.cover.set_from_pixbuf(Some(pp));
                         } else {
                             error!("error creating pixbuf");
                         }
@@ -212,7 +212,7 @@ impl MainGuiExt for MainGui {
                         .unwrap();
                     let path = gtk::TreePath::new_from_indicesv(&[pos, COLOR_COLUMN as i32]);
                     let treeiter = model.get_iter(&path).unwrap();
-    
+
                     self.clear_play_marker();
 
                     let color = gdk::RGBA {
@@ -249,7 +249,7 @@ impl MainGuiExt for MainGui {
 
     fn set_playback(&self, status: &GStreamerAction) {
         if *status == GStreamerAction::RepeatOnce {
-            self.repeat_once.set_from_icon_name("gtk-undelete", gtk::IconSize::SmallToolbar);
+            self.repeat_once.set_from_icon_name(Some("gtk-undelete"), gtk::IconSize::SmallToolbar);
         }
         self.gstreamer.do_gstreamer_action(status);
     }
@@ -314,9 +314,9 @@ impl MainGuiPtrExt for MainGuiPtr {
         let label = gtk::Label::new(Some(lp.name.as_str()));
 
         ///FIXME we should use one of the enum but it doesn't exist yet?
-        let icon = gtk::Image::new_from_icon_name("window-close", gtk::IconSize::SmallToolbar);
-        let button = gtk::ToolButton::new(&icon, "");
-        button.set_icon_name("window-close");
+        let icon = gtk::Image::new_from_icon_name(Some("window-close"), gtk::IconSize::SmallToolbar);
+        let button = gtk::ToolButton::new(Some(&icon), None);
+        button.set_icon_name(Some("window-close"));
         button.show();
 
         let b = gtk::Box::new(gtk::Orientation::Horizontal, 20);
@@ -332,12 +332,12 @@ impl MainGuiPtrExt for MainGuiPtr {
             // the deletion of the data structures needs to happen here because signals are complicated in gtk
             // sometimes the notebook-page-removed signal happens on destruction of the guy
             // in the current gtk-rs it is really difficult to block that signal from being emitted
-            button.connect_clicked(move |_| { 
+            button.connect_clicked(move |_| {
                 s.notebook.remove_page(Some(index));
-                
+
                 //this deletes the data structure behind the playlist
                 s.delete_page(index);
-                
+
             });
         }
 

@@ -212,7 +212,7 @@ fn idle_make_children_visible_from_search(s: &Rc<String>,
     }
 
     let current_tree = (*treeiter.deref()).clone();  //make a new iterator because we will modify it
-    let mut child_iterator = model.iter_children(&current_tree);
+    let mut child_iterator = model.iter_children(Some(&current_tree));
     while let Some(child) = child_iterator {
         model.set_value(&child, 3, visible);
 
@@ -225,7 +225,7 @@ fn idle_make_children_visible_from_search(s: &Rc<String>,
             gtk::idle_add(move || {
                 idle_make_children_visible_from_search(&sc, &fc, &childcopy, &mc)
             });
-        }        
+        }
         child_iterator = if model.iter_next(&child) {
             Some(child)
         } else {
@@ -311,7 +311,7 @@ fn idle_search_changed(
         }
     } else {
         model.set_value(&treeiter, 3, visible);
-        
+
         //set everything to visible
         let it = Rc::new((*treeiter).clone());
         let sc = s.clone();
@@ -506,7 +506,7 @@ fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gd
                     menu.append(&menuitem);
                 }
                 menu.show_all();
-                gtk::GtkMenuExt::popup_at_pointer(&menu, event);
+                gtk::GtkMenuExt::popup_at_pointer(&menu, Some(event));
             }
         }
     }

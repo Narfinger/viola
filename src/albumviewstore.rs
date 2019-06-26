@@ -62,7 +62,7 @@ pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
     }
 }
 
-fn idle_fill<I>(ats: &Rc<RefCell<I>>, model: &gtk::ListStore) -> gtk::Continue 
+fn idle_fill<I>(ats: &Rc<RefCell<I>>, model: &gtk::ListStore) -> gtk::Continue
     where  I: Iterator<Item = String> {
 
     if let Some(a) = ats.borrow_mut().next() {
@@ -248,7 +248,7 @@ fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gd
                     menu.append(&menuitem);
                 }
                 menu.show_all();
-                gtk::GtkMenuExt::popup_at_pointer(&menu, event);
+                gtk::GtkMenuExt::popup_at_pointer(&menu, Some(event));
             }
         }
     }

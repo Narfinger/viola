@@ -92,7 +92,7 @@ pub fn build_gui(application: &gtk::Application, pool: &DBPool) {
     let _plmview = playlist_manager::new(pool.clone(), &builder, gui.clone());
 
     window.maximize();
-    window.set_application(application);
+    window.set_application(Some(application));
     window.set_title("Viola");
     window.connect_delete_event(clone!(window, gui, pool => move |_, _| {
         gui.save(&pool);

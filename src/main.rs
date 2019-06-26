@@ -130,7 +130,7 @@ fn main() {
     } else {
         use gio::ApplicationExtManual;
         let application =
-            gtk::Application::new("com.github.narfinger.viola", gio::ApplicationFlags::empty())
+            gtk::Application::new(Some("com.github.narfinger.viola"), gio::ApplicationFlags::empty())
                 .expect("Initialization failed...");
         application.connect_startup(move |app| {
             gui::build_gui(app, &pool);
