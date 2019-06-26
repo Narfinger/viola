@@ -4,8 +4,6 @@ use gtk;
 use gtk::ObjectExt;
 use std::rc::Rc;
 use std::cell::Cell;
-use std::sync::atomic::AtomicBool;
-use std::sync::Arc;
 use std::sync::mpsc::{channel,Receiver, Sender};
 
 use crate::loaded_playlist::PlaylistControls;
@@ -17,8 +15,6 @@ pub struct GStreamer {
     current_playlist: PlaylistTabsPtr,
     /// Handles gstreamer changes to the gui
     sender: Sender<GStreamerMessage>,
-    /// Handles if we get the almost finished signal
-    finish_bool: Arc<AtomicBool>,
     pool: DBPool,
     repeat_once: Cell<bool>,
 }
@@ -59,28 +55,29 @@ pub fn new(
         gstreamer::parse_launch("playbin").map_err(|_| String::from("Cannot do gstreamer"))?;
 
     let (tx, rx) = channel::<GStreamerMessage>();
-    let finish_bool = Arc::new(AtomicBool::new(false));
 
     let res = Rc::new(GStreamer {
         pipeline,
         current_playlist,
         sender: tx,
-        finish_bool,
         pool,
         repeat_once: Cell::new(false),
     });
 
     {
         let (eos_tx, eos_rx) = channel::<()>();
-        res.pipeline.get_bus().unwrap().connect_message(move |bus, message| {
-            match message.view() {
-                gstreamer::MessageView::Eos(..) => { eos_tx.send(()); }
-                _ => {}
+        res.pipeline.get_bus().unwrap().add_watch(move |_bus, message| {
+            if let gstreamer::MessageView::Eos(..) = message.view() {
+                eos_tx.send(()).expect("Error in sending eos signal to own bus");
+            } else {
+                info!("Got different message {:?}", message.view())
             }
+            gtk::Continue(true)
         });
         let resc = res.clone();
         gtk::timeout_add(250, move || {
             if eos_rx.try_recv().is_ok() {
+                info!("we found eos");
                 resc.gstreamer_handle_eos();
             }
             gtk::Continue(true)
@@ -238,15 +235,15 @@ impl GStreamerExt for GStreamer {
             }
             Some(i) => {
                 info!("Next should play {:?}", &i);
-                //self.pipeline
-                //    .set_state(gstreamer::State::Ready)
-                //    .expect("Error in changing gstreamer state to ready");
+                self.pipeline
+                    .set_state(gstreamer::State::Ready)
+                    .expect("Error in changing gstreamer state to ready");
                 self.pipeline
                     .set_property("uri", &i)
                     .expect("Error setting new url for gstreamer");
-                //self.pipeline
-                //    .set_state(gstreamer::State::Playing)
-                //    .expect("Error in changing gstreamer state to playing");
+                self.pipeline
+                    .set_state(gstreamer::State::Playing)
+                    .expect("Error in changing gstreamer state to playing");
                 self.sender
                     .send(GStreamerMessage::Playing)
                     .expect("Error in gstreamer sending message to gui");
