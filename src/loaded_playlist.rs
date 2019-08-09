@@ -1,7 +1,7 @@
-use std::path::PathBuf;
-use std::ops::Deref;
-use std::cell::Cell;
 use gtk;
+use std::cell::Cell;
+use std::ops::Deref;
+use std::path::PathBuf;
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
 use crate::db::Track;
@@ -46,8 +46,11 @@ impl PlaylistControls for LoadedPlaylist {
         info!("loading from playlist with name: {}", self.name);
         format!(
             "file:////{}",
-            utf8_percent_encode(&self.items[self.current_position as usize].path
-            , DEFAULT_ENCODE_SET).to_string()
+            utf8_percent_encode(
+                &self.items[self.current_position as usize].path,
+                DEFAULT_ENCODE_SET
+            )
+            .to_string()
         )
     }
 
@@ -73,9 +76,7 @@ impl PlaylistControls for LoadedPlaylist {
             let dbc = pool.clone();
             if let Some(t) = track {
                 let id = t.id;
-                gtk::idle_add(move ||
-                    update_playcount(id, &dbc)
-                );
+                gtk::idle_add(move || update_playcount(id, &dbc));
             }
         }
 
@@ -93,7 +94,6 @@ impl PlaylistControls for LoadedPlaylist {
 fn update_playcount(t_id: i32, db: &DBPool) -> gtk::Continue {
     use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
-
 
     if let Ok(mut track) = tracks.filter(id.eq(t_id)).first::<Track>(db.deref()) {
         track.playcount = Some(1 + track.playcount.unwrap_or(0));

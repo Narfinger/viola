@@ -78,14 +78,17 @@ pub fn build_gui(application: &gtk::Application, pool: &DBPool) {
     }
     {
         // Repeat Once button
-        let button: gtk::Button = builder.read().unwrap().get_object("repeatCurrentButton").unwrap();
+        let button: gtk::Button = builder
+            .read()
+            .unwrap()
+            .get_object("repeatCurrentButton")
+            .unwrap();
         button.connect_clicked(clone!(gui => move |_| {
             {
                 (*gui).set_playback(&GStreamerAction::RepeatOnce)
             }
         }));
     }
-
 
     let _libview = libraryviewstore::new(&pool.clone(), &builder, &gui.clone());
     let _albumview = albumviewstore::new(&pool.clone(), &builder, &gui.clone());

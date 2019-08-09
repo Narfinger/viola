@@ -1,10 +1,10 @@
+use diesel::Connection;
 use gdk;
 use gtk;
 use gtk::prelude::*;
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
-use diesel::Connection;
 
 use crate::db;
 use crate::loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
@@ -52,7 +52,7 @@ pub fn load_tab(
         (4, "Length", 150),
         (5, "Year", 100),
         (6, "Genre", 150),
-        (7, "#", 50)
+        (7, "#", 50),
     ] {
         let column = gtk::TreeViewColumn::new();
         let cell = gtk::CellRendererText::new();
@@ -87,25 +87,26 @@ pub fn load_tab(
         let mut flags = gtk::TargetFlags::empty();
         flags.insert(gtk::TargetFlags::SAME_WIDGET);
         let entry = gtk::TargetEntry::new("PlaylistBox", flags, 1);
-        treeview.drag_source_set(gdk::ModifierType::BUTTON1_MASK, &[entry], gdk::DragAction::MOVE);
+        treeview.drag_source_set(
+            gdk::ModifierType::BUTTON1_MASK,
+            &[entry],
+            gdk::DragAction::MOVE,
+        );
 
         /*
         treeview.connect_drag_data_get(move |tv, dc, sd, x, y| {
             gtk::Inhibit(true)
         })
-        
+
         treeview.connect_drag_data_received(move |tv, dc, x, y, sd, u, v| {
             gtk::Inhibit(true)
         })
         */
-
-
     }
-
 
     append_treeview_from_vector(&lp.items, &model);
     let n: Option<&gtk::Adjustment> = None;
-    let scw = gtk::ScrolledWindow::new(n,n);
+    let scw = gtk::ScrolledWindow::new(n, n);
     scw.set_overlay_scrolling(false);
     scw.add(&treeview);
 
@@ -172,7 +173,7 @@ pub trait PlaylistTabsExt {
     /// add a new tab
     fn add_tab(&mut self, _: PlaylistTab);
 
-    /// remove the tab given by the index, returns 
+    /// remove the tab given by the index, returns
     fn remove_tab(&mut self, _: i32) -> u32;
 
     /// removes the items from the vector
@@ -222,7 +223,7 @@ impl PlaylistTabsExt for PlaylistTabs {
         info!("removing tab with: {}", index);
         info!("this is our list so far: {:?}", self.tabs);
         self.tabs.remove(index as usize);
-        
+
         0
     }
 
@@ -345,7 +346,9 @@ impl PlaylistControls for PlaylistTabs {
     }
 
     fn next_or_eol(&mut self, pool: &DBPool) -> Option<String> {
-        self.tabs[self.current_playlist.unwrap()].lp.next_or_eol(pool)
+        self.tabs[self.current_playlist.unwrap()]
+            .lp
+            .next_or_eol(pool)
     }
 }
 

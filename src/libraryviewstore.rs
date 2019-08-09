@@ -1,13 +1,13 @@
 use crate::db::Track;
+use crate::loaded_playlist::LoadedPlaylist;
 use gdk;
 use gtk;
 use gtk::prelude::*;
-use crate::loaded_playlist::LoadedPlaylist;
 use serde_json;
 use std::cell::{Cell, RefCell};
+use std::ops::Deref;
 use std::rc::Rc;
 use std::string::String;
-use std::ops::Deref;
 
 use crate::maingui::{MainGuiExt, MainGuiPtrExt};
 use crate::types::*;
@@ -40,8 +40,8 @@ fn idle_fill<I>(db: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> gt
 where
     I: Iterator<Item = String>,
 {
-    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use crate::schema::tracks::dsl::*;
+    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
 
     ///TODO replace this with const fn
     let DEFAULT_VISIBILITY: &gtk::Value = &true.to_value();
@@ -105,8 +105,8 @@ where
 }
 
 pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
-    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use crate::schema::tracks::dsl::*;
+    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
 
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
     // setup drag drop
@@ -178,7 +178,8 @@ pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
     }
 }
 
-fn idle_make_parents_visible_from_search(s: &Rc<String>,
+fn idle_make_parents_visible_from_search(
+    s: &Rc<String>,
     field: &Rc<gtk::SearchEntry>,
     treeiter: &Rc<gtk::TreeIter>,
     model: &Rc<gtk::TreeStore>,
@@ -190,7 +191,7 @@ fn idle_make_parents_visible_from_search(s: &Rc<String>,
     if s.deref() != &field.get_text().unwrap().to_lowercase() {
         return gtk::Continue(false);
     }
-    let mut parent = model.iter_parent(&treeiter);  //make a new iterator because we will modify it
+    let mut parent = model.iter_parent(&treeiter); //make a new iterator because we will modify it
     while let Some(p) = parent {
         model.set_value(&p, 3, visible);
         parent = model.iter_parent(&p);
@@ -198,7 +199,8 @@ fn idle_make_parents_visible_from_search(s: &Rc<String>,
     gtk::Continue(false)
 }
 
-fn idle_make_children_visible_from_search(s: &Rc<String>,
+fn idle_make_children_visible_from_search(
+    s: &Rc<String>,
     field: &Rc<gtk::SearchEntry>,
     treeiter: &Rc<gtk::TreeIter>,
     model: &Rc<gtk::TreeStore>,
@@ -211,7 +213,7 @@ fn idle_make_children_visible_from_search(s: &Rc<String>,
         return gtk::Continue(false);
     }
 
-    let current_tree = (*treeiter.deref()).clone();  //make a new iterator because we will modify it
+    let current_tree = (*treeiter.deref()).clone(); //make a new iterator because we will modify it
     let mut child_iterator = model.iter_children(Some(&current_tree));
     while let Some(child) = child_iterator {
         model.set_value(&child, 3, visible);
@@ -267,7 +269,8 @@ fn idle_search_changed(
 
         if val == Some(true) {
             model.set_value(&treeiter, 3, visible);
-            {   //parents visible
+            {
+                //parents visible
                 let sc = s.clone();
                 let fc = field.clone();
                 let mc = model.clone();
@@ -281,21 +284,16 @@ fn idle_search_changed(
                     )
                 });
             }
-            {   //childrens visible
+            {
+                //childrens visible
                 let sc = s.clone();
                 let fc = field.clone();
                 let mc = model.clone();
                 let tc = Rc::new((*treeiter).clone());
-                gtk::idle_add(move || {
-                    idle_make_children_visible_from_search(
-                        &sc,
-                        &fc,
-                        &tc,
-                        &mc,
-                    )
-                });
+                gtk::idle_add(move || idle_make_children_visible_from_search(&sc, &fc, &tc, &mc));
             }
-        } else { //if we are not matched now, we might match a child, so go into children
+        } else {
+            //if we are not matched now, we might match a child, so go into children
             model.set_value(&treeiter, 3, invisible);
             let itt = (*treeiter).clone();
             if let Some(c) = model.iter_children(Some(&itt)) {
@@ -317,9 +315,7 @@ fn idle_search_changed(
         let sc = s.clone();
         let fc = field.clone();
         let mc = model.clone();
-        gtk::idle_add(move || {
-            idle_make_children_visible_from_search(&sc, &fc, &it, &mc)
-        });
+        gtk::idle_add(move || idle_make_children_visible_from_search(&sc, &fc, &it, &mc));
     }
 
     // model.iter_next can return false, if that we do not spawn a new thread
@@ -392,8 +388,8 @@ fn get_tracks_for_selection(
     db: &DBPool,
     tv: &gtk::TreeView,
 ) -> Result<(String, Vec<Track>), String> {
-    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use crate::schema::tracks::dsl::*;
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, TextExpressionMethods};
 
     let (m, iter) = get_model_and_iter_for_selection(tv);
 

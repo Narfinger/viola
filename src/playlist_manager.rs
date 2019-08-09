@@ -1,12 +1,12 @@
-use gdk;
-use gtk;
-use gtk::prelude::*;
 use crate::loaded_playlist::LoadedPlaylist;
 use crate::smartplaylist_parser;
 use crate::smartplaylist_parser::{LoadSmartPlaylist, SmartPlaylist};
-use std::string::String;
+use gdk;
+use gtk;
+use gtk::prelude::*;
 use std::cell::Cell;
 use std::ops::Deref;
+use std::string::String;
 
 use crate::maingui::MainGuiPtrExt;
 use crate::types::*;
@@ -61,8 +61,8 @@ fn signalhandler(
 }
 
 fn add_playlist(db: &DBPool, sm: &[SmartPlaylist], index: i32) -> LoadedPlaylist {
-    use diesel::{QueryDsl, RunQueryDsl};
     use crate::schema::tracks::dsl::*;
+    use diesel::{QueryDsl, RunQueryDsl};
 
     info!("You selected index: {}", index);
     if index == 0 {

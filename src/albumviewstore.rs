@@ -1,19 +1,19 @@
 use crate::db::Track;
+use crate::loaded_playlist::LoadedPlaylist;
 use gdk;
 use gtk;
 use gtk::prelude::*;
-use crate::loaded_playlist::LoadedPlaylist;
 use std::cell::{Cell, RefCell};
+use std::ops::Deref;
 use std::rc::Rc;
 use std::string::String;
-use std::ops::Deref;
 
 use crate::maingui::{MainGuiExt, MainGuiPtrExt};
 use crate::types::*;
 
 pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
-    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     use crate::schema::tracks::dsl::*;
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
     let albumview: gtk::TreeView = builder.read().unwrap().get_object("albumview").unwrap();
 
@@ -22,11 +22,7 @@ pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
     let fmodel = gtk::TreeModelFilter::new(&model, None);
     fmodel.set_visible_column(1);
 
-    let searchfield: gtk::SearchEntry = builder
-        .read()
-        .unwrap()
-        .get_object("albumsearch")
-        .unwrap();
+    let searchfield: gtk::SearchEntry = builder.read().unwrap().get_object("albumsearch").unwrap();
     {
         let bc = builder.clone();
         searchfield.connect_search_changed(move |s| search_changed(s, &bc));
@@ -48,7 +44,6 @@ pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
         .load(db.deref())
         .expect("Error in db connection");
 
-
     fmodel.refilter();
     {
         let refcell = Rc::new(RefCell::new(albums.into_iter()));
@@ -63,14 +58,11 @@ pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
 }
 
 fn idle_fill<I>(ats: &Rc<RefCell<I>>, model: &gtk::ListStore) -> gtk::Continue
-    where  I: Iterator<Item = String> {
-
+where
+    I: Iterator<Item = String>,
+{
     if let Some(a) = ats.borrow_mut().next() {
-        model.insert_with_values(
-            None,
-            &[0,1],
-            &[&a, &true]
-        );
+        model.insert_with_values(None, &[0, 1], &[&a, &true]);
         Continue(true)
     } else {
         Continue(false)
@@ -181,18 +173,20 @@ fn get_tracks_for_selection(
     db: &DBPool,
     tv: &gtk::TreeView,
 ) -> Result<(String, Vec<Track>), String> {
-    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     use crate::schema::tracks::dsl::*;
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
     let (m, iter) = get_model_and_iter_for_selection(tv);
     let album_name = m.get_value(&iter, 0).get::<String>().unwrap();
     let query = tracks.order(path);
 
-    Ok((album_name.to_owned(),
+    Ok((
+        album_name.to_owned(),
         query
-        .filter(album.eq(&album_name))
-        .load(db.deref())
-        .expect("Error in query")))
+            .filter(album.eq(&album_name))
+            .load(db.deref())
+            .expect("Error in query"),
+    ))
 }
 
 fn do_new(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {

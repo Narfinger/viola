@@ -1,19 +1,18 @@
+use crate::schema::tracks;
+use crate::types::{DBPool, APP_INFO};
 use app_dirs::*;
 use diesel;
 use diesel::{Connection, SqliteConnection};
-use std::rc::Rc;
 use indicatif::{ProgressBar, ProgressStyle};
-use crate::schema::tracks;
 use std::collections::HashSet;
 use std::iter::FromIterator;
-use std::path::Path;
 use std::ops::Deref;
+use std::path::Path;
+use std::rc::Rc;
 use std::{thread, time};
 use taglib;
-use crate::types::{DBPool, APP_INFO};
 //use jwalk::{WalkDir, DirEntry};
-use walkdir::{DirEntry};
-
+use walkdir::DirEntry;
 
 #[derive(AsChangeset, Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]
 pub struct Track {
@@ -54,22 +53,24 @@ pub fn setup_db_connection() -> DBPool {
     let mut db_file =
         get_app_root(AppDataType::UserConfig, &APP_INFO).expect("Could not get app root");
     db_file.push("music.db");
-    Rc::new(SqliteConnection::establish(&db_file.to_str().unwrap()).expect("Could not open database"))
+    Rc::new(
+        SqliteConnection::establish(&db_file.to_str().unwrap()).expect("Could not open database"),
+    )
 }
 
 fn is_valid_file(s: &Result<DirEntry, walkdir::Error>) -> bool {
     if let Ok(ref sp) = *s {
         if sp.metadata().unwrap().file_type().is_file() {
-            Some(true) == sp.path().extension().map(|ex| {
-                vec!["ogg", "flac", "mp3", "wma", "aac", "opus"].contains(&ex.to_str().unwrap())
-            })
+            Some(true)
+                == sp.path().extension().map(|ex| {
+                    vec!["ogg", "flac", "mp3", "wma", "aac", "opus"].contains(&ex.to_str().unwrap())
+                })
         } else {
             false
         }
     } else {
         false
     }
-
 }
 
 fn get_album_file(s: &str) -> Option<String> {
@@ -82,7 +83,8 @@ fn get_album_file(s: &str) -> Option<String> {
         Some(png)
     } else {
         None
-    }.and_then(|s| s.to_str().map(String::from))
+    }
+    .and_then(|s| s.to_str().map(String::from))
 }
 
 fn convert_to_i32_option(u: Option<u32>) -> Option<i32> {
@@ -135,14 +137,14 @@ fn insert_track_with_error_retries(s: &str, db: &DBPool) -> Result<(), String> {
     let mut i = 2;
     let mut res = Err("retry".into());
     while res.is_err() {
-        res = insert_track(s,db);
+        res = insert_track(s, db);
         i -= 1;
         if res.is_ok() {
             return res;
-        } else if i>0 {
+        } else if i > 0 {
             let ten_millis = time::Duration::from_millis(10);
             thread::sleep(ten_millis);
-        } else if i<=0 {
+        } else if i <= 0 {
             return res;
         }
     }
@@ -150,8 +152,8 @@ fn insert_track_with_error_retries(s: &str, db: &DBPool) -> Result<(), String> {
 }
 
 fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
-    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
     use crate::schema::tracks::dsl::*;
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
 
     let new_track = construct_track_from_path(s)?;
     let old_track_perhaps = tracks
@@ -196,8 +198,8 @@ pub fn build_db(path: &str, db: &DBPool) -> Result<(), String> {
     let file_count = files.len();
 
     {
-        use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
         use crate::schema::tracks::dsl::*;
+        use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
         let old_files: HashSet<String> = HashSet::from_iter(
             tracks
                 .select(path)

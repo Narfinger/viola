@@ -58,7 +58,11 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         total_label: builder.read().unwrap().get_object("totalLabel").unwrap(),
         time_scale: builder.read().unwrap().get_object("timeScale").unwrap(),
         cover: builder.read().unwrap().get_object("coverImage").unwrap(),
-        repeat_once: builder.read().unwrap().get_object("repeatOnceImage").unwrap(),
+        repeat_once: builder
+            .read()
+            .unwrap()
+            .get_object("repeatOnceImage")
+            .unwrap(),
         last_marked: RefCell::new(None),
         playlist_tabs: pltabs,
         gstreamer: gst.clone(),
@@ -76,7 +80,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
     {
         let guic = g.clone();
         let poolc = pool.clone();
-        gtk::timeout_add_seconds(60*30, move || {
+        gtk::timeout_add_seconds(60 * 30, move || {
             info!("autosaving database");
             guic.save(&poolc);
             gtk::Continue(true)
@@ -90,7 +94,6 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
             gtk::Inhibit(true)
         });
     }
-
 
     {
         let gc = g.clone();
@@ -200,8 +203,10 @@ impl MainGuiExt for MainGui {
                         self.cover.clear();
                     }
                     self.elapsed_label.set_text("0:00");
-                    self.total_label.set_text(&format_duration(track.length as u64, track.length as u64));
-                    self.time_scale.set_range(f64::from(0), f64::from(track.length));
+                    self.total_label
+                        .set_text(&format_duration(track.length as u64, track.length as u64));
+                    self.time_scale
+                        .set_range(f64::from(0), f64::from(track.length));
 
                     //highlight row
                     let pos = self.playlist_tabs.borrow().current_position();
@@ -249,14 +254,16 @@ impl MainGuiExt for MainGui {
 
     fn set_playback(&self, status: &GStreamerAction) {
         if *status == GStreamerAction::RepeatOnce {
-            self.repeat_once.set_from_icon_name(Some("gtk-undelete"), gtk::IconSize::SmallToolbar);
+            self.repeat_once
+                .set_from_icon_name(Some("gtk-undelete"), gtk::IconSize::SmallToolbar);
         }
         self.gstreamer.do_gstreamer_action(status);
     }
 
     fn change_time_scale(&self, pos: f64) {
         let p = pos.trunc() as u64;
-        self.gstreamer.do_gstreamer_action(&GStreamerAction::Seek(p));
+        self.gstreamer
+            .do_gstreamer_action(&GStreamerAction::Seek(p));
     }
 
     fn append_to_playlist(&self, t: Vec<db::Track>) {
@@ -282,7 +289,7 @@ fn format_duration(current_position: u64, total: u64) -> String {
     let m = current_position / 60 % (60 * 60);
     let h = current_position / (60 * 60);
     //warn!("current, total {}/{}", current_position, total);
-    if total >= 60*60 {
+    if total >= 60 * 60 {
         format!("{}:{:02}:{:02}", h, m, s)
     } else if total >= 60 {
         format!("{}:{:02}", m, s)
@@ -314,7 +321,8 @@ impl MainGuiPtrExt for MainGuiPtr {
         let label = gtk::Label::new(Some(lp.name.as_str()));
 
         ///FIXME we should use one of the enum but it doesn't exist yet?
-        let icon = gtk::Image::new_from_icon_name(Some("window-close"), gtk::IconSize::SmallToolbar);
+        let icon =
+            gtk::Image::new_from_icon_name(Some("window-close"), gtk::IconSize::SmallToolbar);
         let button = gtk::ToolButton::new(Some(&icon), None);
         button.set_icon_name(Some("window-close"));
         button.show();
@@ -337,7 +345,6 @@ impl MainGuiPtrExt for MainGuiPtr {
 
                 //this deletes the data structure behind the playlist
                 s.delete_page(index);
-
             });
         }
 

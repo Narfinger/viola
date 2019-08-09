@@ -11,7 +11,6 @@ extern crate gdk_pixbuf;
 extern crate gio;
 extern crate glib;
 extern crate gstreamer;
-extern crate gstreamer_player;
 extern crate gtk;
 extern crate indicatif;
 extern crate open;
@@ -27,7 +26,6 @@ extern crate toml;
 extern crate url;
 extern crate walkdir;
 //extern crate jwalk;
-
 
 pub mod albumviewstore;
 pub mod db;
@@ -92,7 +90,6 @@ fn main() {
 
     env_logger::init();
 
-
     let pool = db::setup_db_connection();
     if matches.is_present("update") {
         info!("Updating Database");
@@ -129,9 +126,11 @@ fn main() {
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else {
         use gio::ApplicationExtManual;
-        let application =
-            gtk::Application::new(Some("com.github.narfinger.viola"), gio::ApplicationFlags::empty())
-                .expect("Initialization failed...");
+        let application = gtk::Application::new(
+            Some("com.github.narfinger.viola"),
+            gio::ApplicationFlags::empty(),
+        )
+        .expect("Initialization failed...");
         application.connect_startup(move |app| {
             gui::build_gui(app, &pool);
         });

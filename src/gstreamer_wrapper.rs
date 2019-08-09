@@ -2,9 +2,11 @@ use gstreamer;
 use gstreamer::{ElementExt, ElementExtManual};
 use gtk;
 use gtk::ObjectExt;
-use std::rc::Rc;
+use gtk::ToValue;
+
 use std::cell::Cell;
-use std::sync::mpsc::{channel,Receiver, Sender};
+use std::rc::Rc;
+use std::sync::mpsc::{channel, sync_channel, Receiver, Sender};
 
 use crate::loaded_playlist::PlaylistControls;
 use crate::playlist_tabs::PlaylistControlsImmutable;
@@ -48,7 +50,8 @@ impl From<gstreamer::State> for GStreamerMessage {
 }
 
 pub fn new(
-    current_playlist: PlaylistTabsPtr, pool: DBPool,
+    current_playlist: PlaylistTabsPtr,
+    pool: DBPool,
 ) -> Result<(Rc<GStreamer>, Receiver<GStreamerMessage>), String> {
     gstreamer::init().unwrap();
     let pipeline =
@@ -56,6 +59,50 @@ pub fn new(
 
     let (tx, rx) = channel::<GStreamerMessage>();
 
+    //old method for eos
+    let (eos_tx, eos_rx) = sync_channel::<()>(1);
+    pipeline
+        .connect("about-to-finish", true, move |_| {
+            eos_tx.send(()).expect("Error in sending eos to own bus");
+            Some(true.to_value())
+        })
+        .expect("Could not connect to about-to-finish signal");
+
+    //new method for eos which does not work
+    /*
+    {
+        let (eos_tx, eos_rx) = channel::<()>();
+        res.pipeline
+            .get_bus()
+            .unwrap()
+            .add_watch(move |_bus, message| {
+                if let gstreamer::MessageView::Eos(..) = message.view() {
+                    info!("Sending EOS");
+                    eos_tx
+                        .send(())
+                        .expect("Error in sending eos signal to own bus");
+                } else if let gstreamer::MessageView::StateChanged(v) = message.view() {
+                    // eos does not trigger after we paused and resumed
+                    // but it triggers a null->ready
+                    // Null is hopefully not triggered anywhere else
+                    //info!("State change {:?}", v);
+                    //if v.get_current() == gstreamer::State::Null {
+                    //    info!("We have state null, assuming we had a pause and then eos");
+                    //    info!("Not sending EOS");
+                    //eos_tx.send(()).expect("Error in sending eos signal to own bus");
+                    //}
+                } else if let gstreamer::MessageView::Error(v) = message.view() {
+                    info!("Got error {:?}", message.view());
+                } else if let gstreamer::MessageView::StreamStatus(v) = message.view() {
+                    error!("Got stream status, would skip");
+                } else if let gstreamer::MessageView::DurationChanged(v) = message.view() {
+                    error!("Duration Changed, would skip");
+                } else {
+                    //info!("Got other message {:?}", message.view());
+                }
+                gtk::Continue(true)
+            });
+            */
     let res = Rc::new(GStreamer {
         pipeline,
         current_playlist,
@@ -64,26 +111,14 @@ pub fn new(
         repeat_once: Cell::new(false),
     });
 
-    {
-        let (eos_tx, eos_rx) = channel::<()>();
-        res.pipeline.get_bus().unwrap().add_watch(move |_bus, message| {
-            if let gstreamer::MessageView::Eos(..) = message.view() {
-                eos_tx.send(()).expect("Error in sending eos signal to own bus");
-            } else {
-                info!("Got different message {:?}", message.view())
-            }
-            gtk::Continue(true)
-        });
-        let resc = res.clone();
-        gtk::timeout_add(50, move || {
-            if eos_rx.try_recv().is_ok() {
-                info!("we found eos");
-                resc.gstreamer_handle_eos();
-            }
-            gtk::Continue(true)
-        });
-    }
-
+    let resc = res.clone();
+    gtk::timeout_add(50, move || {
+        if eos_rx.try_recv().is_ok() {
+            info!("we found eos");
+            resc.gstreamer_handle_eos();
+        }
+        gtk::Continue(true)
+    });
 
     let resc = res.clone();
     gtk::timeout_add(250, move || resc.gstreamer_update_gui());
@@ -121,7 +156,9 @@ impl GStreamerExt for GStreamer {
         match *action {
             GStreamerAction::Seek(i) => {
                 let t = gstreamer::ClockTime::from_seconds(i);
-                self.pipeline.seek_simple(gstreamer::SeekFlags::NONE, t).expect("Could not seek");
+                self.pipeline
+                    .seek_simple(gstreamer::SeekFlags::NONE, t)
+                    .expect("Could not seek");
             }
             _ => {}
         };
@@ -131,7 +168,7 @@ impl GStreamerExt for GStreamer {
                 if gstreamer::State::Playing
                     == self.pipeline.get_state(gstreamer::ClockTime(Some(5))).1
                 {
-                    info!("Doing");
+                    info!("Doing (setting to paused and ready");
                     self.pipeline
                         .set_state(gstreamer::State::Paused)
                         .expect("Error in gstreamer state set, paused");
@@ -186,17 +223,20 @@ impl GStreamerExt for GStreamer {
             .expect("Error in sending updated state");
 
         //sending to gstreamer
-        if let Err(e) = self.pipeline.set_state(gstreamer_action) {
-            if let Some(bus) = self.pipeline.get_bus() {
-                while let Some(msg) = bus.pop() {
-                    info!("we found messages on the bus {:?}", msg);
-                }
-            }
-            panic!(
-                "Error in setting gstreamer state playing, found the following error {:?}",
-                e
-            );
-        }
+        self.pipeline
+            .set_state(gstreamer_action)
+            .expect("Error in sending to gstreamer");
+        //if let Err(e) = self.pipeline.set_state(gstreamer_action) {
+        //if let Some(bus) = self.pipeline.get_bus() {
+        //    while let Some(msg) = bus.pop() {
+        //        info!("we found messages on the bus {:?}", msg);
+        //    }
+        //}
+        //panic!(
+        //    "Error in setting gstreamer state playing, found the following error {:?}",
+        //    e
+        //);
+        //}
     }
 
     /// poll the message bus and on eos start new
@@ -209,7 +249,10 @@ impl GStreamerExt for GStreamer {
                 let total = cl.seconds().unwrap_or(0);
                 //warn!("total: {}", total);
                 self.sender
-                    .send(GStreamerMessage::ChangedDuration((cltime.seconds().unwrap_or(0), total)))
+                    .send(GStreamerMessage::ChangedDuration((
+                        cltime.seconds().unwrap_or(0),
+                        total,
+                    )))
                     .expect("Error in gstreamer sending message to gui");
             }
         }
@@ -217,6 +260,7 @@ impl GStreamerExt for GStreamer {
     }
 
     fn gstreamer_handle_eos(&self) {
+        info!("Handling EOS");
         let res = if self.repeat_once.take() {
             info!("we are repeat playing");
             self.repeat_once.set(false);
@@ -248,7 +292,6 @@ impl GStreamerExt for GStreamer {
                     .send(GStreamerMessage::Playing)
                     .expect("Error in gstreamer sending message to gui");
             }
-         };
-
+        };
     }
 }

@@ -1,7 +1,7 @@
-use diesel;
 use crate::schema::{playlists, playlisttracks};
-use std::ops::Deref;
+use diesel;
 use std::cell::Cell;
+use std::ops::Deref;
 
 use crate::db::Track;
 use crate::loaded_playlist::LoadedPlaylist;
@@ -65,10 +65,10 @@ fn create_loaded_from_playlist(
 }
 
 pub fn restore_playlists(db: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::result::Error> {
-    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     use crate::schema::playlists::dsl::*;
     use crate::schema::playlisttracks::dsl::*;
     use crate::schema::tracks::dsl::*;
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
     let pls = playlists.load::<Playlist>(db.deref())?;
     pls.iter()
@@ -79,13 +79,14 @@ pub fn restore_playlists(db: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::res
                 .load(db.deref())?;
 
             create_loaded_from_playlist(pl, &t)
-        }).collect()
+        })
+        .collect()
 }
 
 pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::result::Error> {
-    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     use crate::schema::playlists::dsl::*;
     use crate::schema::playlisttracks::dsl::*;
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
     info!("playlist id {:?}", pl.id);
 
@@ -97,9 +98,7 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
     }
 
     let playlist: Playlist = if let Some(pid) = pl.id.get() {
-        playlists
-            .find(pid)
-            .first::<Playlist>(db.deref())?
+        playlists.find(pid).first::<Playlist>(db.deref())?
     } else {
         let t = vec![NewPlaylist {
             name: pl.name.clone(),
@@ -108,9 +107,7 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
         diesel::insert_into(playlists)
             .values(&t)
             .execute(db.deref())?;
-        playlists
-            .filter(name.eq(&pl.name))
-            .first(db.deref())?
+        playlists.filter(name.eq(&pl.name)).first(db.deref())?
     };
 
     //deleting old tracks
@@ -129,7 +126,8 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
             playlist_id: playlist.id,
             track_id: track.id,
             playlist_order: index as i32,
-        }).collect::<Vec<NewPlaylistTrack>>();
+        })
+        .collect::<Vec<NewPlaylistTrack>>();
     info!("collected and inserting");
     //info!("All values {:?}", vals);
     diesel::insert_into(playlisttracks)
@@ -144,19 +142,23 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
 }
 
 pub fn clear_all(db: &DBPool) {
-    use diesel::RunQueryDsl;
     use crate::schema::playlists::dsl::*;
     use crate::schema::playlisttracks::dsl::*;
+    use diesel::RunQueryDsl;
 
-    diesel::delete(playlists).execute(db.deref()).expect("Error in cleaning playlists");
-    diesel::delete(playlisttracks).execute(db.deref()).expect("Error in cleaning playlisttracks");
+    diesel::delete(playlists)
+        .execute(db.deref())
+        .expect("Error in cleaning playlists");
+    diesel::delete(playlisttracks)
+        .execute(db.deref())
+        .expect("Error in cleaning playlisttracks");
 }
 
 pub fn delete_with_id(db: &DBPool, index: i32) {
-    use diesel::{ExpressionMethods, RunQueryDsl};
     use crate::schema;
     use crate::schema::playlists::dsl::*;
     use crate::schema::playlisttracks::dsl::*;
+    use diesel::{ExpressionMethods, RunQueryDsl};
 
     info!("index for deleting: {}", index);
 
