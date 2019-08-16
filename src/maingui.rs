@@ -7,6 +7,7 @@ use gtk::prelude::*;
 
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::mpsc::sync_channel;
 
 use crate::db;
 use crate::gstreamer_wrapper;
@@ -28,18 +29,21 @@ pub struct MainGui {
     status_label: gtk::Label,
     elapsed_label: gtk::Label,
     total_label: gtk::Label,
+    total_playtime_label: gtk::Label,
     time_scale: gtk::Scale,
     cover: gtk::Image,
     repeat_once: gtk::Image,
     last_marked: RefCell<Option<gtk::TreeIter>>,
     playlist_tabs: PlaylistTabsPtr,
     gstreamer: Rc<GStreamer>,
+    update_playtime_channel: std::sync::mpsc::SyncSender<i64>,
 }
 
 /// Constructs a new gui, given a BuilderPtr and a loaded playlist.
 pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
     let pltabs = playlist_tabs::new();
     let (gst, recv) = gstreamer_wrapper::new(pltabs.clone(), pool.clone()).unwrap();
+    let (playtime_update_send, playtime_update_reicv) = sync_channel::<i64>(1);
     let p: gtk::Paned = builder.read().unwrap().get_object("paned").unwrap();
     p.set_position(80);
 
@@ -56,6 +60,11 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         status_label: builder.read().unwrap().get_object("statusLabel").unwrap(),
         elapsed_label: builder.read().unwrap().get_object("elapsedLabel").unwrap(),
         total_label: builder.read().unwrap().get_object("totalLabel").unwrap(),
+        total_playtime_label: builder
+            .read()
+            .unwrap()
+            .get_object("totalPlaytimeLabel")
+            .unwrap(),
         time_scale: builder.read().unwrap().get_object("timeScale").unwrap(),
         cover: builder.read().unwrap().get_object("coverImage").unwrap(),
         repeat_once: builder
@@ -66,6 +75,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         last_marked: RefCell::new(None),
         playlist_tabs: pltabs,
         gstreamer: gst.clone(),
+        update_playtime_channel: playtime_update_send,
     });
 
     let gc = g.clone();
@@ -99,6 +109,16 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         let gc = g.clone();
         g.notebook.connect_switch_page(move |_, _, index| {
             gc.page_changed(index);
+        });
+    }
+
+    {   //updateing total playtime
+        let gc = g.clone();
+        gtk::timeout_add_seconds(5, move || {
+            if let Ok(i) = playtime_update_reicv.try_recv() {
+                gc.total_playtime_label.set_text(&format!("{}", i));
+            }
+            gtk::Continue(true)
         });
     }
 

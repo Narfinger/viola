@@ -17,6 +17,7 @@ pub struct PlaylistTab {
     pub lp: LoadedPlaylist,
     pub treeview: gtk::TreeView,
     pub model: gtk::ListStore,
+    update_playtime_channel: std::sync::mpsc::SyncSender<i64>,
 }
 
 /// FIXME: clean up this section and make the various traits into different files
@@ -26,6 +27,7 @@ pub fn load_tab(
     tabs: &PlaylistTabsPtr,
     gui: MainGuiPtr,
     lp: LoadedPlaylist,
+    playlist_time_left_sender: std::sync::mpsc::SyncSender<i64>
 ) -> (gtk::ScrolledWindow, PlaylistTab) {
     /// FIXME clean this up
     let model = gtk::ListStore::new(&[
@@ -114,6 +116,7 @@ pub fn load_tab(
         lp,
         treeview,
         model,
+        playlist_time_left_sender,
     };
 
     (scw, tab)
@@ -146,7 +149,7 @@ pub struct PlaylistTabs {
 
 impl Drop for PlaylistTabs {
     fn drop(&mut self) {
-        panic!("implemente saving");
+        panic!("implement saving");
     }
 }
 
