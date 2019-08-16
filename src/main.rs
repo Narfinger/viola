@@ -40,6 +40,7 @@ pub mod playlist_tabs;
 pub mod schema;
 pub mod smartplaylist_parser;
 pub mod types;
+pub mod utils;
 
 use clap::{App, Arg};
 use gio::ApplicationExt;

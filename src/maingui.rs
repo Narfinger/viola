@@ -17,6 +17,7 @@ use crate::playlist;
 use crate::playlist_tabs;
 use crate::playlist_tabs::PlaylistTabsExt;
 use crate::types::*;
+use crate::utils::format_into_full_duration;
 
 /// Gui is the main struct for calling things on the gui or in the gstreamer. It will take care that
 /// everything is the correct state. You should probably interface it with a GuiPtr.
@@ -112,35 +113,16 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         });
     }
 
-    {   //updateing total playtime
+    {
+        //updateing total playtime
         let gc = g.clone();
         gtk::timeout_add_seconds(5, move || {
             if let Ok(i) = playtime_update_reicv.try_recv() {
-                gc.total_playtime_label.set_text(&format!("{}", i));
+                gc.total_playtime_label.set_text(&format_into_full_duration(i));
             }
             gtk::Continue(true)
         });
     }
-
-    //signal handling in gtk-rs is really stupid
-    //let page_removed_signal_id = {
-    //    let gc = g.clone();
-    //    g.notebook.connect_page_removed(move |_, _widget, index| {
-    //        gc.delete_page(index);
-    //    })
-    //};
-
-    //{   //notebook needs to not have any signals emitted because it deleted tabs sometimes
-    //    //we need to build an rc of it because the
-    //    let gc = g.clone();
-    //    let id = page_removed_signal_id;
-    //    g.notebook.connect_destroy(move |_| {
-    //        glib::signal::signal_stop_emission_by_name(
-    //            &gc.notebook,
-    //            "page-removed"
-    //        );
-    //    });
-    //}
 
     g
 }
@@ -351,7 +333,12 @@ impl MainGuiPtrExt for MainGuiPtr {
         b.pack_start(&label, false, false, 0);
         b.pack_start(&button, false, false, 0);
 
-        let (scw, tab) = playlist_tabs::load_tab(&self.playlist_tabs, self.clone(), lp);
+        let (scw, tab) = playlist_tabs::load_tab(
+            &self.playlist_tabs,
+            self.clone(),
+            lp,
+            self.update_playtime_channel.clone(),
+        );
         let index = self.notebook.append_page(&scw, Some(&b));
         b.show_all();
         scw.show_all();
@@ -388,6 +375,7 @@ impl MainGuiPtrExt for MainGuiPtr {
         for lp in playlist::restore_playlists(pool).expect("Error restoring playlisttabs") {
             self.add_page(lp);
         }
+        self.playlist_tabs.borrow().update_playtime();
     }
 
     /// Handles mouse button presses in treeviews/playlistviews

@@ -27,7 +27,7 @@ pub fn load_tab(
     tabs: &PlaylistTabsPtr,
     gui: MainGuiPtr,
     lp: LoadedPlaylist,
-    playlist_time_left_sender: std::sync::mpsc::SyncSender<i64>
+    playlist_time_left_sender: std::sync::mpsc::SyncSender<i64>,
 ) -> (gtk::ScrolledWindow, PlaylistTab) {
     /// FIXME clean this up
     let model = gtk::ListStore::new(&[
@@ -116,7 +116,7 @@ pub fn load_tab(
         lp,
         treeview,
         model,
-        playlist_time_left_sender,
+        update_playtime_channel: playlist_time_left_sender,
     };
 
     (scw, tab)
@@ -193,6 +193,9 @@ pub trait PlaylistTabsExt {
 
     /// saves the playlist tabs to the database
     fn save(&self, _: &DBPool);
+
+    /// updates the current playlist
+    fn update_playtime(&self);
 }
 
 impl PlaylistTabsExt for PlaylistTabs {
@@ -212,7 +215,8 @@ impl PlaylistTabsExt for PlaylistTabs {
     }
 
     fn set_current_playlist(&mut self, index: i32) {
-        self.current_playlist = Some(index as usize)
+        self.current_playlist = Some(index as usize);
+        self.update_playtime();
     }
 
     fn add_tab(&mut self, plt: PlaylistTab) {
@@ -270,6 +274,8 @@ impl PlaylistTabsExt for PlaylistTabs {
             }
         }
         self.tabs[index].lp = new_lp;
+
+        self.update_playtime();
     }
 
     fn append_to_playlist(&mut self, t: Vec<db::Track>) {
@@ -280,6 +286,8 @@ impl PlaylistTabsExt for PlaylistTabs {
         let model = &self.tabs[self.current_playlist.unwrap()].model;
 
         append_treeview_from_vector(&t, model);
+
+        self.update_playtime();
     }
 
     fn replace_playlist(&mut self, t: Vec<db::Track>) {
@@ -293,6 +301,8 @@ impl PlaylistTabsExt for PlaylistTabs {
         self.tabs[self.current_playlist.unwrap()]
             .lp
             .current_position = 0;
+
+        self.update_playtime();
     }
 
     fn insert_tracks(&mut self, index: i32, tracks: Vec<db::Track>) {
@@ -309,6 +319,8 @@ impl PlaylistTabsExt for PlaylistTabs {
             append_treeview_from_vector(&items, model);
         }
         self.tabs[self.current_playlist.unwrap()].lp.items = items;
+
+        self.update_playtime();
     }
 
     fn save(&self, db: &DBPool) {
@@ -321,6 +333,16 @@ impl PlaylistTabsExt for PlaylistTabs {
 
         if let Err(e) = result {
             error!("Error in saving the playlists {:?}", e);
+        }
+    }
+
+    fn update_playtime(&self) {
+        if self.current_playlist.is_some() & !self.tabs.is_empty() {
+            let lp = &self.tabs[self.current_playlist.unwrap()].lp;
+            let channel = &self.tabs[self.current_playlist.unwrap()].update_playtime_channel;
+            channel
+                .send(lp.get_playlist_full_time())
+                .expect("Cannot update full playlist time");
         }
     }
 }

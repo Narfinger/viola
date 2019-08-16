@@ -18,11 +18,16 @@ pub struct LoadedPlaylist {
 
 pub trait LoadedPlaylistExt {
     fn get_current_track(&self) -> &Track;
+    fn get_playlist_full_time(&self) -> i64;
 }
 
 impl LoadedPlaylistExt for LoadedPlaylist {
     fn get_current_track(&self) -> &Track {
         &self.items[self.current_position as usize]
+    }
+
+    fn get_playlist_full_time(&self) -> i64 {
+        self.items.iter().map(|t| t.length as i64).sum()
     }
 }
 
