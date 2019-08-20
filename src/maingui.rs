@@ -44,7 +44,7 @@ pub struct MainGui {
 pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
     let pltabs = playlist_tabs::new();
     let (gst, recv) = gstreamer_wrapper::new(pltabs.clone(), pool.clone()).unwrap();
-    let (playtime_update_send, playtime_update_reicv) = sync_channel::<i64>(1);
+    let (playtime_update_send, playtime_update_reicv) = sync_channel::<i64>(2);
     let p: gtk::Paned = builder.read().unwrap().get_object("paned").unwrap();
     p.set_position(80);
 

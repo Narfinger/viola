@@ -63,8 +63,9 @@ pub fn new(
     let (eos_tx, eos_rx) = sync_channel::<()>(1);
     pipeline
         .connect("about-to-finish", true, move |_| {
+            warn!("received signal to go to next track");
             eos_tx.send(()).expect("Error in sending eos to own bus");
-            Some(true.to_value())
+            None
         })
         .expect("Could not connect to about-to-finish signal");
 
