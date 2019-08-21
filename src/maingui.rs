@@ -192,7 +192,11 @@ impl MainGuiExt for MainGui {
                     let track = &tabs.current_track();
 
                     self.title_label.set_text(&track.title);
-                    self.artist_label.set_text(&track.artist);
+                    {
+                        let mut artist = track.artist.clone();
+                        artist.truncate(15);
+                        self.artist_label.set_text(&artist);
+                    }
                     self.album_label.set_text(&track.album);
                     self.status_label.set_text("Playing");
                     if let Some(ref p) = track.albumpath {
