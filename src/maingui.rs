@@ -44,7 +44,7 @@ pub struct MainGui {
 pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
     let pltabs = playlist_tabs::new();
     let (gst, recv) = gstreamer_wrapper::new(pltabs.clone(), pool.clone()).unwrap();
-    let (playtime_update_send, playtime_update_reicv) = sync_channel::<i64>(2);
+    let (playtime_update_send, playtime_update_reicv) = sync_channel::<i64>(10);
     let p: gtk::Paned = builder.read().unwrap().get_object("paned").unwrap();
     p.set_position(80);
 
@@ -119,6 +119,10 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         gtk::timeout_add_seconds(5, move || {
             if let Ok(i) = playtime_update_reicv.try_recv() {
                 gc.total_playtime_label.set_text(&format_into_full_duration(i));
+
+                //clear the queue because we do not need old messages
+                while let Ok(i) = playtime_update_reicv.try_recv() {
+                }
             }
             gtk::Continue(true)
         });
