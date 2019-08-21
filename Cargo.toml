@@ -8,6 +8,7 @@ edition = "2018"
 [dependencies]
 app_dirs = "1.2"         # Put your app's data in the right place on every platform
 clap = "2.33"                    # A simple to use, efficient, and full featured  Command Line Argument Parser
+dbus = "0.6"
 diesel = { version = "1.4", features = ["sqlite", "r2d2"] }
 error-chain = "0.12"
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }

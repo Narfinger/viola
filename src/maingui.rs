@@ -178,9 +178,10 @@ impl MainGuiExt for MainGui {
         if let Some(cur_page) = self.notebook.get_current_page() {
             let treeview = &self.playlist_tabs.borrow().tabs[cur_page as usize].treeview;
             //let treeselection = treeview.get_selection();
-            self.repeat_once.clear();
             match *status {
                 PlayerStatus::Playing => {
+                    self.repeat_once.clear();
+
                     //if state == gstreamer::State::Paused || state == gstreamer::State::Playing {
                     let index = self.playlist_tabs.borrow().current_position();
                     let mut ipath = gtk::TreePath::new();
