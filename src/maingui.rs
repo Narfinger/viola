@@ -117,12 +117,11 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
         //updateing total playtime
         let gc = g.clone();
         gtk::timeout_add_seconds(5, move || {
-            if let Ok(i) = playtime_update_reicv.try_recv() {
-                gc.total_playtime_label.set_text(&format_into_full_duration(i));
+            // there might be old values in the queue, we only want the last value
+            let elem = playtime_update_reicv.try_iter().last();
 
-                //clear the queue because we do not need old messages
-                while let Ok(i) = playtime_update_reicv.try_recv() {
-                }
+            if let Some(i) = elem {
+                gc.total_playtime_label.set_text(&format_into_full_duration(i));
             }
             gtk::Continue(true)
         });
