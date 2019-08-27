@@ -46,7 +46,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
     let (gst, recv) = gstreamer_wrapper::new(pltabs.clone(), pool.clone()).unwrap();
     let (playtime_update_send, playtime_update_reicv) = sync_channel::<i64>(10);
     let p: gtk::Paned = builder.read().unwrap().get_object("paned").unwrap();
-    p.set_position(80);
+    p.set_position(150); // this is in pixels
 
     let g = Rc::new(MainGui {
         pool: pool.clone(),
@@ -121,7 +121,8 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
             let elem = playtime_update_reicv.try_iter().last();
 
             if let Some(i) = elem {
-                gc.total_playtime_label.set_text(&format_into_full_duration(i));
+                gc.total_playtime_label
+                    .set_text(&format_into_full_duration(i));
             }
             gtk::Continue(true)
         });
