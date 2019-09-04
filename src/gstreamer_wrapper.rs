@@ -55,7 +55,7 @@ pub fn new(
 ) -> Result<(Rc<GStreamer>, Receiver<GStreamerMessage>), String> {
     gstreamer::init().unwrap();
     let pipeline =
-        gstreamer::parse_launch("playbin").map_err(|_| String::from("Cannot do gstreamer"))?;
+        gstreamer::parse_launch("playbin").map_err(|e| format!("Cannot do gstreamer: {}", e))?;
 
     let (tx, rx) = channel::<GStreamerMessage>();
 
