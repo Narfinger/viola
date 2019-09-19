@@ -15,35 +15,45 @@ class MyApp extends StatelessWidget {
 
   Widget _buildGrid() {
     return Expanded(
-        child: GridView.count(
+        child: Column(
+      children: <Widget>[
+        Column(
+          children: <Widget>[
+            Container(child: Text("Title")),
+            Container(child: Text("Artist"))
+          ],
+        ),
+        GridView.count(
             scrollDirection: Axis.vertical,
             crossAxisCount: 2,
             children: <Widget>[
-          this._buildEntry("t1"),
-          this._buildEntry("t2"),
-          this._buildEntry("t3"),
-          this._buildEntry("t4"),
-          this._buildEntry("t5"),
-          this._buildEntry("t6"),
-          this._buildEntry("t7"),
-          this._buildEntry("t8"),
-          this._buildEntry("t9"),
-          this._buildEntry("t10"),
-          this._buildEntry("t11"),
-          this._buildEntry("t12"),
-        ]));
+              this._buildEntry("t1"),
+              this._buildEntry("t2"),
+              this._buildEntry("t3"),
+              this._buildEntry("t4"),
+              this._buildEntry("t5"),
+              this._buildEntry("t6"),
+              this._buildEntry("t7"),
+              this._buildEntry("t8"),
+              this._buildEntry("t9"),
+              this._buildEntry("t10"),
+              this._buildEntry("t11"),
+              this._buildEntry("t12"),
+            ]),
+      ],
+    ));
   }
 
   Widget playbackcontrols = Row(children: <Widget>[
-    const RaisedButton(
-        onPressed: null,
-        child: Text('Disabled Button', style: TextStyle(fontSize: 20))),
-    const RaisedButton(
-        onPressed: null,
-        child: Text('Disabled Button2', style: TextStyle(fontSize: 20))),
-    const RaisedButton(
-        onPressed: null,
-        child: Text('Disabled Button3', style: TextStyle(fontSize: 20))),
+    RaisedButton(
+        onPressed: () {}, child: Text('Play', style: TextStyle(fontSize: 20))),
+    RaisedButton(
+        onPressed: () {}, child: Text('Pause', style: TextStyle(fontSize: 20))),
+    RaisedButton(
+        onPressed: () {},
+        child: Text('Previous', style: TextStyle(fontSize: 20))),
+    RaisedButton(
+        onPressed: () {}, child: Text('next', style: TextStyle(fontSize: 20))),
   ]);
 
   @override
