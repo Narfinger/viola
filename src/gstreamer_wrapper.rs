@@ -116,6 +116,9 @@ pub fn new(
     gtk::timeout_add(50, move || {
         if eos_rx.try_recv().is_ok() {
             info!("we found eos");
+            let position: Option<gstreamer::ClockTime> = resc.pipeline.query_position();
+            let duration: Option<gstreamer::ClockTime> = resc.pipeline.query_duration();
+            info!("pos/dur: {:?}/{:?}", position, duration);
             resc.gstreamer_handle_eos();
         }
         gtk::Continue(true)
