@@ -48,7 +48,7 @@ pub fn load_tab(
 
     for &(id, title, width) in &[
         (0, "#", 50),
-        (1, "Title", 500),
+        (1, "Title", 250),
         (2, "Artist", 200),
         (3, "Album", 300),
         (4, "Length", 150),

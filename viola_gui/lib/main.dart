@@ -1,7 +1,33 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:async' show Future;
+import 'package:flutter/services.dart' show rootBundle;
 
 void main() {
   runApp(new MyApp());
+}
+
+class Track {
+  final String title;
+  final String artist;
+
+  Track.fromJson(Map<String, dynamic> json)
+      : title = json['title'],
+        artist = json['artist'];
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'artist': artist,
+      };
+}
+
+Future<String> loadAsset(BuildContext context) async {
+  return DefaultAssetBundle.of(context).loadString('assets/tracks.json');
+}
+
+Future<List<Track>> fetchTracks(BuildContext context) async {
+  var ass = await loadAsset(context);
+  List<Track> tracks = json.decode(ass).map((i) => Track.fromJson(i)).toList();
+  return tracks;
 }
 
 class MyApp extends StatelessWidget {
@@ -13,7 +39,7 @@ class MyApp extends StatelessWidget {
     );
   }
 
-  Widget _buildGrid() {
+  Widget _buildGrid(List<Track> tracks) {
     return Expanded(
         child: Column(
       children: <Widget>[
@@ -23,23 +49,22 @@ class MyApp extends StatelessWidget {
             Container(child: Text("Artist"))
           ],
         ),
-        GridView.count(
-            scrollDirection: Axis.vertical,
-            crossAxisCount: 2,
-            children: <Widget>[
-              this._buildEntry("t1"),
-              this._buildEntry("t2"),
-              this._buildEntry("t3"),
-              this._buildEntry("t4"),
-              this._buildEntry("t5"),
-              this._buildEntry("t6"),
-              this._buildEntry("t7"),
-              this._buildEntry("t8"),
-              this._buildEntry("t9"),
-              this._buildEntry("t10"),
-              this._buildEntry("t11"),
-              this._buildEntry("t12"),
-            ]),
+        GridView.builder(
+          itemCount: tracks.length * 2,
+          gridDelegate:
+              new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+          itemBuilder: (BuildContext context, int index) {
+            int i = (index / 2).floor();
+            switch (index % 2) {
+              case 0:
+                _buildEntry(tracks[i].title);
+                break;
+              case 1:
+                _buildEntry(tracks[i].artist);
+                break;
+            }
+          },
+        )
       ],
     ));
   }
@@ -64,10 +89,13 @@ class MyApp extends StatelessWidget {
             appBar: AppBar(
               title: Text('Viola Beta'),
             ),
-            body: Center(
-                child: Column(children: <Widget>[
-              this.playbackcontrols,
-              this._buildGrid(),
-            ]))));
+            body: FutureBuilder<List<Track>>(
+                future: fetchTracks(context),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) print(snapshot.error);
+                  return snapshot.hasData
+                      ? this._buildGrid(snapshot.data)
+                      : Center(child: CircularProgressIndicator());
+                })));
   }
 }

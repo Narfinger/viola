@@ -54,8 +54,8 @@ pub fn new(
     pool: DBPool,
 ) -> Result<(Rc<GStreamer>, Receiver<GStreamerMessage>), String> {
     gstreamer::init().unwrap();
-    let pipeline =
-        gstreamer::parse_launch("playbin").map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+    let pipeline = gstreamer::ElementFactory::make("playbin", None).unwrap();
+        //gstreamer::parse_launch("playbin").map_err(|e| format!("Cannot do gstreamer: {}", e))?;
 
     let (tx, rx) = channel::<GStreamerMessage>();
 
@@ -69,41 +69,6 @@ pub fn new(
         })
         .expect("Could not connect to about-to-finish signal");
 
-    //new method for eos which does not work
-    /*
-    {
-        let (eos_tx, eos_rx) = channel::<()>();
-        res.pipeline
-            .get_bus()
-            .unwrap()
-            .add_watch(move |_bus, message| {
-                if let gstreamer::MessageView::Eos(..) = message.view() {
-                    info!("Sending EOS");
-                    eos_tx
-                        .send(())
-                        .expect("Error in sending eos signal to own bus");
-                } else if let gstreamer::MessageView::StateChanged(v) = message.view() {
-                    // eos does not trigger after we paused and resumed
-                    // but it triggers a null->ready
-                    // Null is hopefully not triggered anywhere else
-                    //info!("State change {:?}", v);
-                    //if v.get_current() == gstreamer::State::Null {
-                    //    info!("We have state null, assuming we had a pause and then eos");
-                    //    info!("Not sending EOS");
-                    //eos_tx.send(()).expect("Error in sending eos signal to own bus");
-                    //}
-                } else if let gstreamer::MessageView::Error(v) = message.view() {
-                    info!("Got error {:?}", message.view());
-                } else if let gstreamer::MessageView::StreamStatus(v) = message.view() {
-                    error!("Got stream status, would skip");
-                } else if let gstreamer::MessageView::DurationChanged(v) = message.view() {
-                    error!("Duration Changed, would skip");
-                } else {
-                    //info!("Got other message {:?}", message.view());
-                }
-                gtk::Continue(true)
-            });
-            */
     let res = Rc::new(GStreamer {
         pipeline,
         current_playlist,

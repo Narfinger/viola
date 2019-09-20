@@ -172,27 +172,3 @@ pub fn delete_with_id(db: &DBPool, index: i32) {
         .execute(db.deref())
         .expect("Error in database deletion");
 }
-
-/*
-pub fn load_playlist_from_directory(folder: &str, pool: &DBPool) -> LoadedPlaylist {
-    use diesel::QueryDsl;
-    use diesel::RunQueryDsl;
-    use diesel::TextExpressionMethods;
-    use schema::tracks::dsl::*;
-
-    let db = pool.get().unwrap();
-    let results = tracks
-        .filter(path.like(format!("%{}%", folder)))
-        .order(path)
-        .load(db.deref())
-        .expect("Problem loading playlist");
-
-    let playlistname = &folder[&folder.len() - 10..];
-    LoadedPlaylist {
-        id: None,
-        name: String::from(playlistname),
-        items: results,
-        current_position: 0,
-    }
-}
-*/
