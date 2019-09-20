@@ -26,7 +26,8 @@ Future<String> loadAsset(BuildContext context) async {
 
 Future<List<Track>> fetchTracks(BuildContext context) async {
   var ass = await loadAsset(context);
-  List<Track> tracks = json.decode(ass).map((i) => Track.fromJson(i)).toList();
+  var l = json.decode(ass) as List;
+  List<Track> tracks = l.map((i) => Track.fromJson(i)).toList();
   return tracks;
 }
 
@@ -40,8 +41,7 @@ class MyApp extends StatelessWidget {
   }
 
   Widget _buildGrid(List<Track> tracks) {
-    return Expanded(
-        child: Column(
+    return Column(
       children: <Widget>[
         Column(
           children: <Widget>[
@@ -49,7 +49,8 @@ class MyApp extends StatelessWidget {
             Container(child: Text("Artist"))
           ],
         ),
-        GridView.builder(
+        Flexible(
+            child: GridView.builder(
           itemCount: tracks.length * 2,
           gridDelegate:
               new SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
@@ -57,16 +58,16 @@ class MyApp extends StatelessWidget {
             int i = (index / 2).floor();
             switch (index % 2) {
               case 0:
-                _buildEntry(tracks[i].title);
+                return _buildEntry(tracks[i].title);
                 break;
               case 1:
-                _buildEntry(tracks[i].artist);
+                return _buildEntry(tracks[i].artist);
                 break;
             }
           },
-        )
+        ))
       ],
-    ));
+    );
   }
 
   Widget playbackcontrols = Row(children: <Widget>[
@@ -94,7 +95,8 @@ class MyApp extends StatelessWidget {
                 builder: (context, snapshot) {
                   if (snapshot.hasError) print(snapshot.error);
                   return snapshot.hasData
-                      ? this._buildGrid(snapshot.data)
+                      ? Column(
+                          children: <Widget>[this._buildGrid(snapshot.data)])
                       : Center(child: CircularProgressIndicator());
                 })));
   }
