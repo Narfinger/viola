@@ -38,68 +38,53 @@ Future<List<Track>> fetchTracks(BuildContext context) async {
 class MyApp extends StatelessWidget {
   Widget _buildEntry(BuildContext context, String t) {
     return Align(
-        alignment: Alignment.centerLeft,
-        child: Text(t,
-            textAlign: TextAlign.left,
-            style: Theme.of(context).textTheme.headline)
-        //color: Colors.teal[100],
-        );
+      alignment: Alignment.centerLeft,
+      child: Text(t,
+          textAlign: TextAlign.left,
+          style: Theme.of(context).textTheme.headline),
+    );
   }
 
   Widget _buildGrid(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        Row(
-          children: <Widget>[
-            Container(child: Text("Title")),
-            Container(child: Text("Artist")),
-            Container(child: Text("Album")),
-          ],
-        ),
-        FutureBuilder<List<Track>>(
-            future: fetchTracks(context),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) print(snapshot.error);
-              return snapshot.hasData
-                  ? Expanded(
-                      child: GridView.builder(
-                          itemCount: snapshot.data.length * 3,
-                          gridDelegate:
-                              new SliverGridDelegateWithFixedCrossAxisCount(
-                                  mainAxisSpacing: 4.0,
-                                  crossAxisCount: 3,
-                                  childAspectRatio: 15.0 / 1.0),
-                          itemBuilder: (BuildContext context, int index) {
-                            int i = (index / 3).floor();
-                            switch (index % 3) {
-                              case 0:
-                                return _buildEntry(
-                                    context, snapshot.data[i].title);
-                                break;
-                              case 1:
-                                return _buildEntry(
-                                    context, snapshot.data[i].artist);
-                                break;
-                              case 2:
-                                return _buildEntry(
-                                    context, snapshot.data[i].album);
-                                break;
-                              case 3:
-                                return _buildEntry(context, "NI");
-                                break;
-                              case 4:
-                                return _buildEntry(
-                                    context, snapshot.data[i].genre);
-                                break;
-                              case 5:
-                                return _buildEntry(context, "NI");
-                                break;
-                            }
-                          }))
-                  : Center(child: CircularProgressIndicator());
-            })
-      ],
-    );
+    return FutureBuilder<List<Track>>(
+        future: fetchTracks(context),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) print(snapshot.error);
+          return snapshot.hasData
+              ? Expanded(
+                  child: GridView.builder(
+                      itemCount: snapshot.data.length * 3,
+                      gridDelegate:
+                          new SliverGridDelegateWithFixedCrossAxisCount(
+                              mainAxisSpacing: 4.0,
+                              crossAxisCount: 3,
+                              childAspectRatio: 15.0 / 1.0),
+                      itemBuilder: (BuildContext context, int index) {
+                        int i = (index / 3).floor();
+                        switch (index % 3) {
+                          case 0:
+                            return _buildEntry(context, snapshot.data[i].title);
+                            break;
+                          case 1:
+                            return _buildEntry(
+                                context, snapshot.data[i].artist);
+                            break;
+                          case 2:
+                            return _buildEntry(context, snapshot.data[i].album);
+                            break;
+                          case 3:
+                            return _buildEntry(context, "NI");
+                            break;
+                          case 4:
+                            return _buildEntry(context, snapshot.data[i].genre);
+                            break;
+                          case 5:
+                            return _buildEntry(context, "NI");
+                            break;
+                        }
+                      }))
+              : Center(child: CircularProgressIndicator());
+        });
   }
 
   Widget playbackcontrols = Row(children: <Widget>[
@@ -122,6 +107,20 @@ class MyApp extends StatelessWidget {
             appBar: AppBar(
               title: Text('Viola Beta'),
             ),
-            body: _buildGrid(context)));
+            body: Column(children: <Widget>[
+              playbackcontrols,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  Container(
+                      child: Text("Title", style: TextStyle(fontSize: 30))),
+                  Container(
+                      child: Text("Artist", style: TextStyle(fontSize: 30))),
+                  Container(
+                      child: Text("Album", style: TextStyle(fontSize: 30))),
+                ],
+              ),
+              _buildGrid(context),
+            ])));
   }
 }
