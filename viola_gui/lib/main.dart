@@ -37,14 +37,17 @@ Future<List<Track>> fetchTracks(BuildContext context) async {
 
 class MyApp extends StatelessWidget {
   Widget _buildEntry(BuildContext context, String t) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(t,
-          textAlign: TextAlign.left,
-          style: Theme.of(context).textTheme.headline),
-    );
+    return GestureDetector(
+        onTap: () {},
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(t,
+              textAlign: TextAlign.left,
+              style: Theme.of(context).textTheme.headline),
+        ));
   }
 
+// this should get a stateful widget that remembers which rows are marked
   Widget _buildGrid(BuildContext context) {
     return FutureBuilder<List<Track>>(
         future: fetchTracks(context),
@@ -99,6 +102,12 @@ class MyApp extends StatelessWidget {
         onPressed: () {}, child: Text('next', style: TextStyle(fontSize: 20))),
   ]);
 
+  Widget statusbar = Row(
+    children: <Widget>[
+      Text("Stopped"),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -109,6 +118,7 @@ class MyApp extends StatelessWidget {
             ),
             body: Column(children: <Widget>[
               playbackcontrols,
+              statusbar,
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
