@@ -35,20 +35,29 @@ Future<List<Track>> fetchTracks(BuildContext context) async {
   return tracks;
 }
 
-class MyApp extends StatelessWidget {
-  Widget _buildEntry(BuildContext context, String t) {
+class EntryWidget extends StatelessWidget {
+  const EntryWidget({
+    Key key,
+    this.text = "NA",
+  }) : super(key: key);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
         onTap: () {},
         child: Align(
           alignment: Alignment.centerLeft,
-          child: Text(t,
+          child: Text(text,
               textAlign: TextAlign.left,
               style: Theme.of(context).textTheme.headline),
         ));
   }
+}
 
-// this should get a stateful widget that remembers which rows are marked
-  Widget _buildGrid(BuildContext context) {
+class PlaylistView extends StatelessWidget {
+  Widget build(BuildContext context) {
     return FutureBuilder<List<Track>>(
         future: fetchTracks(context),
         builder: (context, snapshot) {
@@ -66,30 +75,31 @@ class MyApp extends StatelessWidget {
                         int i = (index / 3).floor();
                         switch (index % 3) {
                           case 0:
-                            return _buildEntry(context, snapshot.data[i].title);
+                            return EntryWidget(text: snapshot.data[i].title);
                             break;
                           case 1:
-                            return _buildEntry(
-                                context, snapshot.data[i].artist);
+                            return EntryWidget(text: snapshot.data[i].artist);
                             break;
                           case 2:
-                            return _buildEntry(context, snapshot.data[i].album);
+                            return EntryWidget(text: snapshot.data[i].album);
                             break;
                           case 3:
-                            return _buildEntry(context, "NI");
+                            return EntryWidget(text: "NI");
                             break;
                           case 4:
-                            return _buildEntry(context, snapshot.data[i].genre);
+                            return EntryWidget(text: snapshot.data[i].genre);
                             break;
                           case 5:
-                            return _buildEntry(context, "NI");
+                            return EntryWidget(text: "NI");
                             break;
                         }
                       }))
               : Center(child: CircularProgressIndicator());
         });
   }
+}
 
+class MyApp extends StatelessWidget {
   Widget playbackcontrols = Row(children: <Widget>[
     RaisedButton(
         onPressed: () {}, child: Text('Play', style: TextStyle(fontSize: 20))),
@@ -130,7 +140,7 @@ class MyApp extends StatelessWidget {
                       child: Text("Album", style: TextStyle(fontSize: 30))),
                 ],
               ),
-              _buildGrid(context),
+              PlaylistView(),
             ])));
   }
 }
