@@ -99,25 +99,36 @@ class PlaylistView extends StatelessWidget {
   }
 }
 
+class PlaybackControls extends StatelessWidget {
+  Widget build(BuildContext context) {
+    return Row(children: <Widget>[
+      RaisedButton(
+          onPressed: () {},
+          child: Text('Play', style: TextStyle(fontSize: 20))),
+      RaisedButton(
+          onPressed: () {},
+          child: Text('Pause', style: TextStyle(fontSize: 20))),
+      RaisedButton(
+          onPressed: () {},
+          child: Text('Previous', style: TextStyle(fontSize: 20))),
+      RaisedButton(
+          onPressed: () {},
+          child: Text('next', style: TextStyle(fontSize: 20))),
+    ]);
+  }
+}
+
+class StatusBar extends StatelessWidget {
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Text("Stopped"),
+      ],
+    );
+  }
+}
+
 class MyApp extends StatelessWidget {
-  Widget playbackcontrols = Row(children: <Widget>[
-    RaisedButton(
-        onPressed: () {}, child: Text('Play', style: TextStyle(fontSize: 20))),
-    RaisedButton(
-        onPressed: () {}, child: Text('Pause', style: TextStyle(fontSize: 20))),
-    RaisedButton(
-        onPressed: () {},
-        child: Text('Previous', style: TextStyle(fontSize: 20))),
-    RaisedButton(
-        onPressed: () {}, child: Text('next', style: TextStyle(fontSize: 20))),
-  ]);
-
-  Widget statusbar = Row(
-    children: <Widget>[
-      Text("Stopped"),
-    ],
-  );
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -127,8 +138,8 @@ class MyApp extends StatelessWidget {
               title: Text('Viola Beta'),
             ),
             body: Column(children: <Widget>[
-              playbackcontrols,
-              statusbar,
+              PlaybackControls(),
+              StatusBar(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
