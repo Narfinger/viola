@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:async' show Future;
-import 'package:flutter/services.dart' show rootBundle;
 
 void main() {
   runApp(new MyApp());
@@ -93,6 +92,7 @@ class PlaylistView extends StatelessWidget {
                             return EntryWidget(text: "NI");
                             break;
                         }
+                        return EntryWidget(text: "ERROR");
                       }))
               : Center(child: CircularProgressIndicator());
         });
