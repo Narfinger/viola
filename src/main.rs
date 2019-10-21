@@ -45,6 +45,9 @@ pub mod utils;
 use clap::{App, Arg};
 use gio::ApplicationExt;
 use preferences::{prefs_base_dir, AppInfo, Preferences, PreferencesMap};
+use qmetaobject::*;
+#[macro_use]
+extern crate cstr;
 
 const APP_INFO: AppInfo = AppInfo {
     name: "viola",
@@ -126,6 +129,19 @@ fn main() {
         path.extend(&["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else {
+        qrc::load();
+
+        #[derive(QObject, Default)]
+        struct TableModel {
+            base: qt_base_class!(trait QObject),
+            name_changed: qt_signal!(),
+        }
+
+        qml_register_type::<TableModel>(cstr!("TableModel"), 1, 0, cstr!("TableModel"));
+        let mut engine = QmlEngine::new();
+        engine.load_file("qrc:/ui/main.qml".into());
+        engine.exec();
+        /*
         use gio::ApplicationExtManual;
         let application = gtk::Application::new(
             Some("com.github.narfinger.viola"),
@@ -137,5 +153,6 @@ fn main() {
         });
         application.connect_activate(|_| {});
         application.run(&[]);
+        */
     }
 }
