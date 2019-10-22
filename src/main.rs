@@ -46,6 +46,7 @@ use clap::{App, Arg};
 use gio::ApplicationExt;
 use preferences::{prefs_base_dir, AppInfo, Preferences, PreferencesMap};
 use qmetaobject::*;
+use std::collections::HashMap;
 #[macro_use]
 extern crate cstr;
 
@@ -129,17 +130,40 @@ fn main() {
         path.extend(&["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else {
-        qrc::load();
-
         #[derive(QObject, Default)]
         struct TableModel {
-            base: qt_base_class!(trait QObject),
-            name_changed: qt_signal!(),
+            base: qt_base_class!(trait QAbstractListModel),
+            list: Vec<String>,
+        };
+
+        impl QAbstractListModel for TableModel {
+            fn row_count(&self) -> i32 {
+                self.list.len() as i32
+            }
+            fn data(&self, index: QModelIndex, role: i32) -> QVariant {
+                let idx = index.row() as usize;
+                if idx < self.list.len() {
+                    if role == USER_ROLE {
+                        let st: QString = self.list[idx].clone().into();
+                        st.into()
+                    } else {
+                        QVariant::default()
+                    }
+                } else {
+                    QVariant::default()
+                }
+            }
+
+            fn role_names(&self) -> HashMap<i32, QByteArray> {
+                let mut map = HashMap::new();
+                map.insert(USER_ROLE, "display".into());
+                map
+            }
         }
 
         qml_register_type::<TableModel>(cstr!("TableModel"), 1, 0, cstr!("TableModel"));
         let mut engine = QmlEngine::new();
-        engine.load_file("qrc:/ui/main.qml".into());
+        engine.load_data(include_str!("../ui/main.qml").into());
         engine.exec();
         /*
         use gio::ApplicationExtManual;
