@@ -130,11 +130,27 @@ fn main() {
         path.extend(&["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else {
-        #[derive(QObject, Default)]
+        #[derive(QObject)]
         struct TableModel {
             base: qt_base_class!(trait QAbstractListModel),
             list: Vec<String>,
         };
+
+        impl Default for TableModel {
+            fn default() -> Self {
+                let mut v = Vec::new();
+                v.push("test2".to_string());
+                v.push("test3".to_string());
+                v.push("test1".to_string());
+                v.push("test4".to_string());
+                v.push("test5".to_string());
+                v.push("test6".to_string());
+                TableModel {
+                    list: v,
+                    base: <qt_base_class!(trait QAbstractListModel)>::default(),
+                }
+            }
+        }
 
         impl QAbstractListModel for TableModel {
             fn row_count(&self) -> i32 {
