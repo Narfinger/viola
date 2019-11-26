@@ -34,6 +34,7 @@ pub mod gui;
 pub mod libraryviewstore;
 pub mod loaded_playlist;
 pub mod maingui;
+pub mod maingui_web;
 pub mod playlist;
 pub mod playlist_manager;
 pub mod playlist_tabs;
@@ -126,16 +127,17 @@ fn main() {
         path.extend(&["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else {
-        use gio::ApplicationExtManual;
-        let application = gtk::Application::new(
-            Some("com.github.narfinger.viola"),
-            gio::ApplicationFlags::empty(),
-        )
-        .expect("Initialization failed...");
-        application.connect_startup(move |app| {
-            gui::build_gui(app, &pool);
-        });
-        application.connect_activate(|_| {});
-        application.run(&[]);
+        maingui_web::run(&pool);
+        //use gio::ApplicationExtManual;
+        //let application = gtk::Application::new(
+        //    Some("com.github.narfinger.viola"),
+        //    gio::ApplicationFlags::empty(),
+        //)
+        //.expect("Initialization failed...");
+        //application.connect_startup(move |app| {
+        //    gui::build_gui(app, &pool);
+        //});
+        //application.connect_activate(|_| {});
+        //application.run(&[]);
     }
 }
