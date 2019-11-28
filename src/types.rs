@@ -4,8 +4,7 @@ use gstreamer::Element;
 use gtk::Builder;
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
-use std::sync::Arc;
-use std::sync::RwLock;
+use std::sync::{Arc, Mutex, RwLock};
 
 use crate::gstreamer_wrapper::GStreamerMessage;
 use crate::maingui::MainGui;
@@ -25,7 +24,7 @@ pub type BuilderPtr = Arc<RwLock<Builder>>;
 pub type GstreamerPipeline = Arc<RwLock<Element>>;
 pub type MainGuiPtr = Rc<MainGui>;
 pub type MainGuiWeakPtr = Weak<MainGui>;
-pub type DBPool = Rc<SqliteConnection>;
+pub type DBPool = Arc<Mutex<diesel::SqliteConnection>>;
 pub type PlaylistTabsPtr = Rc<RefCell<PlaylistTabs>>;
 
 pub enum PlayerStatus {

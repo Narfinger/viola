@@ -41,7 +41,7 @@ pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
         .order(album)
         .filter(album.ne(""))
         .distinct()
-        .load(db.deref())
+        .load(db.lock().expect("DB Error").deref())
         .expect("Error in db connection");
 
     fmodel.refilter();
@@ -184,7 +184,7 @@ fn get_tracks_for_selection(
         album_name.to_owned(),
         query
             .filter(album.eq(&album_name))
-            .load(db.deref())
+            .load(db.lock().expect("Lock Error").deref())
             .expect("Error in query"),
     ))
 }

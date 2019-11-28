@@ -9,6 +9,7 @@ use std::iter::FromIterator;
 use std::ops::Deref;
 use std::path::Path;
 use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 use std::{thread, time};
 use taglib;
 //use jwalk::{WalkDir, DirEntry};
@@ -53,9 +54,9 @@ pub fn setup_db_connection() -> DBPool {
     let mut db_file =
         get_app_root(AppDataType::UserConfig, &APP_INFO).expect("Could not get app root");
     db_file.push("music.db");
-    Rc::new(
+    Arc::new(Mutex::new(
         SqliteConnection::establish(&db_file.to_str().unwrap()).expect("Could not open database"),
-    )
+    ))
 }
 
 fn is_valid_file(s: &Result<DirEntry, walkdir::Error>) -> bool {
@@ -158,7 +159,7 @@ fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
     let new_track = construct_track_from_path(s)?;
     let old_track_perhaps = tracks
         .filter(path.eq(&new_track.path))
-        .get_result::<Track>(db.deref());
+        .get_result::<Track>(db.lock().expect("DB Error").deref());
 
     if let Ok(mut old_track) = old_track_perhaps {
         if tags_equal(&new_track, &old_track) {
@@ -174,14 +175,14 @@ fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
             old_track.albumpath = new_track.albumpath;
 
             old_track
-                .save_changes::<Track>(db.deref())
+                .save_changes::<Track>(db.lock().expect("DB Error").deref())
                 .map(|_| ())
                 .map_err(|err| format!("Error in updateing for track {}, See full: {:?}", s, err))
         }
     } else {
         diesel::insert_into(tracks)
             .values(&new_track)
-            .execute(db.deref())
+            .execute(db.lock().expect("DB Error").deref())
             .map(|_| ())
             .map_err(|err| format!("Insertion Error for track {}, See full: {:?}", s, err))
     }
@@ -203,7 +204,7 @@ pub fn build_db(path: &str, db: &DBPool) -> Result<(), String> {
         let old_files: HashSet<String> = HashSet::from_iter(
             tracks
                 .select(path)
-                .load(db.deref())
+                .load(db.lock().expect("DB Error").deref())
                 .expect("Error in loading old files"),
         );
 
@@ -242,7 +243,7 @@ pub fn build_db(path: &str, db: &DBPool) -> Result<(), String> {
                 //println!("to delete: {}", i);
                 diesel::delete(tracks)
                     .filter(path.eq(i))
-                    .execute(db.deref())
+                    .execute(db.lock().expect("DB Error").deref())
                     .unwrap_or_else(|_| {
                         panic!("Error in deleting outdated database entries: {}", &i)
                     });

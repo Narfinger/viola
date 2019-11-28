@@ -68,7 +68,7 @@ fn add_playlist(db: &DBPool, sm: &[SmartPlaylist], index: i32) -> LoadedPlaylist
     if index == 0 {
         let results = tracks
             .order(path)
-            .load(db.deref())
+            .load(db.lock().expect("DB Error").deref())
             .expect("Problem loading playlist");
 
         LoadedPlaylist {

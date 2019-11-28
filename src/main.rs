@@ -127,7 +127,7 @@ fn main() {
         path.extend(&["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else {
-        maingui_web::run(&pool);
+        maingui_web::run(pool);
         //use gio::ApplicationExtManual;
         //let application = gtk::Application::new(
         //    Some("com.github.narfinger.viola"),

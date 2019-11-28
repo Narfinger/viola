@@ -70,13 +70,13 @@ pub fn restore_playlists(db: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::res
     use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
-    let pls = playlists.load::<Playlist>(db.deref())?;
+    let pls = playlists.load::<Playlist>(db.lock().expect("DB Error").deref())?;
     pls.iter()
         .map(|pl| {
             let t: Vec<(Track, PlaylistTrack)> = tracks
                 .inner_join(playlisttracks)
                 .filter(playlist_id.eq(pl.id))
-                .load(db.deref())?;
+                .load(db.lock().expect("DB Error").deref())?;
 
             create_loaded_from_playlist(pl, &t)
         })
@@ -94,11 +94,13 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
         // the playlist is already in the database
         diesel::update(playlists.find(pid))
             .set(current_position.eq(pl.current_position))
-            .execute(db.deref())?;
+            .execute(db.lock().expect("DB Error").deref())?;
     }
 
     let playlist: Playlist = if let Some(pid) = pl.id.get() {
-        playlists.find(pid).first::<Playlist>(db.deref())?
+        playlists
+            .find(pid)
+            .first::<Playlist>(db.lock().expect("DB Error").deref())?
     } else {
         let t = vec![NewPlaylist {
             name: pl.name.clone(),
@@ -106,14 +108,16 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
         }];
         diesel::insert_into(playlists)
             .values(&t)
-            .execute(db.deref())?;
-        playlists.filter(name.eq(&pl.name)).first(db.deref())?
+            .execute(db.lock().expect("DB Error").deref())?;
+        playlists
+            .filter(name.eq(&pl.name))
+            .first(db.lock().expect("DB Error").deref())?
     };
 
     //deleting old tracks
     diesel::delete(playlisttracks)
         .filter(playlist_id.eq(playlist.id))
-        .execute(db.deref())?;
+        .execute(db.lock().expect("DB Error").deref())?;
 
     //inserting new tracks
 
@@ -132,7 +136,7 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
     //info!("All values {:?}", vals);
     diesel::insert_into(playlisttracks)
         .values(&vals)
-        .execute(db.deref())?;
+        .execute(db.lock().expect("DB Error").deref())?;
 
     pl.id.set(Some(playlist.id));
 
@@ -147,10 +151,10 @@ pub fn clear_all(db: &DBPool) {
     use diesel::RunQueryDsl;
 
     diesel::delete(playlists)
-        .execute(db.deref())
+        .execute(db.lock().expect("DB Error").deref())
         .expect("Error in cleaning playlists");
     diesel::delete(playlisttracks)
-        .execute(db.deref())
+        .execute(db.lock().expect("DB Error").deref())
         .expect("Error in cleaning playlisttracks");
 }
 
@@ -164,12 +168,12 @@ pub fn delete_with_id(db: &DBPool, index: i32) {
 
     diesel::delete(playlists)
         .filter(schema::playlists::dsl::id.eq(index))
-        .execute(db.deref())
+        .execute(db.lock().expect("DB Error").deref())
         .expect("Error in database deletion");
 
     diesel::delete(playlisttracks)
         .filter(playlist_id.eq(index))
-        .execute(db.deref())
+        .execute(db.lock().expect("DB Error").deref())
         .expect("Error in database deletion");
 }
 
@@ -184,7 +188,7 @@ pub fn load_playlist_from_directory(folder: &str, pool: &DBPool) -> LoadedPlayli
     let results = tracks
         .filter(path.like(format!("%{}%", folder)))
         .order(path)
-        .load(db.deref())
+        .load(db.lock().expect("DB Error").deref())
         .expect("Problem loading playlist");
 
     let playlistname = &folder[&folder.len() - 10..];

@@ -324,12 +324,15 @@ impl PlaylistTabsExt for PlaylistTabs {
     }
 
     fn save(&self, db: &DBPool) {
-        let result = db.transaction::<_, diesel::result::Error, _>(|| {
-            for lp in &self.tabs {
-                playlist::update_playlist(db, &lp.lp)?;
-            }
-            Ok(())
-        });
+        let result = db
+            .lock()
+            .expect("DB Error")
+            .transaction::<_, diesel::result::Error, _>(|| {
+                for lp in &self.tabs {
+                    playlist::update_playlist(db, &lp.lp)?;
+                }
+                Ok(())
+            });
 
         if let Err(e) = result {
             error!("Error in saving the playlists {:?}", e);
