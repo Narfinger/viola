@@ -50,13 +50,31 @@ function Main() {
     </div>
 };
 
+class Cell extends React.PureComponent {
+    render() {
+        const item = this.props.data[this.props.rowIndex];
+        //const style_without_width = this.props.style;
+        //delete style_without_width.width;
+        var style = this.props.style;
+        switch (this.props.columnIndex) {
+            case 0: style.left = 10; break;
+            case 1: style.left = 50; break;
+            case 2: style.left = 300; break;
+            case 3: style.left = 500; break;
+            case 4: style.left = 700; break;
+            default: style.left = 1000;
+        }
 
-const Cell = ({ columnIndex, rowIndex, style }) => (
-    <div style={style}>
-        Item {rowIndex},{columnIndex}
-    </div>
-);
-
+        switch (this.props.columnIndex) {
+            case 0: return <div style={style}>{this.props.rowIndex}</div>
+            case 1: return <div style={style}>{item.title}</div>
+            case 2: return <div style={style}>{item.artist}</div>
+            case 3: return <div style={style}>{item.album}</div>
+            case 4: return <div style={style}>{item.genre}</div>
+            default: return <div style={style}>ERROR</div>
+        }
+    }
+}
 
 class SongView extends React.Component {
     constructor(props) {
@@ -66,17 +84,17 @@ class SongView extends React.Component {
 
     componentDidMount() {
         console.log("we mounted");
-        axios.get("/playlist/").then(this.setState({
-            pl: [1, 2, 3],
+        axios.get("/playlist/").then((response) => this.setState({
+            pl: response.data,
         }, console.log(this.state.pl))).catch(function () { });
     }
 
     render() {
-        return <div><div>{this.state.pl}</div><div>
+        return <div><div>
             <Grid
                 itemData={this.state.pl}
                 columnCount={5}
-                columnWidth={100}
+                columnWidth={200}
                 height={700}
                 rowCount={this.state.pl.length}
                 rowHeight={20}
