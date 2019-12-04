@@ -1,4 +1,3 @@
-'use strict';
 
 import ReactDOM from 'react-dom'
 import React from 'react'
@@ -27,13 +26,13 @@ class TransportButton extends React.Component {
 }
 
 function PlayButton(props) {
-    if (props.play_state == PlayState.Stopped) {
+    if (props.play_state === PlayState.Stopped) {
         return <TransportButton title="Play" api="play"></TransportButton>
     };
-    if (props.play_state == PlayState.Paused) {
+    if (props.play_state === PlayState.Paused) {
         return <TransportButton title="Play" api="play"></TransportButton>
     };
-    if (props.play_state == PlayState.Playing) {
+    if (props.play_state === PlayState.Playing) {
         return <TransportButton title="Pause" api="pause"></TransportButton>
     }
     return <TransportButton title="Unspecified" api="NI"></TransportButton>
@@ -58,37 +57,36 @@ const Cell = ({ columnIndex, rowIndex, style }) => (
     </div>
 );
 
+
 class SongView extends React.Component {
     constructor(props) {
-        super(props)
-        this.state = { data: axios.get("/playlist/").then(| v | v).else([]) }
+        super(props);
+        this.state = { pl: [] };
+    }
+
+    componentDidMount() {
+        console.log("we mounted");
+        axios.get("/playlist/").then(this.setState({
+            pl: [1, 2, 3],
+        }, console.log(this.state.pl))).catch(function () { });
     }
 
     render() {
-        <Grid
-            columnCount={5}
-            columnWidth={this.data.length}
-            height={150}
-            rowCount={1000}
-            rowHeight={35}
-            width={300}
-        >
-            <Cell></Cell>
-        </Grid>
-
+        return <div><div>{this.state.pl}</div><div>
+            <Grid
+                itemData={this.state.pl}
+                columnCount={5}
+                columnWidth={100}
+                height={700}
+                rowCount={this.state.pl.length}
+                rowHeight={20}
+                width={700}
+            >
+                {Cell}
+            </Grid>
+        </div></div>
     }
 }
-
-const Example = () => (
-    <List
-        height={700}
-        itemCount={10000}
-        itemSize={35}
-        width={800}
-    >
-        {Row}
-    </List>
-);
 
 
 
