@@ -1,7 +1,7 @@
 
 import ReactDOM from 'react-dom'
 import React from 'react'
-import { FixedSizeGrid as Grid } from 'react-window';
+import { VariableSizeGrid as Grid } from 'react-window';
 import axios from 'axios';
 const e = React.createElement;
 
@@ -50,28 +50,28 @@ function Main() {
     </div>
 };
 
+
+function columnWidths(index) {
+    switch (index) {
+        case 0: return 50;  //number
+        case 1: return 400; //title
+        case 2: return 300; //artist
+        case 3: return 300; //album
+        case 4: return 200; //genre
+        default: return 10000;
+    }
+}
+
 class Cell extends React.PureComponent {
     render() {
         const item = this.props.data[this.props.rowIndex];
-        //const style_without_width = this.props.style;
-        //delete style_without_width.width;
-        var style = this.props.style;
         switch (this.props.columnIndex) {
-            case 0: style.left = 10; break;
-            case 1: style.left = 50; break;
-            case 2: style.left = 300; break;
-            case 3: style.left = 500; break;
-            case 4: style.left = 700; break;
-            default: style.left = 1000;
-        }
-
-        switch (this.props.columnIndex) {
-            case 0: return <div style={style}>{this.props.rowIndex}</div>
-            case 1: return <div style={style}>{item.title}</div>
-            case 2: return <div style={style}>{item.artist}</div>
-            case 3: return <div style={style}>{item.album}</div>
-            case 4: return <div style={style}>{item.genre}</div>
-            default: return <div style={style}>ERROR</div>
+            case 0: return <div style={this.props.style}>{this.props.rowIndex}</div>
+            case 1: return <div style={this.props.style}>{item.title}</div>
+            case 2: return <div style={this.props.style}>{item.artist}</div>
+            case 3: return <div style={this.props.style}>{item.album}</div>
+            case 4: return <div style={this.props.style}>{item.genre}</div>
+            default: return <div style={this.props.style}>ERROR</div>
         }
     }
 }
@@ -94,11 +94,11 @@ class SongView extends React.Component {
             <Grid
                 itemData={this.state.pl}
                 columnCount={5}
-                columnWidth={200}
+                columnWidth={columnWidths}
                 height={700}
                 rowCount={this.state.pl.length}
-                rowHeight={20}
-                width={700}
+                rowHeight={(index) => { return 25; }}
+                width={1500}
             >
                 {Cell}
             </Grid>

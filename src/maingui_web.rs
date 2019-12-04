@@ -11,7 +11,7 @@ fn playlist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
             .unwrap()
             .items
             .as_slice()
-            .chunks(10)
+            .chunks(30)
             .next()
             .unwrap(),
     )
