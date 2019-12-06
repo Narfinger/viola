@@ -1,7 +1,9 @@
 
 import ReactDOM from 'react-dom'
 import React from 'react'
-import { VariableSizeGrid as Grid } from 'react-window';
+import Button from '@material-ui/core/Button';
+import Grid from '@material-ui/core/Grid';
+import { VariableSizeGrid as VSGrid } from 'react-window';
 import axios from 'axios';
 const e = React.createElement;
 
@@ -21,7 +23,7 @@ class TransportButton extends React.Component {
         axios.get("/transport/{this.state.url}");
     }
     render() {
-        return <button onClick={this.click}> {this.props.title}</button>
+        return <Button ariant="contained" color="primary" onClick={this.click}> {this.props.title}</Button>
     }
 }
 
@@ -39,14 +41,21 @@ function PlayButton(props) {
 }
 
 function Main() {
-    return <div><div align="center">
-        <TransportButton title="Prev" api="prev"></TransportButton>
-        <PlayButton></PlayButton>
-        <TransportButton title="Next" api="next"></TransportButton>
-    </div>
-        <div>
-            <SongView></SongView>
-        </div>
+    return <div className={classes.root}>
+        <Grid container spacing={1}>
+            <Grid item xs={3}>
+                <TransportButton title="Prev" api="prev"></TransportButton>
+            </Grid>
+            <Grid item xs={3}>
+                <PlayButton></PlayButton>
+            </Grid>
+            <Grid item xs={12}>
+                <TransportButton title="Next" api="next"></TransportButton>
+            </Grid>
+            <Grid item xs={12}>
+                <SongView></SongView>
+            </Grid>
+        </Grid>
     </div>
 };
 
@@ -91,7 +100,7 @@ class SongView extends React.Component {
 
     render() {
         return <div><div>
-            <Grid
+            <VSGrid
                 itemData={this.state.pl}
                 columnCount={5}
                 columnWidth={columnWidths}
@@ -101,7 +110,7 @@ class SongView extends React.Component {
                 width={1500}
             >
                 {Cell}
-            </Grid>
+            </VSGrid>
         </div></div>
     }
 }
