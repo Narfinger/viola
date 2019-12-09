@@ -41,7 +41,7 @@ function PlayButton(props) {
 }
 
 function Main() {
-    return <div className={classes.root}>
+    return <div>
         <Grid container spacing={1}>
             <Grid item xs={3}>
                 <TransportButton title="Prev" api="prev"></TransportButton>
@@ -49,7 +49,7 @@ function Main() {
             <Grid item xs={3}>
                 <PlayButton></PlayButton>
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={3}>
                 <TransportButton title="Next" api="next"></TransportButton>
             </Grid>
             <Grid item xs={12}>
