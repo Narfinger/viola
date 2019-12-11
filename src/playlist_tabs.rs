@@ -5,6 +5,7 @@ use gtk::prelude::*;
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
+use std::sync::atomic::Ordering;
 
 use crate::db;
 use crate::loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls};
@@ -208,6 +209,7 @@ impl PlaylistTabsExt for PlaylistTabs {
         self.tabs[self.current_playlist.unwrap()]
             .lp
             .current_position
+            .load(Ordering::Relaxed) as i32
     }
 
     fn id(&self, index: i32) -> Option<i32> {
@@ -250,12 +252,13 @@ impl PlaylistTabsExt for PlaylistTabs {
         {
             //model needs to go out of scope
             let model = &self.tabs[index].model;
+            let current_position = new_lp.current_position.load(Ordering::Relaxed) as i32;
             let mut position_adjustment = 0;
             let mut invalid_position = false;
             for i in rows {
-                if i < new_lp.current_position {
+                if i < current_position {
                     position_adjustment += 1;
-                } else if i == new_lp.current_position {
+                } else if i == current_position {
                     invalid_position = true;
                 }
                 //println!("deleting {}", i);
@@ -268,9 +271,11 @@ impl PlaylistTabsExt for PlaylistTabs {
 
             //correcting the current position index
             if invalid_position {
-                new_lp.current_position = 0;
+                new_lp.current_position.store(0, Ordering::Relaxed);
             } else {
-                new_lp.current_position -= position_adjustment;
+                new_lp
+                    .current_position
+                    .fetch_sub(position_adjustment, Ordering::Relaxed);
             }
         }
         self.tabs[index].lp = new_lp;
@@ -300,7 +305,8 @@ impl PlaylistTabsExt for PlaylistTabs {
         self.tabs[self.current_playlist.unwrap()].lp.items = t;
         self.tabs[self.current_playlist.unwrap()]
             .lp
-            .current_position = 0;
+            .current_position
+            .store(0, Ordering::Relaxed);
 
         self.update_playtime();
     }
@@ -361,19 +367,19 @@ impl PlaylistControls for PlaylistTabs {
         lp.get_current_uri()
     }
 
-    fn previous(&mut self) -> String {
+    fn previous(&self) -> String {
         self.tabs[self.current_playlist.unwrap()].lp.previous()
     }
 
-    fn next(&mut self) -> String {
+    fn next(&self) -> String {
         self.tabs[self.current_playlist.unwrap()].lp.next()
     }
 
-    fn set(&mut self, i: i32) -> String {
+    fn set(&self, i: i32) -> String {
         self.tabs[self.current_playlist.unwrap()].lp.set(i)
     }
 
-    fn next_or_eol(&mut self, pool: &DBPool) -> Option<String> {
+    fn next_or_eol(&self, pool: &DBPool) -> Option<String> {
         self.tabs[self.current_playlist.unwrap()]
             .lp
             .next_or_eol(pool)

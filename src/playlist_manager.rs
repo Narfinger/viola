@@ -7,6 +7,8 @@ use gtk::prelude::*;
 use std::cell::Cell;
 use std::ops::Deref;
 use std::string::String;
+use std::sync::atomic::AtomicUsize;
+use std::sync::Arc;
 
 use crate::db::get_new_playlist_id;
 use crate::maingui::MainGuiPtrExt;
@@ -79,7 +81,7 @@ fn add_playlist(db: &DBPool, sm: &[SmartPlaylist], index: i32) -> LoadedPlaylist
             id: new_id,
             name: String::from("Full Collection"),
             items: results,
-            current_position: 0,
+            current_position: Arc::new(AtomicUsize::new(0)),
         }
     } else {
         let i = index - 1 as i32;

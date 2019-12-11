@@ -1,8 +1,10 @@
 use gtk;
-use std::cell::Cell;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::ops::Deref;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::sync::Mutex;
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
 use crate::db::Track;
@@ -14,7 +16,7 @@ pub struct LoadedPlaylist {
     pub id: i32,
     pub name: String,
     pub items: Vec<Track>,
-    pub current_position: i32,
+    pub current_position: Arc<AtomicUsize>,
 }
 
 pub trait LoadedPlaylistExt {
@@ -24,7 +26,7 @@ pub trait LoadedPlaylistExt {
 
 impl LoadedPlaylistExt for LoadedPlaylist {
     fn get_current_track(&self) -> &Track {
-        &self.items[self.current_position as usize]
+        &self.items[self.current_position.load(Ordering::Relaxed)]
     }
 
     fn get_playlist_full_time(&self) -> i64 {
@@ -35,16 +37,16 @@ impl LoadedPlaylistExt for LoadedPlaylist {
 pub trait PlaylistControls {
     fn get_current_path(&self) -> PathBuf;
     fn get_current_uri(&self) -> String;
-    fn previous(&mut self) -> String;
-    fn next(&mut self) -> String;
-    fn set(&mut self, _: i32) -> String;
-    fn next_or_eol(&mut self, _: &DBPool) -> Option<String>;
+    fn previous(&self) -> String;
+    fn next(&self) -> String;
+    fn set(&self, _: i32) -> String;
+    fn next_or_eol(&self, _: &DBPool) -> Option<String>;
 }
 
 impl PlaylistControls for LoadedPlaylist {
     fn get_current_path(&self) -> PathBuf {
         let mut pb = PathBuf::new();
-        pb.push(&self.items[self.current_position as usize].path);
+        pb.push(&self.items[self.current_position.load(Ordering::Relaxed)].path);
         pb
     }
 
@@ -53,31 +55,33 @@ impl PlaylistControls for LoadedPlaylist {
         format!(
             "file:////{}",
             utf8_percent_encode(
-                &self.items[self.current_position as usize].path,
+                &self.items[self.current_position.load(Ordering::Relaxed) as usize].path,
                 DEFAULT_ENCODE_SET
             )
             .to_string()
         )
     }
 
-    fn previous(&mut self) -> String {
-        self.current_position -= 1 % self.items.len() as i32;
+    fn previous(&self) -> String {
+        self.current_position.fetch_sub(1, Ordering::Relaxed);
         self.get_current_uri()
     }
 
-    fn next(&mut self) -> String {
-        self.current_position += 1 % self.items.len() as i32;
+    fn next(&self) -> String {
+        self.current_position.fetch_add(1, Ordering::Relaxed);
         self.get_current_uri()
     }
 
-    fn set(&mut self, i: i32) -> String {
-        self.current_position = i;
+    fn set(&self, i: i32) -> String {
+        self.current_position.swap(i as usize, Ordering::Relaxed);
         self.get_current_uri()
     }
 
-    fn next_or_eol(&mut self, pool: &DBPool) -> Option<String> {
+    fn next_or_eol(&self, pool: &DBPool) -> Option<String> {
         {
-            let track = self.items.get(self.current_position as usize);
+            let track = self
+                .items
+                .get(self.current_position.load(Ordering::Relaxed));
             //update playlist counter
             let dbc = pool.clone();
             if let Some(t) = track {
@@ -86,12 +90,12 @@ impl PlaylistControls for LoadedPlaylist {
             }
         }
 
-        let next_pos = self.current_position + 1;
+        let next_pos = self.current_position.fetch_add(1, Ordering::Relaxed);
 
         if self.items.get(next_pos as usize).is_some() {
             Some(self.next())
         } else {
-            self.current_position = 0;
+            self.current_position.swap(0, Ordering::Relaxed);
             None
         }
     }
