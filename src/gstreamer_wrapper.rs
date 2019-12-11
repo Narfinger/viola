@@ -81,7 +81,7 @@ pub fn new(
     });
 
     let resc = res.clone();
-    gtk::timeout_add(50, move || {
+    glib::timeout_add(50, move || {
         if eos_rx.try_recv().is_ok() {
             info!("we found eos");
             resc.gstreamer_handle_eos();
@@ -89,8 +89,8 @@ pub fn new(
         gtk::Continue(true)
     });
 
-    let resc = res.clone();
-    gtk::timeout_add(250, move || resc.gstreamer_update_gui());
+    //let resc = res.clone();
+    //glin::timeout_add(250, move || resc.gstreamer_update_gui());
     Ok((res, rx))
 }
 
