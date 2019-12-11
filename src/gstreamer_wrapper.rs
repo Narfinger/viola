@@ -5,8 +5,11 @@ use gtk::ObjectExt;
 use gtk::ToValue;
 
 use std::cell::Cell;
+use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::mpsc::{channel, sync_channel, Receiver, Sender};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::{channel, sync_channel, Receiver, Sender, SyncSender};
+use std::sync::Arc;
 
 use crate::loaded_playlist::PlaylistControls;
 use crate::playlist_tabs::PlaylistControlsImmutable;
@@ -14,11 +17,11 @@ use crate::types::*;
 
 pub struct GStreamer {
     pipeline: gstreamer::Element,
-    current_playlist: PlaylistTabsPtr,
+    current_playlist: LoadedPlaylistPtr,
     /// Handles gstreamer changes to the gui
-    sender: Sender<GStreamerMessage>,
+    sender: SyncSender<GStreamerMessage>,
     pool: DBPool,
-    repeat_once: Cell<bool>,
+    repeat_once: AtomicBool,
 }
 
 impl Drop for GStreamer {
@@ -50,14 +53,14 @@ impl From<gstreamer::State> for GStreamerMessage {
 }
 
 pub fn new(
-    current_playlist: PlaylistTabsPtr,
+    current_playlist: LoadedPlaylistPtr,
     pool: DBPool,
-) -> Result<(Rc<GStreamer>, Receiver<GStreamerMessage>), String> {
+) -> Result<(Arc<GStreamer>, Receiver<GStreamerMessage>), String> {
     gstreamer::init().unwrap();
     let pipeline =
         gstreamer::parse_launch("playbin").map_err(|e| format!("Cannot do gstreamer: {}", e))?;
 
-    let (tx, rx) = channel::<GStreamerMessage>();
+    let (tx, rx) = sync_channel::<GStreamerMessage>(1);
 
     //old method for eos
     let (eos_tx, eos_rx) = sync_channel::<()>(1);
@@ -69,47 +72,12 @@ pub fn new(
         })
         .expect("Could not connect to about-to-finish signal");
 
-    //new method for eos which does not work
-    /*
-    {
-        let (eos_tx, eos_rx) = channel::<()>();
-        res.pipeline
-            .get_bus()
-            .unwrap()
-            .add_watch(move |_bus, message| {
-                if let gstreamer::MessageView::Eos(..) = message.view() {
-                    info!("Sending EOS");
-                    eos_tx
-                        .send(())
-                        .expect("Error in sending eos signal to own bus");
-                } else if let gstreamer::MessageView::StateChanged(v) = message.view() {
-                    // eos does not trigger after we paused and resumed
-                    // but it triggers a null->ready
-                    // Null is hopefully not triggered anywhere else
-                    //info!("State change {:?}", v);
-                    //if v.get_current() == gstreamer::State::Null {
-                    //    info!("We have state null, assuming we had a pause and then eos");
-                    //    info!("Not sending EOS");
-                    //eos_tx.send(()).expect("Error in sending eos signal to own bus");
-                    //}
-                } else if let gstreamer::MessageView::Error(v) = message.view() {
-                    info!("Got error {:?}", message.view());
-                } else if let gstreamer::MessageView::StreamStatus(v) = message.view() {
-                    error!("Got stream status, would skip");
-                } else if let gstreamer::MessageView::DurationChanged(v) = message.view() {
-                    error!("Duration Changed, would skip");
-                } else {
-                    //info!("Got other message {:?}", message.view());
-                }
-                gtk::Continue(true)
-            });
-            */
-    let res = Rc::new(GStreamer {
+    let res = Arc::new(GStreamer {
         pipeline,
         current_playlist,
         sender: tx,
         pool,
-        repeat_once: Cell::new(false),
+        repeat_once: AtomicBool::new(false),
     });
 
     let resc = res.clone();
@@ -149,7 +117,7 @@ impl GStreamerExt for GStreamer {
     fn do_gstreamer_action(&self, action: &GStreamerAction) {
         info!("Gstreamer action {:?}", action);
         if *action == GStreamerAction::RepeatOnce {
-            self.repeat_once.set(true);
+            self.repeat_once.store(true, Ordering::Relaxed);
             return;
         }
 
@@ -183,12 +151,12 @@ impl GStreamerExt for GStreamer {
         //getting correct url or None
         let url = match *action {
             GStreamerAction::RepeatOnce => None, //this is captured above but matches need to be complete
-            GStreamerAction::Playing => Some(self.current_playlist.borrow().get_current_uri()),
+            GStreamerAction::Playing => Some(self.current_playlist.get_current_uri()),
             GStreamerAction::Pausing => {
                 if gstreamer::State::Playing
                     != self.pipeline.get_state(gstreamer::ClockTime(Some(5))).1
                 {
-                    Some(self.current_playlist.borrow().get_current_uri())
+                    Some(self.current_playlist.get_current_uri())
                 } else {
                     None
                 }
@@ -200,7 +168,7 @@ impl GStreamerExt for GStreamer {
         };
         //setting the url
         if let Some(u) = url {
-            if !self.current_playlist.borrow().get_current_path().exists() {
+            if !self.current_playlist.get_current_path().exists() {
                 panic!("The file we want to play does not exist");
             }
 
@@ -262,9 +230,9 @@ impl GStreamerExt for GStreamer {
 
     fn gstreamer_handle_eos(&self) {
         info!("Handling EOS");
-        let res = if self.repeat_once.take() {
+        let res = if self.repeat_once.load(Ordering::Relaxed) {
             info!("we are repeat playing");
-            self.repeat_once.set(false);
+            self.repeat_once.store(false, Ordering::Relaxed);
             Some(self.current_playlist.get_current_uri())
         } else {
             self.current_playlist.next_or_eol(&self.pool)

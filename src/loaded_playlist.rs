@@ -1,5 +1,6 @@
 use gtk;
 use std::cell::Cell;
+use std::cell::RefCell;
 use std::ops::Deref;
 use std::path::PathBuf;
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};

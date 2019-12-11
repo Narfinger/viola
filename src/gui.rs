@@ -29,6 +29,7 @@ macro_rules! clone {
 }
 
 pub fn build_gui(application: &gtk::Application, pool: &DBPool) {
+    /*
     if gtk::init().is_err() {
         error!("Failed to initialize GTK.");
         return;
@@ -106,4 +107,5 @@ pub fn build_gui(application: &gtk::Application, pool: &DBPool) {
     window.show_all();
     info!("Restoring tabs");
     gui.restore(&pool);
+    */
 }

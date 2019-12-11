@@ -1,7 +1,10 @@
 use actix_files as fs;
 use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use std::sync::Arc;
 
+use crate::gstreamer_wrapper;
 use crate::playlist::restore_playlists;
+use crate::playlist_tabs;
 use crate::types::*;
 
 fn playlist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
@@ -19,10 +22,22 @@ fn playlist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
 
 struct WebGui {
     pool: DBPool,
+    gstreamer: Arc<gstreamer_wrapper::GStreamer>,
 }
 
 pub fn run(pool: DBPool) {
-    let state = WebGui { pool: pool };
+    let lp = Arc::new(
+        restore_playlists(&pool)
+            .expect("Error restoring playlisttabs")
+            .swap_remove(0),
+    );
+
+    let (gst, recv) =
+        gstreamer_wrapper::new(lp.clone(), pool).expect("Error Initializing gstreamer");
+    let state = WebGui {
+        pool: pool,
+        gstreamer: gst,
+    };
 
     let data = web::Data::new(state);
 

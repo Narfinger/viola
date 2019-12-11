@@ -8,6 +8,7 @@ use std::sync::{Arc, Mutex, RwLock};
 
 use crate::gstreamer_wrapper::GStreamerMessage;
 use crate::maingui::MainGui;
+use crate::loaded_playlist::LoadedPlaylist;
 use crate::playlist_tabs::PlaylistTabs;
 
 pub const APP_INFO: AppInfo = AppInfo {
@@ -26,6 +27,7 @@ pub type MainGuiPtr = Rc<MainGui>;
 pub type MainGuiWeakPtr = Weak<MainGui>;
 pub type DBPool = Arc<Mutex<diesel::SqliteConnection>>;
 pub type PlaylistTabsPtr = Rc<RefCell<PlaylistTabs>>;
+pub type LoadedPlaylistPtr = Arc<LoadedPlaylist>;
 
 pub enum PlayerStatus {
     Playing,
