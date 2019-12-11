@@ -254,3 +254,16 @@ pub fn build_db(path: &str, db: &DBPool) -> Result<(), String> {
 
     Ok(())
 }
+
+// returns an id for a newly created playlist. Returns 0 if no playlists yet in db
+pub fn get_new_playlist_id(db: &DBPool) -> i32 {
+    use crate::schema::playlists::dsl::*;
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+    playlists
+        .select(crate::schema::playlists::id)
+        .order(crate::schema::playlists::id.desc())
+        .load(db.lock().expect("DB Error").deref())
+        .map(|mut v: Vec<i32>| v.swap_remove(0))
+        .ok()
+        .map_or(0, |i| i + 1)
+}

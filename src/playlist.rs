@@ -17,6 +17,7 @@ struct Playlist {
 #[derive(Insertable)]
 #[table_name = "playlists"]
 struct NewPlaylist {
+    id: i32,
     name: String,
     current_position: i32,
 }
@@ -57,7 +58,7 @@ fn create_loaded_from_playlist(
 
     let sorted = unsorted.iter().map(only_tracks).cloned().collect();
     Ok(LoadedPlaylist {
-        id: Cell::new(Some(pl.id)),
+        id: pl.id,
         name: pl.name.clone(),
         items: sorted,
         current_position: pl.current_position,
@@ -90,19 +91,26 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
 
     info!("playlist id {:?}", pl.id);
 
-    if let Some(pid) = pl.id.get() {
+    let exists = diesel::select(diesel::dsl::exists(
+        playlists.filter(crate::schema::playlists::id.eq(pl.id)),
+    ))
+    .get_result(db.lock().expect("DB Error").deref())
+    .expect("Error in db");
+
+    if exists {
         // the playlist is already in the database
-        diesel::update(playlists.find(pid))
+        diesel::update(playlists.find(pl.id))
             .set(current_position.eq(pl.current_position))
             .execute(db.lock().expect("DB Error").deref())?;
     }
 
-    let playlist: Playlist = if let Some(pid) = pl.id.get() {
+    let playlist: Playlist = if exists {
         playlists
-            .find(pid)
+            .find(pl.id)
             .first::<Playlist>(db.lock().expect("DB Error").deref())?
     } else {
         let t = vec![NewPlaylist {
+            id: pl.id,
             name: pl.name.clone(),
             current_position: pl.current_position,
         }];
@@ -137,8 +145,6 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
     diesel::insert_into(playlisttracks)
         .values(&vals)
         .execute(db.lock().expect("DB Error").deref())?;
-
-    pl.id.set(Some(playlist.id));
 
     info!("done");
 

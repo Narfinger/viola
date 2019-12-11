@@ -8,6 +8,7 @@ use std::cell::Cell;
 use std::ops::Deref;
 use std::string::String;
 
+use crate::db::get_new_playlist_id;
 use crate::maingui::MainGuiPtrExt;
 use crate::types::*;
 
@@ -61,8 +62,9 @@ fn signalhandler(
 }
 
 fn add_playlist(db: &DBPool, sm: &[SmartPlaylist], index: i32) -> LoadedPlaylist {
+    use crate::schema::playlists::dsl::*;
     use crate::schema::tracks::dsl::*;
-    use diesel::{QueryDsl, RunQueryDsl};
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
     info!("You selected index: {}", index);
     if index == 0 {
@@ -71,8 +73,10 @@ fn add_playlist(db: &DBPool, sm: &[SmartPlaylist], index: i32) -> LoadedPlaylist
             .load(db.lock().expect("DB Error").deref())
             .expect("Problem loading playlist");
 
+        let new_id = get_new_playlist_id(db);
+
         LoadedPlaylist {
-            id: Cell::new(None),
+            id: new_id,
             name: String::from("Full Collection"),
             items: results,
             current_position: 0,

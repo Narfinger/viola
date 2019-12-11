@@ -8,6 +8,7 @@ use std::fs;
 use std::ops::Deref;
 use toml;
 
+use crate::db;
 use crate::db::Track;
 use crate::loaded_playlist::LoadedPlaylist;
 use crate::types::*;
@@ -188,7 +189,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
         }
 
         LoadedPlaylist {
-            id: Cell::new(None),
+            id: db::get_new_playlist_id(db),
             name: self.name.clone(),
             items: filtered,
             current_position: 0,

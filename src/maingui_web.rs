@@ -33,9 +33,9 @@ pub fn run(pool: DBPool) {
     );
 
     let (gst, recv) =
-        gstreamer_wrapper::new(lp.clone(), pool).expect("Error Initializing gstreamer");
+        gstreamer_wrapper::new(lp.clone(), pool.clone()).expect("Error Initializing gstreamer");
     let state = WebGui {
-        pool: pool,
+        pool: pool.clone(),
         gstreamer: gst,
     };
 

@@ -450,6 +450,7 @@ fn get_tracks_for_selection(
 }
 
 fn do_new(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
+    /*
     let (name, res) = get_tracks_for_selection(pool, tv).expect("Error in getting tracks");
     let pl = LoadedPlaylist {
         id: Cell::new(None),
@@ -458,6 +459,7 @@ fn do_new(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
         current_position: 0,
     };
     gui.add_page(pl);
+    */
 }
 
 fn do_append(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
