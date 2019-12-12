@@ -51,9 +51,21 @@ function PlayButton(props) {
 class Main extends React.Component {
     constructor(props) {
         super(props)
-        this.state = { status: PlayState.Stopped };
+        this.state = {
+            status: PlayState.Stopped,
+            current: -1,
+            pl: [],
+        };
 
         this.handleButtonPush = this.handleButtonPush.bind(this);
+        this.refresh = this.refresh.bind(this);
+    }
+
+    componentDidMount() {
+        console.log("we mounted");
+        axios.get("/playlist/").then((response) => this.setState({
+            pl: response.data
+        }));
     }
 
     handleButtonPush(e) {
@@ -74,6 +86,12 @@ class Main extends React.Component {
         }
     }
 
+    refresh() {
+        axios.get("/currentid/").then((response) => {
+            this.setState({ current: response.data });
+        })
+    }
+
     render() {
         return <div>
             <Grid container spacing={1}>
@@ -87,10 +105,10 @@ class Main extends React.Component {
                     <TransportButton title="Next" api="next" event="ButtonEvent.Next" click={this.handleButtonPush}></TransportButton>
                 </Grid>
                 <Grid item xs={12}>
-                    <SongView></SongView>
+                    <SongView current={this.state.current} pl={this.state.pl}></SongView>
                 </Grid>
             </Grid>
-        </div>
+        </div >
     }
 }
 
@@ -107,39 +125,46 @@ function columnWidths(index) {
 
 class Cell extends React.PureComponent {
     render() {
-        const item = this.props.data[this.props.rowIndex];
-        switch (this.props.columnIndex) {
-            case 0: return <div style={this.props.style}>{this.props.rowIndex}</div>
-            case 1: return <div style={this.props.style}>{item.title}</div>
-            case 2: return <div style={this.props.style}>{item.artist}</div>
-            case 3: return <div style={this.props.style}>{item.album}</div>
-            case 4: return <div style={this.props.style}>{item.genre}</div>
-            default: return <div style={this.props.style}>ERROR</div>
+        const { item, selected } = this.props.data[this.props.rowIndex];
+        if (selected) {
+            let style = JSON.parse(JSON.stringify(this.props.style));
+            style.color = "#FF0000";
+            console.log(style);
+            switch (this.props.columnIndex) {
+                case 0: return <div style={style}>{this.props.rowIndex}</div>
+                case 1: return <div style={style}>{item.title}</div>
+                case 2: return <div style={style}>{item.artist}</div>
+                case 3: return <div style={style}>{item.album}</div>
+                case 4: return <div style={style}>{item.genre}</div>
+                default: return <div style={this.props.style}>ERROR</div>
+            }
+        } else {
+            switch (this.props.columnIndex) {
+                case 0: return <div style={this.props.style}>{this.props.rowIndex}</div>
+                case 1: return <div style={this.props.style}>{item.title}</div>
+                case 2: return <div style={this.props.style}>{item.artist}</div>
+                case 3: return <div style={this.props.style}>{item.album}</div>
+                case 4: return <div style={this.props.style}>{item.genre}</div>
+                default: return <div style={this.props.style}>ERROR</div>
+            }
         }
     }
 }
 
 class SongView extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = { pl: [] };
-    }
-
-    componentDidMount() {
-        console.log("we mounted");
-        axios.get("/playlist/").then((response) => this.setState({
-            pl: response.data,
-        }, console.log(this.state.pl))).catch(function () { });
-    }
-
     render() {
+        let items = this.props.pl.map((t) => ({ item: t, selected: false }));
+        if (this.props.current !== -1 && items) {
+            console.log(this.props.current);
+            items[this.props.current].selected = true;
+        }
         return <div><div>
             <VSGrid
-                itemData={this.state.pl}
+                itemData={items}
                 columnCount={5}
                 columnWidth={columnWidths}
                 height={700}
-                rowCount={this.state.pl.length}
+                rowCount={this.props.pl.length}
                 rowHeight={(index) => { return 25; }}
                 width={1500}
             >

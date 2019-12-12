@@ -1,5 +1,6 @@
 use actix_files as fs;
 use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
 use crate::gstreamer_wrapper;
@@ -9,16 +10,7 @@ use crate::playlist_tabs;
 use crate::types::*;
 
 async fn playlist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
-    let pls = restore_playlists(&state.pool).unwrap();
-    HttpResponse::Ok().json(
-        &pls.get(0)
-            .unwrap()
-            .items
-            .as_slice()
-            .chunks(30)
-            .next()
-            .unwrap(),
-    )
+    HttpResponse::Ok().json(&state.playlist.items)
 }
 
 fn play(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
@@ -29,16 +21,20 @@ fn play(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
 }
 
 fn pause(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
-    println!("Trying to pause");
     state
         .gstreamer
         .do_gstreamer_action(&gstreamer_wrapper::GStreamerAction::Pausing);
     HttpResponse::Ok().finish()
 }
 
+fn current_id(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+    HttpResponse::Ok().json(state.playlist.current_position.load(Ordering::Relaxed))
+}
+
 struct WebGui {
     pool: DBPool,
     gstreamer: Arc<gstreamer_wrapper::GStreamer>,
+    playlist: LoadedPlaylistPtr,
 }
 
 pub fn run(pool: DBPool) {
@@ -56,6 +52,7 @@ pub fn run(pool: DBPool) {
     let state = WebGui {
         pool: pool.clone(),
         gstreamer: gst,
+        playlist: lp,
     };
 
     println!("Doing data");
@@ -66,6 +63,7 @@ pub fn run(pool: DBPool) {
         App::new()
             .register_data(data.clone())
             .service(web::resource("/playlist/").route(web::get().to(playlist)))
+            .service(web::resource("/currentid/").route(web::get().to(current_id)))
             .service(web::resource("/transport/play").route(web::get().to(play)))
             .service(web::resource("/transport/pause").route(web::get().to(pause)))
             .service(fs::Files::new("/static/", "web_gui/dist/").show_files_listing())
