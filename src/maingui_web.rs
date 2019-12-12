@@ -29,6 +29,7 @@ fn play(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
 }
 
 fn pause(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+    println!("Trying to pause");
     state
         .gstreamer
         .do_gstreamer_action(&gstreamer_wrapper::GStreamerAction::Pausing);

@@ -7,58 +7,92 @@ import { VariableSizeGrid as VSGrid } from 'react-window';
 import axios from 'axios';
 const e = React.createElement;
 
-var PlayState = {
+const PlayState = Object.freeze({
     Stopped: 1,
     Paused: 2,
     Playing: 3
-};
+});
 
+const ButtonEvent = Object.freeze({
+    Next: 1,
+    Previous: 2,
+    Pause: 3,
+    Play: 4,
+});
 
 class TransportButton extends React.Component {
     constructor(props) {
-        super(props)
-        this.state = { title: "", url: "" }
+        super(props);
+
+        // This binding is necessary to make `this` work in the callback
+        this.click = this.click.bind(this);
     }
     click() {
-        axios.get("/transport/{this.state.url}");
+        this.props.click(this.props.event);
     }
     render() {
-        return <Button ariant="contained" color="primary" onClick={this.click}> {this.props.title}</Button>
+        return <Button variant="contained" color="primary" onClick={this.click}> {this.props.title}</Button>
     }
 }
 
 function PlayButton(props) {
     if (props.play_state === PlayState.Stopped) {
-        return <TransportButton title="Play" api="play"></TransportButton>
+        return <TransportButton title="Play" event={ButtonEvent.Play} click={props.click}></TransportButton>
     };
     if (props.play_state === PlayState.Paused) {
-        return <TransportButton title="Play" api="play"></TransportButton>
+        return <TransportButton title="Play" event={ButtonEvent.Play} click={props.click}></TransportButton>
     };
     if (props.play_state === PlayState.Playing) {
-        return <TransportButton title="Pause" api="pause"></TransportButton>
+        return <TransportButton title="Pause" event={ButtonEvent.Pause} click={props.click}></TransportButton>
     }
-    return <TransportButton title="Unspecified" api="NI"></TransportButton>
+    return <TransportButton title="Unspecified"></TransportButton>
 }
 
-function Main() {
-    return <div>
-        <Grid container spacing={1}>
-            <Grid item xs={3}>
-                <TransportButton title="Prev" api="prev"></TransportButton>
-            </Grid>
-            <Grid item xs={3}>
-                <PlayButton></PlayButton>
-            </Grid>
-            <Grid item xs={3}>
-                <TransportButton title="Next" api="next"></TransportButton>
-            </Grid>
-            <Grid item xs={12}>
-                <SongView></SongView>
-            </Grid>
-        </Grid>
-    </div>
-};
+class Main extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = { status: PlayState.Stopped };
 
+        this.handleButtonPush = this.handleButtonPush.bind(this);
+    }
+
+    handleButtonPush(e) {
+        if (e === ButtonEvent.Play) {
+            axios.get("/transport/play");
+            this.setState({ status: PlayState.Playing });
+        } else if (e === ButtonEvent.Pause) {
+            axios.get("/transport/pause");
+            this.setState({ status: PlayState.Paused });
+        } else if (e === ButtonEvent.Previous) {
+            axios.get("/transport/prev");
+            console.log("previous");
+        } else if (e === ButtonEvent.Next) {
+            axios.get("/transport/next");
+            console.log("next");
+        } else {
+            console.log("Unspecified!");
+        }
+    }
+
+    render() {
+        return <div>
+            <Grid container spacing={1}>
+                <Grid item xs={3}>
+                    <TransportButton title="Prev" event="ButtonEvent.Previous" click={this.handleButtonPush}></TransportButton>
+                </Grid>
+                <Grid item xs={3}>
+                    <PlayButton play_state={this.state.status} click={this.handleButtonPush}></PlayButton>
+                </Grid>
+                <Grid item xs={3}>
+                    <TransportButton title="Next" api="next" event="ButtonEvent.Next" click={this.handleButtonPush}></TransportButton>
+                </Grid>
+                <Grid item xs={12}>
+                    <SongView></SongView>
+                </Grid>
+            </Grid>
+        </div>
+    }
+}
 
 function columnWidths(index) {
     switch (index) {

@@ -181,17 +181,19 @@ impl GStreamerExt for GStreamer {
             & (gstreamer::State::Playing
                 == self.pipeline.get_state(gstreamer::ClockTime(Some(5))).1)
         {
+            println!("Obviously, we do not reach here");
             gstreamer::State::Paused
         } else {
             gstreamer::State::Playing
         };
 
-        //sending to gui
-        self.sender
-            .send(gstreamer_action.into())
-            .expect("Error in sending updated state");
-
+        /*       //sending to gui
+                self.sender
+                    .send(gstreamer_action.into())
+                    .expect("Error in sending updated state");
+        */
         //sending to gstreamer
+        println!("state we set to: {:?}", gstreamer_action);
         self.pipeline
             .set_state(gstreamer_action)
             .expect("Error in sending to gstreamer");
