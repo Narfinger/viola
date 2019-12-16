@@ -1,12 +1,13 @@
-use actix::{Actor, StreamHandler};
+use actix::prelude::*;
 use actix::AsyncContext;
+use actix::{Actor, StreamHandler};
 use actix_files as fs;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web_actors::ws;
-use std::sync::atomic::Ordering;
-use std::sync::Arc;
 use core::time::Duration;
-use std::sync::mpsc::{sync_channel, SyncSender, Receiver};
+use std::sync::atomic::Ordering;
+use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
+use std::sync::Arc;
 
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
@@ -14,20 +15,17 @@ use crate::playlist::restore_playlists;
 use crate::playlist_tabs;
 use crate::types::*;
 
+#[derive(Message)]
 enum WsMessage {
     PlayChanged,
 }
 
 struct MyWs {
-    recv: Receiver<WsMessage>,
+    recv: Option<Recipient<WsMessage>>,
 }
 
 impl Actor for MyWs {
     type Context = ws::WebsocketContext<Self>;
-
-    fn started(&mut self, ctx: &mut Self::Context) {
-        self.sendmsg(ctx);
-    }
 }
 
 /// Handler for ws::Message message
@@ -35,27 +33,17 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for MyWs {
     fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
         match msg {
             ws::Message::Ping(msg) => ctx.pong(&msg),
-            ws::Message::Text(text) => ctx.text(text),
+            ws::Message::Text(text) => {
+                self.recv = Some(msg.addr());
+            }
             ws::Message::Binary(bin) => ctx.binary(bin),
             _ => (),
         }
     }
 }
 
-impl MyWs {
-    fn sendmsg(&self, ctx: &mut <Self as Actor>::Context) {
-        ctx.run_interval(Duration::new(10, 0), |act, ctx| {
-            if let Ok(m) = self.recv.recv() {
-                match m {
-                    PlayChanged => ctx.send_text("playchanged");
-                }
-            }
-        });
-    }
-}
-
 fn ws_start(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
-    let resp = ws::start(MyWs {}, &req, stream);
+    let resp = ws::start(MyWs {None}, &req, stream);
     println!("websocket {:?}", resp);
     resp
 }
