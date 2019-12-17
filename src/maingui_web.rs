@@ -4,8 +4,11 @@ use actix_files as fs;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web_actors::ws;
 use std::sync::atomic::Ordering;
+use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::sync::RwLock;
+use std::thread;
+use std::time::Duration;
 
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
@@ -15,13 +18,21 @@ use crate::types::*;
 
 #[derive(Message)]
 enum WsMessage {
-    PlayChanged,
+    PlayChanged(usize),
 }
 
 struct MyWs {}
 
 impl Actor for MyWs {
     type Context = ws::WebsocketContext<Self>;
+}
+
+impl Handler<WsMessage> for MyWs {
+    type Result = ();
+
+    fn handle(&mut self, msg: WsMessage, _: &mut ws::WebsocketContext<Self>) -> Self::Result {
+        ()
+    }
 }
 
 /// Handler for ws::Message message
@@ -74,6 +85,32 @@ struct WebGui {
     ws_address: RwLock<Option<Addr<MyWs>>>,
 }
 
+fn handle_gstreamer_messages(
+    state: web::Data<WebGui>,
+    rx: Receiver<gstreamer_wrapper::GStreamerMessage>,
+) {
+    loop {
+        if let Ok(msg) = rx.recv() {
+            match msg {
+                gstreamer_wrapper::GStreamerMessage::Playing => {
+                    let pos = state.playlist.current_position.load(Ordering::Relaxed);
+                    state
+                        .ws_address
+                        .read()
+                        .as_ref()
+                        .unwrap()
+                        .as_ref()
+                        .unwrap()
+                        .do_send(WsMessage::PlayChanged(pos));
+                }
+                _ => (),
+            }
+        }
+        let secs = Duration::new(1, 0);
+        thread::sleep(secs);
+    }
+}
+
 pub fn run(pool: DBPool) {
     println!("Loading playlist");
     let lp = Arc::new(
@@ -83,8 +120,9 @@ pub fn run(pool: DBPool) {
     );
 
     println!("Starting gstreamer");
-    let (gst, recv) =
+    let (gst, rx) =
         gstreamer_wrapper::new(lp.clone(), pool.clone()).expect("Error Initializing gstreamer");
+
     println!("Setting up gui");
     let state = WebGui {
         pool: pool.clone(),
@@ -95,6 +133,11 @@ pub fn run(pool: DBPool) {
 
     println!("Doing data");
     let data = web::Data::new(state);
+
+    {
+        let datac = data.clone();
+        thread::spawn(move || handle_gstreamer_messages(datac, rx));
+    }
 
     println!("Starting web gui on 127.0.0.1:8088");
     HttpServer::new(move || {

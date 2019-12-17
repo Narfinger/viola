@@ -187,27 +187,11 @@ impl GStreamerExt for GStreamer {
             gstreamer::State::Playing
         };
 
-        /*       //sending to gui
-                self.sender
-                    .send(gstreamer_action.into())
-                    .expect("Error in sending updated state");
-        */
         //sending to gstreamer
         println!("state we set to: {:?}", gstreamer_action);
         self.pipeline
             .set_state(gstreamer_action)
             .expect("Error in sending to gstreamer");
-        //if let Err(e) = self.pipeline.set_state(gstreamer_action) {
-        //if let Some(bus) = self.pipeline.get_bus() {
-        //    while let Some(msg) = bus.pop() {
-        //        info!("we found messages on the bus {:?}", msg);
-        //    }
-        //}
-        //panic!(
-        //    "Error in setting gstreamer state playing, found the following error {:?}",
-        //    e
-        //);
-        //}
     }
 
     /// poll the message bus and on eos start new
