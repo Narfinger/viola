@@ -1,13 +1,11 @@
 use actix::prelude::*;
-use actix::AsyncContext;
 use actix::{Actor, StreamHandler};
 use actix_files as fs;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web_actors::ws;
-use core::time::Duration;
 use std::sync::atomic::Ordering;
-use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::Arc;
+use std::sync::RwLock;
 
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
@@ -20,9 +18,7 @@ enum WsMessage {
     PlayChanged,
 }
 
-struct MyWs {
-    recv: Option<Recipient<WsMessage>>,
-}
+struct MyWs {}
 
 impl Actor for MyWs {
     type Context = ws::WebsocketContext<Self>;
@@ -33,22 +29,23 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for MyWs {
     fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
         match msg {
             ws::Message::Ping(msg) => ctx.pong(&msg),
-            ws::Message::Text(text) => {
-                self.recv = Some(msg.addr());
-            }
-            ws::Message::Binary(bin) => ctx.binary(bin),
             _ => (),
         }
     }
 }
 
-fn ws_start(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
-    let resp = ws::start(MyWs {None}, &req, stream);
+fn ws_start(
+    state: web::Data<WebGui>,
+    req: HttpRequest,
+    stream: web::Payload,
+) -> Result<HttpResponse, Error> {
+    let (address, resp) = ws::start_with_addr(MyWs {}, &req, stream)?;
     println!("websocket {:?}", resp);
-    resp
+    *state.ws_address.write().unwrap() = Some(address);
+    Ok(resp)
 }
 
-async fn playlist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+fn playlist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(&state.playlist.items)
 }
 
@@ -74,6 +71,7 @@ struct WebGui {
     pool: DBPool,
     gstreamer: Arc<gstreamer_wrapper::GStreamer>,
     playlist: LoadedPlaylistPtr,
+    ws_address: RwLock<Option<Addr<MyWs>>>,
 }
 
 pub fn run(pool: DBPool) {
@@ -92,6 +90,7 @@ pub fn run(pool: DBPool) {
         pool: pool.clone(),
         gstreamer: gst,
         playlist: lp,
+        ws_address: RwLock::new(None),
     };
 
     println!("Doing data");
