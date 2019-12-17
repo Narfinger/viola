@@ -19,6 +19,7 @@ use crate::types::*;
 #[derive(Message)]
 enum WsMessage {
     PlayChanged(usize),
+    Ping,
 }
 
 struct MyWs {}
@@ -90,7 +91,8 @@ fn handle_gstreamer_messages(
     rx: Receiver<gstreamer_wrapper::GStreamerMessage>,
 ) {
     loop {
-        if let Ok(msg) = rx.recv() {
+        println!("loop is working");
+        if let Ok(msg) = rx.try_recv() {
             match msg {
                 gstreamer_wrapper::GStreamerMessage::Playing => {
                     let pos = state.playlist.current_position.load(Ordering::Relaxed);
@@ -101,12 +103,17 @@ fn handle_gstreamer_messages(
                         .unwrap()
                         .as_ref()
                         .unwrap()
-                        .do_send(WsMessage::PlayChanged(pos));
+                        .do_send(WsMessage::PlayChanged(pos))
                 }
                 _ => (),
             }
         }
-        let secs = Duration::new(1, 0);
+        if let Some(a) = state.ws_address.read().unwrap().as_ref() {
+            println!("Sending ping");
+            a.send(WsMessage::Ping).wait().expect("Error in future");
+        }
+
+        let secs = Duration::from_secs(1);
         thread::sleep(secs);
     }
 }

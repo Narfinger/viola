@@ -59,13 +59,33 @@ class Main extends React.Component {
 
         this.handleButtonPush = this.handleButtonPush.bind(this);
         this.refresh = this.refresh.bind(this);
+        this.ws = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port + "/ws/")
     }
+
 
     componentDidMount() {
         console.log("we mounted");
         axios.get("/playlist/").then((response) => this.setState({
             pl: response.data
         }));
+
+        this.ws.onopen = () => {
+            // on connecting, do nothing but log it to the console
+            console.log('connected')
+        }
+
+        this.ws.onmessage = evt => {
+            // listen to data sent from the websocket server
+            //const message = JSON.parse(evt.data)
+            //this.setState({ dataFromServer: message })
+            console.log(evt);
+        }
+
+        this.ws.onclose = () => {
+            console.log('disconnected')
+            // automatically try to reconnect on connection loss
+
+        }
     }
 
     handleButtonPush(e) {
