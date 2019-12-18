@@ -16,13 +16,16 @@ use crate::playlist::restore_playlists;
 use crate::playlist_tabs;
 use crate::types::*;
 
-#[derive(Message)]
+#[derive(Clone, Message)]
+#[rtype(result = "()")]
 enum WsMessage {
     PlayChanged(usize),
     Ping,
 }
 
-struct MyWs {}
+struct MyWs {
+    addr: Option<Addr<Self>>,
+}
 
 impl Actor for MyWs {
     type Context = ws::WebsocketContext<Self>;
@@ -31,18 +34,16 @@ impl Actor for MyWs {
 impl Handler<WsMessage> for MyWs {
     type Result = ();
 
-    fn handle(&mut self, msg: WsMessage, _: &mut ws::WebsocketContext<Self>) -> Self::Result {
-        ()
-    }
-}
-
-/// Handler for ws::Message message
-impl StreamHandler<ws::Message, ws::ProtocolError> for MyWs {
-    fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: WsMessage, ctx: &mut ws::WebsocketContext<Self>) -> Self::Result {
         match msg {
-            ws::Message::Ping(msg) => ctx.pong(&msg),
-            _ => (),
+            WsMessage::PlayChanged(i) => {
+                ctx.text(format!("playchanged {}", i));
+            }
+            WsMessage::Ping => {
+                ctx.text("bl");
+            }
         }
+        println!("We want to handle");
     }
 }
 
@@ -51,9 +52,10 @@ fn ws_start(
     req: HttpRequest,
     stream: web::Payload,
 ) -> Result<HttpResponse, Error> {
-    let (address, resp) = ws::start_with_addr(MyWs {}, &req, stream)?;
+    let ws = MyWs { addr: None };
+    let resp = ws::start(ws, &req, stream)?;
     println!("websocket {:?}", resp);
-    *state.ws_address.write().unwrap() = Some(address);
+    *state.ws.write().unwrap() = Some(ws);
     Ok(resp)
 }
 
@@ -83,7 +85,7 @@ struct WebGui {
     pool: DBPool,
     gstreamer: Arc<gstreamer_wrapper::GStreamer>,
     playlist: LoadedPlaylistPtr,
-    ws_address: RwLock<Option<Addr<MyWs>>>,
+    ws: RwLock<Option<MyWs>>,
 }
 
 fn handle_gstreamer_messages(
@@ -97,7 +99,7 @@ fn handle_gstreamer_messages(
                 gstreamer_wrapper::GStreamerMessage::Playing => {
                     let pos = state.playlist.current_position.load(Ordering::Relaxed);
                     state
-                        .ws_address
+                        .ws
                         .read()
                         .as_ref()
                         .unwrap()
@@ -108,7 +110,8 @@ fn handle_gstreamer_messages(
                 _ => (),
             }
         }
-        if let Some(a) = state.ws_address.read().unwrap().as_ref() {
+
+        if let Some(a) = state.ws.read().unwrap().as_ref() {
             println!("Sending ping");
             a.send(WsMessage::Ping).wait().expect("Error in future");
         }
@@ -135,7 +138,7 @@ pub fn run(pool: DBPool) {
         pool: pool.clone(),
         gstreamer: gst,
         playlist: lp,
-        ws_address: RwLock::new(None),
+        ws: RwLock::new(None),
     };
 
     println!("Doing data");
