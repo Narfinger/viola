@@ -75,9 +75,10 @@ fn ws_start(
     req: HttpRequest,
     stream: web::Payload,
 ) -> Result<HttpResponse, Error> {
-    let ws = MyWs { addr: None };
-    let resp = ws::start(ws.clone(), &req, stream)?;
+    let mut ws = MyWs { addr: None };
+    let (addr, resp) = ws::start_with_addr(ws.clone(), &req, stream)?;
     println!("websocket {:?}", resp);
+    ws.addr = Some(addr);
     *state.ws.write().unwrap() = Some(ws);
     Ok(resp)
 }
@@ -117,10 +118,10 @@ fn handle_gstreamer_messages(
 ) {
     loop {
         println!("loop is working");
-        let addr = state.ws.read().unwrap().as_ref().unwrap().addr.clone();
         if let Ok(msg) = rx.try_recv() {
             match msg {
                 gstreamer_wrapper::GStreamerMessage::Playing => {
+                    let addr = state.ws.read().unwrap().as_ref().unwrap().addr.clone();
                     let pos = state.playlist.current_position.load(Ordering::Relaxed);
                     addr.clone().unwrap().do_send(WsMessage::PlayChanged(pos))
                 }
@@ -129,8 +130,10 @@ fn handle_gstreamer_messages(
         }
 
         if let Some(a) = state.ws.read().unwrap().as_ref() {
-            println!("Sending ping");
-            addr.unwrap().do_send(WsMessage::Ping);
+            if let Some(a) = a.addr.clone() {
+                println!("Sending ping");
+                a.do_send(WsMessage::Ping);
+            }
         }
 
         let secs = Duration::from_secs(1);
