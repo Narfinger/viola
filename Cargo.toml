@@ -6,9 +6,9 @@ authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-actix = "0.9.0-alpha.2"
-actix-web = "2.0.0-alpha.6"
-actix-web-actors="2.0.0-alpha.1"
+actix = "0.8.3"
+actix-web = "1.0"
+actix-web-actors="1.0"
 actix-files = "0.1"         # Static files support for actix web.
 app_dirs = "1.2"         # Put your app's data in the right place on every platform
 clap = "2.33"                    # A simple to use, efficient, and full featured  Command Line Argument Parser

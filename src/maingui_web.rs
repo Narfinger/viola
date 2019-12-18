@@ -3,6 +3,7 @@ use actix::{Actor, StreamHandler};
 use actix_files as fs;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder};
 use actix_web_actors::ws;
+use std::fmt;
 use std::sync::atomic::Ordering;
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
@@ -23,6 +24,25 @@ enum WsMessage {
     Ping,
 }
 
+impl fmt::Display for WsMessage {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            WsMessage::PlayChanged(i) => write!(f, "playchanged {}", i),
+            WsMessage::Ping => write!(f, "ping"),
+        }
+    }
+}
+
+impl From<WsMessage> for String {
+    fn from(msg: WsMessage) -> Self {
+        match msg {
+            WsMessage::PlayChanged(i) => format!("playchanged {}", i),
+            WsMessage::Ping => format!("ping"),
+        }
+    }
+}
+
+#[derive(Clone)]
 struct MyWs {
     addr: Option<Addr<Self>>,
 }
@@ -34,16 +54,19 @@ impl Actor for MyWs {
 impl Handler<WsMessage> for MyWs {
     type Result = ();
 
-    fn handle(&mut self, msg: WsMessage, ctx: &mut ws::WebsocketContext<Self>) -> Self::Result {
+    fn handle(&mut self, msg: WsMessage, ctx: &mut Self::Context) {
+        ctx.text(msg);
+    }
+}
+
+impl StreamHandler<ws::Message, ws::ProtocolError> for MyWs {
+    fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
         match msg {
-            WsMessage::PlayChanged(i) => {
-                ctx.text(format!("playchanged {}", i));
-            }
-            WsMessage::Ping => {
-                ctx.text("bl");
-            }
+            ws::Message::Text(b) => println!("we found text {}", b),
+            _ => {}
         }
-        println!("We want to handle");
+        //self.addr.unwrap().do_send(msg.unwrap());
+        //println!("We want to handle");
     }
 }
 
@@ -53,7 +76,7 @@ fn ws_start(
     stream: web::Payload,
 ) -> Result<HttpResponse, Error> {
     let ws = MyWs { addr: None };
-    let resp = ws::start(ws, &req, stream)?;
+    let resp = ws::start(ws.clone(), &req, stream)?;
     println!("websocket {:?}", resp);
     *state.ws.write().unwrap() = Some(ws);
     Ok(resp)
@@ -94,18 +117,12 @@ fn handle_gstreamer_messages(
 ) {
     loop {
         println!("loop is working");
+        let addr = state.ws.read().unwrap().as_ref().unwrap().addr.clone();
         if let Ok(msg) = rx.try_recv() {
             match msg {
                 gstreamer_wrapper::GStreamerMessage::Playing => {
                     let pos = state.playlist.current_position.load(Ordering::Relaxed);
-                    state
-                        .ws
-                        .read()
-                        .as_ref()
-                        .unwrap()
-                        .as_ref()
-                        .unwrap()
-                        .do_send(WsMessage::PlayChanged(pos))
+                    addr.clone().unwrap().do_send(WsMessage::PlayChanged(pos))
                 }
                 _ => (),
             }
@@ -113,7 +130,7 @@ fn handle_gstreamer_messages(
 
         if let Some(a) = state.ws.read().unwrap().as_ref() {
             println!("Sending ping");
-            a.send(WsMessage::Ping).wait().expect("Error in future");
+            addr.unwrap().do_send(WsMessage::Ping);
         }
 
         let secs = Duration::from_secs(1);
