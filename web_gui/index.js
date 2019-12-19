@@ -93,16 +93,16 @@ class Main extends React.Component {
 
     handleButtonPush(e) {
         if (e === ButtonEvent.Play) {
-            axios.get("/transport/play");
+            axios.post("/transport/play");
             this.setState({ status: PlayState.Playing });
         } else if (e === ButtonEvent.Pause) {
-            axios.get("/transport/pause");
+            axios.post("/transport/pause");
             this.setState({ status: PlayState.Paused });
         } else if (e === ButtonEvent.Previous) {
-            axios.get("/transport/prev");
+            axios.post("/transport/prev");
             console.log("previous");
         } else if (e === ButtonEvent.Next) {
-            axios.get("/transport/next");
+            axios.post("/transport/next");
             console.log("next");
         } else {
             console.log("Unspecified!");
@@ -153,6 +153,9 @@ class Cell extends React.PureComponent {
     }
     click() {
         console.log("cliicked");
+        axios.post("/transport/play/", {
+            index: this.props.index,
+        })
 
         console.log(this.props);
     }
