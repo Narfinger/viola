@@ -17,28 +17,16 @@ use crate::playlist::restore_playlists;
 use crate::playlist_tabs;
 use crate::types::*;
 
-#[derive(Clone, Message)]
+#[derive(Clone, Message, Serialize)]
 #[rtype(result = "()")]
 enum WsMessage {
     PlayChanged(usize),
     Ping,
 }
 
-impl fmt::Display for WsMessage {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            WsMessage::PlayChanged(i) => write!(f, "playchanged {}", i),
-            WsMessage::Ping => write!(f, "ping"),
-        }
-    }
-}
-
 impl From<WsMessage> for String {
     fn from(msg: WsMessage) -> Self {
-        match msg {
-            WsMessage::PlayChanged(i) => format!("playchanged {}", i),
-            WsMessage::Ping => format!("ping"),
-        }
+        serde_json::to_string(&msg).unwrap()
     }
 }
 

@@ -78,7 +78,8 @@ class Main extends React.Component {
             // listen to data sent from the websocket server
             //const message = JSON.parse(evt.data)
             //this.setState({ dataFromServer: message })
-            console.log(evt);
+            var msg = JSON.parse(evt.data);
+            console.log(msg);
         }
 
         this.ws.onclose = () => {
