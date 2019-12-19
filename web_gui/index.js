@@ -75,11 +75,13 @@ class Main extends React.Component {
         }
 
         this.ws.onmessage = evt => {
-            // listen to data sent from the websocket server
-            //const message = JSON.parse(evt.data)
-            //this.setState({ dataFromServer: message })
             var msg = JSON.parse(evt.data);
             console.log(msg);
+            switch (msg.type) {
+                case "Ping": break;
+                case "PlayChanged": this.setState({ current: msg.index }); break;
+                default:
+            }
         }
 
         this.ws.onclose = () => {

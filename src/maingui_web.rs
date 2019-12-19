@@ -18,9 +18,10 @@ use crate::playlist_tabs;
 use crate::types::*;
 
 #[derive(Clone, Message, Serialize)]
+#[serde(tag = "type")]
 #[rtype(result = "()")]
 enum WsMessage {
-    PlayChanged(usize),
+    PlayChanged { index: usize },
     Ping,
 }
 
@@ -111,19 +112,22 @@ fn handle_gstreamer_messages(
                 gstreamer_wrapper::GStreamerMessage::Playing => {
                     let addr = state.ws.read().unwrap().as_ref().unwrap().addr.clone();
                     let pos = state.playlist.current_position.load(Ordering::Relaxed);
-                    addr.clone().unwrap().do_send(WsMessage::PlayChanged(pos))
+                    addr.clone()
+                        .unwrap()
+                        .do_send(WsMessage::PlayChanged { index: pos })
                 }
                 _ => (),
             }
         }
 
+        /*
         if let Some(a) = state.ws.read().unwrap().as_ref() {
             if let Some(a) = a.addr.clone() {
                 println!("Sending ping");
                 a.do_send(WsMessage::Ping);
             }
         }
-
+        */
         let secs = Duration::from_secs(1);
         thread::sleep(secs);
     }
