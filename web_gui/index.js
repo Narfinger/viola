@@ -137,7 +137,7 @@ class Main extends React.Component {
 
 function columnWidths(index) {
     switch (index) {
-        case 0: return 50;  //number
+        case 0: return 100;  //number
         case 1: return 400; //title
         case 2: return 300; //artist
         case 3: return 300; //album
@@ -147,12 +147,22 @@ function columnWidths(index) {
 }
 
 class Cell extends React.PureComponent {
+    constructor(props) {
+        super(props)
+        this.click = this.click.bind(this);
+    }
+    click() {
+        console.log("cliicked");
+
+        console.log(this.props);
+    }
+
     render() {
         const { item, selected } = this.props.data[this.props.rowIndex];
         if (selected) {
             let style = JSON.parse(JSON.stringify(this.props.style));
             style.color = "#FF0000";
-            console.log(style);
+            //console.log(style);
             switch (this.props.columnIndex) {
                 case 0: return <div style={style}>{this.props.rowIndex}</div>
                 case 1: return <div style={style}>{item.title}</div>
@@ -163,11 +173,12 @@ class Cell extends React.PureComponent {
             }
         } else {
             switch (this.props.columnIndex) {
-                case 0: return <div style={this.props.style}>{this.props.rowIndex}</div>
-                case 1: return <div style={this.props.style}>{item.title}</div>
-                case 2: return <div style={this.props.style}>{item.artist}</div>
-                case 3: return <div style={this.props.style}>{item.album}</div>
-                case 4: return <div style={this.props.style}>{item.genre}</div>
+                case 0: return <div style={this.props.style} onDoubleClick={this.click}>{this.props.rowIndex}</div>
+                //<PlayIndexButton style={this.props.style} index={this.props.rowIndex}></PlayIndexButton>//<div style={this.props.style}>{this.props.rowIndex}</div>
+                case 1: return <div style={this.props.style} onDoubleClick={this.click}>{item.title}</div>
+                case 2: return <div style={this.props.style} onDoubleClick={this.click}>{item.artist}</div>
+                case 3: return <div style={this.props.style} onDoubleClick={this.click}>{item.album}</div>
+                case 4: return <div style={this.props.style} onDoubleClick={this.click}>{item.genre}</div>
                 default: return <div style={this.props.style}>ERROR</div>
             }
         }

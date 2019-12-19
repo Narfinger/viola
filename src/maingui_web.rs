@@ -106,7 +106,7 @@ fn handle_gstreamer_messages(
     rx: Receiver<gstreamer_wrapper::GStreamerMessage>,
 ) {
     loop {
-        println!("loop is working");
+        //println!("loop is working");
         if let Ok(msg) = rx.try_recv() {
             match msg {
                 gstreamer_wrapper::GStreamerMessage::Playing => {
