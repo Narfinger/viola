@@ -79,7 +79,7 @@ class Main extends React.Component {
             console.log(msg);
             switch (msg.type) {
                 case "Ping": break;
-                case "PlayChanged": this.setState({ current: msg.index }); break;
+                case "PlayChanged": this.setState({ current: msg.index, status: PlayState.Playing }); break;
                 default:
             }
         }
@@ -93,17 +93,15 @@ class Main extends React.Component {
 
     handleButtonPush(e) {
         if (e === ButtonEvent.Play) {
-            axios.post("/transport/play");
+            axios.post("/transport/", { "t": "Playing" });
             this.setState({ status: PlayState.Playing });
         } else if (e === ButtonEvent.Pause) {
-            axios.post("/transport/pause");
+            axios.post("/transport/", { "t": "Pausing" });
             this.setState({ status: PlayState.Paused });
         } else if (e === ButtonEvent.Previous) {
-            axios.post("/transport/prev");
-            console.log("previous");
+            axios.post("/transport/", { "t": "Previous" });
         } else if (e === ButtonEvent.Next) {
-            axios.post("/transport/next");
-            console.log("next");
+            axios.post("/transport/", { "t": "Next" });
         } else {
             console.log("Unspecified!");
         }
@@ -153,9 +151,11 @@ class Cell extends React.PureComponent {
     }
     click() {
         console.log("cliicked");
-        axios.post("/transport/play/", {
-            index: this.props.index,
-        })
+        let c = {
+            "t": "Play",
+            c: this.props.rowIndex,
+        };
+        axios.post("/transport/", c);
 
         console.log(this.props);
     }

@@ -76,17 +76,20 @@ fn playlist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(&state.playlist.items)
 }
 
-fn play(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
-    state
-        .gstreamer
-        .do_gstreamer_action(&gstreamer_wrapper::GStreamerAction::Playing);
-    HttpResponse::Ok().finish()
+// removes all already played data
+fn clean(state: web::Data<WebGui>, req: HttpRequest) -> HttpResonse {
+    //state.playlist.clean();
+
+    //reload playlist
 }
 
-fn pause(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
-    state
-        .gstreamer
-        .do_gstreamer_action(&gstreamer_wrapper::GStreamerAction::Pausing);
+fn transport(
+    state: web::Data<WebGui>,
+    msg: web::Json<gstreamer_wrapper::GStreamerAction>,
+) -> HttpResponse {
+    println!("stuff: {:?}", &msg);
+    state.gstreamer.do_gstreamer_action(&msg);
+
     HttpResponse::Ok().finish()
 }
 
@@ -167,8 +170,8 @@ pub fn run(pool: DBPool) {
             .register_data(data.clone())
             .service(web::resource("/playlist/").route(web::get().to(playlist)))
             .service(web::resource("/currentid/").route(web::get().to(current_id)))
-            .service(web::resource("/transport/play").route(web::get().to(play)))
-            .service(web::resource("/transport/pause").route(web::get().to(pause)))
+            .service(web::resource("/clean/").route(web::post().to(clean)))
+            .service(web::resource("/transport/").route(web::post().to(transport)))
             .service(web::resource("/ws/").route(web::get().to(ws_start)))
             .service(fs::Files::new("/static/", "web_gui/dist/").show_files_listing())
             .service(fs::Files::new("/", "./web_gui/").index_file("index.html"))

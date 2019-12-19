@@ -95,7 +95,8 @@ pub fn new(
 }
 
 /// Tells the GuiPtr and the gstreamer what action is performed. Splits the GuiPtr and the backend a tiny bit
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, Serialize, Deserialize, PartialEq)]
+#[serde(tag = "t", content = "c")]
 pub enum GStreamerAction {
     Next,
     Playing,
@@ -192,6 +193,10 @@ impl GStreamerExt for GStreamer {
         self.pipeline
             .set_state(gstreamer_action)
             .expect("Error in sending to gstreamer");
+
+        self.sender
+            .send(gstreamer_action.into())
+            .expect("Error in sending");
     }
 
     /// poll the message bus and on eos start new
