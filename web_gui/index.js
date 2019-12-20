@@ -138,7 +138,7 @@ class Main extends React.Component {
                     <TransportButton title="Next" api="next" event="ButtonEvent.Next" click={this.handleButtonPush}></TransportButton>
                 </Grid>
                 <Grid item xs={1}>
-                    <Button variant="contained" color="secondary" onClick={this.clean}></Button>
+                    <Button variant="contained" color="secondary" onClick={this.clean}>Clean</Button>
                 </Grid>
                 <Grid item xs={12}>
                     <SongView current={this.state.current} pl={this.state.pl}></SongView>

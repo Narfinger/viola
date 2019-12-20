@@ -63,7 +63,7 @@ fn create_loaded_from_playlist(
         id: pl.id,
         name: pl.name.clone(),
         items: sorted,
-        current_position: Arc::new(AtomicUsize::new(pl.current_position as usize)),
+        current_position: pl.current_position as usize,
     })
 }
 
@@ -102,7 +102,7 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
     if exists {
         // the playlist is already in the database
         diesel::update(playlists.find(pl.id))
-            .set(current_position.eq(pl.current_position.load(Ordering::Relaxed) as i32))
+            .set(current_position.eq(pl.current_position as i32))
             .execute(db.lock().expect("DB Error").deref())?;
     }
 
@@ -114,7 +114,7 @@ pub fn update_playlist(db: &DBPool, pl: &LoadedPlaylist) -> Result<(), diesel::r
         let t = vec![NewPlaylist {
             id: pl.id,
             name: pl.name.clone(),
-            current_position: pl.current_position.load(Ordering::Relaxed) as i32,
+            current_position: pl.current_position as i32,
         }];
         diesel::insert_into(playlists)
             .values(&t)

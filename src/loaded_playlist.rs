@@ -1,12 +1,7 @@
 use gtk;
 use owning_ref::RwLockReadGuardRef;
-use std::cell::{Cell, RefCell};
 use std::ops::Deref;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
-use std::sync::Mutex;
-use std::sync::RwLockReadGuard;
 use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
 use crate::db::Track;
@@ -18,7 +13,7 @@ pub struct LoadedPlaylist {
     pub id: i32,
     pub name: String,
     pub items: Vec<Track>,
-    pub current_position: Arc<AtomicUsize>,
+    pub current_position: usize,
 }
 
 pub trait LoadedPlaylistExt {
@@ -32,7 +27,7 @@ pub trait LoadedPlaylistExt {
 impl LoadedPlaylistExt for LoadedPlaylistPtr {
     fn get_current_track(&self) -> Track {
         let s = self.read().unwrap();
-        s.items[s.current_position.load(Ordering::Relaxed)].clone()
+        s.items[s.current_position].clone()
     }
 
     fn get_playlist_full_time(&self) -> i64 {
@@ -41,10 +36,7 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
     }
 
     fn current_position(&self) -> usize {
-        self.read()
-            .unwrap()
-            .current_position
-            .load(Ordering::Relaxed)
+        self.read().unwrap().current_position
     }
 
     fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>> {
@@ -56,6 +48,7 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
         let index = self.current_position();
         let mut s = self.write().unwrap();
         s.items = s.items.split_off(index);
+        s.current_position = 1;
     }
 }
 
@@ -72,7 +65,7 @@ impl PlaylistControls for LoadedPlaylistPtr {
     fn get_current_path(&self) -> PathBuf {
         let mut pb = PathBuf::new();
         let s = self.read().unwrap();
-        pb.push(&s.items[s.current_position.load(Ordering::Relaxed)].path);
+        pb.push(&s.items[s.current_position].path);
         pb
     }
 
@@ -81,42 +74,38 @@ impl PlaylistControls for LoadedPlaylistPtr {
         info!("loading from playlist with name: {}", s.name);
         format!(
             "file:////{}",
-            utf8_percent_encode(
-                &s.items[s.current_position.load(Ordering::Relaxed) as usize].path,
-                DEFAULT_ENCODE_SET
-            )
-            .to_string()
+            utf8_percent_encode(&s.items[s.current_position].path, DEFAULT_ENCODE_SET).to_string()
         )
     }
 
     fn previous(&self) -> String {
         {
-            let s = self.read().unwrap();
-            s.current_position.fetch_sub(1, Ordering::Relaxed);
+            let mut s = self.write().unwrap();
+            s.current_position -= 1;
         }
         self.get_current_uri()
     }
 
     fn next(&self) -> String {
         {
-            let s = self.read().unwrap();
-            s.current_position.fetch_add(1, Ordering::Relaxed);
+            let mut s = self.write().unwrap();
+            s.current_position += 1;
         }
         self.get_current_uri()
     }
 
     fn set(&self, i: i32) -> String {
         {
-            let s = self.read().unwrap();
-            s.current_position.swap(i as usize, Ordering::Relaxed);
+            let mut s = self.write().unwrap();
+            s.current_position = i as usize;
         }
         self.get_current_uri()
     }
 
     fn next_or_eol(&self, pool: &DBPool) -> Option<String> {
-        let s = self.read().unwrap();
+        let mut s = self.write().unwrap();
         {
-            let track = s.items.get(s.current_position.load(Ordering::Relaxed));
+            let track = s.items.get(s.current_position);
             //update playlist counter
             let dbc = pool.clone();
             if let Some(t) = track {
@@ -125,12 +114,13 @@ impl PlaylistControls for LoadedPlaylistPtr {
             }
         }
 
-        let next_pos = s.current_position.fetch_add(1, Ordering::Relaxed);
+        s.current_position += 1;
+        let next_pos = s.current_position;
 
         if s.items.get(next_pos as usize).is_some() {
             Some(self.next())
         } else {
-            s.current_position.swap(0, Ordering::Relaxed);
+            s.current_position = 0;
             None
         }
     }

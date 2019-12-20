@@ -3,11 +3,8 @@ use diesel::sqlite::Sqlite;
 use diesel::{QueryDsl, RunQueryDsl};
 use preferences::prefs_base_dir;
 use rand::prelude::*;
-use std::cell::Cell;
 use std::fs;
 use std::ops::Deref;
-use std::sync::atomic::AtomicUsize;
-use std::sync::Arc;
 use toml;
 
 use crate::db;
@@ -194,7 +191,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
             id: db::get_new_playlist_id(db),
             name: self.name.clone(),
             items: filtered,
-            current_position: Arc::new(AtomicUsize::new(0)),
+            current_position: 0,
         }
     }
 }
