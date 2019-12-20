@@ -1,4 +1,5 @@
 use gtk;
+use owning_ref::RwLockReadGuardRef;
 use std::cell::{Cell, RefCell};
 use std::ops::Deref;
 use std::path::PathBuf;
@@ -24,7 +25,7 @@ pub trait LoadedPlaylistExt {
     fn get_current_track(&self) -> Track;
     fn get_playlist_full_time(&self) -> i64;
     fn current_position(&self) -> usize;
-    fn items(&self) -> RwLockReadGuard<Vec<Track>>;
+    fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>>;
     fn clean(&self);
 }
 
@@ -46,9 +47,9 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
             .load(Ordering::Relaxed)
     }
 
-    fn items(&self) -> RwLockReadGuard<Vec<Track>> {
+    fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>> {
         println!("This is really inefficient");
-        self.read().unwrap().items
+        RwLockReadGuardRef::new(self.read().unwrap()).map(|s| &s.items)
     }
 
     fn clean(&self) {

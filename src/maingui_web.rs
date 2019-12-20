@@ -74,7 +74,8 @@ fn ws_start(
 }
 
 fn playlist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
-    HttpResponse::Ok().json(&state.playlist.items())
+    let items = &*state.playlist.items();
+    HttpResponse::Ok().json(items)
 }
 
 // removes all already played data
