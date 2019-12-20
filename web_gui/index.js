@@ -59,6 +59,7 @@ class Main extends React.Component {
 
         this.handleButtonPush = this.handleButtonPush.bind(this);
         this.refresh = this.refresh.bind(this);
+        this.clean = this.clean.bind(this);
         this.ws = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port + "/ws/")
     }
 
@@ -89,6 +90,17 @@ class Main extends React.Component {
             // automatically try to reconnect on connection loss
 
         }
+    }
+
+    clean() {
+        axios.post("/clean/");
+        axios.get("/playlist/").then((response) => this.setState({
+            pl: response.data
+        }));
+        axios.get("/currentid/").then((response) => {
+            this.setState({ current: response.data });
+        })
+
     }
 
     handleButtonPush(e) {
@@ -124,6 +136,9 @@ class Main extends React.Component {
                 </Grid>
                 <Grid item xs={3}>
                     <TransportButton title="Next" api="next" event="ButtonEvent.Next" click={this.handleButtonPush}></TransportButton>
+                </Grid>
+                <Grid item xs={1}>
+                    <Button variant="contained" color="secondary" onClick={this.clean}></Button>
                 </Grid>
                 <Grid item xs={12}>
                     <SongView current={this.state.current} pl={this.state.pl}></SongView>
