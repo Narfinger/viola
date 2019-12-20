@@ -12,7 +12,7 @@ use std::sync::mpsc::{channel, sync_channel, Receiver, Sender, SyncSender};
 use std::sync::Arc;
 
 use crate::loaded_playlist::PlaylistControls;
-use crate::playlist_tabs::PlaylistControlsImmutable;
+//use crate::playlist_tabs::PlaylistControlsImmutable;
 use crate::types::*;
 
 pub struct GStreamer {

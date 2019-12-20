@@ -13,6 +13,7 @@ use std::time::Duration;
 
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
+use crate::loaded_playlist::LoadedPlaylistExt;
 use crate::playlist::restore_playlists;
 use crate::playlist_tabs;
 use crate::types::*;
@@ -73,14 +74,15 @@ fn ws_start(
 }
 
 fn playlist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
-    HttpResponse::Ok().json(&state.playlist.items)
+    HttpResponse::Ok().json(&state.playlist.items())
 }
 
 // removes all already played data
-fn clean(state: web::Data<WebGui>, req: HttpRequest) -> HttpResonse {
-    //state.playlist.clean();
+fn clean(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+    state.playlist.clean();
 
     //reload playlist
+    HttpResponse::Ok().finish()
 }
 
 fn transport(
@@ -94,7 +96,7 @@ fn transport(
 }
 
 fn current_id(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
-    HttpResponse::Ok().json(state.playlist.current_position.load(Ordering::Relaxed))
+    HttpResponse::Ok().json(state.playlist.current_position())
 }
 
 struct WebGui {
@@ -114,7 +116,7 @@ fn handle_gstreamer_messages(
             match msg {
                 gstreamer_wrapper::GStreamerMessage::Playing => {
                     let addr = state.ws.read().unwrap().as_ref().unwrap().addr.clone();
-                    let pos = state.playlist.current_position.load(Ordering::Relaxed);
+                    let pos = state.playlist.current_position();
                     addr.clone()
                         .unwrap()
                         .do_send(WsMessage::PlayChanged { index: pos })
@@ -138,11 +140,11 @@ fn handle_gstreamer_messages(
 
 pub fn run(pool: DBPool) {
     println!("Loading playlist");
-    let lp = Arc::new(
+    let lp = Arc::new(RwLock::new(
         restore_playlists(&pool)
             .expect("Error restoring playlisttabs")
             .swap_remove(0),
-    );
+    ));
 
     println!("Starting gstreamer");
     let (gst, rx) =

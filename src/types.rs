@@ -7,9 +7,9 @@ use std::rc::{Rc, Weak};
 use std::sync::{Arc, Mutex, RwLock};
 
 use crate::gstreamer_wrapper::GStreamerMessage;
-use crate::maingui::MainGui;
 use crate::loaded_playlist::LoadedPlaylist;
-use crate::playlist_tabs::PlaylistTabs;
+//use crate::maingui::MainGui;
+//use crate::playlist_tabs::PlaylistTabs;
 
 pub const APP_INFO: AppInfo = AppInfo {
     name: "viola",
@@ -23,11 +23,11 @@ pub const COLOR_COLUMN: u32 = 8;
 
 pub type BuilderPtr = Arc<RwLock<Builder>>;
 pub type GstreamerPipeline = Arc<RwLock<Element>>;
-pub type MainGuiPtr = Rc<MainGui>;
-pub type MainGuiWeakPtr = Weak<MainGui>;
+//pub type MainGuiPtr = Rc<MainGui>;
+//pub type MainGuiWeakPtr = Weak<MainGui>;
 pub type DBPool = Arc<Mutex<diesel::SqliteConnection>>;
-pub type PlaylistTabsPtr = Rc<RefCell<PlaylistTabs>>;
-pub type LoadedPlaylistPtr = Arc<LoadedPlaylist>;
+//pub type PlaylistTabsPtr = Rc<RefCell<PlaylistTabs>>;
+pub type LoadedPlaylistPtr = Arc<RwLock<LoadedPlaylist>>;
 
 pub enum PlayerStatus {
     Playing,

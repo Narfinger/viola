@@ -1,3 +1,4 @@
+/*
 use diesel::Connection;
 use gdk;
 use gtk;
@@ -12,6 +13,8 @@ use crate::loaded_playlist::{LoadedPlaylist, LoadedPlaylistExt, PlaylistControls
 use crate::maingui::MainGuiPtrExt;
 use crate::playlist;
 use crate::types::*;
+
+
 
 #[derive(Clone, Debug)]
 pub struct PlaylistTab {
@@ -356,6 +359,7 @@ impl PlaylistTabsExt for PlaylistTabs {
     }
 }
 
+/*
 impl PlaylistControls for PlaylistTabs {
     fn get_current_path(&self) -> PathBuf {
         let lp = &self.tabs[self.current_playlist.unwrap()].lp;
@@ -385,6 +389,7 @@ impl PlaylistControls for PlaylistTabs {
             .next_or_eol(pool)
     }
 }
+*/
 
 pub trait PlaylistControlsImmutable {
     fn get_current_uri(&self) -> String;
@@ -394,6 +399,7 @@ pub trait PlaylistControlsImmutable {
     fn next_or_eol(&self, _: &DBPool) -> Option<String>;
 }
 
+/*
 impl PlaylistControlsImmutable for PlaylistTabsPtr {
     fn get_current_uri(&self) -> String {
         self.borrow().get_current_uri()
@@ -416,6 +422,7 @@ impl PlaylistControlsImmutable for PlaylistTabsPtr {
     }
 }
 
+*/
 /// This only modifies the treeview, not any underlying structure
 fn append_treeview_from_vector(v: &[db::Track], model: &gtk::ListStore) {
     for entry in v {
@@ -463,3 +470,5 @@ fn format_duration(d: i32) -> String {
         format!("{}:{:02}:{:02}", h, m, s)
     }
 }
+
+*/

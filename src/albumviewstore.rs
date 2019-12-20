@@ -1,3 +1,4 @@
+/*
 use crate::db::Track;
 use crate::loaded_playlist::LoadedPlaylist;
 use gdk;
@@ -8,7 +9,7 @@ use std::ops::Deref;
 use std::rc::Rc;
 use std::string::String;
 
-use crate::maingui::{MainGuiExt, MainGuiPtrExt};
+//use crate::maingui::{MainGuiExt, MainGuiPtrExt};
 use crate::types::*;
 
 pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
@@ -249,3 +250,4 @@ fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gd
         }
     }
 }
+*/

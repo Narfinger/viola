@@ -1,5 +1,5 @@
 //! The main gui parts.
-
+/*
 use gdk;
 use gdk_pixbuf;
 use gtk;
@@ -16,7 +16,6 @@ use crate::gstreamer_wrapper::{GStreamer, GStreamerAction, GStreamerExt};
 use crate::loaded_playlist::LoadedPlaylist;
 use crate::playlist;
 use crate::playlist_tabs;
-use crate::playlist_tabs::PlaylistTabsExt;
 use crate::types::*;
 use crate::utils::format_into_full_duration;
 
@@ -405,3 +404,4 @@ impl MainGuiPtrExt for MainGuiPtr {
         }
     }
 }
+*/

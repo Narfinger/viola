@@ -7,7 +7,7 @@ use crate::albumviewstore;
 use crate::gstreamer_wrapper::GStreamerAction;
 use crate::libraryviewstore;
 use crate::maingui;
-use crate::maingui::{MainGuiExt, MainGuiPtrExt};
+//use crate::maingui::{MainGuiExt, MainGuiPtrExt};
 use crate::playlist_manager;
 use crate::types::*;
 

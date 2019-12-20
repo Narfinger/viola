@@ -1,3 +1,4 @@
+/*
 use crate::loaded_playlist::LoadedPlaylist;
 use crate::smartplaylist_parser;
 use crate::smartplaylist_parser::{LoadSmartPlaylist, SmartPlaylist};
@@ -47,7 +48,7 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) -> PlaylistManag
 
 fn signalhandler(
     pool: &DBPool,
-    gui: &MainGuiPtr,
+    //gui: &MainGuiPtr,
     sm: &[SmartPlaylist],
     tv: &gtk::TreeView,
     event: &gdk::Event,
@@ -88,3 +89,4 @@ fn add_playlist(db: &DBPool, sm: &[SmartPlaylist], index: i32) -> LoadedPlaylist
         sm[i as usize].load(db)
     }
 }
+*/
