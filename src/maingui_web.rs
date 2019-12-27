@@ -13,6 +13,7 @@ use std::time::Duration;
 
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
+use crate::libraryviewstore;
 use crate::loaded_playlist::LoadedPlaylistExt;
 use crate::playlist::restore_playlists;
 use crate::playlist_tabs;
@@ -96,6 +97,12 @@ fn transport(
     HttpResponse::Ok().finish()
 }
 
+fn library_artist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+    let items = libraryviewstore::get_artist_trees(&state.pool);
+
+    HttpResponse::Ok().json(items)
+}
+
 fn current_id(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(state.playlist.current_position())
 }
@@ -175,6 +182,7 @@ pub fn run(pool: DBPool) {
             .service(web::resource("/currentid/").route(web::get().to(current_id)))
             .service(web::resource("/clean/").route(web::post().to(clean)))
             .service(web::resource("/transport/").route(web::post().to(transport)))
+            .service(web::resource("/libraryview/artist/").route(web::get().to(library_artist)))
             .service(web::resource("/ws/").route(web::get().to(ws_start)))
             .service(fs::Files::new("/static/", "web_gui/dist/").show_files_listing())
             .service(fs::Files::new("/", "./web_gui/").index_file("index.html"))

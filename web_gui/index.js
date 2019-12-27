@@ -1,6 +1,7 @@
 
 import ReactDOM from 'react-dom'
 import React from 'react'
+import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import TreeView from '@material-ui/lab/TreeView';
@@ -139,10 +140,13 @@ class Main extends React.Component {
                 <Grid item xs={3}>
                     <TransportButton title="Next" api="next" event="ButtonEvent.Next" click={this.handleButtonPush}></TransportButton>
                 </Grid>
-                <Grid item xs={1}>
+                <Grid item xs={3}>
                     <Button variant="contained" color="secondary" onClick={this.clean}>Clean</Button>
                 </Grid>
-                <Grid item xs={12}>
+                <Grid item xs={2}>
+                    <ArtistTreeView></ArtistTreeView>
+                </Grid>
+                <Grid item xs={10}>
                     <SongView current={this.state.current} pl={this.state.pl}></SongView>
                 </Grid>
             </Grid>
@@ -228,20 +232,46 @@ class SongView extends React.Component {
     }
 }
 
-class SongTreeView extends React.Component {
+class ArtistTreeView extends React.Component {
     constructor(props) {
         super(props)
-        this.state = { items: ["v1", "v2", "v3"] }
+        this.state = {
+            items: [
+                { name: "v1", children: [] },
+                { name: "v2", children: [] },
+                {
+                    name: "v3", children: [{ name: "vv3", children: [] }, { name: "vvv3", children: [] },
+                    { name: "vvv3", children: [] },
+
+                    ]
+                },
+                { name: "v4", children: [] },
+                { name: "v5", children: [] }
+            ]
+        };
+    }
+
+    componentDidMount() {
+        axios.get("/libraryview/artist/").then((response) => this.setState({
+            items: response.data
+        }));
     }
 
 
-
     render() {
-        <TreeView>
-            {this.state.items.map((value, index) => {
-                return <TreeItem label={value}></TreeItem>
-            })}
-        </TreeView>
+        return <Paper style={{ maxHeight: 800, overflow: 'auto' }}>
+            <TreeView height="60vh">
+                {
+                    this.state.items.map((value, index) => {
+                        return <TreeItem nodeId={index} key={index} label={value.name}>
+                            {value.children.map((v2, i2) => {
+                                return <TreeItem nodeId={10000 * index + i2} key={10000 * index + i2} label={v2.name}></TreeItem>
+                            })}
+                        </TreeItem>
+                    })
+                }
+            </TreeView >
+        </Paper>
     }
 }
 

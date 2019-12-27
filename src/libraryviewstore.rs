@@ -512,3 +512,41 @@ fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gd
     }
 }
 */
+
+use crate::db::Track;
+use crate::types::*;
+
+#[derive(Serialize, Deserialize)]
+pub struct Albums {
+    name: String,
+    children: Vec<Tracks>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Artist {
+    name: String,
+    children: Vec<Albums>,
+}
+
+pub type Tracks = String;
+
+pub type Artists = Vec<Artist>;
+
+pub fn get_artist_trees(pool: &DBPool) -> Artists {
+    use crate::schema::tracks::dsl::*;
+    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
+    use std::ops::Deref;
+    let artists: Vec<Track> = tracks
+        .group_by(artist)
+        .load(pool.lock().expect("Error in lock").deref())
+        .expect("Error in DB");
+    artists
+        .into_iter()
+        .map(|t| Artist {
+            name: t.artist,
+            children: Vec::new(),
+        })
+        .collect()
+
+    //Vec::new()
+}
