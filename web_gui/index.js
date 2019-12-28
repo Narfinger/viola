@@ -12,6 +12,23 @@ import { VariableSizeGrid as VSGrid } from 'react-window';
 import axios from 'axios';
 const e = React.createElement;
 
+function TabPanel(props) {
+    const { children, value, index, ...other } = props;
+
+    return (
+        <Typography
+            component="div"
+            role="tabpanel"
+            hidden={value !== index}
+            id={`vertical-tabpanel-${index}`}
+            aria-labelledby={`vertical-tab-${index}`}
+            {...other}
+        >
+            {value === index && <Box p={3}>{children}</Box>}
+        </Typography>
+    );
+}
+
 const PlayState = Object.freeze({
     Stopped: 1,
     Paused: 2,
@@ -149,13 +166,13 @@ class Main extends React.Component {
                     <ArtistTreeView></ArtistTreeView>
                 </Grid>
                 <Grid item xs={10}>
-                    <Tabs orientation="vertical"
+                    {/* <Tabs orientation="vertical"
                         variant="scrollable">
                         <Tab label="Artist View"></Tab>
                     </Tabs>
-                    <TabPanel index={0}>
-                        <SongView current={this.state.current} pl={this.state.pl}></SongView>
-                    </TabPanel>
+    <TabPanel index={0}> */}
+                    <SongView current={this.state.current} pl={this.state.pl}></SongView>
+                    {/*}  </TabPanel> */}
                 </Grid>
             </Grid>
         </div >
