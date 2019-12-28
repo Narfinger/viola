@@ -6,6 +6,8 @@ import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import TreeView from '@material-ui/lab/TreeView';
 import TreeItem from '@material-ui/lab/TreeItem';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
 import { VariableSizeGrid as VSGrid } from 'react-window';
 import axios from 'axios';
 const e = React.createElement;
@@ -147,7 +149,13 @@ class Main extends React.Component {
                     <ArtistTreeView></ArtistTreeView>
                 </Grid>
                 <Grid item xs={10}>
-                    <SongView current={this.state.current} pl={this.state.pl}></SongView>
+                    <Tabs orientation="vertical"
+                        variant="scrollable">
+                        <Tab label="Artist View"></Tab>
+                    </Tabs>
+                    <TabPanel index={0}>
+                        <SongView current={this.state.current} pl={this.state.pl}></SongView>
+                    </TabPanel>
                 </Grid>
             </Grid>
         </div >
