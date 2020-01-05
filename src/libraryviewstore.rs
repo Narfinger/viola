@@ -513,40 +513,95 @@ fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gd
 }
 */
 
-use crate::db::Track;
+use crate::db;
 use crate::types::*;
 
 #[derive(Serialize, Deserialize)]
-pub struct Albums {
+pub struct General<T> {
     name: String,
-    children: Vec<Tracks>,
+    children: Vec<T>,
 }
+pub type Track = String;
+pub type Album = General<Track>;
+pub type Artist = General<Album>;
 
-#[derive(Serialize, Deserialize)]
-pub struct Artist {
-    name: String,
-    children: Vec<Albums>,
-}
-
-pub type Tracks = String;
-
-pub type Artists = Vec<Artist>;
-
-pub fn get_artist_trees(pool: &DBPool) -> Artists {
+fn get_track_vec(
+    pool: &DBPool,
+    artist_name: &Option<String>,
+    album_name: &Option<String>,
+) -> Vec<Track> {
     use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use std::ops::Deref;
-    let artists: Vec<Track> = tracks
-        .group_by(artist)
-        .load(pool.lock().expect("Error in lock").deref())
-        .expect("Error in DB");
+    if let Some(a) = artist_name {
+        tracks
+            .filter(artist.like(String::from("%") + &a + "%"))
+            .filter(album.like(String::from("%") + album_name.as_ref().unwrap() + "%"))
+            .load(pool.lock().expect("Error in lock").deref())
+    } else {
+        tracks.load(pool.lock().expect("Error in lock").deref())
+    }
+    .expect("Error in loading DB")
+    .into_iter()
+    .map(|t: db::Track| t.title.to_owned())
+    .collect()
+}
 
-    artists
+fn get_album_subtree(pool: &DBPool, artist_name: &Option<String>) -> Vec<Album> {
+    use crate::schema::tracks::dsl::*;
+    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
+    use std::ops::Deref;
+    if let Some(a) = artist_name {
+        tracks
+            .filter(artist.like(String::from("%") + &a + "%"))
+            .select((album, artist))
+            .distinct()
+            .load(pool.lock().expect("Error in lock").deref())
+            .expect("Error in loading DB")
+    } else {
+        tracks
+            .select((album, artist))
+            .distinct()
+            .load(pool.lock().expect("Error in lock").deref())
+            .expect("Error in loading DB")
+    }
+    .into_iter()
+    .map(|t: (String, String)| Album {
+        name: t.0,
+        children: get_track_vec(&pool, &Some(t.1), artist_name),
+    })
+    .collect()
+}
+
+pub fn get_tracks(pool: &DBPool) -> Vec<Track> {
+    get_track_vec(pool, &None, &None)
+}
+
+pub fn get_album_trees(pool: &DBPool) -> Vec<Album> {
+    get_album_subtree(pool, &None)
+}
+
+fn track_to_artist(t: String, pool: &DBPool) -> Artist {
+    Artist {
+        name: t.chars().take(20).collect::<String>(),
+        children: get_album_subtree(pool, &Some(t)),
+    }
+}
+
+// TODO This could be much more general by having the fill_fn in general
+// TODO Try to make this iterator stuff, at the moment it doesn't need json
+// TODO try to use distinct and select
+pub fn get_artist_trees(pool: &DBPool) -> Vec<Artist> {
+    use crate::schema::tracks::dsl::*;
+    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
+    use std::ops::Deref;
+    let p = pool.clone();
+    tracks
+        .select(artist)
+        .distinct()
+        .load(pool.lock().expect("Error in lock").deref())
+        .expect("Error in DB")
         .into_iter()
-        .map(|t| Artist {
-            name: t.artist.chars().take(20).collect::<String>(),
-            children: Vec::new(),
-        })
-        .collect::<Artists>()
-    //Vec::new()
+        .map(move |t| track_to_artist(t, &p))
+        .collect()
 }

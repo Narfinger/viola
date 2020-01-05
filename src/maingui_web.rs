@@ -99,7 +99,16 @@ fn transport(
 
 fn library_artist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     let items = libraryviewstore::get_artist_trees(&state.pool);
+    HttpResponse::Ok().json(items)
+}
 
+fn library_albums(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+    let items = libraryviewstore::get_album_trees(&state.pool);
+    HttpResponse::Ok().json(items)
+}
+
+fn library_tracks(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+    let items = libraryviewstore::get_tracks(&state.pool);
     HttpResponse::Ok().json(items)
 }
 
@@ -183,6 +192,8 @@ pub fn run(pool: DBPool) {
             .service(web::resource("/clean/").route(web::post().to(clean)))
             .service(web::resource("/transport/").route(web::post().to(transport)))
             .service(web::resource("/libraryview/artist/").route(web::get().to(library_artist)))
+            .service(web::resource("/libraryview/albums/").route(web::get().to(library_albums)))
+            .service(web::resource("/libraryview/tracks/").route(web::get().to(library_tracks)))
             .service(web::resource("/ws/").route(web::get().to(ws_start)))
             .service(fs::Files::new("/static/", "web_gui/dist/").show_files_listing())
             .service(fs::Files::new("/", "./web_gui/").index_file("index.html"))
