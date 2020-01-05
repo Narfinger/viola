@@ -515,8 +515,9 @@ fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gd
 
 use crate::db;
 use crate::types::*;
+use std::ops::Deref;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct General<T> {
     name: String,
     children: Vec<T>,
@@ -526,7 +527,7 @@ pub type Album = General<Track>;
 pub type Artist = General<Album>;
 
 fn get_track_vec(
-    pool: &DBPool,
+    db: &diesel::SqliteConnection,
     artist_name: &Option<String>,
     album_name: &Option<String>,
 ) -> Vec<Track> {
@@ -537,9 +538,11 @@ fn get_track_vec(
         tracks
             .filter(artist.like(String::from("%") + &a + "%"))
             .filter(album.like(String::from("%") + album_name.as_ref().unwrap() + "%"))
-            .load(pool.lock().expect("Error in lock").deref())
+            .filter(artist.is_not_null())
+            .filter(artist.is_not_null())
+            .load(db)
     } else {
-        tracks.load(pool.lock().expect("Error in lock").deref())
+        tracks.load(db)
     }
     .expect("Error in loading DB")
     .into_iter()
@@ -547,61 +550,72 @@ fn get_track_vec(
     .collect()
 }
 
-fn get_album_subtree(pool: &DBPool, artist_name: &Option<String>) -> Vec<Album> {
+fn get_album_subtree(db: &diesel::SqliteConnection, artist_name: &Option<String>) -> Vec<Album> {
     use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use std::ops::Deref;
     if let Some(a) = artist_name {
         tracks
             .filter(artist.like(String::from("%") + &a + "%"))
+            .filter(artist.is_not_null())
+            .filter(album.is_not_null())
             .select((album, artist))
             .distinct()
-            .load(pool.lock().expect("Error in lock").deref())
+            .order_by(album)
+            .load(db)
             .expect("Error in loading DB")
     } else {
         tracks
             .select((album, artist))
+            .filter(artist.is_not_null())
+            .filter(artist.is_not_null())
             .distinct()
-            .load(pool.lock().expect("Error in lock").deref())
+            .order_by(album)
+            .load(db)
             .expect("Error in loading DB")
     }
     .into_iter()
     .map(|t: (String, String)| Album {
         name: t.0,
-        children: get_track_vec(&pool, &Some(t.1), artist_name),
+        children: get_track_vec(db, &Some(t.1), artist_name),
     })
     .collect()
 }
 
 pub fn get_tracks(pool: &DBPool) -> Vec<Track> {
-    get_track_vec(pool, &None, &None)
+    let db = pool.lock().expect("Error locking DB");
+    get_track_vec(db.deref(), &None, &None)
 }
 
 pub fn get_album_trees(pool: &DBPool) -> Vec<Album> {
-    get_album_subtree(pool, &None)
+    let db = pool.lock().expect("Error locking DB");
+    get_album_subtree(db.deref(), &None)
 }
 
-fn track_to_artist(t: String, pool: &DBPool) -> Artist {
+fn track_to_artist(t: String, db: &diesel::SqliteConnection) -> Artist {
+    println!("Doing artist: {:?}", t);
     Artist {
         name: t.chars().take(20).collect::<String>(),
-        children: get_album_subtree(pool, &Some(t)),
+        children: get_album_subtree(db, &Some(t)),
     }
 }
 
 // TODO This could be much more general by having the fill_fn in general
 // TODO Try to make this iterator stuff, at the moment it doesn't need json
-// TODO try to use distinct and select
+// TODO we need to not have the empty strings for stuff around
 pub fn get_artist_trees(pool: &DBPool) -> Vec<Artist> {
     use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
-    use std::ops::Deref;
-    let p = pool.clone();
+    let p = pool.lock().expect("Error in lock");
     tracks
         .select(artist)
+        .filter(artist.is_not_null())
+        .filter(artist.neq(""))
         .distinct()
-        .load(pool.lock().expect("Error in lock").deref())
+        .order_by(artist)
+        .load(p.deref())
         .expect("Error in DB")
         .into_iter()
-        .map(move |t| track_to_artist(t, &p))
+        .map(move |t| track_to_artist(t, p.deref()))
         .collect()
 }

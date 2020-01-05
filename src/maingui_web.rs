@@ -99,16 +99,19 @@ fn transport(
 
 fn library_artist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     let items = libraryviewstore::get_artist_trees(&state.pool);
+    //println!("items: {:?}", items);
     HttpResponse::Ok().json(items)
 }
 
 fn library_albums(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     let items = libraryviewstore::get_album_trees(&state.pool);
+    //println!("{:?}", items);
     HttpResponse::Ok().json(items)
 }
 
 fn library_tracks(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     let items = libraryviewstore::get_tracks(&state.pool);
+    //println!("{:?}", items);
     HttpResponse::Ok().json(items)
 }
 

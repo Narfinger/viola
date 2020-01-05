@@ -57,7 +57,7 @@ const useStyles = makeStyles(theme => ({
     },
 }));
 
-class ArtistTreeView extends React.Component {
+class MyTreeView extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
@@ -67,11 +67,13 @@ class ArtistTreeView extends React.Component {
     }
 
     componentDidMount() {
-        axios.get("/libraryview/artist/").then((response) => this.setState({
-            items: response.data
-        }));
+        console.log("we mounted treeview " + this.props.url);
+        axios.get(this.props.url).then((response) => {
+            this.setState({
+                items: response.data
+            });
+        });
     }
-
 
     render() {
         return <Paper style={{ maxHeight: 800, overflow: 'auto' }}>
@@ -119,13 +121,13 @@ export default function LibraryView() {
                 <Box></Box>
             </TabPanel>
             <TabPanel value={value} index={1}>
-                <ArtistTreeView />
+                <MyTreeView url="/libraryview/artist/" />
             </TabPanel>
             <TabPanel value={value} index={2}>
-                Item Two
+                <MyTreeView url="/libraryview/albums/" />
             </TabPanel>
             <TabPanel value={value} index={3}>
-                Item Three
+                <MyTreeView url="/libraryview/tracks/" />
             </TabPanel>
         </div >
     )
