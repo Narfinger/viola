@@ -6,28 +6,18 @@ import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import TreeView from '@material-ui/lab/TreeView';
 import TreeItem from '@material-ui/lab/TreeItem';
+import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import { VariableSizeGrid as VSGrid } from 'react-window';
 import axios from 'axios';
+import LibraryView from './libraryviews';
+
 const e = React.createElement;
 
-function TabPanel(props) {
-    const { children, value, index, ...other } = props;
 
-    return (
-        <Typography
-            component="div"
-            role="tabpanel"
-            hidden={value !== index}
-            id={`vertical-tabpanel-${index}`}
-            aria-labelledby={`vertical-tab-${index}`}
-            {...other}
-        >
-            {value === index && <Box p={3}>{children}</Box>}
-        </Typography>
-    );
-}
+
 
 const PlayState = Object.freeze({
     Stopped: 1,
@@ -162,17 +152,11 @@ class Main extends React.Component {
                 <Grid item xs={3}>
                     <Button variant="contained" color="secondary" onClick={this.clean}>Clean</Button>
                 </Grid>
-                <Grid item xs={2}>
-                    <ArtistTreeView></ArtistTreeView>
+                <Grid item xs={4}>
+                    <LibraryView></LibraryView>
                 </Grid>
-                <Grid item xs={10}>
-                    {/* <Tabs orientation="vertical"
-                        variant="scrollable">
-                        <Tab label="Artist View"></Tab>
-                    </Tabs>
-    <TabPanel index={0}> */}
-                    <SongView current={this.state.current} pl={this.state.pl}></SongView>
-                    {/*}  </TabPanel> */}
+                <Grid item xs={8}>
+                    <SongView current={this.state.current} pl={this.state.pl} />
                 </Grid>
             </Grid>
         </div >
@@ -254,49 +238,6 @@ class SongView extends React.Component {
                 {Cell}
             </VSGrid>
         </div></div>
-    }
-}
-
-class ArtistTreeView extends React.Component {
-    constructor(props) {
-        super(props)
-        this.state = {
-            items: [
-                { name: "v1", children: [] },
-                { name: "v2", children: [] },
-                {
-                    name: "v3", children: [{ name: "vv3", children: [] }, { name: "vvv3", children: [] },
-                    { name: "vvv3", children: [] },
-
-                    ]
-                },
-                { name: "v4", children: [] },
-                { name: "v5", children: [] }
-            ]
-        };
-    }
-
-    componentDidMount() {
-        axios.get("/libraryview/artist/").then((response) => this.setState({
-            items: response.data
-        }));
-    }
-
-
-    render() {
-        return <Paper style={{ maxHeight: 800, overflow: 'auto' }}>
-            <TreeView height="60vh">
-                {
-                    this.state.items.map((value, index) => {
-                        return <TreeItem nodeId={index} key={index} label={value.name}>
-                            {value.children.map((v2, i2) => {
-                                return <TreeItem nodeId={10000 * index + i2} key={10000 * index + i2} label={v2.name}></TreeItem>
-                            })}
-                        </TreeItem>
-                    })
-                }
-            </TreeView >
-        </Paper>
     }
 }
 
