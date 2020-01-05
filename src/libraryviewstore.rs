@@ -540,13 +540,13 @@ pub fn get_artist_trees(pool: &DBPool) -> Artists {
         .group_by(artist)
         .load(pool.lock().expect("Error in lock").deref())
         .expect("Error in DB");
+
     artists
         .into_iter()
         .map(|t| Artist {
-            name: t.artist,
+            name: t.artist.chars().take(20).collect::<String>(),
             children: Vec::new(),
         })
-        .collect()
-
+        .collect::<Artists>()
     //Vec::new()
 }

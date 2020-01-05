@@ -50,7 +50,7 @@ const useStyles = makeStyles(theme => ({
         flexGrow: 1,
         backgroundColor: theme.palette.background.paper,
         display: 'flex',
-        height: 1000,
+        height: 500,
     },
     tabs: {
         borderRight: `1px solid ${theme.palette.divider}`,
@@ -99,6 +99,7 @@ export default function LibraryView() {
         setValue(newValue);
     };
 
+    //try to make the size dynamic
     return (
         < div className={classes.root} >
             <Tabs
@@ -109,19 +110,23 @@ export default function LibraryView() {
                 aria-label="Vertical tabs example"
                 className={classes.tabs}
             >
-                <Tab label="Full" {...a11yProps(0)} />
-                <Tab label="Album" {...a11yProps(1)} />
-                <Tab label="Track" {...a11yProps(2)} />
+                <Tab label="t" {...a11yProps(0)} />
+                <Tab label="Full" {...a11yProps(1)} />
+                <Tab label="Album" {...a11yProps(2)} />
+                <Tab label="Track" {...a11yProps(3)} />
             </Tabs>
             <TabPanel value={value} index={0}>
-                <ArtistTreeView />
+                <Box></Box>
             </TabPanel>
             <TabPanel value={value} index={1}>
-                Item Two
-    </TabPanel>
+                <ArtistTreeView />
+            </TabPanel>
             <TabPanel value={value} index={2}>
+                Item Two
+            </TabPanel>
+            <TabPanel value={value} index={3}>
                 Item Three
-    </TabPanel>
+            </TabPanel>
         </div >
     )
 }
