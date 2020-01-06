@@ -1,6 +1,7 @@
 
 import ReactDOM from 'react-dom'
 import React from 'react'
+import Drawer from '@material-ui/core/Drawer';
 import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
@@ -140,26 +141,51 @@ class Main extends React.Component {
     render() {
         return <div>
             <Grid container spacing={1}>
-                <Grid item xs={3}>
+                <Grid item xs={1}>
+                    <LibraryDrawer></LibraryDrawer>
+                </Grid>
+                <Grid item xs={2}>
                     <TransportButton title="Prev" event="ButtonEvent.Previous" click={this.handleButtonPush}></TransportButton>
                 </Grid>
-                <Grid item xs={3}>
+                <Grid item xs={2}>
                     <PlayButton play_state={this.state.status} click={this.handleButtonPush}></PlayButton>
                 </Grid>
-                <Grid item xs={3}>
+                <Grid item xs={2}>
                     <TransportButton title="Next" api="next" event="ButtonEvent.Next" click={this.handleButtonPush}></TransportButton>
                 </Grid>
-                <Grid item xs={3}>
+                <Grid item xs={2}>
                     <Button variant="contained" color="secondary" onClick={this.clean}>Clean</Button>
                 </Grid>
-                <Grid item xs={4}>
-                    <LibraryView></LibraryView>
-                </Grid>
-                <Grid item xs={8}>
+                <Grid item xs={10}>
                     <SongView current={this.state.current} pl={this.state.pl} />
                 </Grid>
             </Grid>
         </div >
+    }
+}
+
+class LibraryDrawer extends React.Component {
+    constructor(props) {
+        super(props);
+
+        // This binding is necessary to make `this` work in the callback
+        this.click = this.click.bind(this);
+        this.close = this.close.bind(this);
+        this.state = { open: false };
+    }
+    click() {
+        this.setState({ open: true })
+    }
+    close() {
+        this.setState({ open: false })
+    }
+    render() {
+        return <div>
+            <Button onClick={this.click} color="primary" >Lib</Button>
+            <Drawer anchor="left" open={this.state.open} onClose={this.close}>
+                <LibraryView></LibraryView>
+            </Drawer>
+        </div>
     }
 }
 

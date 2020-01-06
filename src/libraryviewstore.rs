@@ -540,6 +540,8 @@ fn get_track_vec(
             .filter(album.like(String::from("%") + album_name.as_ref().unwrap() + "%"))
             .filter(artist.is_not_null())
             .filter(artist.is_not_null())
+            .filter(artist.ne(""))
+            .filter(album.ne(""))
             .load(db)
     } else {
         tracks.load(db)
@@ -559,6 +561,8 @@ fn get_album_subtree(db: &diesel::SqliteConnection, artist_name: &Option<String>
             .filter(artist.like(String::from("%") + &a + "%"))
             .filter(artist.is_not_null())
             .filter(album.is_not_null())
+            .filter(artist.ne(""))
+            .filter(album.ne(""))
             .select((album, artist))
             .distinct()
             .order_by(album)
@@ -610,7 +614,7 @@ pub fn get_artist_trees(pool: &DBPool) -> Vec<Artist> {
     tracks
         .select(artist)
         .filter(artist.is_not_null())
-        .filter(artist.neq(""))
+        .filter(artist.ne(""))
         .distinct()
         .order_by(artist)
         .load(p.deref())

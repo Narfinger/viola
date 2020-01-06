@@ -27,7 +27,7 @@ function TabPanel(props) {
             aria-labelledby={`vertical-tab-${index}`}
             {...other}
         >
-            {value === index && <Box p={3}>{children}</Box>}
+            {value === index && <Box p={3} width={30}>{children}</Box>}
         </Typography>
     );
 }
@@ -47,13 +47,15 @@ function a11yProps(index) {
 
 const useStyles = makeStyles(theme => ({
     root: {
-        flexGrow: 1,
+        //flexGrow: 1,
         backgroundColor: theme.palette.background.paper,
         display: 'flex',
         height: 500,
+        width: 200,
     },
     tabs: {
         borderRight: `1px solid ${theme.palette.divider}`,
+        width: 100,
     },
 }));
 
@@ -103,13 +105,12 @@ export default function LibraryView() {
 
     //try to make the size dynamic
     return (
-        < div className={classes.root} >
+        <div className={classes.root} >
             <Tabs
                 orientation="vertical"
                 variant="scrollable"
                 value={value}
                 onChange={handleChange}
-                aria-label="Vertical tabs example"
                 className={classes.tabs}
             >
                 <Tab label="t" {...a11yProps(0)} />
