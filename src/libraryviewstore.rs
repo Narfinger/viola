@@ -536,8 +536,10 @@ fn get_track_vec(
     use std::ops::Deref;
     if let Some(a) = artist_name {
         tracks
-            .filter(artist.like(String::from("%") + &a + "%"))
-            .filter(album.like(String::from("%") + album_name.as_ref().unwrap() + "%"))
+            //.filter(artist.like(String::from("%") + &a + "%"))
+            //.filter(album.like(String::from("%") + album_name.as_ref().unwrap() + "%"))
+            .filter(artist.eq(&a))
+            .filter(album.eq(&album_name.as_ref().unwrap()))
             .filter(artist.is_not_null())
             .filter(artist.is_not_null())
             .filter(artist.ne(""))
@@ -558,7 +560,8 @@ fn get_album_subtree(db: &diesel::SqliteConnection, artist_name: &Option<String>
     use std::ops::Deref;
     if let Some(a) = artist_name {
         tracks
-            .filter(artist.like(String::from("%") + &a + "%"))
+            //.filter(artist.like(String::from("%") + &a + "%"))
+            .filter(artist.eq(&a))
             .filter(artist.is_not_null())
             .filter(album.is_not_null())
             .filter(artist.ne(""))
@@ -600,7 +603,8 @@ fn track_to_artist(t: String, db: &diesel::SqliteConnection) -> Artist {
     println!("Doing artist: {:?}", t);
     Artist {
         name: t.chars().take(20).collect::<String>(),
-        children: get_album_subtree(db, &Some(t)),
+        children: Vec::new(),
+        //children: get_album_subtree(db, &Some(t)),
     }
 }
 

@@ -51,7 +51,7 @@ const useStyles = makeStyles(theme => ({
         backgroundColor: theme.palette.background.paper,
         display: 'flex',
         height: 500,
-        width: 200,
+        width: 800,
     },
     tabs: {
         borderRight: `1px solid ${theme.palette.divider}`,
@@ -78,7 +78,7 @@ class MyTreeView extends React.Component {
     }
 
     render() {
-        return <Paper style={{ maxHeight: 800, overflow: 'auto' }}>
+        return <Paper style={{ maxHeight: 800, width: 800, overflow: 'auto' }}>
             <TreeView height="60vh">
                 {
                     this.state.items.map((value, index) => {
@@ -113,14 +113,10 @@ export default function LibraryView() {
                 onChange={handleChange}
                 className={classes.tabs}
             >
-                <Tab label="t" {...a11yProps(0)} />
                 <Tab label="Full" {...a11yProps(1)} />
                 <Tab label="Album" {...a11yProps(2)} />
                 <Tab label="Track" {...a11yProps(3)} />
             </Tabs>
-            <TabPanel value={value} index={0}>
-                <Box></Box>
-            </TabPanel>
             <TabPanel value={value} index={1}>
                 <MyTreeView url="/libraryview/artist/" />
             </TabPanel>
