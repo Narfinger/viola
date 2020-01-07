@@ -3,6 +3,8 @@ import React from 'react'
 import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import TreeView from '@material-ui/lab/TreeView';
 import TreeItem from '@material-ui/lab/TreeItem';
 import Typography from '@material-ui/core/Typography';
@@ -66,6 +68,25 @@ class MyTreeView extends React.Component {
             items: [
             ]
         };
+
+        this.handleChange = this.handleChange.bind(this);
+    }
+
+    handleChange(event, nodeids) {
+        let id = nodeids;
+        let name = this.state.items[id].name;
+        axios.get(this.props.url, {
+            params: {
+                name: name,
+            }
+        }).then((response) => {
+            let no = { name: name, children: response.data };
+            this.setState({
+                items: this.state.items.map((objs, index) => {
+                    return id === id ? no : obj;
+                })
+            })
+        })
     }
 
     componentDidMount() {
@@ -79,7 +100,11 @@ class MyTreeView extends React.Component {
 
     render() {
         return <Paper style={{ maxHeight: 800, width: 800, overflow: 'auto' }}>
-            <TreeView height="60vh">
+            <TreeView height="60vh"
+                defaultCollapseIcon={<ExpandMoreIcon />}
+                defaultExpandIcon={<ChevronRightIcon />}
+                onNodeToggle={handleChange}
+            >
                 {
                     this.state.items.map((value, index) => {
                         return <TreeItem nodeId={String(value)} key={index} label={value.name}>
