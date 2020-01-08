@@ -1,7 +1,7 @@
+use crate::glib::ObjectExt;
 use gstreamer;
 use gstreamer::{ElementExt, ElementExtManual};
 use gtk;
-use gtk::ObjectExt;
 use gtk::ToValue;
 
 use std::cell::Cell;
@@ -86,7 +86,7 @@ pub fn new(
             info!("we found eos");
             resc.gstreamer_handle_eos();
         }
-        gtk::Continue(true)
+        glib::Continue(true)
     });
 
     //let resc = res.clone();

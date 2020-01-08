@@ -515,6 +515,7 @@ fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gd
 
 use crate::db;
 use crate::types::*;
+use std::collections::HashMap;
 use std::ops::Deref;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -606,6 +607,73 @@ fn track_to_artist(t: String, db: &diesel::SqliteConnection) -> Artist {
         children: Vec::new(),
         //children: get_album_subtree(db, &Some(t)),
     }
+}
+
+pub fn query_tree(
+    pool: &DBPool,
+    artist_opt: &Option<String>,
+    album_opt: &Option<String>,
+    track_opt: &Option<String>,
+) -> Vec<Artist> {
+    use crate::schema::tracks::dsl::*;
+    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
+    let p = pool.lock().expect("Error in lock");
+    let mut query = tracks
+        .filter(artist.is_not_null())
+        .filter(artist.ne(""))
+        .distinct()
+        .order_by(artist)
+        .into_boxed();
+
+    if let Some(a) = artist_opt {
+        query = query.filter(artist.eq(a));
+    }
+    if let Some(a) = album_opt {
+        query = query.filter(album.eq(a));
+    }
+    if let Some(t) = track_opt {
+        query = query.filter(title.eq(t));
+    }
+
+    let mut q_tracks: Vec<db::Track> = query.load(p.deref()).expect("Error in DB");
+
+    //Artist, Album, Track
+    let mut hashmap: HashMap<String, HashMap<String, Vec<db::Track>>> = HashMap::new();
+    for t in q_tracks.drain(0..) {
+        if let Some(ref mut artist_hash) = hashmap.get_mut(&t.artist) {
+            if let Some(ref mut album_vec) = artist_hash.get_mut(&t.album) {
+                album_vec.push(t);
+            } else {
+                let k = t.artist.clone();
+                let v = vec![t];
+                artist_hash.insert(k, v);
+            }
+        } else {
+            let mut v = HashMap::new();
+            let kb = t.album.clone();
+            let ka = t.artist.clone();
+            let v2 = vec![t];
+            v.insert(kb, v2);
+            hashmap.insert(ka, v);
+        }
+    }
+
+    hashmap
+        .drain()
+        .map(|(k, mut m): (String, HashMap<String, Vec<db::Track>>)| {
+            let mut children = m
+                .drain()
+                .map(|(k2, v): (String, Vec<db::Track>)| Album {
+                    name: k2.clone(),
+                    children: v.iter().map(|v| v.title.clone()).collect(),
+                })
+                .collect();
+            Artist {
+                name: k.clone(),
+                children: children,
+            }
+        })
+        .collect::<Vec<Artist>>()
 }
 
 // TODO This could be much more general by having the fill_fn in general

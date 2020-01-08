@@ -50,10 +50,10 @@ impl Handler<WsMessage> for MyWs {
     }
 }
 
-impl StreamHandler<ws::Message, ws::ProtocolError> for MyWs {
-    fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
+    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         match msg {
-            ws::Message::Text(b) => println!("we found text {}", b),
+            //Ok(ws::Message::Text(b)) => println!("we found text {}", b),
             _ => {}
         }
         //self.addr.unwrap().do_send(msg.unwrap());
@@ -61,7 +61,7 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for MyWs {
     }
 }
 
-fn ws_start(
+async fn ws_start(
     state: web::Data<WebGui>,
     req: HttpRequest,
     stream: web::Payload,
@@ -103,17 +103,30 @@ fn library_artist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(items)
 }
 
+#[derive(Deserialize, Serialize)]
+struct Q {
+    artist: Option<String>,
+    album: Option<String>,
+    track: Option<String>,
+}
+
+fn library_tree(state: web::Data<WebGui>, q: web::Query<Q>, req: HttpRequest) -> HttpResponse {
+    let items = libraryviewstore::query_tree(&state.pool, &q.artist, &q.album, &q.track);
+    HttpResponse::Ok().json(items)
+}
+
+/*
 fn library_albums(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     let items = libraryviewstore::get_album_trees(&state.pool);
     //println!("{:?}", items);
     HttpResponse::Ok().json(items)
-}
+}*/
 
-fn library_tracks(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+/*fn library_tracks(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     let items = libraryviewstore::get_tracks(&state.pool);
     //println!("{:?}", items);
     HttpResponse::Ok().json(items)
-}
+}*/
 
 fn current_id(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(state.playlist.current_position())
@@ -189,20 +202,20 @@ pub fn run(pool: DBPool) {
     println!("Starting web gui on 127.0.0.1:8088");
     HttpServer::new(move || {
         App::new()
-            .register_data(data.clone())
+            .data(data.clone())
             .service(web::resource("/playlist/").route(web::get().to(playlist)))
             .service(web::resource("/currentid/").route(web::get().to(current_id)))
             .service(web::resource("/clean/").route(web::post().to(clean)))
             .service(web::resource("/transport/").route(web::post().to(transport)))
             .service(web::resource("/libraryview/artist/").route(web::get().to(library_artist)))
-            .service(web::resource("/libraryview/albums/").route(web::get().to(library_albums)))
-            .service(web::resource("/libraryview/tracks/").route(web::get().to(library_tracks)))
+            //.service(web::resource("/libraryview/albums/").route(web::get().to(library_albums)))
+            //.service(web::resource("/libraryview/tracks/").route(web::get().to(library_tracks)))
+            .service(web::resource("/libraryview/querytree/").route(web::get().to(library_tree)))
             .service(web::resource("/ws/").route(web::get().to(ws_start)))
             .service(fs::Files::new("/static/", "web_gui/dist/").show_files_listing())
             .service(fs::Files::new("/", "./web_gui/").index_file("index.html"))
     })
     .bind("127.0.0.1:8088")
     .unwrap()
-    .run()
-    .unwrap();
+    .run();
 }
