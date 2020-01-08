@@ -73,6 +73,8 @@ class MyTreeView extends React.Component {
     }
 
     handleChange(event, nodeids) {
+        console.log("we are changing:");
+        console.log(nodeids);
         let id = nodeids;
         let name = this.state.items[id].name;
         axios.get(this.props.url, {
@@ -98,19 +100,28 @@ class MyTreeView extends React.Component {
         });
     }
 
+    children(children, index) {
+        if (children.length === 0) {
+            return <TreeItem nodeId={"c" + index} key={"c" + index} label="Loading" />
+        } else {
+            children.map((v2, i2) => {
+                return <TreeItem nodeId={String(v2)} key={10000 * index + i2} label={v2.name}></TreeItem>
+            })
+        }
+    }
+
     render() {
         return <Paper style={{ maxHeight: 800, width: 800, overflow: 'auto' }}>
             <TreeView height="60vh"
                 defaultCollapseIcon={<ExpandMoreIcon />}
                 defaultExpandIcon={<ChevronRightIcon />}
-                onNodeToggle={handleChange}
+                onNodeToggle={this.handleChange}
             >
                 {
                     this.state.items.map((value, index) => {
+                        console.log(value);
                         return <TreeItem nodeId={String(value)} key={index} label={value.name}>
-                            {value.children.map((v2, i2) => {
-                                return <TreeItem nodeId={String(v2)} key={10000 * index + i2} label={v2.name}></TreeItem>
-                            })}
+                            {this.children(value.children, index)}
                         </TreeItem>
                     })
                 }
@@ -138,17 +149,17 @@ export default function LibraryView() {
                 onChange={handleChange}
                 className={classes.tabs}
             >
-                <Tab label="Full" {...a11yProps(1)} />
-                <Tab label="Album" {...a11yProps(2)} />
-                <Tab label="Track" {...a11yProps(3)} />
+                <Tab label="Full" {...a11yProps(0)} />
+                <Tab label="Album" {...a11yProps(1)} />
+                <Tab label="Track" {...a11yProps(2)} />
             </Tabs>
-            <TabPanel value={value} index={1}>
+            <TabPanel value={value} index={0}>
                 <MyTreeView url="/libraryview/artist/" />
             </TabPanel>
-            <TabPanel value={value} index={2}>
+            <TabPanel value={value} index={1}>
                 <MyTreeView url="/libraryview/albums/" />
             </TabPanel>
-            <TabPanel value={value} index={3}>
+            <TabPanel value={value} index={2}>
                 <MyTreeView url="/libraryview/tracks/" />
             </TabPanel>
         </div >

@@ -625,5 +625,6 @@ pub fn get_artist_trees(pool: &DBPool) -> Vec<Artist> {
         .expect("Error in DB")
         .into_iter()
         .map(move |t| track_to_artist(t, p.deref()))
+        .take(10)
         .collect()
 }
