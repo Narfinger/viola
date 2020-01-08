@@ -73,8 +73,28 @@ class MyTreeView extends React.Component {
     }
 
     handleChange(event, nodeids) {
-        console.log("we are changing:");
-        console.log(nodeids);
+        console.log("we are chang:");
+        if (nodeids.length !== 0) {
+            let id = nodeids[0];
+            console.log(id);
+            let node = this.state.items[id];
+            if (node.children.length !== 1) {
+                console.log("would load: " + node.name);
+                axios.get(this.props.detailurl1, {
+                    params: {
+                        name: node.name,
+                    }
+                }).then((response) => {
+                    let new_object = { name: node.name, children: response.data };
+                    this.setState({
+                        items: this.state.items.map((objs, index) => {
+                            return id === index ? new_object : obj;
+                        })
+                    })
+                })
+            }
+        }
+        /*
         let id = nodeids;
         let name = this.state.items[id].name;
         axios.get(this.props.url, {
@@ -88,7 +108,7 @@ class MyTreeView extends React.Component {
                     return id === id ? no : obj;
                 })
             })
-        })
+        })*/
     }
 
     componentDidMount() {
@@ -119,8 +139,7 @@ class MyTreeView extends React.Component {
             >
                 {
                     this.state.items.map((value, index) => {
-                        console.log(value);
-                        return <TreeItem nodeId={String(value)} key={index} label={value.name}>
+                        return <TreeItem nodeId={String(index)} key={index} label={value.name}>
                             {this.children(value.children, index)}
                         </TreeItem>
                     })
@@ -154,7 +173,7 @@ export default function LibraryView() {
                 <Tab label="Track" {...a11yProps(2)} />
             </Tabs>
             <TabPanel value={value} index={0}>
-                <MyTreeView url="/libraryview/artist/" />
+                <MyTreeView url="/libraryview/artist/" detailurl1="/libraryview/albums/" />
             </TabPanel>
             <TabPanel value={value} index={1}>
                 <MyTreeView url="/libraryview/albums/" />
