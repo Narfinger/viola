@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate actix_web;
 extern crate app_dirs;
 #[macro_use]
 extern crate clap;
@@ -46,6 +48,7 @@ pub mod utils;
 use clap::{App, Arg};
 use gio::ApplicationExt;
 use preferences::{prefs_base_dir, AppInfo, Preferences, PreferencesMap};
+use std::{env, io};
 
 const APP_INFO: AppInfo = AppInfo {
     name: "viola",
@@ -53,7 +56,8 @@ const APP_INFO: AppInfo = AppInfo {
 };
 const PREFS_KEY: &str = "viola_prefs";
 
-fn main() {
+#[actix_rt::main]
+async fn main() -> io::Result<()> {
     let matches = App::new("Viola")
         .about("Music Player")
         .version(crate_version!())
@@ -90,6 +94,7 @@ fn main() {
         )
         .get_matches();
 
+    env::set_var("RUST_LOG", "actix_web=debug,actix_server=info");
     env_logger::init();
 
     let pool = db::setup_db_connection();
@@ -127,17 +132,8 @@ fn main() {
         path.extend(&["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else {
-        maingui_web::run(pool);
-        //use gio::ApplicationExtManual;
-        //let application = gtk::Application::new(
-        //    Some("com.github.narfinger.viola"),
-        //    gio::ApplicationFlags::empty(),
-        //)
-        //.expect("Initialization failed...");
-        //application.connect_startup(move |app| {
-        //    gui::build_gui(app, &pool);
-        //});
-        //application.connect_activate(|_| {});
-        //application.run(&[]);
-    }
+        println!("Trying main");
+        maingui_web::run(pool).await;
+    };
+    Ok(())
 }

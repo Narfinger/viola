@@ -10,6 +10,7 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use std::thread;
 use std::time::Duration;
+use std::{env, io};
 
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
@@ -74,20 +75,21 @@ async fn ws_start(
     Ok(resp)
 }
 
-fn playlist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+#[get("/playlist/")]
+async fn playlist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     let items = &*state.playlist.items();
     HttpResponse::Ok().json(items)
 }
 
 // removes all already played data
-fn clean(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+async fn clean(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     state.playlist.clean();
 
     //reload playlist
     HttpResponse::Ok().finish()
 }
 
-fn transport(
+async fn transport(
     state: web::Data<WebGui>,
     msg: web::Json<gstreamer_wrapper::GStreamerAction>,
 ) -> HttpResponse {
@@ -97,7 +99,7 @@ fn transport(
     HttpResponse::Ok().finish()
 }
 
-fn library_artist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+async fn library_artist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     let items = libraryviewstore::get_artist_trees(&state.pool);
     //println!("items: {:?}", items);
     HttpResponse::Ok().json(items)
@@ -110,7 +112,11 @@ struct Q {
     track: Option<String>,
 }
 
-fn library_tree(state: web::Data<WebGui>, q: web::Query<Q>, req: HttpRequest) -> HttpResponse {
+async fn library_tree(
+    state: web::Data<WebGui>,
+    q: web::Query<Q>,
+    req: HttpRequest,
+) -> HttpResponse {
     let items = libraryviewstore::query_tree(&state.pool, &q.artist, &q.album, &q.track);
     HttpResponse::Ok().json(items)
 }
@@ -128,7 +134,7 @@ fn library_albums(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(items)
 }*/
 
-fn current_id(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+async fn current_id(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(state.playlist.current_position())
 }
 
@@ -171,7 +177,7 @@ fn handle_gstreamer_messages(
     }
 }
 
-pub fn run(pool: DBPool) {
+pub async fn run(pool: DBPool) -> io::Result<()> {
     println!("Loading playlist");
     let lp = Arc::new(RwLock::new(
         restore_playlists(&pool)
@@ -198,12 +204,13 @@ pub fn run(pool: DBPool) {
         let datac = data.clone();
         thread::spawn(move || handle_gstreamer_messages(datac, rx));
     }
-
     println!("Starting web gui on 127.0.0.1:8088");
+
     HttpServer::new(move || {
         App::new()
-            .data(data.clone())
-            .service(web::resource("/playlist/").route(web::get().to(playlist)))
+            .app_data(data.clone())
+            .service(playlist)
+            //.service(web::resource("/playlist/").route(web::get().to(playlist)))
             .service(web::resource("/currentid/").route(web::get().to(current_id)))
             .service(web::resource("/clean/").route(web::post().to(clean)))
             .service(web::resource("/transport/").route(web::post().to(transport)))
@@ -216,6 +223,7 @@ pub fn run(pool: DBPool) {
             .service(fs::Files::new("/", "./web_gui/").index_file("index.html"))
     })
     .bind("127.0.0.1:8088")
-    .unwrap()
-    .run();
+    .expect("Cannot bind address")
+    .run()
+    .await
 }
