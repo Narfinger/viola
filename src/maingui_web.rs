@@ -82,6 +82,7 @@ async fn playlist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
 }
 
 // removes all already played data
+#[get("/clean/")]
 async fn clean(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     state.playlist.clean();
 
@@ -89,6 +90,7 @@ async fn clean(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().finish()
 }
 
+#[post("/transport/")]
 async fn transport(
     state: web::Data<WebGui>,
     msg: web::Json<gstreamer_wrapper::GStreamerAction>,
@@ -99,6 +101,7 @@ async fn transport(
     HttpResponse::Ok().finish()
 }
 
+#[get("/libraryview/artist/")]
 async fn library_artist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     let items = libraryviewstore::get_artist_trees(&state.pool);
     //println!("items: {:?}", items);
@@ -112,6 +115,7 @@ struct Q {
     track: Option<String>,
 }
 
+#[get("/libraryview/querytree/")]
 async fn library_tree(
     state: web::Data<WebGui>,
     q: web::Query<Q>,
@@ -134,6 +138,7 @@ fn library_albums(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(items)
 }*/
 
+#[get("/currentid/")]
 async fn current_id(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(state.playlist.current_position())
 }
@@ -210,14 +215,13 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
         App::new()
             .app_data(data.clone())
             .service(playlist)
-            //.service(web::resource("/playlist/").route(web::get().to(playlist)))
-            .service(web::resource("/currentid/").route(web::get().to(current_id)))
-            .service(web::resource("/clean/").route(web::post().to(clean)))
-            .service(web::resource("/transport/").route(web::post().to(transport)))
-            .service(web::resource("/libraryview/artist/").route(web::get().to(library_artist)))
+            .service(current_id)
+            .service(clean)
+            .service(transport)
+            .service(library_artist)
             //.service(web::resource("/libraryview/albums/").route(web::get().to(library_albums)))
             //.service(web::resource("/libraryview/tracks/").route(web::get().to(library_tracks)))
-            .service(web::resource("/libraryview/querytree/").route(web::get().to(library_tree)))
+            .service(library_tree)
             .service(web::resource("/ws/").route(web::get().to(ws_start)))
             .service(fs::Files::new("/static/", "web_gui/dist/").show_files_listing())
             .service(fs::Files::new("/", "./web_gui/").index_file("index.html"))
