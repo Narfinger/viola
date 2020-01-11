@@ -80,11 +80,7 @@ class MyTreeView extends React.Component {
             let node = this.state.items[id];
             if (node.children.length !== 1) {
                 console.log("would load: " + node.name);
-                axios.get(this.props.detailurl1, {
-                    params: {
-                        name: node.name,
-                    }
-                }).then((response) => {
+                axios.get(this.props.detailurl1 + encodeURI(node.name)).then((response) => {
                     let new_object = { name: node.name, children: response.data };
                     this.setState({
                         items: this.state.items.map((objs, index) => {

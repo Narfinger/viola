@@ -529,75 +529,75 @@ pub type Artist = General<Album>;
 
 fn get_track_vec(
     db: &diesel::SqliteConnection,
-    artist_name: &Option<String>,
-    album_name: &Option<String>,
+    artist_name: Option<&str>,
+    album_name: Option<&str>,
 ) -> Vec<Track> {
     use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use std::ops::Deref;
+    let mut query = tracks.into_boxed();
     if let Some(a) = artist_name {
-        tracks
-            //.filter(artist.like(String::from("%") + &a + "%"))
-            //.filter(album.like(String::from("%") + album_name.as_ref().unwrap() + "%"))
-            .filter(artist.eq(&a))
-            .filter(album.eq(&album_name.as_ref().unwrap()))
+        query = query
+            .filter(artist.eq(a))
             .filter(artist.is_not_null())
             .filter(artist.is_not_null())
-            .filter(artist.ne(""))
-            .filter(album.ne(""))
-            .load(db)
-    } else {
-        tracks.load(db)
+            .filter(artist.ne(""));
     }
-    .expect("Error in loading DB")
-    .into_iter()
-    .map(|t: db::Track| t.title.to_owned())
-    .collect()
+    if let Some(a) = album_name {
+        query = query
+            .filter(album.eq(album_name.unwrap()))
+            .filter(album.ne(""))
+    }
+    query
+        .order_by(tracknumber)
+        .load(db)
+        .expect("Error in loading DB")
+        .into_iter()
+        .map(|t: db::Track| t.title.to_owned())
+        .collect()
 }
 
-fn get_album_subtree(db: &diesel::SqliteConnection, artist_name: &Option<String>) -> Vec<Album> {
+pub fn get_album_subtree(db: &diesel::SqliteConnection, artist_name: Option<&str>) -> Vec<Album> {
     use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     use std::ops::Deref;
+
+    let mut query = tracks.into_boxed();
+
     if let Some(a) = artist_name {
-        tracks
-            //.filter(artist.like(String::from("%") + &a + "%"))
-            .filter(artist.eq(&a))
+        query = query
+            .filter(artist.eq(a))
             .filter(artist.is_not_null())
             .filter(album.is_not_null())
             .filter(artist.ne(""))
-            .filter(album.ne(""))
-            .select((album, artist))
-            .distinct()
-            .order_by(album)
-            .load(db)
-            .expect("Error in loading DB")
+            .filter(album.ne(""));
     } else {
-        tracks
-            .select((album, artist))
+        query = query
             .filter(artist.is_not_null())
-            .filter(artist.is_not_null())
-            .distinct()
-            .order_by(album)
-            .load(db)
-            .expect("Error in loading DB")
+            .filter(album.is_not_null());
     }
-    .into_iter()
-    .map(|t: (String, String)| Album {
-        name: t.0,
-        children: get_track_vec(db, &Some(t.1), artist_name),
-    })
-    .collect()
+    query
+        .select((album, artist))
+        .distinct()
+        .order_by(album)
+        .load(db)
+        .expect("Error in loading DB")
+        .into_iter()
+        .map(|t: (String, String)| Album {
+            name: t.0,
+            children: get_track_vec(db, Some(&t.1), artist_name),
+        })
+        .collect()
 }
 
 pub fn get_tracks(pool: &DBPool) -> Vec<Track> {
     let db = pool.lock().expect("Error locking DB");
-    get_track_vec(db.deref(), &None, &None)
+    get_track_vec(db.deref(), None, None)
 }
 
 pub fn get_album_trees(pool: &DBPool) -> Vec<Album> {
     let db = pool.lock().expect("Error locking DB");
-    get_album_subtree(db.deref(), &None)
+    get_album_subtree(db.deref(), None)
 }
 
 fn track_to_artist(t: String, db: &diesel::SqliteConnection) -> Artist {

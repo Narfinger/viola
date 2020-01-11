@@ -125,12 +125,19 @@ async fn library_tree(
     HttpResponse::Ok().json(items)
 }
 
-/*
-fn library_albums(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
-    let items = libraryviewstore::get_album_trees(&state.pool);
+#[get("/libraryview/albums/{name}")]
+fn library_albums(
+    state: web::Data<WebGui>,
+    req: HttpRequest,
+    path: web::Path<String>,
+) -> HttpResponse {
+    let name = path.into_inner();
+    let db = state.pool.lock().expect("Error in db locking");
+    println!("getting album with: {:?}", name);
+    let items = libraryviewstore::get_album_subtree(&db, Some(&name));
     //println!("{:?}", items);
     HttpResponse::Ok().json(items)
-}*/
+}
 
 /*fn library_tracks(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     let items = libraryviewstore::get_tracks(&state.pool);
@@ -219,6 +226,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
             .service(clean)
             .service(transport)
             .service(library_artist)
+            .service(library_albums)
             //.service(web::resource("/libraryview/albums/").route(web::get().to(library_albums)))
             //.service(web::resource("/libraryview/tracks/").route(web::get().to(library_tracks)))
             .service(library_tree)
