@@ -73,38 +73,22 @@ class MyTreeView extends React.Component {
     }
 
     handleChange(event, nodeids) {
-        console.log("we are chang:");
         if (nodeids.length !== 0) {
             let id = nodeids[0];
-            console.log(id);
             let node = this.state.items[id];
             if (node.children.length !== 1) {
-                console.log("would load: " + node.name);
                 axios.get(this.props.detailurl1 + encodeURI(node.name)).then((response) => {
                     let new_object = { name: node.name, children: response.data };
                     this.setState({
-                        items: this.state.items.map((objs, index) => {
-                            return id === index ? new_object : obj;
+                        items: this.state.items.map((obj, index) => {
+                            return id == index ? new_object : obj;
                         })
-                    })
+                    },
+                        function () { console.log(this.state.items) }
+                    );
                 })
             }
         }
-        /*
-        let id = nodeids;
-        let name = this.state.items[id].name;
-        axios.get(this.props.url, {
-            params: {
-                name: name,
-            }
-        }).then((response) => {
-            let no = { name: name, children: response.data };
-            this.setState({
-                items: this.state.items.map((objs, index) => {
-                    return id === id ? no : obj;
-                })
-            })
-        })*/
     }
 
     componentDidMount() {
@@ -117,11 +101,12 @@ class MyTreeView extends React.Component {
     }
 
     children(children, index) {
+        console.log(children);
         if (children.length === 0) {
-            return <TreeItem nodeId={"c" + index} key={"c" + index} label="Loading" />
+            return <TreeItem nodeId={"l" + index} key={"l" + index} label="Loading" />
         } else {
-            children.map((v2, i2) => {
-                return <TreeItem nodeId={String(v2)} key={10000 * index + i2} label={v2.name}></TreeItem>
+            return children.map((v2, i2) => {
+                return <TreeItem nodeId={index + "-" + i2} key={index + "-" + i2} label={v2.name} />
             })
         }
     }
