@@ -83,9 +83,7 @@ class MyTreeView extends React.Component {
                         items: this.state.items.map((obj, index) => {
                             return id == index ? new_object : obj;
                         })
-                    },
-                        function () { console.log(this.state.items) }
-                    );
+                    });
                 })
             }
         }
@@ -101,7 +99,6 @@ class MyTreeView extends React.Component {
     }
 
     children(children, index) {
-        console.log(children);
         if (children.length === 0) {
             return <TreeItem nodeId={"l" + index} key={"l" + index} label="Loading" />
         } else {
