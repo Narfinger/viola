@@ -101,13 +101,6 @@ async fn transport(
     HttpResponse::Ok().finish()
 }
 
-#[get("/libraryview/artist/")]
-async fn library_artist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
-    let items = libraryviewstore::get_artist_trees(&state.pool);
-    //println!("items: {:?}", items);
-    HttpResponse::Ok().json(items)
-}
-
 #[derive(Deserialize, Serialize)]
 struct Q {
     artist: Option<String>,
@@ -115,12 +108,26 @@ struct Q {
     track: Option<String>,
 }
 
+#[get("/libraryview/artist/")]
+async fn library_artist(
+    state: web::Data<WebGui>,
+    info: web::Json<Q>,
+    req: HttpRequest,
+) -> HttpResponse {
+    let q = info.into_inner();
+
+    let items = libraryviewstore::get_artist_trees(&state.pool);
+    //println!("items: {:?}", items);
+    HttpResponse::Ok().json(items)
+}
+
 #[get("/libraryview/querytree/")]
 async fn library_tree(
     state: web::Data<WebGui>,
-    q: web::Query<Q>,
+    path: web::Json<Q>,
     req: HttpRequest,
 ) -> HttpResponse {
+    let q = path.into_inner();
     let items = libraryviewstore::query_tree(&state.pool, &q.artist, &q.album, &q.track);
     HttpResponse::Ok().json(items)
 }

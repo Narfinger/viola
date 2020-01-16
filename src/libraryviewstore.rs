@@ -609,12 +609,12 @@ fn track_to_artist(t: String, db: &diesel::SqliteConnection) -> Artist {
     }
 }
 
-pub fn query_tree(
+fn basic_tree_query(
     pool: &DBPool,
     artist_opt: &Option<String>,
     album_opt: &Option<String>,
     track_opt: &Option<String>,
-) -> Vec<Artist> {
+) -> () {
     use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     let p = pool.lock().expect("Error in lock");
@@ -634,6 +634,39 @@ pub fn query_tree(
     if let Some(t) = track_opt {
         query = query.filter(title.eq(t));
     }
+    query
+}
+
+pub fn query_tree_partial(
+    pool: &DBPool,
+    artist_opt: &Option<String>,
+    album_opt: &Option<String>,
+    track_opt: &Option<String>,
+) -> Vec<Artist> {
+    use crate::schema::tracks::dsl::*;
+    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
+    let p = pool.lock().expect("Error in lock");
+    let mut query = basic_tree_query(pool, artist_opt, album_opt, track_opt);
+    if let Some(ref t) = track_opt {
+        query = query.select(title).group_by(title);
+    } else if let Some(ref ab) = album_opt {
+        query = query.select(album).group_by(album)
+    }
+
+    vec![]
+}
+
+//this gives us the complete tree, not partial
+pub fn query_tree(
+    pool: &DBPool,
+    artist_opt: &Option<String>,
+    album_opt: &Option<String>,
+    track_opt: &Option<String>,
+) -> Vec<Artist> {
+    use crate::schema::tracks::dsl::*;
+    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
+    let p = pool.lock().expect("Error in lock");
+    let mut query = basic_tree_query(pool, artist_opt, album_opt, track_opt);
 
     let mut q_tracks: Vec<db::Track> = query.load(p.deref()).expect("Error in DB");
 

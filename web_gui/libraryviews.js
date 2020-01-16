@@ -70,20 +70,49 @@ class MyTreeView extends React.Component {
         };
 
         this.handleChange = this.handleChange.bind(this);
+        this.need_to_load = this.need_to_load.bind(this);
+    }
+
+    need_to_load(ids) {
+        if (ids.length === 0) {
+            return true;
+        } else if (ids.length === 1) {
+            console.log(this.state.items[ids[0]].children);
+            return (this.state.items[ids[0]].children.length === 0)
+        } else if (ids.length === 2) {
+            return ((this.state.items[ids[0]].children.length === 0) || (this.state.items[ids[0]].children[ids[1]].length === 0))
+        }
     }
 
     handleChange(event, nodeids) {
         if (nodeids.length !== 0) {
-            let id = nodeids[0];
-            let node = this.state.items[id];
-            if (node.children.length !== 1) {
-                axios.get(this.props.detailurl1 + encodeURI(node.name)).then((response) => {
-                    let new_object = { name: node.name, children: response.data };
-                    this.setState({
-                        items: this.state.items.map((obj, index) => {
-                            return id == index ? new_object : obj;
-                        })
-                    });
+            let ids = nodeids[0].split("-");
+            console.log(ids);
+
+            if (this.need_to_load(ids)) {
+                console.log("we would load");
+                let names = [];
+                names.push(this.state.items[ids[0]].name);
+                if (ids.length === 2) {
+                    names.push(this.state.items[ids[0]].children[ids[1]].name);
+                } else {
+                    names.push();
+                }
+
+                axios.get(this.props.detailurl1, {
+                    params: {
+                        artist: names[0],
+                        album: names[1],
+                        track: null,
+                    }
+                }).then((response) => {
+
+                    //let new_object = { name: node.name, children: response.data };
+                    //this.setState({
+                    //    items: this.state.items.map((obj, index) => {
+                    //        return ids[0] == index ? new_object : obj;
+                    //    })
+                    //});
                 })
             }
         }
@@ -98,12 +127,25 @@ class MyTreeView extends React.Component {
         });
     }
 
-    children(children, index) {
+    title_children(children, index, index2) {
+        if (children.length === 0) {
+            return <TreeItem nodeId={"l" + index + "-" + index2} key={"l" + index + "-" + index2} label="Loading" />
+        } else {
+            return children.map((v3, i3) => {
+                return <TreeItem nodeId={index + "-" + index2 + "-" + i3} key={index + "-" + index2 + "-" + i3} label={v3.name}>
+                </TreeItem>
+            })
+        }
+    }
+
+    album_children(children, index) {
         if (children.length === 0) {
             return <TreeItem nodeId={"l" + index} key={"l" + index} label="Loading" />
         } else {
             return children.map((v2, i2) => {
-                return <TreeItem nodeId={index + "-" + i2} key={index + "-" + i2} label={v2.name} />
+                return <TreeItem nodeId={index + "-" + i2} key={index + "-" + i2} label={v2.name}>
+                    {this.title_children(v2.children, index, i2)}
+                </TreeItem>
             })
         }
     }
@@ -118,7 +160,7 @@ class MyTreeView extends React.Component {
                 {
                     this.state.items.map((value, index) => {
                         return <TreeItem nodeId={String(index)} key={index} label={value.name}>
-                            {this.children(value.children, index)}
+                            {this.album_children(value.children, index)}
                         </TreeItem>
                     })
                 }
@@ -151,7 +193,7 @@ export default function LibraryView() {
                 <Tab label="Track" {...a11yProps(2)} />
             </Tabs>
             <TabPanel value={value} index={0}>
-                <MyTreeView url="/libraryview/artist/" detailurl1="/libraryview/albums/" />
+                <MyTreeView url="/libraryview/artist/" detailurl1="/libraryview/artist/" />
             </TabPanel>
             <TabPanel value={value} index={1}>
                 <MyTreeView url="/libraryview/albums/" />
