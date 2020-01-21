@@ -527,6 +527,24 @@ pub type Track = String;
 pub type Album = General<Track>;
 pub type Artist = General<Album>;
 
+impl From<String> for Album {
+    fn from(s: String) -> Self {
+        Album {
+            name: s,
+            children: vec![],
+        }
+    }
+}
+
+impl From<String> for Artist {
+    fn from(s: String) -> Self {
+        Artist {
+            name: s,
+            children: vec![],
+        }
+    }
+}
+
 fn get_track_vec(
     db: &diesel::SqliteConnection,
     artist_name: Option<&str>,
@@ -609,15 +627,16 @@ fn track_to_artist(t: String, db: &diesel::SqliteConnection) -> Artist {
     }
 }
 
-fn basic_tree_query(
-    pool: &DBPool,
-    artist_opt: &Option<String>,
-    album_opt: &Option<String>,
-    track_opt: &Option<String>,
-) -> () {
+/// basic query function to model tracks with the apropiate values selected
+fn basic_tree_query<'a>(
+    pool: &'a DBPool,
+    artist_opt: &'a Option<String>,
+    album_opt: &'a Option<String>,
+    track_opt: &'a Option<String>,
+) -> crate::schema::tracks::BoxedQuery<'a, diesel::sqlite::Sqlite> {
     use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
-    let p = pool.lock().expect("Error in lock");
+    //let p = pool.lock().expect("Error in lock");
     let mut query = tracks
         .filter(artist.is_not_null())
         .filter(artist.ne(""))
@@ -637,6 +656,7 @@ fn basic_tree_query(
     query
 }
 
+/// Queries the tree but only returns not filled in results, i.e., children might be unpopulated
 pub fn query_tree_partial(
     pool: &DBPool,
     artist_opt: &Option<String>,
@@ -648,15 +668,44 @@ pub fn query_tree_partial(
     let p = pool.lock().expect("Error in lock");
     let mut query = basic_tree_query(pool, artist_opt, album_opt, track_opt);
     if let Some(ref t) = track_opt {
-        query = query.select(title).group_by(title);
-    } else if let Some(ref ab) = album_opt {
-        query = query.select(album).group_by(album)
-    }
+        let res = query
+            .select(title)
+            .group_by(title)
+            .load(p.deref())
+            .expect("Error in loading");
 
-    vec![]
+        vec![Artist {
+            name: artist_opt.expect("Not supported"),
+            children: vec![Album {
+                name: album_opt.expect("Not supported"),
+                children: res,
+            }],
+        }]
+    } else if let Some(ref ab) = album_opt {
+        let res = query
+            .select(album)
+            .group_by(album)
+            .load(p.deref())
+            .expect("Error in Loading");
+
+        vec![Artist {
+            name: artist_opt.expect("Not supported"),
+            children: res.into_iter().map(|s: String| s.into()).collect(),
+        }]
+    } else if let Some(ref a) = artist_opt {
+        let res = query
+            .select(artist)
+            .group_by(artist)
+            .load(p.deref())
+            .expect("Error in loading");
+
+        res.into_iter().map(|s: String| s.into()).collect()
+    } else {
+        vec![]
+    }
 }
 
-//this gives us the complete tree, not partial
+/// Queries the tree with the matching parameters, does not give us partials
 pub fn query_tree(
     pool: &DBPool,
     artist_opt: &Option<String>,
@@ -712,6 +761,7 @@ pub fn query_tree(
 // TODO This could be much more general by having the fill_fn in general
 // TODO Try to make this iterator stuff, at the moment it doesn't need json
 // TODO we need to not have the empty strings for stuff around
+/*
 pub fn get_artist_trees(pool: &DBPool) -> Vec<Artist> {
     use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
@@ -729,3 +779,4 @@ pub fn get_artist_trees(pool: &DBPool) -> Vec<Artist> {
         .take(10)
         .collect()
 }
+*/
