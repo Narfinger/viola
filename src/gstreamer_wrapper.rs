@@ -1,14 +1,9 @@
 use crate::glib::ObjectExt;
 use gstreamer;
-use gstreamer::{ElementExt, ElementExtManual};
+use gstreamer::ElementExtManual;
 use gtk;
-use gtk::ToValue;
-
-use std::cell::Cell;
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{channel, sync_channel, Receiver, Sender, SyncSender};
+use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::Arc;
 
 use crate::loaded_playlist::PlaylistControls;

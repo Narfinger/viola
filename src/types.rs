@@ -1,9 +1,6 @@
 use app_dirs::*;
-use diesel::SqliteConnection;
 use gstreamer::Element;
 use gtk::Builder;
-use std::cell::RefCell;
-use std::rc::{Rc, Weak};
 use std::sync::{Arc, Mutex, RwLock};
 
 use crate::gstreamer_wrapper::GStreamerMessage;

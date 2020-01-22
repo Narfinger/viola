@@ -1,3 +1,4 @@
+/*
 use gtk;
 use gtk::prelude::*;
 use std::sync::Arc;
@@ -9,6 +10,8 @@ use crate::libraryviewstore;
 use crate::maingui;
 //use crate::maingui::{MainGuiExt, MainGuiPtrExt};
 use crate::playlist_manager;
+*/
+
 use crate::types::*;
 
 macro_rules! clone {

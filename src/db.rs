@@ -8,7 +8,6 @@ use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::ops::Deref;
 use std::path::Path;
-use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
 use taglib;

@@ -1,9 +1,6 @@
 use crate::schema::{playlists, playlisttracks};
 use diesel;
-use std::cell::Cell;
 use std::ops::Deref;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
 
 use crate::db::Track;
 use crate::loaded_playlist::LoadedPlaylist;

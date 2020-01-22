@@ -551,8 +551,7 @@ fn get_track_vec(
     album_name: Option<&str>,
 ) -> Vec<Track> {
     use crate::schema::tracks::dsl::*;
-    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
-    use std::ops::Deref;
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     let mut query = tracks.into_boxed();
     if let Some(a) = artist_name {
         query = query
@@ -577,8 +576,7 @@ fn get_track_vec(
 
 pub fn get_album_subtree(db: &diesel::SqliteConnection, artist_name: Option<&str>) -> Vec<Album> {
     use crate::schema::tracks::dsl::*;
-    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
-    use std::ops::Deref;
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
     let mut query = tracks.into_boxed();
 
@@ -635,7 +633,7 @@ fn basic_tree_query<'a>(
     track_opt: &'a Option<String>,
 ) -> crate::schema::tracks::BoxedQuery<'a, diesel::sqlite::Sqlite> {
     use crate::schema::tracks::dsl::*;
-    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
+    use diesel::{ExpressionMethods, QueryDsl};
     //let p = pool.lock().expect("Error in lock");
     let mut query = tracks
         .filter(artist.is_not_null())
@@ -664,7 +662,7 @@ pub fn query_tree_partial(
     track_opt: &Option<String>,
 ) -> Vec<Artist> {
     use crate::schema::tracks::dsl::*;
-    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
+    use diesel::{GroupByDsl, QueryDsl, RunQueryDsl};
     let p = pool.lock().expect("Error in lock");
     let mut query = basic_tree_query(pool, artist_opt, album_opt, track_opt);
     if let Some(ref t) = track_opt {
@@ -712,8 +710,7 @@ pub fn query_tree(
     album_opt: &Option<String>,
     track_opt: &Option<String>,
 ) -> Vec<Artist> {
-    use crate::schema::tracks::dsl::*;
-    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
+    use diesel::RunQueryDsl;
     let p = pool.lock().expect("Error in lock");
     let mut query = basic_tree_query(pool, artist_opt, album_opt, track_opt);
 
@@ -752,7 +749,7 @@ pub fn query_tree(
                 .collect();
             Artist {
                 name: k.clone(),
-                children: children,
+                children,
             }
         })
         .collect::<Vec<Artist>>()
