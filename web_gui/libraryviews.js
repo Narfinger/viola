@@ -99,7 +99,7 @@ class MyTreeView extends React.Component {
                     names.push();
                 }
 
-                axios.get(this.props.detailurl1, {
+                axios.get(this.props.url, {
                     params: {
                         artist: names[0],
                         album: names[1],
@@ -193,7 +193,7 @@ export default function LibraryView() {
                 <Tab label="Track" {...a11yProps(2)} />
             </Tabs>
             <TabPanel value={value} index={0}>
-                <MyTreeView url="/libraryview/artist/" detailurl1="/libraryview/artist/" />
+                <MyTreeView url="/libraryview/artist/" />
             </TabPanel>
             <TabPanel value={value} index={1}>
                 <MyTreeView url="/libraryview/albums/" />

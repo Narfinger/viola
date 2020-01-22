@@ -37,6 +37,7 @@ toml = "0.5"
 owning_ref = "0.4"
 url = "1.7.2"
 walkdir = "2"
+web-view = "0.6"
 
 
 [dependencies.gtk]

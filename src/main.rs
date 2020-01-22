@@ -133,6 +133,22 @@ async fn main() -> io::Result<()> {
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else {
         println!("Trying main");
+        use web_view::*;
+        std::thread::spawn(|| {
+            println!("Starting webview");
+            WebViewBuilder::new()
+                .title("Minimal webview example")
+                .content(Content::Url("localhost:8088"))
+                .size(800, 600)
+                .resizable(true)
+                .debug(true)
+                .user_data(())
+                .invoke_handler(|_webview, _arg| Ok(()))
+                .build()
+                .unwrap()
+                .run()
+                .unwrap();
+        });
         maingui_web::run(pool).await;
     };
     Ok(())

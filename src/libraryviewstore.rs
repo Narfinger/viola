@@ -655,7 +655,7 @@ fn basic_tree_query<'a>(
 }
 
 /// Queries the tree but only returns not filled in results, i.e., children might be unpopulated
-pub fn query_tree_partial(
+pub fn query_partial_tree(
     pool: &DBPool,
     artist_opt: &Option<String>,
     album_opt: &Option<String>,
@@ -673,9 +673,9 @@ pub fn query_tree_partial(
             .expect("Error in loading");
 
         vec![Artist {
-            name: artist_opt.expect("Not supported"),
+            name: artist_opt.to_owned().unwrap_or("Default".to_string()),
             children: vec![Album {
-                name: album_opt.expect("Not supported"),
+                name: album_opt.to_owned().unwrap_or("Default".to_string()),
                 children: res,
             }],
         }]
@@ -687,7 +687,7 @@ pub fn query_tree_partial(
             .expect("Error in Loading");
 
         vec![Artist {
-            name: artist_opt.expect("Not supported"),
+            name: artist_opt.to_owned().unwrap_or("Default".to_string()),
             children: res.into_iter().map(|s: String| s.into()).collect(),
         }]
     } else if let Some(ref a) = artist_opt {

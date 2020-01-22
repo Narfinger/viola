@@ -3,12 +3,12 @@ use actix::{Actor, StreamHandler};
 use actix_files as fs;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
+use std::io;
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::thread;
 use std::time::Duration;
-use std::io;
 
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
@@ -114,7 +114,7 @@ async fn library_artist(
 ) -> HttpResponse {
     let q = info.into_inner();
 
-    let items = libraryviewstore::get_artist_trees(&state.pool);
+    let items = libraryviewstore::query_partial_tree(&state.pool, &None, &None, &None);
     //println!("items: {:?}", items);
     HttpResponse::Ok().json(items)
 }
