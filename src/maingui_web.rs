@@ -1,6 +1,7 @@
 use actix::prelude::*;
 use actix::{Actor, StreamHandler};
 use actix_files as fs;
+use actix_rt;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 use std::io;
@@ -194,7 +195,7 @@ fn handle_gstreamer_messages(
     }
 }
 
-pub async fn run(pool: DBPool) -> io::Result<()> {
+pub fn run(pool: DBPool) -> io::Result<()> {
     println!("Loading playlist");
     let lp = Arc::new(RwLock::new(
         restore_playlists(&pool)
@@ -222,8 +223,8 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
         thread::spawn(move || handle_gstreamer_messages(datac, rx));
     }
     println!("Starting web gui on 127.0.0.1:8088");
-
-    HttpServer::new(move || {
+    //let mut sys = actix_rt::System::new("test");
+    let server = HttpServer::new(move || {
         App::new()
             .app_data(data.clone())
             .service(playlist)
@@ -241,6 +242,9 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
     })
     .bind("127.0.0.1:8088")
     .expect("Cannot bind address")
-    .run()
-    .await
+    .run();
+
+    //sys.block_on(server);
+
+    Ok(())
 }

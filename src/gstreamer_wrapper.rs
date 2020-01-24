@@ -105,7 +105,7 @@ pub enum GStreamerAction {
 
 pub trait GStreamerExt {
     fn do_gstreamer_action(&self, _: &GStreamerAction);
-    fn gstreamer_update_gui(&self) -> gtk::Continue;
+    fn gstreamer_update_gui(&self) -> glib::Continue;
     fn gstreamer_handle_eos(&self);
 }
 
@@ -195,7 +195,7 @@ impl GStreamerExt for GStreamer {
     }
 
     /// poll the message bus and on eos start new
-    fn gstreamer_update_gui(&self) -> gtk::Continue {
+    fn gstreamer_update_gui(&self) -> glib::Continue {
         //update gui for running time
         let cltime_opt: Option<gstreamer::ClockTime> = self.pipeline.query_position();
         let cltotal_opt: Option<gstreamer::ClockTime> = self.pipeline.query_duration();
@@ -211,7 +211,7 @@ impl GStreamerExt for GStreamer {
                     .expect("Error in gstreamer sending message to gui");
             }
         }
-        gtk::Continue(true)
+        glib::Continue(true)
     }
 
     fn gstreamer_handle_eos(&self) {

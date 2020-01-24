@@ -1,8 +1,8 @@
 use gtk;
 use owning_ref::RwLockReadGuardRef;
+use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use std::ops::Deref;
 use std::path::PathBuf;
-use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
 use crate::db::Track;
 use crate::types::{DBPool, LoadedPlaylistPtr};
@@ -74,7 +74,7 @@ impl PlaylistControls for LoadedPlaylistPtr {
         info!("loading from playlist with name: {}", s.name);
         format!(
             "file:////{}",
-            utf8_percent_encode(&s.items[s.current_position].path, DEFAULT_ENCODE_SET).to_string()
+            utf8_percent_encode(&s.items[s.current_position].path, NON_ALPHANUMERIC).to_string()
         )
     }
 
@@ -126,7 +126,7 @@ impl PlaylistControls for LoadedPlaylistPtr {
     }
 }
 
-fn update_playcount(t_id: i32, db: &DBPool) -> gtk::Continue {
+fn update_playcount(t_id: i32, db: &DBPool) -> glib::Continue {
     use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
 
@@ -144,5 +144,5 @@ fn update_playcount(t_id: i32, db: &DBPool) -> gtk::Continue {
     } else {
         error!("Some problem with updating play status (gettin track)");
     }
-    gtk::Continue(false)
+    glib::Continue(false)
 }

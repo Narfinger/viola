@@ -25,7 +25,6 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 extern crate toml;
-extern crate url;
 extern crate walkdir;
 //extern crate jwalk;
 
@@ -133,23 +132,28 @@ async fn main() -> io::Result<()> {
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else {
         println!("Trying main");
+        //std::thread::spawn(|| {
+        println!("Starting web service");
+        maingui_web::run(pool);
+        //});
+        std::thread::sleep(std::time::Duration::from_secs(1));
+
         use web_view::*;
-        std::thread::spawn(|| {
-            println!("Starting webview");
-            WebViewBuilder::new()
-                .title("Minimal webview example")
-                .content(Content::Url("localhost:8088"))
-                .size(800, 600)
-                .resizable(true)
-                .debug(true)
-                .user_data(())
-                .invoke_handler(|_webview, _arg| Ok(()))
-                .build()
-                .unwrap()
-                .run()
-                .unwrap();
-        });
-        maingui_web::run(pool).await;
+        println!("Starting webview");
+        /*
+        WebViewBuilder::new()
+            .title("Minimal webview example")
+            .content(Content::Url("http://localhost:8088"))
+            .size(800, 600)
+            .resizable(true)
+            .debug(true)
+            .user_data(())
+            .invoke_handler(|_webview, _arg| Ok(()))
+            .build()
+            .unwrap()
+            .run()
+            .unwrap();
+            */
     };
     Ok(())
 }
