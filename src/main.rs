@@ -134,13 +134,14 @@ async fn main() -> io::Result<()> {
         println!("Trying main");
         //std::thread::spawn(|| {
         println!("Starting web service");
-        maingui_web::run(pool);
+        maingui_web::run(pool).await;
         //});
+
+        /*
         std::thread::sleep(std::time::Duration::from_secs(1));
 
         use web_view::*;
         println!("Starting webview");
-        /*
         WebViewBuilder::new()
             .title("Minimal webview example")
             .content(Content::Url("http://localhost:8088"))

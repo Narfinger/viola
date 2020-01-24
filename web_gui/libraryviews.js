@@ -74,7 +74,9 @@ class MyTreeView extends React.Component {
     }
 
     need_to_load(ids) {
-        if (ids.length === 0) {
+        if (!this.props.query_for_details) {
+            return false;
+        } else if (ids.length === 0) {
             return true;
         } else if (ids.length === 1) {
             console.log(this.state.items[ids[0]].children);
@@ -85,7 +87,7 @@ class MyTreeView extends React.Component {
     }
 
     handleChange(event, nodeids) {
-        if (nodeids.length !== 0) {
+        if (this.props.query_for_details && nodeids.length !== 0) {
             let ids = nodeids[0].split("-");
             console.log(ids);
 
@@ -128,8 +130,13 @@ class MyTreeView extends React.Component {
     }
 
     title_children(children, index, index2) {
+        if (!children) {
+            return;
+        }
         if (children.length === 0) {
-            return <TreeItem nodeId={"l" + index + "-" + index2} key={"l" + index + "-" + index2} label="Loading" />
+            if (this.props.query_for_details) {
+                return <TreeItem nodeId={"l" + index + "-" + index2} key={"l" + index + "-" + index2} label="Loading" />
+            }
         } else {
             return children.map((v3, i3) => {
                 return <TreeItem nodeId={index + "-" + index2 + "-" + i3} key={index + "-" + index2 + "-" + i3} label={v3.name}>
@@ -139,8 +146,13 @@ class MyTreeView extends React.Component {
     }
 
     album_children(children, index) {
+        if (!children) {
+            return;
+        }
         if (children.length === 0) {
-            return <TreeItem nodeId={"l" + index} key={"l" + index} label="Loading" />
+            if (this.props.query_for_details) {
+                return <TreeItem nodeId={"l" + index} key={"l" + index} label="Loading" />
+            }
         } else {
             return children.map((v2, i2) => {
                 return <TreeItem nodeId={index + "-" + i2} key={index + "-" + i2} label={v2.name}>
@@ -188,18 +200,22 @@ export default function LibraryView() {
                 onChange={handleChange}
                 className={classes.tabs}
             >
-                <Tab label="Full" {...a11yProps(0)} />
+                <Tab label="Full"  {...a11yProps(0)} />
                 <Tab label="Album" {...a11yProps(1)} />
                 <Tab label="Track" {...a11yProps(2)} />
+                <Tab label="SMP" {...a11yProps(3)} />
             </Tabs>
             <TabPanel value={value} index={0}>
-                <MyTreeView url="/libraryview/artist/" />
+                <MyTreeView url="/libraryview/artist/" query_for_details={true} />
             </TabPanel>
             <TabPanel value={value} index={1}>
-                <MyTreeView url="/libraryview/albums/" />
+                <MyTreeView url="/libraryview/albums/" query_for_details={true} />
             </TabPanel>
             <TabPanel value={value} index={2}>
-                <MyTreeView url="/libraryview/tracks/" />
+                <MyTreeView url="/libraryview/tracks/" query_for_details={true} />
+            </TabPanel>
+            <TabPanel value={value} index={3}>
+                <MyTreeView url="/smartplaylist/" query_for_details={false} />
             </TabPanel>
         </div >
     )

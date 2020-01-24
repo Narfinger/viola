@@ -17,6 +17,7 @@ use crate::libraryviewstore;
 use crate::loaded_playlist::LoadedPlaylistExt;
 use crate::playlist::restore_playlists;
 use crate::playlist_tabs;
+use crate::smartplaylist_parser;
 use crate::types::*;
 
 #[derive(Clone, Message, Serialize)]
@@ -145,6 +146,15 @@ fn library_albums(
     HttpResponse::Ok().json(items)
 }
 
+#[get("/smartplaylist/")]
+fn smartplaylist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+    let spl = smartplaylist_parser::construct_smartplaylists_from_config()
+        .into_iter()
+        .map(|pl| pl.name)
+        .collect::<Vec<String>>();
+    HttpResponse::Ok().json(spl)
+}
+
 /*fn library_tracks(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     let items = libraryviewstore::get_tracks(&state.pool);
     //println!("{:?}", items);
@@ -195,7 +205,7 @@ fn handle_gstreamer_messages(
     }
 }
 
-pub fn run(pool: DBPool) -> io::Result<()> {
+pub async fn run(pool: DBPool) -> io::Result<()> {
     println!("Loading playlist");
     let lp = Arc::new(RwLock::new(
         restore_playlists(&pool)
@@ -236,13 +246,15 @@ pub fn run(pool: DBPool) -> io::Result<()> {
             //.service(web::resource("/libraryview/albums/").route(web::get().to(library_albums)))
             //.service(web::resource("/libraryview/tracks/").route(web::get().to(library_tracks)))
             .service(library_tree)
+            .service(smartplaylist)
             .service(web::resource("/ws/").route(web::get().to(ws_start)))
             .service(fs::Files::new("/static/", "web_gui/dist/").show_files_listing())
             .service(fs::Files::new("/", "./web_gui/").index_file("index.html"))
     })
     .bind("127.0.0.1:8088")
     .expect("Cannot bind address")
-    .run();
+    .run()
+    .await;
 
     //sys.block_on(server);
 
