@@ -150,8 +150,11 @@ fn library_albums(
 fn smartplaylist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     let spl = smartplaylist_parser::construct_smartplaylists_from_config()
         .into_iter()
-        .map(|pl| pl.name)
-        .collect::<Vec<String>>();
+        .map(|pl| GeneralTreeViewJson::<String> {
+            name: pl.name,
+            children: Vec::new(),
+        })
+        .collect::<Vec<GeneralTreeViewJson<String>>>();
     HttpResponse::Ok().json(spl)
 }
 

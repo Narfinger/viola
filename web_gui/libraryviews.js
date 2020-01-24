@@ -130,9 +130,6 @@ class MyTreeView extends React.Component {
     }
 
     title_children(children, index, index2) {
-        if (!children) {
-            return;
-        }
         if (children.length === 0) {
             if (this.props.query_for_details) {
                 return <TreeItem nodeId={"l" + index + "-" + index2} key={"l" + index + "-" + index2} label="Loading" />
@@ -146,9 +143,6 @@ class MyTreeView extends React.Component {
     }
 
     album_children(children, index) {
-        if (!children) {
-            return;
-        }
         if (children.length === 0) {
             if (this.props.query_for_details) {
                 return <TreeItem nodeId={"l" + index} key={"l" + index} label="Loading" />

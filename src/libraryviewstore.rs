@@ -518,14 +518,9 @@ use crate::types::*;
 use std::collections::HashMap;
 use std::ops::Deref;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct General<T> {
-    name: String,
-    children: Vec<T>,
-}
 pub type Track = String;
-pub type Album = General<Track>;
-pub type Artist = General<Album>;
+pub type Album = GeneralTreeViewJson<Track>;
+pub type Artist = GeneralTreeViewJson<Album>;
 
 impl From<String> for Album {
     fn from(s: String) -> Self {

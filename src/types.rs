@@ -26,6 +26,13 @@ pub type DBPool = Arc<Mutex<diesel::SqliteConnection>>;
 //pub type PlaylistTabsPtr = Rc<RefCell<PlaylistTabs>>;
 pub type LoadedPlaylistPtr = Arc<RwLock<LoadedPlaylist>>;
 
+/// General type to communicate with treeviews
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GeneralTreeViewJson<T> {
+    pub name: String,
+    pub children: Vec<T>,
+}
+
 pub enum PlayerStatus {
     Playing,
     Paused,
