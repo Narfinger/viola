@@ -71,6 +71,7 @@ class MyTreeView extends React.Component {
 
         this.handleChange = this.handleChange.bind(this);
         this.need_to_load = this.need_to_load.bind(this);
+        this.handleDoubleClick = this.handleDoubleClick.bind(this);
     }
 
     need_to_load(ids) {
@@ -129,6 +130,11 @@ class MyTreeView extends React.Component {
         });
     }
 
+    handleDoubleClick(name, event) {
+        console.log("doing event");
+        console.log(name);
+    }
+
     title_children(children, index, index2) {
         if (children.length === 0) {
             if (this.props.query_for_details) {
@@ -165,13 +171,13 @@ class MyTreeView extends React.Component {
             >
                 {
                     this.state.items.map((value, index) => {
-                        return <TreeItem nodeId={String(index)} key={index} label={value.name}>
+                        return <TreeItem nodeId={String(index)} key={index} label={value.name} onDoubleClick={(e) => this.handleDoubleClick(value.name, e)} >
                             {this.album_children(value.children, index)}
                         </TreeItem>
                     })
                 }
             </TreeView >
-        </Paper>
+        </Paper >
 
     }
 }
