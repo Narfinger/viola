@@ -540,92 +540,21 @@ impl From<String> for Artist {
     }
 }
 
-fn get_track_vec(
-    db: &diesel::SqliteConnection,
-    artist_name: Option<&str>,
-    album_name: Option<&str>,
-) -> Vec<Track> {
-    use crate::schema::tracks::dsl::*;
-    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
-    let mut query = tracks.into_boxed();
-    if let Some(a) = artist_name {
-        query = query
-            .filter(artist.eq(a))
-            .filter(artist.is_not_null())
-            .filter(artist.is_not_null())
-            .filter(artist.ne(""));
-    }
-    if let Some(a) = album_name {
-        query = query
-            .filter(album.eq(album_name.unwrap()))
-            .filter(album.ne(""))
-    }
-    query
-        .order_by(tracknumber)
-        .load(db)
-        .expect("Error in loading DB")
-        .into_iter()
-        .map(|t: db::Track| t.title.to_owned())
-        .collect()
-}
-
-pub fn get_album_subtree(db: &diesel::SqliteConnection, artist_name: Option<&str>) -> Vec<Album> {
-    use crate::schema::tracks::dsl::*;
-    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
-
-    let mut query = tracks.into_boxed();
-
-    if let Some(a) = artist_name {
-        query = query
-            .filter(artist.eq(a))
-            .filter(artist.is_not_null())
-            .filter(album.is_not_null())
-            .filter(artist.ne(""))
-            .filter(album.ne(""));
-    } else {
-        query = query
-            .filter(artist.is_not_null())
-            .filter(album.is_not_null());
-    }
-    query
-        .select((album, artist))
-        .distinct()
-        .order_by(album)
-        .load(db)
-        .expect("Error in loading DB")
-        .into_iter()
-        .map(|t: (String, String)| Album {
-            name: t.0,
-            children: get_track_vec(db, Some(&t.1), artist_name),
-        })
-        .collect()
-}
-
-pub fn get_tracks(pool: &DBPool) -> Vec<Track> {
-    let db = pool.lock().expect("Error locking DB");
-    get_track_vec(db.deref(), None, None)
-}
-
-pub fn get_album_trees(pool: &DBPool) -> Vec<Album> {
-    let db = pool.lock().expect("Error locking DB");
-    get_album_subtree(db.deref(), None)
-}
-
-fn track_to_artist(t: String, db: &diesel::SqliteConnection) -> Artist {
-    println!("Doing artist: {:?}", t);
-    Artist {
-        name: t.chars().take(20).collect::<String>(),
-        children: Vec::new(),
-        //children: get_album_subtree(db, &Some(t)),
-    }
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "type", content = "content")]
+pub enum PartialQueryLevel {
+    /// We want to get all the possible artists
+    Artist,
+    /// We want to get all the possible albums. If Some(x), only albums of artist x
+    Album(Option<String>),
+    /// We want to get all the possible tracks. If Some((x,y)), only tracks in album y or artist x
+    Track(Option<(String, String)>),
 }
 
 /// basic query function to model tracks with the apropiate values selected
 fn basic_tree_query<'a>(
     pool: &'a DBPool,
-    artist_opt: &'a Option<String>,
-    album_opt: &'a Option<String>,
-    track_opt: &'a Option<String>,
+    level: &'a PartialQueryLevel,
 ) -> crate::schema::tracks::BoxedQuery<'a, diesel::sqlite::Sqlite> {
     use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl};
@@ -633,81 +562,77 @@ fn basic_tree_query<'a>(
     let mut query = tracks
         .filter(artist.is_not_null())
         .filter(artist.ne(""))
-        .distinct()
-        .order_by(artist)
         .into_boxed();
 
-    if let Some(a) = artist_opt {
-        query = query.filter(artist.eq(a));
+    match level {
+        PartialQueryLevel::Artist => query.order_by(artist).distinct(),
+        PartialQueryLevel::Album(artist_value) => {
+            if let Some(a) = artist_value {
+                query.order_by(album).filter(artist.eq(a)).distinct()
+            } else {
+                query.order_by(album)
+            }
+        }
+        PartialQueryLevel::Track(artist_and_album) => {
+            if let Some((artist_value, album_value)) = artist_and_album {
+                query
+                    .order_by(title)
+                    .filter(artist.eq(artist_value))
+                    .filter(album.eq(album_value))
+            } else {
+                query.order_by(title)
+            }
+        }
     }
-    if let Some(a) = album_opt {
-        query = query.filter(album.eq(a));
-    }
-    if let Some(t) = track_opt {
-        query = query.filter(title.eq(t));
-    }
-    query
 }
 
 /// Queries the tree but only returns not filled in results, i.e., children might be unpopulated
-pub fn query_partial_tree(
-    pool: &DBPool,
-    artist_opt: &Option<String>,
-    album_opt: &Option<String>,
-    track_opt: &Option<String>,
-) -> Vec<Artist> {
+pub fn query_partial_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artist> {
     use crate::schema::tracks::dsl::*;
     use diesel::{GroupByDsl, QueryDsl, RunQueryDsl};
     let p = pool.lock().expect("Error in lock");
-    let mut query = basic_tree_query(pool, artist_opt, album_opt, track_opt);
-    if let Some(ref t) = track_opt {
-        let res = query
-            .select(title)
-            .group_by(title)
-            .load(p.deref())
-            .expect("Error in loading");
+    let mut query = basic_tree_query(pool, level);
 
-        vec![Artist {
-            name: artist_opt.to_owned().unwrap_or("Default".to_string()),
-            children: vec![Album {
-                name: album_opt.to_owned().unwrap_or("Default".to_string()),
-                children: res,
-            }],
-        }]
-    } else if let Some(ref ab) = album_opt {
-        let res = query
-            .select(album)
-            .group_by(album)
-            .load(p.deref())
-            .expect("Error in Loading");
+    match level {
+        PartialQueryLevel::Artist => {
+            let res = query
+                .select(artist)
+                .load(p.deref())
+                .expect("Error in loading");
+            res.into_iter().map(|s: String| s.into()).collect()
+        }
+        PartialQueryLevel::Album(x) => {
+            let res = query
+                .select(album)
+                .load(p.deref())
+                .expect("Error in loading album");
+            vec![Artist {
+                name: "Default".to_string(),
+                children: res.into_iter().map(|s: String| s.into()).collect(),
+            }]
+        }
+        PartialQueryLevel::Track(x) => {
+            let res = query
+                .select(title)
+                .load(p.deref())
+                .expect("Error in loading album");
 
-        vec![Artist {
-            name: artist_opt.to_owned().unwrap_or("Default".to_string()),
-            children: res.into_iter().map(|s: String| s.into()).collect(),
-        }]
-    } else if let Some(ref a) = artist_opt {
-        let res = query
-            .select(artist)
-            .group_by(artist)
-            .load(p.deref())
-            .expect("Error in loading");
-
-        res.into_iter().map(|s: String| s.into()).collect()
-    } else {
-        vec![]
+            vec![Artist {
+                name: "Default".to_string(),
+                children: vec![Album {
+                    name: "Default".to_string(),
+                    children: res.into_iter().map(|s: String| s.into()).collect(),
+                }],
+            }]
+        }
     }
 }
 
 /// Queries the tree with the matching parameters, does not give us partials
-pub fn query_tree(
-    pool: &DBPool,
-    artist_opt: &Option<String>,
-    album_opt: &Option<String>,
-    track_opt: &Option<String>,
-) -> Vec<Artist> {
+pub fn query_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artist> {
     use diesel::RunQueryDsl;
     let p = pool.lock().expect("Error in lock");
-    let mut query = basic_tree_query(pool, artist_opt, album_opt, track_opt);
+    let mut query = basic_tree_query(pool, level);
 
     let mut q_tracks: Vec<db::Track> = query.load(p.deref()).expect("Error in DB");
 

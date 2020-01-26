@@ -101,48 +101,39 @@ async fn transport(
     HttpResponse::Ok().finish()
 }
 
-#[derive(Deserialize, Serialize)]
-struct Q {
-    artist: Option<String>,
-    album: Option<String>,
-    track: Option<String>,
-}
-
-#[get("/libraryview/artist/")]
-async fn library_artist(
+#[post("/libraryview/partial/")]
+async fn library_partial_tree(
     state: web::Data<WebGui>,
-    info: web::Json<Q>,
+    level: web::Json<libraryviewstore::PartialQueryLevel>,
     req: HttpRequest,
 ) -> HttpResponse {
-    let q = info.into_inner();
-
-    let items = libraryviewstore::query_partial_tree(&state.pool, &None, &None, &None);
+    let q = level.into_inner();
+    let items = libraryviewstore::query_partial_tree(&state.pool, &q);
     //println!("items: {:?}", items);
     HttpResponse::Ok().json(items)
 }
 
-#[get("/libraryview/querytree/")]
-async fn library_tree(
+use futures::{Future, Stream, StreamExt};
+#[post("/libraryview/full/")]
+async fn library_full_tree(
     state: web::Data<WebGui>,
-    path: web::Json<Q>,
     req: HttpRequest,
+    //level: web::Json<libraryviewstore::PartialQueryLevel>,
+    mut body: web::Payload,
 ) -> HttpResponse {
-    let q = path.into_inner();
-    let items = libraryviewstore::query_tree(&state.pool, &q.artist, &q.album, &q.track);
-    HttpResponse::Ok().json(items)
-}
+    let mut bytes = web::BytesMut::new();
+    while let Some(item) = body.next().await {
+        bytes.extend_from_slice(&item.unwrap());
+    }
+    format!("Body {:?}!", bytes);
+    let q = serde_json::from_slice::<libraryviewstore::PartialQueryLevel>(&bytes);
+    println!("{:?}", q);
 
-#[get("/libraryview/albums/{name}")]
-fn library_albums(
-    state: web::Data<WebGui>,
-    req: HttpRequest,
-    path: web::Path<String>,
-) -> HttpResponse {
-    let name = path.into_inner();
-    let db = state.pool.lock().expect("Error in db locking");
-    println!("getting album with: {:?}", name);
-    let items = libraryviewstore::get_album_subtree(&db, Some(&name));
-    //println!("{:?}", items);
+    //println!("{:?}", level);
+    //let q = level.into_inner();
+    //let items = libraryviewstore::query_tree(&state.pool, &q);
+    //Ok(HttpResponse::Ok().json(items))
+    let items: Vec<String> = Vec::new();
     HttpResponse::Ok().json(items)
 }
 
@@ -244,11 +235,10 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
             .service(current_id)
             .service(clean)
             .service(transport)
-            .service(library_artist)
-            .service(library_albums)
             //.service(web::resource("/libraryview/albums/").route(web::get().to(library_albums)))
             //.service(web::resource("/libraryview/tracks/").route(web::get().to(library_tracks)))
-            .service(library_tree)
+            .service(library_partial_tree)
+            .service(library_full_tree)
             .service(smartplaylist)
             .service(web::resource("/ws/").route(web::get().to(ws_start)))
             .service(fs::Files::new("/static/", "web_gui/dist/").show_files_listing())

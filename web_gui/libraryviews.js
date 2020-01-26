@@ -123,11 +123,13 @@ class MyTreeView extends React.Component {
 
     componentDidMount() {
         console.log("we mounted treeview " + this.props.url);
-        axios.get(this.props.url).then((response) => {
-            this.setState({
-                items: response.data
+        console.log(this.props.query_param);
+        axios.post(this.props.url,
+            this.props.query_param).then((response) => {
+                this.setState({
+                    items: response.data
+                });
             });
-        });
     }
 
     handleDoubleClick(name, event) {
@@ -135,7 +137,7 @@ class MyTreeView extends React.Component {
         console.log(name);
     }
 
-    title_children(children, index, index2) {
+    third_level_children(children, index, index2) {
         if (children.length === 0) {
             if (this.props.query_for_details) {
                 return <TreeItem nodeId={"l" + index + "-" + index2} key={"l" + index + "-" + index2} label="Loading" />
@@ -148,7 +150,7 @@ class MyTreeView extends React.Component {
         }
     }
 
-    album_children(children, index) {
+    second_level_children(children, index) {
         if (children.length === 0) {
             if (this.props.query_for_details) {
                 return <TreeItem nodeId={"l" + index} key={"l" + index} label="Loading" />
@@ -156,7 +158,7 @@ class MyTreeView extends React.Component {
         } else {
             return children.map((v2, i2) => {
                 return <TreeItem nodeId={index + "-" + i2} key={index + "-" + i2} label={v2.name}>
-                    {this.title_children(v2.children, index, i2)}
+                    {this.third_level_children(v2.children, index, i2)}
                 </TreeItem>
             })
         }
@@ -206,13 +208,13 @@ export default function LibraryView() {
                 <Tab label="SMP" {...a11yProps(3)} />
             </Tabs>
             <TabPanel value={value} index={0}>
-                <MyTreeView url="/libraryview/artist/" query_for_details={true} />
+                <MyTreeView url="/libraryview/partial/" query_for_details={true} query_param={{ "type": "Artist" }} />
             </TabPanel>
             <TabPanel value={value} index={1}>
-                <MyTreeView url="/libraryview/albums/" query_for_details={true} />
+                <MyTreeView url="/libraryview/partial/" query_for_details={true} query_param={{ "album": null }} />
             </TabPanel>
             <TabPanel value={value} index={2}>
-                <MyTreeView url="/libraryview/tracks/" query_for_details={true} />
+                <MyTreeView url="/libraryview/partial/" query_for_details={true} query_param={{ "track": null }} />
             </TabPanel>
             <TabPanel value={value} index={3}>
                 <MyTreeView url="/smartplaylist/" query_for_details={false} />
