@@ -546,9 +546,9 @@ pub enum PartialQueryLevel {
     /// We want to get all the possible artists
     Artist,
     /// We want to get all the possible albums. If Some(x), only albums of artist x
-    Album(Option<String>),
+    Album(Vec<String>),
     /// We want to get all the possible tracks. If Some((x,y)), only tracks in album y or artist x
-    Track(Option<(String, String)>),
+    Track(Vec<String>),
 }
 
 /// basic query function to model tracks with the apropiate values selected
@@ -567,14 +567,14 @@ fn basic_tree_query<'a>(
     match level {
         PartialQueryLevel::Artist => query.order_by(artist).distinct(),
         PartialQueryLevel::Album(artist_value) => {
-            if let Some(a) = artist_value {
+            if let [a] = artist_value.as_slice() {
                 query.order_by(album).filter(artist.eq(a)).distinct()
             } else {
                 query.order_by(album)
             }
         }
         PartialQueryLevel::Track(artist_and_album) => {
-            if let Some((artist_value, album_value)) = artist_and_album {
+            if let [artist_value, album_value] = artist_and_album.as_slice() {
                 query
                     .order_by(title)
                     .filter(artist.eq(artist_value))

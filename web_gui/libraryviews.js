@@ -64,7 +64,17 @@ const useStyles = makeStyles(theme => ({
 class MyTreeView extends React.Component {
     constructor(props) {
         super(props)
+
+        let list = ["Artist", "Album", "Track"];
+        if (props.query_params == "Album") {
+            list.pop();
+        } else if (props.query_params == "Track") {
+            list.pop();
+            list.pop();
+        }
+
         this.state = {
+            query_params_list: list,
             items: [
             ]
         };
@@ -94,6 +104,12 @@ class MyTreeView extends React.Component {
 
             if (this.need_to_load(ids)) {
                 console.log("we would load");
+                let state = null;
+
+                // format we look at is
+                // {"type": "album", "content": "foo"};
+
+
                 let names = [];
                 names.push(this.state.items[ids[0]].name);
                 if (ids.length === 2) {
@@ -101,14 +117,14 @@ class MyTreeView extends React.Component {
                 } else {
                     names.push();
                 }
+                console.log(this.state.query_params_list);
+                console.log(ids);
+                state = this.state.query_params_list[ids.length];
+                let query_param = {"type": state, "content": names};
+                console.log("We could query the following");
+                console.log(query_param);
 
-                axios.get(this.props.url, {
-                    params: {
-                        artist: names[0],
-                        album: names[1],
-                        track: null,
-                    }
-                }).then((response) => {
+                axios.post(this.props.url, query_param).then((response) => {
 
                     //let new_object = { name: node.name, children: response.data };
                     //this.setState({
@@ -125,7 +141,7 @@ class MyTreeView extends React.Component {
         console.log("we mounted treeview " + this.props.url);
         console.log(this.props.query_param);
         axios.post(this.props.url,
-            this.props.query_param).then((response) => {
+            { "type": this.state.query_params_list[0]}).then((response) => {
                 this.setState({
                     items: response.data
                 });
@@ -174,7 +190,7 @@ class MyTreeView extends React.Component {
                 {
                     this.state.items.map((value, index) => {
                         return <TreeItem nodeId={String(index)} key={index} label={value.name} onDoubleClick={(e) => this.handleDoubleClick(value.name, e)} >
-                            {this.album_children(value.children, index)}
+                            {this.second_level_children(value.children, index)}
                         </TreeItem>
                     })
                 }
@@ -208,13 +224,13 @@ export default function LibraryView() {
                 <Tab label="SMP" {...a11yProps(3)} />
             </Tabs>
             <TabPanel value={value} index={0}>
-                <MyTreeView url="/libraryview/partial/" query_for_details={true} query_param={{ "type": "Artist" }} />
+                <MyTreeView url="/libraryview/partial/" query_for_details={true} query_param="Artist" />
             </TabPanel>
             <TabPanel value={value} index={1}>
-                <MyTreeView url="/libraryview/partial/" query_for_details={true} query_param={{ "album": null }} />
+                <MyTreeView url="/libraryview/partial/" query_for_details={true} query_param="Album" />
             </TabPanel>
             <TabPanel value={value} index={2}>
-                <MyTreeView url="/libraryview/partial/" query_for_details={true} query_param={{ "track": null }} />
+                <MyTreeView url="/libraryview/partial/" query_for_details={true} query_param="Track" />
             </TabPanel>
             <TabPanel value={value} index={3}>
                 <MyTreeView url="/smartplaylist/" query_for_details={false} />
