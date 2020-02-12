@@ -204,6 +204,12 @@ class MyTreeView extends React.Component {
             }
         } else {
             return children.map((v2, i2) => {
+                let value = null;
+                if (v2.optional) {
+                    value = v2.optional + "-" + v2.value;
+                } else {
+                    value = v2.value;
+                };
                 return <TreeItem nodeId={index + "-" + i2} key={index + "-" + i2} label={v2.value}>
                     {this.third_level_children(v2.children, index, i2)}
                 </TreeItem>

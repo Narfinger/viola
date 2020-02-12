@@ -518,15 +518,20 @@ use crate::types::*;
 use std::collections::HashMap;
 use std::ops::Deref;
 
-pub type Track = String;
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Track {
+    pub value: String,
+    pub optional: Option<i32>,
+
 pub type Album = GeneralTreeViewJson<Track>;
 pub type Artist = GeneralTreeViewJson<Album>;
 
-impl From<String> for Album {
-    fn from(s: String) -> Self {
+impl From<(String, Option<i32>)> for Album {
+    fn from(s: (String, Option<i32>)) -> Self {
         Album {
-            name: s,
+            value: s.0,
             children: vec![],
+            optional: s.1,
         }
     }
 }
@@ -534,7 +539,8 @@ impl From<String> for Album {
 impl From<String> for Artist {
     fn from(s: String) -> Self {
         Artist {
-            name: s,
+            value: s,
+            optional: None,
             children: vec![],
         }
     }
@@ -559,7 +565,7 @@ fn basic_tree_query<'a>(
     use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl};
     //let p = pool.lock().expect("Error in lock");
-    let mut query = tracks
+    let query = tracks
         .filter(artist.is_not_null())
         .filter(artist.ne(""))
         .into_boxed();
@@ -591,7 +597,7 @@ pub fn query_partial_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artis
     use crate::schema::tracks::dsl::*;
     use diesel::{GroupByDsl, QueryDsl, RunQueryDsl};
     let p = pool.lock().expect("Error in lock");
-    let mut query = basic_tree_query(pool, level);
+    let query = basic_tree_query(pool, level);
 
     match level {
         PartialQueryLevel::Artist => {
@@ -599,29 +605,42 @@ pub fn query_partial_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artis
                 .select(artist)
                 .load(p.deref())
                 .expect("Error in loading");
-            res.into_iter().map(|s: String| s.into()).collect()
+            res.into_iter()
+                .map(|s: String| s.into())
+                .collect::<Vec<Artist>>()
         }
         PartialQueryLevel::Album(x) => {
             let res = query
-                .select(album)
+                .select((album, year))
+                .distinct()
                 .load(p.deref())
                 .expect("Error in loading album");
             vec![Artist {
-                name: "Default".to_string(),
-                children: res.into_iter().map(|s: String| s.into()).collect(),
+                value: "Default".to_string(),
+                optional: None,
+                children: res
+                    .into_iter()
+                    .map(|s: (String, Option<i32>)| s.into())
+                    .collect::<Vec<Album>>(),
             }]
         }
         PartialQueryLevel::Track(x) => {
-            let res = query
-                .select(title)
+            let res: Vec<(Option<i32>, String)> = query
+                .select((tracknumber, title))
+                .distinct()
                 .load(p.deref())
                 .expect("Error in loading album");
 
             vec![Artist {
-                name: "Default".to_string(),
+                value: "Default".to_string(),
+                optional: None,
                 children: vec![Album {
-                    name: "Default".to_string(),
-                    children: res.into_iter().map(|s: String| s.into()).collect(),
+                    value: "Default".to_string(),
+                    optional: None,
+                    children: res
+                        .into_iter()
+                        .map(|(number, t)| (number.unwrap_or(0), t))
+                        .collect::<Vec<Track>>(),
                 }],
             }]
         }
@@ -632,7 +651,7 @@ pub fn query_partial_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artis
 pub fn query_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artist> {
     use diesel::RunQueryDsl;
     let p = pool.lock().expect("Error in lock");
-    let mut query = basic_tree_query(pool, level);
+    let query = basic_tree_query(pool, level);
 
     let mut q_tracks: Vec<db::Track> = query.load(p.deref()).expect("Error in DB");
 
@@ -663,12 +682,17 @@ pub fn query_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artist> {
             let mut children = m
                 .drain()
                 .map(|(k2, v): (String, Vec<db::Track>)| Album {
-                    name: k2.clone(),
-                    children: v.iter().map(|v| v.title.clone()).collect(),
+                    value: k2,
+                    optional: None,
+                    children: v
+                        .iter()
+                        .map(|v| (v.tracknumber.unwrap_or(0), v.title.clone()))
+                        .collect(),
                 })
                 .collect();
             Artist {
-                name: k.clone(),
+                value: k.clone(),
+                optional: None,
                 children,
             }
         })

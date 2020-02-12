@@ -144,6 +144,7 @@ fn smartplaylist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
         .map(|pl| GeneralTreeViewJson::<String> {
             value: pl.name,
             children: Vec::new(),
+            optional: None,
         })
         .collect::<Vec<GeneralTreeViewJson<String>>>();
     HttpResponse::Ok().json(spl)

@@ -29,8 +29,9 @@ pub type LoadedPlaylistPtr = Arc<RwLock<LoadedPlaylist>>;
 /// General type to communicate with treeviews
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GeneralTreeViewJson<T> {
-    pub name: String,
+    pub value: String,
     pub children: Vec<T>,
+    pub optional: Option<i32>,
 }
 
 pub enum PlayerStatus {
