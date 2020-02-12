@@ -93,7 +93,7 @@ class MyTreeView extends React.Component {
             console.log(this.state.items[ids[0]].children);
             return (this.state.items[ids[0]].children.length === 0)
         } else if (ids.length === 2) {
-            return ((this.state.items[ids[0]].children.length === 0) || (this.state.items[ids[0]].children[ids[1]].length === 0))
+            return ((this.state.items[ids[0]].children.length === 0) || (this.state.items[ids[0]].children[ids[1]].children.length === 0))
         }
     }
 
@@ -104,6 +104,8 @@ class MyTreeView extends React.Component {
             console.log("ids");
             console.log(nodeids);
             console.log(ids);
+            console.log(ids.length);
+            console.log(this.need_to_load(ids));
 
             if (this.need_to_load(ids)) {
                 console.log("we would load");
