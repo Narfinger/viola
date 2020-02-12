@@ -131,7 +131,7 @@ class MyTreeView extends React.Component {
                 axios.post(this.props.url, query_param).then((response) => {
                     console.log(response.data[0].children);
                     if (ids.length === 1) {
-                        let new_object = { value: ids[0], children: response.data[0].children };
+                        let new_object = { value: names[0], children: response.data[0].children };
                         //console.log(new_object);
                         this.setState({
                             items: this.state.items.map((obj, index) => {
@@ -140,7 +140,7 @@ class MyTreeView extends React.Component {
                         })
                     } else if (ids.length === 2) {
                         console.log("we found 2 ids");
-                        let new_object = {value: ids[1], children: response.data[0].children[0].children };
+                        let new_object = {value: names[1], children: response.data[0].children[0].children };
                         this.setState({
                             items: this.state.items.map((obj, index) => {
                                 if (ids[0] != index) {
@@ -148,8 +148,8 @@ class MyTreeView extends React.Component {
                                 } else {
                                     console.log("the object stuff");
                                     console.log(new_object);
-                                    let nb = { value: ids[1], children: obj.children.map((objv2, indexv2) => {
-                                        return ids[1] == index ? new_object: objv2;
+                                    let nb = { value: names[0], children: obj.children.map((objv2, indexv2) => {
+                                        return ids[1] == indexv2 ? new_object: objv2;
                                     })};
                                     return nb;
                                 }
@@ -190,9 +190,9 @@ class MyTreeView extends React.Component {
                 return <TreeItem nodeId={"l" + index + "-" + index2} key={"l" + index + "-" + index2} label="Loading" />
             }
         } else {
+
             return children.map((v3, i3) => {
-                return <TreeItem nodeId={index + "-" + index2 + "-" + i3} key={index + "-" + index2 + "-" + i3} label={v3.value}>
-                </TreeItem>
+                return <TreeItem nodeId={index + "-" + index2 + "-" + i3} key={index + "-" + index2 + "-" + i3} label={v3} />
             })
         }
     }
