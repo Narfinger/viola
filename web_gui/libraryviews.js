@@ -100,31 +100,60 @@ class MyTreeView extends React.Component {
     handleChange(event, nodeids) {
         if (this.props.query_for_details && nodeids.length !== 0) {
             let ids = nodeids[0].split("-");
+
+            console.log("ids");
+            console.log(nodeids);
             console.log(ids);
 
             if (this.need_to_load(ids)) {
                 console.log("we would load");
                 let state = null;
-
                 // format we look at is
                 // {"type": "album", "content": "foo"};
 
 
                 let names = [];
-                names.push(this.state.items[ids[0]].name);
+                names.push(this.state.items[ids[0]].value);
                 if (ids.length === 2) {
-                    names.push(this.state.items[ids[0]].children[ids[1]].name);
+                    names.push(this.state.items[ids[0]].children[ids[1]].value);
                 } else {
                     names.push();
                 }
-                console.log(this.state.query_params_list);
-                console.log(ids);
+                //console.log(this.state.query_params_list);
+                //console.log(ids);
                 state = this.state.query_params_list[ids.length];
                 let query_param = {"type": state, "content": names};
-                console.log("We could query the following");
-                console.log(query_param);
+                //console.log("We could query the following");
+                //console.log(query_param);
 
                 axios.post(this.props.url, query_param).then((response) => {
+                    console.log(response.data[0].children);
+                    if (ids.length === 1) {
+                        let new_object = { value: ids[0], children: response.data[0].children };
+                        //console.log(new_object);
+                        this.setState({
+                            items: this.state.items.map((obj, index) => {
+                                return ids[0] == index ? new_object : obj;
+                            })
+                        })
+                    } else if (ids.length === 2) {
+                        console.log("we found 2 ids");
+                        let new_object = {value: ids[1], children: response.data[0].children[0].children };
+                        this.setState({
+                            items: this.state.items.map((obj, index) => {
+                                if (ids[0] != index) {
+                                    return obj;
+                                } else {
+                                    console.log("the object stuff");
+                                    console.log(new_object);
+                                    let nb = { value: ids[1], children: obj.children.map((objv2, indexv2) => {
+                                        return ids[1] == index ? new_object: objv2;
+                                    })};
+                                    return nb;
+                                }
+                            })
+                        });
+                    }
 
                     //let new_object = { name: node.name, children: response.data };
                     //this.setState({
@@ -160,7 +189,7 @@ class MyTreeView extends React.Component {
             }
         } else {
             return children.map((v3, i3) => {
-                return <TreeItem nodeId={index + "-" + index2 + "-" + i3} key={index + "-" + index2 + "-" + i3} label={v3.name}>
+                return <TreeItem nodeId={index + "-" + index2 + "-" + i3} key={index + "-" + index2 + "-" + i3} label={v3.value}>
                 </TreeItem>
             })
         }
@@ -173,7 +202,7 @@ class MyTreeView extends React.Component {
             }
         } else {
             return children.map((v2, i2) => {
-                return <TreeItem nodeId={index + "-" + i2} key={index + "-" + i2} label={v2.name}>
+                return <TreeItem nodeId={index + "-" + i2} key={index + "-" + i2} label={v2.value}>
                     {this.third_level_children(v2.children, index, i2)}
                 </TreeItem>
             })
@@ -189,7 +218,7 @@ class MyTreeView extends React.Component {
             >
                 {
                     this.state.items.map((value, index) => {
-                        return <TreeItem nodeId={String(index)} key={index} label={value.name} onDoubleClick={(e) => this.handleDoubleClick(value.name, e)} >
+                        return <TreeItem nodeId={String(index)} key={index} label={value.value} onDoubleClick={(e) => this.handleDoubleClick(value.value, e)} >
                             {this.second_level_children(value.children, index)}
                         </TreeItem>
                     })

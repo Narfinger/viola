@@ -142,7 +142,7 @@ fn smartplaylist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     let spl = smartplaylist_parser::construct_smartplaylists_from_config()
         .into_iter()
         .map(|pl| GeneralTreeViewJson::<String> {
-            name: pl.name,
+            value: pl.name,
             children: Vec::new(),
         })
         .collect::<Vec<GeneralTreeViewJson<String>>>();
