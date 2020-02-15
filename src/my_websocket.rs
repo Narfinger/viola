@@ -54,7 +54,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
     }
 }
 
-pub fn send_my_message(ws: &RwLock<Option<MyWs>>, msg: &WsMessage) {
+pub fn send_my_message(ws: &RwLock<Option<MyWs>>, msg: WsMessage) {
     let addr = ws.read().unwrap().as_ref().unwrap().addr.clone();
-    addr.clone().unwrap().do_send(*msg);
+    addr.clone().unwrap().do_send(msg);
 }

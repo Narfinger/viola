@@ -69,7 +69,7 @@ async fn library_load(
     let q = level.into_inner();
     let pl = libraryviewstore::load_query(&state.pool, &q);
     *state.playlist.write().unwrap() = pl;
-    my_websocket::send_my_message(&state.ws, &my_websocket::WsMessage::ReloadPlaylist);
+    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
 
     HttpResponse::Ok().finish()
 }
@@ -152,10 +152,7 @@ fn handle_gstreamer_messages(
             match msg {
                 crate::gstreamer_wrapper::GStreamerMessage::Playing => {
                     let pos = state.playlist.current_position();
-                    my_websocket::send_my_message(
-                        &state.ws,
-                        &WsMessage::PlayChanged { index: pos },
-                    );
+                    my_websocket::send_my_message(&state.ws, WsMessage::PlayChanged { index: pos });
                 }
                 _ => (),
             }
