@@ -593,6 +593,21 @@ fn basic_tree_query<'a>(
     }
 }
 
+pub fn load_query(pool: &DBPool, level: &PartialQueryLevel) -> loaded_playlist::LoadedPlaylist {
+    use crate::schema::tracks::dsl::*;
+    use diesel::{GroupByDsl, QueryDsl, RunQueryDsl};
+    let p = pool.lock().expect("Error in lock");
+    let items = basic_tree_query(pool, level)
+        .load(p.deref())
+        .expect("Error in loading");
+    loaded_playlist::LoadedPlaylist {
+        id: -1,
+        name: "Default".to_string(),
+        items: items,
+        current_position: 0,
+    }
+}
+
 /// Queries the tree but only returns not filled in results, i.e., children might be unpopulated
 pub fn query_partial_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artist> {
     use crate::schema::tracks::dsl::*;

@@ -15,65 +15,11 @@ use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
 use crate::libraryviewstore;
 use crate::loaded_playlist::LoadedPlaylistExt;
+use crate::my_websocket::*;
 use crate::playlist::restore_playlists;
 use crate::playlist_tabs;
 use crate::smartplaylist_parser;
 use crate::types::*;
-
-#[derive(Clone, Message, Serialize)]
-#[serde(tag = "type")]
-#[rtype(result = "()")]
-enum WsMessage {
-    PlayChanged { index: usize },
-    Ping,
-}
-
-impl From<WsMessage> for String {
-    fn from(msg: WsMessage) -> Self {
-        serde_json::to_string(&msg).unwrap()
-    }
-}
-
-#[derive(Clone)]
-struct MyWs {
-    addr: Option<Addr<Self>>,
-}
-
-impl Actor for MyWs {
-    type Context = ws::WebsocketContext<Self>;
-}
-
-impl Handler<WsMessage> for MyWs {
-    type Result = ();
-
-    fn handle(&mut self, msg: WsMessage, ctx: &mut Self::Context) {
-        ctx.text(msg);
-    }
-}
-
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
-    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-        match msg {
-            //Ok(ws::Message::Text(b)) => println!("we found text {}", b),
-            _ => {}
-        }
-        //self.addr.unwrap().do_send(msg.unwrap());
-        //println!("We want to handle");
-    }
-}
-
-async fn ws_start(
-    state: web::Data<WebGui>,
-    req: HttpRequest,
-    stream: web::Payload,
-) -> Result<HttpResponse, Error> {
-    let mut ws = MyWs { addr: None };
-    let (addr, resp) = ws::start_with_addr(ws.clone(), &req, stream)?;
-    println!("websocket {:?}", resp);
-    ws.addr = Some(addr);
-    *state.ws.write().unwrap() = Some(ws);
-    Ok(resp)
-}
 
 #[get("/playlist/")]
 async fn playlist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
@@ -111,6 +57,20 @@ async fn library_partial_tree(
     let items = libraryviewstore::query_partial_tree(&state.pool, &q);
     //println!("items: {:?}", items);
     HttpResponse::Ok().json(items)
+}
+
+#[post("/libraryview/load/")]
+async fn library_load(
+    state: web::Data<WebGui>,
+    level: web::Json<libraryviewstore::PartialQueryLevel>,
+    req: HttpRequest,
+) -> HttpResponse {
+    let q = level.into_inner();
+    let pl = libraryviewstore::load_query(&state.pool, &q);
+    *state.playlist.write().unwrap() = pl;
+    my_websocket::send_message(&state, Ws::Message::ReloadPlaylist);
+
+    HttpResponse::Ok().finish()
 }
 
 use futures::{Future, Stream, StreamExt};
@@ -165,39 +125,7 @@ struct WebGui {
     pool: DBPool,
     gstreamer: Arc<gstreamer_wrapper::GStreamer>,
     playlist: LoadedPlaylistPtr,
-    ws: RwLock<Option<MyWs>>,
-}
-
-fn handle_gstreamer_messages(
-    state: web::Data<WebGui>,
-    rx: Receiver<gstreamer_wrapper::GStreamerMessage>,
-) {
-    loop {
-        //println!("loop is working");
-        if let Ok(msg) = rx.try_recv() {
-            match msg {
-                gstreamer_wrapper::GStreamerMessage::Playing => {
-                    let addr = state.ws.read().unwrap().as_ref().unwrap().addr.clone();
-                    let pos = state.playlist.current_position();
-                    addr.clone()
-                        .unwrap()
-                        .do_send(WsMessage::PlayChanged { index: pos })
-                }
-                _ => (),
-            }
-        }
-
-        /*
-        if let Some(a) = state.ws.read().unwrap().as_ref() {
-            if let Some(a) = a.addr.clone() {
-                println!("Sending ping");
-                a.do_send(WsMessage::Ping);
-            }
-        }
-        */
-        let secs = Duration::from_secs(1);
-        thread::sleep(secs);
-    }
+    ws: RwLock<Option<websocket::MyWs>>,
 }
 
 pub async fn run(pool: DBPool) -> io::Result<()> {
@@ -225,7 +153,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
 
     {
         let datac = data.clone();
-        thread::spawn(move || handle_gstreamer_messages(datac, rx));
+        thread::spawn(move || websocket::handle_gstreamer_messages(datac, rx));
     }
     println!("Starting web gui on 127.0.0.1:8088");
     //let mut sys = actix_rt::System::new("test");
@@ -241,7 +169,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
             .service(library_partial_tree)
             .service(library_full_tree)
             .service(smartplaylist)
-            .service(web::resource("/ws/").route(web::get().to(ws_start)))
+            .service(web::resource("/ws/").route(web::get().to(websocket::ws_start)))
             .service(fs::Files::new("/static/", "web_gui/dist/").show_files_listing())
             .service(fs::Files::new("/", "./web_gui/").index_file("index.html"))
     })

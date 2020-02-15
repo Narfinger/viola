@@ -36,6 +36,7 @@ pub mod libraryviewstore;
 pub mod loaded_playlist;
 pub mod maingui;
 pub mod maingui_web;
+pub mod my_websocket;
 pub mod playlist;
 pub mod playlist_manager;
 pub mod playlist_tabs;

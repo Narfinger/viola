@@ -179,9 +179,11 @@ class MyTreeView extends React.Component {
             });
     }
 
-    handleDoubleClick(name, event) {
+    handleDoubleClick(name, level, event) {
         console.log("doing event");
+        block events
         console.log(name);
+        console.log(level);
     }
 
     third_level_children(children, index, index2) {
@@ -197,7 +199,7 @@ class MyTreeView extends React.Component {
                     label += v3.optional + "-";
                 }
                 label += v3.value;
-                return <TreeItem nodeId={index + "-" + index2 + "-" + i3} key={index + "-" + index2 + "-" + i3} label={label} />
+                return <TreeItem nodeId={index + "-" + index2 + "-" + i3} key={index + "-" + index2 + "-" + i3} label={label} onDoubleClick={(e) => this.handleDoubleClick(v3.value, 2, e)} />
             })
         }
     }
@@ -215,7 +217,7 @@ class MyTreeView extends React.Component {
                 } else {
                     value = v2.value;
                 };
-                return <TreeItem nodeId={index + "-" + i2} key={index + "-" + i2} label={value}>
+                return <TreeItem nodeId={index + "-" + i2} key={index + "-" + i2} label={value} onDoubleClick={(e) => this.handleDoubleClick(v2.value, 1, e)} >
                     {this.third_level_children(v2.children, index, i2)}
                 </TreeItem>
             })
@@ -231,7 +233,7 @@ class MyTreeView extends React.Component {
             >
                 {
                     this.state.items.map((value, index) => {
-                        return <TreeItem nodeId={String(index)} key={index} label={value.value} onDoubleClick={(e) => this.handleDoubleClick(value.value, e)} >
+                        return <TreeItem nodeId={String(index)} key={index} label={value.value} onDoubleClick={(e) => this.handleDoubleClick(value.value, 0, e)} >
                             {this.second_level_children(value.children, index)}
                         </TreeItem>
                     })
