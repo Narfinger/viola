@@ -192,7 +192,12 @@ class MyTreeView extends React.Component {
         } else {
 
             return children.map((v3, i3) => {
-                return <TreeItem nodeId={index + "-" + index2 + "-" + i3} key={index + "-" + index2 + "-" + i3} label={v3} />
+                let label = "";
+                if (v3.optional) {
+                    label += v3.optional + "-";
+                }
+                label += v3.value;
+                return <TreeItem nodeId={index + "-" + index2 + "-" + i3} key={index + "-" + index2 + "-" + i3} label={label} />
             })
         }
     }
@@ -210,7 +215,7 @@ class MyTreeView extends React.Component {
                 } else {
                     value = v2.value;
                 };
-                return <TreeItem nodeId={index + "-" + i2} key={index + "-" + i2} label={v2.value}>
+                return <TreeItem nodeId={index + "-" + i2} key={index + "-" + i2} label={value}>
                     {this.third_level_children(v2.children, index, i2)}
                 </TreeItem>
             })

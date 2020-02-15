@@ -522,6 +522,7 @@ use std::ops::Deref;
 pub struct Track {
     pub value: String,
     pub optional: Option<i32>,
+}
 
 pub type Album = GeneralTreeViewJson<Track>;
 pub type Artist = GeneralTreeViewJson<Album>;
@@ -603,6 +604,7 @@ pub fn query_partial_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artis
         PartialQueryLevel::Artist => {
             let res = query
                 .select(artist)
+                .order_by(artist)
                 .load(p.deref())
                 .expect("Error in loading");
             res.into_iter()
@@ -612,6 +614,7 @@ pub fn query_partial_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artis
         PartialQueryLevel::Album(x) => {
             let res = query
                 .select((album, year))
+                .order_by(year)
                 .distinct()
                 .load(p.deref())
                 .expect("Error in loading album");
@@ -627,6 +630,7 @@ pub fn query_partial_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artis
         PartialQueryLevel::Track(x) => {
             let res: Vec<(Option<i32>, String)> = query
                 .select((tracknumber, title))
+                .order_by(tracknumber)
                 .distinct()
                 .load(p.deref())
                 .expect("Error in loading album");
@@ -639,7 +643,10 @@ pub fn query_partial_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artis
                     optional: None,
                     children: res
                         .into_iter()
-                        .map(|(number, t)| (number.unwrap_or(0), t))
+                        .map(|(number, t)| Track {
+                            value: t,
+                            optional: number,
+                        })
                         .collect::<Vec<Track>>(),
                 }],
             }]
@@ -685,8 +692,11 @@ pub fn query_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artist> {
                     value: k2,
                     optional: None,
                     children: v
-                        .iter()
-                        .map(|v| (v.tracknumber.unwrap_or(0), v.title.clone()))
+                        .into_iter()
+                        .map(|v| Track {
+                            value: v.title,
+                            optional: v.tracknumber,
+                        })
                         .collect(),
                 })
                 .collect();
