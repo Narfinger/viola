@@ -3,11 +3,18 @@ use actix::{Actor, StreamHandler};
 use actix_files as fs;
 use actix_rt;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
+use actix_web_actors::ws;
+use std::io;
+use std::sync::mpsc::Receiver;
+use std::sync::Arc;
+use std::sync::RwLock;
+use std::thread;
+use std::time::Duration;
 
 #[derive(Clone, Message, Serialize)]
 #[serde(tag = "type")]
 #[rtype(result = "()")]
-enum WsMessage {
+pub enum WsMessage {
     PlayChanged { index: usize },
     ReloadPlaylist,
     Ping,
@@ -21,7 +28,7 @@ impl From<WsMessage> for String {
 
 #[derive(Clone)]
 pub struct MyWs {
-    addr: Option<Addr<Self>>,
+    pub addr: Option<Addr<Self>>,
 }
 
 impl Actor for MyWs {
@@ -47,51 +54,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
     }
 }
 
-pub async fn ws_start(
-    state: WebGui,
-    req: HttpRequest,
-    stream: web::Payload,
-) -> Result<HttpResponse, Error> {
-    let mut ws = MyWs { addr: None };
-    let (addr, resp) = ws::start_with_addr(ws.clone(), &req, stream)?;
-    println!("websocket {:?}", resp);
-    ws.addr = Some(addr);
-    *state.ws.write().unwrap() = Some(ws);
-    Ok(resp)
-}
-
-pub fn handle_gstreamer_messages(
-    state: web::Data<WebGui>,
-    rx: Receiver<gstreamer_wrapper::GStreamerMessage>,
-) {
-    loop {
-        //println!("loop is working");
-        if let Ok(msg) = rx.try_recv() {
-            match msg {
-                gstreamer_wrapper::GStreamerMessage::Playing => {
-                    let addr = state.ws.read().unwrap().as_ref().unwrap().addr.clone();
-                    let pos = state.playlist.current_position();
-                    addr.clone()
-                        .unwrap()
-                        .do_send(WsMessage::PlayChanged { index: pos })
-                }
-                _ => (),
-            }
-        }
-
-        /*
-        if let Some(a) = state.ws.read().unwrap().as_ref() {
-            if let Some(a) = a.addr.clone() {
-                println!("Sending ping");
-                a.do_send(WsMessage::Ping);
-            }
-        }
-        */
-        let secs = Duration::from_secs(1);
-        thread::sleep(secs);
-    }
-}
-
-pub fn send_message(state: &WebGui, msg: Ws::Message) {
+pub fn send_my_message(state: &RwLock<Option<MyWs>>, msg: WsMessage) {
     panic!("not yet implemented");
 }

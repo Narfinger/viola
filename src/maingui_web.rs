@@ -15,6 +15,7 @@ use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
 use crate::libraryviewstore;
 use crate::loaded_playlist::LoadedPlaylistExt;
+use crate::my_websocket;
 use crate::my_websocket::*;
 use crate::playlist::restore_playlists;
 use crate::playlist_tabs;
@@ -68,7 +69,7 @@ async fn library_load(
     let q = level.into_inner();
     let pl = libraryviewstore::load_query(&state.pool, &q);
     *state.playlist.write().unwrap() = pl;
-    my_websocket::send_message(&state, Ws::Message::ReloadPlaylist);
+    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
 
     HttpResponse::Ok().finish()
 }
@@ -125,7 +126,52 @@ struct WebGui {
     pool: DBPool,
     gstreamer: Arc<gstreamer_wrapper::GStreamer>,
     playlist: LoadedPlaylistPtr,
-    ws: RwLock<Option<websocket::MyWs>>,
+    ws: RwLock<Option<my_websocket::MyWs>>,
+}
+
+async fn ws_start(
+    state: web::Data<WebGui>,
+    req: HttpRequest,
+    stream: web::Payload,
+) -> Result<HttpResponse, Error> {
+    let mut ws = MyWs { addr: None };
+    let (addr, resp) = ws::start_with_addr(ws.clone(), &req, stream)?;
+    println!("websocket {:?}", resp);
+    ws.addr = Some(addr);
+    *state.ws.write().unwrap() = Some(ws);
+    Ok(resp)
+}
+
+fn handle_gstreamer_messages(
+    state: web::Data<WebGui>,
+    rx: Receiver<crate::gstreamer_wrapper::GStreamerMessage>,
+) {
+    loop {
+        //println!("loop is working");
+        if let Ok(msg) = rx.try_recv() {
+            match msg {
+                crate::gstreamer_wrapper::GStreamerMessage::Playing => {
+                    let addr = state.ws.read().unwrap().as_ref().unwrap().addr.clone();
+                    let pos = state.playlist.current_position();
+                    addr.clone()
+                        .unwrap()
+                        .do_send(WsMessage::PlayChanged { index: pos })
+                }
+                _ => (),
+            }
+        }
+
+        /*
+        if let Some(a) = state.ws.read().unwrap().as_ref() {
+            if let Some(a) = a.addr.clone() {
+                println!("Sending ping");
+                a.do_send(WsMessage::Ping);
+            }
+        }
+        */
+        let secs = Duration::from_secs(1);
+        thread::sleep(secs);
+    }
 }
 
 pub async fn run(pool: DBPool) -> io::Result<()> {
@@ -153,7 +199,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
 
     {
         let datac = data.clone();
-        thread::spawn(move || websocket::handle_gstreamer_messages(datac, rx));
+        thread::spawn(move || handle_gstreamer_messages(datac, rx));
     }
     println!("Starting web gui on 127.0.0.1:8088");
     //let mut sys = actix_rt::System::new("test");
@@ -169,7 +215,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
             .service(library_partial_tree)
             .service(library_full_tree)
             .service(smartplaylist)
-            .service(web::resource("/ws/").route(web::get().to(websocket::ws_start)))
+            .service(web::resource("/ws/").route(web::get().to(ws_start)))
             .service(fs::Files::new("/static/", "web_gui/dist/").show_files_listing())
             .service(fs::Files::new("/", "./web_gui/").index_file("index.html"))
     })

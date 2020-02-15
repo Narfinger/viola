@@ -514,6 +514,7 @@ fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gd
 */
 
 use crate::db;
+use crate::loaded_playlist;
 use crate::types::*;
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -594,8 +595,7 @@ fn basic_tree_query<'a>(
 }
 
 pub fn load_query(pool: &DBPool, level: &PartialQueryLevel) -> loaded_playlist::LoadedPlaylist {
-    use crate::schema::tracks::dsl::*;
-    use diesel::{GroupByDsl, QueryDsl, RunQueryDsl};
+    use diesel::RunQueryDsl;
     let p = pool.lock().expect("Error in lock");
     let items = basic_tree_query(pool, level)
         .load(p.deref())
@@ -603,7 +603,7 @@ pub fn load_query(pool: &DBPool, level: &PartialQueryLevel) -> loaded_playlist::
     loaded_playlist::LoadedPlaylist {
         id: -1,
         name: "Default".to_string(),
-        items: items,
+        items,
         current_position: 0,
     }
 }
@@ -611,7 +611,7 @@ pub fn load_query(pool: &DBPool, level: &PartialQueryLevel) -> loaded_playlist::
 /// Queries the tree but only returns not filled in results, i.e., children might be unpopulated
 pub fn query_partial_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artist> {
     use crate::schema::tracks::dsl::*;
-    use diesel::{GroupByDsl, QueryDsl, RunQueryDsl};
+    use diesel::{QueryDsl, RunQueryDsl};
     let p = pool.lock().expect("Error in lock");
     let query = basic_tree_query(pool, level);
 
