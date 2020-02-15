@@ -94,6 +94,9 @@ class Main extends React.Component {
             switch (msg.type) {
                 case "Ping": break;
                 case "PlayChanged": this.setState({ current: msg.index, status: PlayState.Playing }); break;
+                case "ReloadPlaylist": axios.get("/playlist/").then((response) => this.setState({
+                    pl: response.data
+                }));
                 default:
             }
         }
