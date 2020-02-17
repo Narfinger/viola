@@ -199,6 +199,7 @@ function columnWidths(index) {
         case 2: return 300; //artist
         case 3: return 300; //album
         case 4: return 200; //genre
+        case 5: return 100; //year
         default: return 10000;
     }
 }
@@ -231,6 +232,7 @@ class Cell extends React.PureComponent {
                 case 2: return <div style={style}>{item.artist}</div>
                 case 3: return <div style={style}>{item.album}</div>
                 case 4: return <div style={style}>{item.genre}</div>
+                case 5: return <div style={style}>{item.year}</div>
                 default: return <div style={this.props.style}>ERROR</div>
             }
         } else {
@@ -241,6 +243,7 @@ class Cell extends React.PureComponent {
                 case 2: return <div style={this.props.style} onDoubleClick={this.click}>{item.artist}</div>
                 case 3: return <div style={this.props.style} onDoubleClick={this.click}>{item.album}</div>
                 case 4: return <div style={this.props.style} onDoubleClick={this.click}>{item.genre}</div>
+                case 5: return <div style={this.props.style} onDoubleClick={this.click}>{item.year}</div>
                 default: return <div style={this.props.style}>ERROR</div>
             }
         }
@@ -257,7 +260,7 @@ class SongView extends React.Component {
         return <div><div>
             <VSGrid
                 itemData={items}
-                columnCount={5}
+                columnCount={6}
                 columnWidth={columnWidths}
                 height={700}
                 rowCount={this.props.pl.length}
