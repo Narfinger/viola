@@ -18,7 +18,7 @@ error-chain = "0.12"
 futures = "0.3"
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 env_logger = "0.7"
-indicatif = "0.13"
+indicatif = "0.14"
 #jwalk = "0.4"    # A progress bar and cli reporting library for Rust
 taglib = "1.0"        # Rust bindings for TagLib
 gdk = "0.12"               # Rust bindings for the GDK 3 library

@@ -63,14 +63,25 @@ async fn library_partial_tree(
 #[post("/libraryview/load/")]
 async fn library_load(
     state: web::Data<WebGui>,
-    level: web::Json<libraryviewstore::PartialQueryLevel>,
+    //level: web::Json<libraryviewstore::PartialQueryLevel>,
+    mut body: web::Payload,
     req: HttpRequest,
 ) -> HttpResponse {
-    let q = level.into_inner();
-    let pl = libraryviewstore::load_query(&state.pool, &q);
-    *state.playlist.write().unwrap() = pl;
-    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
+    let mut bytes = web::BytesMut::new();
+    while let Some(item) = body.next().await {
+        bytes.extend_from_slice(&item.unwrap());
+    }
+    println!("Body {:?}!", bytes);
+    let q = serde_json::from_slice::<libraryviewstore::PartialQueryLevel>(&bytes);
+    println!("{:?}", q);
 
+    //println!("{:?}", level);
+    /*
+        let q = level.into_inner();
+        let pl = libraryviewstore::load_query(&state.pool, &q);
+        *state.playlist.write().unwrap() = pl;
+        my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
+    */
     HttpResponse::Ok().finish()
 }
 
@@ -109,6 +120,25 @@ fn smartplaylist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
         })
         .collect::<Vec<GeneralTreeViewJson<String>>>();
     HttpResponse::Ok().json(spl)
+}
+
+#[post("/smartplaylist/load/")]
+fn smartplaylist_load(
+    state: web::Data<WebGui>,
+    index: web::Json<usize>,
+    req: HttpRequest,
+) -> HttpResponse {
+    use crate::smartplaylist_parser::LoadSmartPlaylist;
+    let spl = smartplaylist_parser::construct_smartplaylists_from_config();
+    let pl = spl.get(index.into_inner());
+
+    if let Some(p) = pl {
+        let rp = p.load(&state.pool);
+        *state.playlist.write().unwrap() = rp;
+        my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
+    }
+
+    HttpResponse::Ok().finish()
 }
 
 /*fn library_tracks(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
@@ -211,7 +241,9 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
             //.service(web::resource("/libraryview/tracks/").route(web::get().to(library_tracks)))
             .service(library_partial_tree)
             .service(library_full_tree)
+            .service(library_load)
             .service(smartplaylist)
+            .service(smartplaylist_load)
             .service(web::resource("/ws/").route(web::get().to(ws_start)))
             .service(fs::Files::new("/static/", "web_gui/dist/").show_files_listing())
             .service(fs::Files::new("/", "./web_gui/").index_file("index.html"))
