@@ -576,23 +576,23 @@ fn basic_tree_query<'a>(
         PartialQueryLevel::Artist => query.order_by(artist).distinct(),
         PartialQueryLevel::Album(artist_value) => {
             if let [a] = artist_value.as_slice() {
-                query.order_by(album).filter(artist.eq(a)).distinct()
+                query.order_by(path).filter(artist.eq(a)).distinct()
             } else {
-                query.order_by(album)
+                query.order_by(path)
             }
         }
         PartialQueryLevel::Track(artist_and_album) => {
             if let [artist_value, album_value] = artist_and_album.as_slice() {
                 query
-                    .order_by(title)
+                    .order_by(path)
                     .filter(artist.eq(artist_value))
                     .filter(album.eq(album_value))
-            } else if let [artist_value, album_value, track_value] = artist_and_album.as_slice() {
+            } else if let [artist_value, album_value, title_value] = artist_and_album.as_slice() {
                 query
-                    .order_by(title)
+                    .order_by(path)
                     .filter(artist.eq(artist_value))
                     .filter(album.eq(album_value))
-                    .filter(track.eq(track_value))
+                    .filter(title.eq(title_value))
             } else {
                 query.order_by(title)
             }
