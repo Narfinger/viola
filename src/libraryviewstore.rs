@@ -587,6 +587,12 @@ fn basic_tree_query<'a>(
                     .order_by(title)
                     .filter(artist.eq(artist_value))
                     .filter(album.eq(album_value))
+            } else if let [artist_value, album_value, track_value] = artist_and_album.as_slice() {
+                query
+                    .order_by(title)
+                    .filter(artist.eq(artist_value))
+                    .filter(album.eq(album_value))
+                    .filter(track.eq(track_value))
             } else {
                 query.order_by(title)
             }

@@ -63,25 +63,13 @@ async fn library_partial_tree(
 #[post("/libraryview/load/")]
 async fn library_load(
     state: web::Data<WebGui>,
-    //level: web::Json<libraryviewstore::PartialQueryLevel>,
-    mut body: web::Payload,
+    level: web::Json<libraryviewstore::PartialQueryLevel>,
     req: HttpRequest,
 ) -> HttpResponse {
-    let mut bytes = web::BytesMut::new();
-    while let Some(item) = body.next().await {
-        bytes.extend_from_slice(&item.unwrap());
-    }
-    println!("Body {:?}!", bytes);
-    let q = serde_json::from_slice::<libraryviewstore::PartialQueryLevel>(&bytes);
-    println!("{:?}", q);
-
-    //println!("{:?}", level);
-    /*
-        let q = level.into_inner();
-        let pl = libraryviewstore::load_query(&state.pool, &q);
-        *state.playlist.write().unwrap() = pl;
-        my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
-    */
+    let q = level.into_inner();
+    let pl = libraryviewstore::load_query(&state.pool, &q);
+    *state.playlist.write().unwrap() = pl;
+    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
 
