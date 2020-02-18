@@ -82,16 +82,16 @@ export default function LibraryView() {
                 <Tab label="SMP" {...a11yProps(3)} />
             </Tabs>
             <TabPanel value={value} index={0}>
-                <MyTreeView url="/libraryview/partial/" query_for_details={true} query_param="Artist" />
+                <MyTreeView url="/libraryview/partial/" query_params_list={["Artist", "Album", "Track"]} />
             </TabPanel>
             <TabPanel value={value} index={1}>
-                <MyTreeView url="/libraryview/partial/" query_for_details={true} query_param="Album" />
+                <MyTreeView url="/libraryview/partial/" query_params_list={["Album", "Track"]} />
             </TabPanel>
             <TabPanel value={value} index={2}>
-                <MyTreeView url="/libraryview/partial/" query_for_details={true} query_param="Track" />
+                <MyTreeView url="/libraryview/partial/" query_params_list={["Track"]} />
             </TabPanel>
             <TabPanel value={value} index={3}>
-                <SmartplaylistView url="/smartplaylist/" query_for_details={false} />
+                <SmartplaylistView url="/smartplaylist/" />
             </TabPanel>
         </div >
     )
