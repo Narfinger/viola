@@ -578,7 +578,7 @@ fn basic_tree_query<'a>(
             if let [a] = artist_value.as_slice() {
                 query.order_by(path).filter(artist.eq(a)).distinct()
             } else {
-                query.order_by(path)
+                query.order_by(album)
             }
         }
         PartialQueryLevel::Track(artist_and_album) => {

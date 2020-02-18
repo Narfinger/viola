@@ -111,14 +111,21 @@ fn smartplaylist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
 }
 
 #[post("/smartplaylist/load/")]
-fn smartplaylist_load(
+async fn smartplaylist_load(
     state: web::Data<WebGui>,
-    index: web::Json<usize>,
+    //index: web::Json<usize>,
     req: HttpRequest,
+    mut body: web::Payload,
 ) -> HttpResponse {
     use crate::smartplaylist_parser::LoadSmartPlaylist;
+    let mut bytes = web::BytesMut::new();
+    while let Some(item) = body.next().await {
+        bytes.extend_from_slice(&item.unwrap());
+    }
+    let q = serde_json::from_slice::<usize>(&bytes).expect("Error in parsing");
+
     let spl = smartplaylist_parser::construct_smartplaylists_from_config();
-    let pl = spl.get(index.into_inner());
+    let pl = spl.get(q);
 
     if let Some(p) = pl {
         let rp = p.load(&state.pool);
