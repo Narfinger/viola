@@ -102,7 +102,7 @@ async fn main() -> io::Result<()> {
         info!("Updating Database");
         if let Ok(preferences) = PreferencesMap::<String>::load(&APP_INFO, PREFS_KEY) {
             if let Some(music_dir) = preferences.get("music_dir") {
-                db::build_db(music_dir, &pool.clone()).unwrap();
+                db::build_db(music_dir, &pool).unwrap();
             } else {
                 error!("Could not find music_dir");
             }

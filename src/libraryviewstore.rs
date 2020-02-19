@@ -707,7 +707,7 @@ pub fn query_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artist> {
     hashmap
         .drain()
         .map(|(k, mut m): (String, HashMap<String, Vec<db::Track>>)| {
-            let mut children = m
+            let children = m
                 .drain()
                 .map(|(k2, v): (String, Vec<db::Track>)| Album {
                     value: k2,
@@ -722,7 +722,7 @@ pub fn query_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artist> {
                 })
                 .collect();
             Artist {
-                value: k.clone(),
+                value: k,
                 optional: None,
                 children,
             }

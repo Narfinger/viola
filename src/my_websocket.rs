@@ -1,15 +1,7 @@
 use actix::prelude::*;
 use actix::{Actor, StreamHandler};
-use actix_files as fs;
-use actix_rt;
-use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
-use std::io;
-use std::sync::mpsc::Receiver;
-use std::sync::Arc;
 use std::sync::RwLock;
-use std::thread;
-use std::time::Duration;
 
 #[derive(Clone, Message, Serialize)]
 #[serde(tag = "type")]
@@ -56,5 +48,5 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
 
 pub fn send_my_message(ws: &RwLock<Option<MyWs>>, msg: WsMessage) {
     let addr = ws.read().unwrap().as_ref().unwrap().addr.clone();
-    addr.clone().unwrap().do_send(msg);
+    addr.unwrap().do_send(msg);
 }

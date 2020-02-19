@@ -1,7 +1,4 @@
-use actix::prelude::*;
-use actix::{Actor, StreamHandler};
 use actix_files as fs;
-use actix_rt;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 use diesel::Connection;
@@ -24,14 +21,14 @@ use crate::smartplaylist_parser;
 use crate::types::*;
 
 #[get("/playlist/")]
-async fn playlist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+async fn playlist(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     let items = &*state.playlist.items();
     HttpResponse::Ok().json(items)
 }
 
 // removes all already played data
 #[get("/clean/")]
-async fn clean(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+async fn clean(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     state.playlist.clean();
 
     //reload playlist
@@ -53,7 +50,7 @@ async fn transport(
 async fn library_partial_tree(
     state: web::Data<WebGui>,
     level: web::Json<libraryviewstore::PartialQueryLevel>,
-    req: HttpRequest,
+    _: HttpRequest,
 ) -> HttpResponse {
     let q = level.into_inner();
     let items = libraryviewstore::query_partial_tree(&state.pool, &q);
@@ -65,7 +62,7 @@ async fn library_partial_tree(
 async fn library_load(
     state: web::Data<WebGui>,
     level: web::Json<libraryviewstore::PartialQueryLevel>,
-    req: HttpRequest,
+    _: HttpRequest,
 ) -> HttpResponse {
     let q = level.into_inner();
     let pl = libraryviewstore::load_query(&state.pool, &q);
@@ -74,7 +71,7 @@ async fn library_load(
     HttpResponse::Ok().finish()
 }
 
-use futures::{Future, Stream, StreamExt};
+use futures::StreamExt;
 #[post("/libraryview/full/")]
 async fn library_full_tree(
     state: web::Data<WebGui>,
@@ -99,7 +96,7 @@ async fn library_full_tree(
 }
 
 #[get("/smartplaylist/")]
-fn smartplaylist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+fn smartplaylist(_: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     let spl = smartplaylist_parser::construct_smartplaylists_from_config()
         .into_iter()
         .map(|pl| GeneralTreeViewJson::<String> {
@@ -115,7 +112,7 @@ fn smartplaylist(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
 async fn smartplaylist_load(
     state: web::Data<WebGui>,
     //index: web::Json<usize>,
-    req: HttpRequest,
+    _: HttpRequest,
     mut body: web::Payload,
 ) -> HttpResponse {
     use crate::smartplaylist_parser::LoadSmartPlaylist;
@@ -144,7 +141,7 @@ async fn smartplaylist_load(
 }*/
 
 #[get("/currentid/")]
-async fn current_id(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+async fn current_id(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(state.playlist.current_position())
 }
 
@@ -249,7 +246,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
 
     println!("Starting web gui on 127.0.0.1:8088");
     //let mut sys = actix_rt::System::new("test");
-    let server = HttpServer::new(move || {
+    HttpServer::new(move || {
         App::new()
             .app_data(data.clone())
             .service(playlist)

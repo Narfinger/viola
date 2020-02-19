@@ -1,7 +1,6 @@
 use crate::glib::ObjectExt;
 use gstreamer;
 use gstreamer::ElementExtManual;
-use gtk;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::Arc;
