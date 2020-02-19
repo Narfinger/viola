@@ -5,6 +5,7 @@ use std::ops::Deref;
 use std::path::PathBuf;
 
 use crate::db::Track;
+use crate::playlist::{NewPlaylist, NewPlaylistTrack, Playlist};
 use crate::types::{DBPool, LoadedPlaylistPtr};
 
 #[derive(Clone, Debug)]
@@ -22,6 +23,7 @@ pub trait LoadedPlaylistExt {
     fn current_position(&self) -> usize;
     fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>>;
     fn clean(&self);
+    fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error>;
 }
 
 impl LoadedPlaylistExt for LoadedPlaylistPtr {
@@ -49,6 +51,68 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
         let mut s = self.write().unwrap();
         s.items = s.items.split_off(index);
         s.current_position = 1;
+    }
+
+    fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error> {
+        use crate::schema::playlists::dsl::*;
+        use crate::schema::playlisttracks::dsl::*;
+        use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+
+        let pl = self.read().expect("Could not read lock to save playlist");
+
+        info!("playlist id {:?}", pl.id);
+
+        let exists = diesel::select(diesel::dsl::exists(
+            playlists.filter(crate::schema::playlists::id.eq(pl.id)),
+        ))
+        .get_result(db)
+        .expect("Error in db");
+
+        if exists {
+            // the playlist is already in the database
+            diesel::update(playlists.find(pl.id))
+                .set(current_position.eq(pl.current_position as i32))
+                .execute(db)?;
+        }
+
+        let playlist: Playlist = if exists {
+            playlists.find(pl.id).first::<Playlist>(db)?
+        } else {
+            let t = vec![NewPlaylist {
+                id: pl.id,
+                name: pl.name.clone(),
+                current_position: pl.current_position as i32,
+            }];
+            diesel::insert_into(playlists).values(&t).execute(db)?;
+            playlists.filter(name.eq(&pl.name)).first(db)?
+        };
+
+        //deleting old tracks
+        diesel::delete(playlisttracks)
+            .filter(playlist_id.eq(playlist.id))
+            .execute(db)?;
+
+        //inserting new tracks
+        info!("starting to gather");
+        let vals = pl
+            .items
+            .iter()
+            .enumerate()
+            .map(|(index, track)| NewPlaylistTrack {
+                playlist_id: playlist.id,
+                track_id: track.id,
+                playlist_order: index as i32,
+            })
+            .collect::<Vec<NewPlaylistTrack>>();
+        info!("collected and inserting");
+        //info!("All values {:?}", vals);
+        diesel::insert_into(playlisttracks)
+            .values(&vals)
+            .execute(db)?;
+
+        info!("done");
+
+        Ok(())
     }
 }
 

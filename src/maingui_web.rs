@@ -4,6 +4,7 @@ use actix_files as fs;
 use actix_rt;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
+use diesel::Connection;
 use std::io;
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
@@ -154,6 +155,21 @@ struct WebGui {
     ws: RwLock<Option<my_websocket::MyWs>>,
 }
 
+trait Web {
+    fn save(&self);
+}
+
+impl Web for WebGui {
+    fn save(&self) {
+        let db = self.pool.lock().expect("DB Error");
+        db.transaction::<_, diesel::result::Error, _>(|| {
+            self.playlist.save(&*db)?;
+            Ok(())
+        })
+        .expect("Error in saving");
+    }
+}
+
 async fn ws_start(
     state: web::Data<WebGui>,
     req: HttpRequest,
@@ -223,6 +239,14 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
         let datac = data.clone();
         thread::spawn(move || handle_gstreamer_messages(datac, rx));
     }
+    {
+        let datac = data.clone();
+        thread::spawn(move || loop {
+            thread::sleep(Duration::new(10 * 60, 0));
+            datac.save();
+        });
+    }
+
     println!("Starting web gui on 127.0.0.1:8088");
     //let mut sys = actix_rt::System::new("test");
     let server = HttpServer::new(move || {
