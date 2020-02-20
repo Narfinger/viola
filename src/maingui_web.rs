@@ -30,8 +30,7 @@ async fn playlist(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
 #[get("/clean/")]
 async fn clean(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     state.playlist.clean();
-
-    //reload playlist
+    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
 
