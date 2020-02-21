@@ -50,7 +50,7 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
         let index = self.current_position();
         let mut s = self.write().unwrap();
         s.items = s.items.split_off(index);
-        s.current_position = 1;
+        s.current_position = 0;
     }
 
     fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error> {
