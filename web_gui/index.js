@@ -26,6 +26,26 @@ const PlayState = Object.freeze({
     Playing: 3
 });
 
+function playstate_from_string(input) {
+    if (input === "Stopped") {
+        return PlayState.Stopped;
+    } else if (input === "Playing") {
+        return PlayState.Playing;
+    } else if (input === "Paused") {
+        return PlayState.Paused;
+    }
+}
+
+function playstate_to_string(input) {
+    if (input === PlayState.Stopped) {
+        return "Stopped";
+    } else if (input === PlayState.Playing) {
+        return "Playing";
+    } else if (input === PlayState.Paused) {
+        return "Paused";
+    }
+}
+
 const ButtonEvent = Object.freeze({
     Next: 1,
     Previous: 2,
@@ -88,15 +108,19 @@ class Main extends React.Component {
             console.log('connected')
         }
 
+        this.update_playstate();
         this.ws.onmessage = evt => {
             var msg = JSON.parse(evt.data);
             console.log(msg);
             switch (msg.type) {
                 case "Ping": break;
                 case "PlayChanged": this.setState({ current: msg.index, status: PlayState.Playing }); break;
-                case "ReloadPlaylist": axios.get("/playlist/").then((response) => this.setState({
+                case "ReloadPlaylist": {
+                    axios.get("/playlist/").then((response) => this.setState({
                     pl: response.data
                 }));
+                this.update_playstate();
+            }
                 default:
             }
         }
@@ -108,6 +132,14 @@ class Main extends React.Component {
         }
     }
 
+    update_playstate() {
+        axios.get("/transport/").then((response) => {
+            this.setState({
+                state: playstate_from_string(response.data)
+            })
+        });
+    }
+
     clean() {
         axios.post("/clean/");
         axios.get("/playlist/").then((response) => this.setState({
@@ -116,7 +148,7 @@ class Main extends React.Component {
         axios.get("/currentid/").then((response) => {
             this.setState({ current: response.data });
         })
-
+        this.update_playstate();
     }
 
     handleButtonPush(e) {
@@ -138,6 +170,7 @@ class Main extends React.Component {
     refresh() {
         axios.get("/currentid/").then((response) => {
             this.setState({ current: response.data });
+            this.update_playstate();
         })
     }
 
@@ -158,6 +191,9 @@ class Main extends React.Component {
                 </Grid>
                 <Grid item xs={2}>
                     <Button variant="contained" color="secondary" onClick={this.clean}>Clean</Button>
+                </Grid>
+                <Grid item xs={1}>
+                    {playstate_to_string(this.state.status)}
                 </Grid>
                 <Grid item xs={10}>
                     <SongView current={this.state.current} pl={this.state.pl} />

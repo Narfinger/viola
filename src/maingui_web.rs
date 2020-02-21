@@ -35,6 +35,11 @@ async fn clean(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().finish()
 }
 
+#[get("/transport/")]
+async fn get_transport(state: web::Data<WebGui>) -> HttpResponse {
+    HttpResponse::Ok().json(state.gstreamer.get_state())
+}
+
 #[post("/transport/")]
 async fn transport(
     state: web::Data<WebGui>,
@@ -187,6 +192,7 @@ fn handle_gstreamer_messages(
     loop {
         //println!("loop is working");
         if let Ok(msg) = rx.try_recv() {
+            println!("received message: {:?}", msg);
             match msg {
                 crate::gstreamer_wrapper::GStreamerMessage::Playing => {
                     let pos = state.playlist.current_position();
@@ -253,6 +259,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
             .service(current_id)
             .service(clean)
             .service(transport)
+            .service(get_transport)
             //.service(web::resource("/libraryview/albums/").route(web::get().to(library_albums)))
             //.service(web::resource("/libraryview/tracks/").route(web::get().to(library_tracks)))
             .service(library_partial_tree)

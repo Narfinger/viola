@@ -1,6 +1,6 @@
 use crate::glib::ObjectExt;
 use gstreamer;
-use gstreamer::ElementExtManual;
+use gstreamer::{ElementExt, ElementExtManual, GstObjectExt};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::Arc;
@@ -26,6 +26,7 @@ impl Drop for GStreamer {
     }
 }
 
+#[derive(Debug, Serialize)]
 pub enum GStreamerMessage {
     Pausing,
     Stopped,
@@ -61,11 +62,12 @@ pub fn new(
     pipeline
         .connect("about-to-finish", true, move |_| {
             warn!("received signal to go to next track");
-            eos_tx.send(()).expect("Error in sending eos to own bus");
+            //eos_tx.send(()).expect("Error in sending eos to own bus");
             None
         })
         .expect("Could not connect to about-to-finish signal");
 
+    let bus = pipeline.get_bus().unwrap();
     let res = Arc::new(GStreamer {
         pipeline,
         current_playlist,
@@ -75,12 +77,21 @@ pub fn new(
     });
 
     let resc = res.clone();
-    glib::timeout_add(50, move || {
-        if eos_rx.try_recv().is_ok() {
-            info!("we found eos");
-            resc.gstreamer_handle_eos();
+    std::thread::spawn(move || {
+        use gstreamer::MessageView;
+        for msg in bus.iter_timed(gstreamer::CLOCK_TIME_NONE) {
+            match msg.view() {
+                MessageView::Eos(..) => resc.gstreamer_handle_eos(),
+                MessageView::Error(err) => println!(
+                    "Error from {:?}: {} ({:?})",
+                    err.get_src().map(|s| s.get_path_string()),
+                    err.get_error(),
+                    err.get_debug()
+                ),
+                MessageView::StateChanged(state_changed) => {}
+                _ => (),
+            }
         }
-        glib::Continue(true)
     });
 
     //let resc = res.clone();
@@ -106,6 +117,7 @@ pub trait GStreamerExt {
     fn do_gstreamer_action(&self, _: &GStreamerAction);
     fn gstreamer_update_gui(&self) -> glib::Continue;
     fn gstreamer_handle_eos(&self);
+    fn get_state(&self) -> GStreamerMessage;
 }
 
 impl GStreamerExt for GStreamer {
@@ -247,5 +259,12 @@ impl GStreamerExt for GStreamer {
                     .expect("Error in gstreamer sending message to gui");
             }
         };
+    }
+
+    fn get_state(&self) -> GStreamerMessage {
+        self.pipeline
+            .get_state(gstreamer::ClockTime(Some(5)))
+            .1
+            .into()
     }
 }
