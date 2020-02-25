@@ -1,11 +1,13 @@
 import React from 'react';
 import Paper from '@material-ui/core/Paper';
+import Input from '@material-ui/core/Input';
+import { makeStyles } from '@material-ui/core/styles';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import TreeView from '@material-ui/lab/TreeView';
 import TreeItem from '@material-ui/lab/TreeItem';
+import AwesomeDebouncePromise from 'awesome-debounce-promise';
 import axios from 'axios';
-
 
 export default class MyTreeView extends React.Component {
     constructor(props) {
@@ -13,13 +15,22 @@ export default class MyTreeView extends React.Component {
 
         this.state = {
             items: [
-            ]
+            ],
+            search: "",
         };
 
+        this.refresh = this.refresh.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.need_to_load = this.need_to_load.bind(this);
         this.handleDoubleClick = this.handleDoubleClick.bind(this);
+        this.refreshDebounced = AwesomeDebouncePromise(this.refresh, 500);
+        this.searchChange = this.searchChange.bind(this);
     }
+
+    searchChange(e) {
+        this.setState({ search: e.target.value });
+        this.refreshDebounced();
+    };
 
     need_to_load(ids) {
         if (!this.props.query_for_details) {
@@ -55,7 +66,7 @@ export default class MyTreeView extends React.Component {
                 //console.log(ids);
 
                 state = this.props.query_params_list[ids.length];
-                let query_param = {"lvl": {"type": state, "content": names}};
+                let query_param = { "lvl": { "type": state, "content": names }, "search": "" };
                 //console.log("We could query the following");
                 //console.log(query_param);
 
@@ -69,41 +80,45 @@ export default class MyTreeView extends React.Component {
                             })
                         })
                     } else if (ids.length === 2) {
-                        let new_object = {value: names[1], children: response.data[0].children[0].children };
+                        let new_object = { value: names[1], children: response.data[0].children[0].children };
                         this.setState({
                             items: this.state.items.map((obj, index) => {
                                 if (ids[0] != index) {
                                     return obj;
                                 } else {
-                                    let nb = { value: names[0], children: obj.children.map((objv2, indexv2) => {
-                                        return ids[1] == indexv2 ? new_object: objv2;
-                                    })};
+                                    let nb = {
+                                        value: names[0], children: obj.children.map((objv2, indexv2) => {
+                                            return ids[1] == indexv2 ? new_object : objv2;
+                                        })
+                                    };
                                     return nb;
                                 }
                             })
                         });
                     }
-
-                    //let new_object = { name: node.name, children: response.data };
-                    //this.setState({
-                    //    items: this.state.items.map((obj, index) => {
-                    //        return ids[0] == index ? new_object : obj;
-                    //    })
-                    //});
                 })
             }
         }
     }
 
     componentDidMount() {
+        this.refresh();
+    }
+
+    refresh() {
         let query_param = {};
-        if (this.props.query_params_list[0]!="Artist") {
-            query_param = {"lvl": {"type": this.props.query_params_list[0],
-        "content":[]}};
+        if (this.props.query_params_list[0] != "Artist") {
+            query_param = {
+                "search": this.state.items,
+                "lvl": {
+                    "type": this.props.query_params_list[0],
+                    "content": []
+                }
+            };
         } else {
-            query_param = {"lvl": {"type": this.props.query_params_list[0]}};
+            query_param = { "search": this.state.search, "lvl": { "type": this.props.query_params_list[0] } };
         }
-        axios.post(this.props.url,query_param).then((response) => {
+        axios.post(this.props.url, query_param).then((response) => {
             let data = response.data;
             if (this.props.query_params_list.length == 1) {
                 data = response.data[0].children[0].children;
@@ -118,32 +133,22 @@ export default class MyTreeView extends React.Component {
 
     handleDoubleClick(event, index) {
         event.stopPropagation();
-        console.log("doing event");
         let ids = index.split("-");
         let values = [];
         let current = this.state.items;
-        for(let id of ids) {
+        for (let id of ids) {
             let val = current[parseInt(id)];
             values.push(val.value);
             current = val.children;
         }
-        console.log(values);
-        let type = this.props.query_params_list[Math.min(ids.length,this.props.query_params_list.length-1)];
-        console.log(type);
-        axios.post("/libraryview/load/", {"lvl": {
-            "type": type,
-            "content": values,
-        }});
-        /*
-        console.log(name);
-        console.log(level);
-        let type = this.props.query_params_list[level+1];
-        console.log(type);
-        axios.post("/libraryview/load/", {
-            "type": type,
-            "content": [name],
+        let type = this.props.query_params_list[Math.min(ids.length, this.props.query_params_list.length - 1)];
+        axios.post("/libraryview/partial/", {
+            "search": this.state.search,
+            "lvl": {
+                "type": type,
+                "content": values,
+            }
         });
-        */
     }
 
     third_level_children(children, index, index2) {
@@ -167,7 +172,7 @@ export default class MyTreeView extends React.Component {
 
     second_level_children(children, index) {
         if ((!children || children.length == 0) && this.props.query_for_details) {
-                return <TreeItem nodeId={"l" + index} key={"l" + index} label="Loading" />
+            return <TreeItem nodeId={"l" + index} key={"l" + index} label="Loading" />
         } else if (!children || children.length == 0) {
             return
         } else {
@@ -179,7 +184,7 @@ export default class MyTreeView extends React.Component {
                     value = v2.value;
                 };
                 let i = index + "-" + i2;
-                return <TreeItem nodeId={i} key={i} label={value} onDoubleClick={(e) => this.handleDoubleClick(e,i)} >
+                return <TreeItem nodeId={i} key={i} label={value} onDoubleClick={(e) => this.handleDoubleClick(e, i)} >
                     {this.third_level_children(v2.children, index, i2)}
                 </TreeItem>
             })
@@ -188,6 +193,10 @@ export default class MyTreeView extends React.Component {
 
     render() {
         return <Paper style={{ maxHeight: 800, width: 800, overflow: 'auto' }}>
+            <form noValidate autoComplete="off">
+                <Input defaultValue=""
+                    variant="outlined" onChange={this.searchChange} />
+            </form>
             <TreeView height="60vh"
                 defaultCollapseIcon={<ExpandMoreIcon />}
                 defaultExpandIcon={<ChevronRightIcon />}
@@ -209,4 +218,4 @@ export default class MyTreeView extends React.Component {
 
 MyTreeView.defaultProps = {
     query_for_details: true,
-  };
+};
