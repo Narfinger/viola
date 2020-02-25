@@ -55,7 +55,7 @@ export default class MyTreeView extends React.Component {
                 //console.log(ids);
 
                 state = this.props.query_params_list[ids.length];
-                let query_param = {"type": state, "content": names};
+                let query_param = {"lvl": {"type": state, "content": names}};
                 //console.log("We could query the following");
                 //console.log(query_param);
 
@@ -98,10 +98,10 @@ export default class MyTreeView extends React.Component {
     componentDidMount() {
         let query_param = {};
         if (this.props.query_params_list[0]!="Artist") {
-            query_param = {"type": this.props.query_params_list[0],
-        "content":[]};
+            query_param = {"lvl": {"type": this.props.query_params_list[0],
+        "content":[]}};
         } else {
-            query_param = {"type": this.props.query_params_list[0]};
+            query_param = {"lvl": {"type": this.props.query_params_list[0]}};
         }
         axios.post(this.props.url,query_param).then((response) => {
             let data = response.data;
@@ -130,10 +130,10 @@ export default class MyTreeView extends React.Component {
         console.log(values);
         let type = this.props.query_params_list[Math.min(ids.length,this.props.query_params_list.length-1)];
         console.log(type);
-        axios.post("/libraryview/load/", {
+        axios.post("/libraryview/load/", {"lvl": {
             "type": type,
             "content": values,
-        });
+        }});
         /*
         console.log(name);
         console.log(level);

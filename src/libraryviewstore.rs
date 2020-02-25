@@ -549,8 +549,14 @@ impl From<String> for Artist {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct PartialQueryLevel {
+    pub lvl: PartialQueryLevelEnum,
+    pub search: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type", content = "content")]
-pub enum PartialQueryLevel {
+pub enum PartialQueryLevelEnum {
     /// We want to get all the possible artists
     Artist,
     /// We want to get all the possible albums. If Some(x), only albums of artist x
@@ -560,28 +566,35 @@ pub enum PartialQueryLevel {
 }
 
 /// basic query function to model tracks with the apropiate values selected
-fn basic_tree_query<'a>(
-    pool: &'a DBPool,
-    level: &'a PartialQueryLevel,
-) -> crate::schema::tracks::BoxedQuery<'a, diesel::sqlite::Sqlite> {
+fn basic_tree_query(
+    pql: &PartialQueryLevel,
+) -> crate::schema::tracks::BoxedQuery<diesel::sqlite::Sqlite> {
     use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl};
-    //let p = pool.lock().expect("Error in lock");
-    let query = tracks
+
+    let level = &pql.lvl;
+
+    let mut query = tracks
         .filter(artist.is_not_null())
         .filter(artist.ne(""))
         .into_boxed();
+    if let Some(s) = pql.search.as_ref().map(|s| String::from("%") + &s + "%") {
+        query = query
+            .filter(artist.eq(s.clone()))
+            .or_filter(album.eq(s.clone()))
+            .or_filter(title.eq(s));
+    }
 
     match level {
-        PartialQueryLevel::Artist => query.order_by(artist).distinct(),
-        PartialQueryLevel::Album(artist_value) => {
+        PartialQueryLevelEnum::Artist => query.order_by(artist).distinct(),
+        PartialQueryLevelEnum::Album(artist_value) => {
             if let [a] = artist_value.as_slice() {
                 query.order_by(path).filter(artist.eq(a)).distinct()
             } else {
                 query.order_by(album)
             }
         }
-        PartialQueryLevel::Track(artist_and_album) => {
+        PartialQueryLevelEnum::Track(artist_and_album) => {
             if let [artist_value, album_value] = artist_and_album.as_slice() {
                 query
                     .order_by(path)
@@ -600,10 +613,10 @@ fn basic_tree_query<'a>(
     }
 }
 
-pub fn load_query(pool: &DBPool, level: &PartialQueryLevel) -> loaded_playlist::LoadedPlaylist {
+pub fn load_query(pool: &DBPool, pql: &PartialQueryLevel) -> loaded_playlist::LoadedPlaylist {
     use diesel::RunQueryDsl;
     let p = pool.lock().expect("Error in lock");
-    let items = basic_tree_query(pool, level)
+    let items = basic_tree_query(pql)
         .load(p.deref())
         .expect("Error in loading");
     loaded_playlist::LoadedPlaylist {
@@ -615,14 +628,15 @@ pub fn load_query(pool: &DBPool, level: &PartialQueryLevel) -> loaded_playlist::
 }
 
 /// Queries the tree but only returns not filled in results, i.e., children might be unpopulated
-pub fn query_partial_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artist> {
+pub fn query_partial_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist> {
     use crate::schema::tracks::dsl::*;
     use diesel::{QueryDsl, RunQueryDsl};
     let p = pool.lock().expect("Error in lock");
-    let query = basic_tree_query(pool, level);
+    let level = &pql.lvl;
+    let query = basic_tree_query(pql);
 
     match level {
-        PartialQueryLevel::Artist => {
+        PartialQueryLevelEnum::Artist => {
             let res = query
                 .select(artist)
                 .order_by(artist)
@@ -632,7 +646,7 @@ pub fn query_partial_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artis
                 .map(|s: String| s.into())
                 .collect::<Vec<Artist>>()
         }
-        PartialQueryLevel::Album(x) => {
+        PartialQueryLevelEnum::Album(x) => {
             let res = query
                 .select((album, year))
                 .order_by(year)
@@ -648,7 +662,7 @@ pub fn query_partial_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artis
                     .collect::<Vec<Album>>(),
             }]
         }
-        PartialQueryLevel::Track(x) => {
+        PartialQueryLevelEnum::Track(x) => {
             let res: Vec<(Option<i32>, String)> = query
                 .select((tracknumber, title))
                 .order_by(tracknumber)
@@ -676,10 +690,10 @@ pub fn query_partial_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artis
 }
 
 /// Queries the tree with the matching parameters, does not give us partials
-pub fn query_tree(pool: &DBPool, level: &PartialQueryLevel) -> Vec<Artist> {
+pub fn query_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist> {
     use diesel::RunQueryDsl;
     let p = pool.lock().expect("Error in lock");
-    let query = basic_tree_query(pool, level);
+    let query = basic_tree_query(pql);
 
     let mut q_tracks: Vec<db::Track> = query.load(p.deref()).expect("Error in DB");
 
