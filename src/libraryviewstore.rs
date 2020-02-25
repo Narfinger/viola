@@ -551,7 +551,7 @@ impl From<String> for Artist {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PartialQueryLevel {
     pub lvl: PartialQueryLevelEnum,
-    pub search: Option<String>,
+    pub search: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -570,7 +570,7 @@ fn basic_tree_query(
     pql: &PartialQueryLevel,
 ) -> crate::schema::tracks::BoxedQuery<diesel::sqlite::Sqlite> {
     use crate::schema::tracks::dsl::*;
-    use diesel::{ExpressionMethods, QueryDsl};
+    use diesel::{ExpressionMethods, QueryDsl, TextExpressionMethods};
 
     let level = &pql.lvl;
 
@@ -578,11 +578,12 @@ fn basic_tree_query(
         .filter(artist.is_not_null())
         .filter(artist.ne(""))
         .into_boxed();
-    if let Some(s) = pql.search.as_ref().map(|s| String::from("%") + &s + "%") {
+    if !pql.search.is_empty() {
+        let s = String::from("%") + &pql.search + "%";
         query = query
-            .filter(artist.eq(s.clone()))
-            .or_filter(album.eq(s.clone()))
-            .or_filter(title.eq(s));
+            .filter(artist.like(s.clone()))
+            .or_filter(album.like(s.clone()))
+            .or_filter(title.like(s));
     }
 
     match level {
@@ -634,6 +635,9 @@ pub fn query_partial_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist>
     let p = pool.lock().expect("Error in lock");
     let level = &pql.lvl;
     let query = basic_tree_query(pql);
+
+    let sql = diesel::debug_query(&query).to_string();
+    info!("query: {}", sql);
 
     match level {
         PartialQueryLevelEnum::Artist => {
