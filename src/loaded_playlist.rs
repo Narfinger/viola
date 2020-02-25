@@ -167,25 +167,33 @@ impl PlaylistControls for LoadedPlaylistPtr {
     }
 
     fn next_or_eol(&self, pool: &DBPool) -> Option<String> {
-        let mut s = self.write().unwrap();
         {
-            let track = s.items.get(s.current_position);
-            //update playlist counter
-            let dbc = pool.clone();
+            // update playcounter in db
+            let track = {
+                let s = self.read().unwrap();
+                s.items.get(s.current_position).map(|t| t.id)
+            };
             if let Some(t) = track {
-                let id = t.id;
-                gtk::idle_add(move || update_playcount(id, &dbc));
+                let dbc = pool.clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::new(1, 0));
+                    update_playcount(t, &dbc);
+                });
             }
         }
 
-        s.current_position += 1;
-        let next_pos = s.current_position;
+        {
+            let next_pos = {
+                let mut s = self.write().unwrap();
+                s.current_position += 1 % s.items.len();
+                s.current_position
+            };
 
-        if s.items.get(next_pos as usize).is_some() {
-            Some(self.next())
-        } else {
-            s.current_position = 0;
-            None
+            if next_pos != 0 {
+                Some(self.get_current_uri())
+            } else {
+                None
+            }
         }
     }
 }

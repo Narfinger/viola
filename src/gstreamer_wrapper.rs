@@ -59,13 +59,13 @@ pub fn new(
 
     //old method for eos
     let (eos_tx, eos_rx) = sync_channel::<()>(1);
-    pipeline
-        .connect("about-to-finish", true, move |_| {
-            warn!("received signal to go to next track");
-            //eos_tx.send(()).expect("Error in sending eos to own bus");
-            None
-        })
-        .expect("Could not connect to about-to-finish signal");
+    //pipeline
+    //    .connect("about-to-finish", true, move |_| {
+    //        warn!("received signal to go to next track");
+    //eos_tx.send(()).expect("Error in sending eos to own bus");
+    //        None
+    //    })
+    //    .expect("Could not connect to about-to-finish signal");
 
     let bus = pipeline.get_bus().unwrap();
     let res = Arc::new(GStreamer {
@@ -81,15 +81,20 @@ pub fn new(
         use gstreamer::MessageView;
         for msg in bus.iter_timed(gstreamer::CLOCK_TIME_NONE) {
             match msg.view() {
-                MessageView::Eos(..) => resc.gstreamer_handle_eos(),
+                MessageView::Eos(..) => {
+                    warn!("We found an eos on the bus!");
+                    resc.gstreamer_handle_eos()
+                }
                 MessageView::Error(err) => println!(
                     "Error from {:?}: {} ({:?})",
                     err.get_src().map(|s| s.get_path_string()),
                     err.get_error(),
                     err.get_debug()
                 ),
-                MessageView::StateChanged(state_changed) => {}
-                _ => (),
+                MessageView::StateChanged(state_changed) => {
+                    warn!("Message bus has state change: {:?}", state_changed)
+                }
+                m => (warn!("Found message {:?}", m)),
             }
         }
     });
