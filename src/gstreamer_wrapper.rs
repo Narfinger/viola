@@ -1,11 +1,14 @@
 use rodio::Sink;
-use std::file::{BufReader, File};
+use std::fs::File;
+use std::io::BufReader;
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::Arc;
 
 use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls};
 //use crate::playlist_tabs::PlaylistControlsImmutable;
+use crate::db;
 use crate::types::*;
 
 pub struct GStreamer {
@@ -39,6 +42,7 @@ pub enum GStreamerAction {
     Playing,
     Pausing,
     Previous,
+    Stop,
     /// This means we selected one specific track
     Play(usize),
     Seek(u64),
@@ -55,6 +59,7 @@ impl From<GStreamerAction> for GStreamerMessage {
             GStreamerAction::Play(i) => GStreamerMessage::Playing,
             GStreamerAction::Seek(i) => GStreamerMessage::Playing,
             GStreamerAction::RepeatOnce => GStreamerMessage::Playing,
+            GStreamerAction::Stop => GStreamerMessage::Stopped,
         }
     }
 }
@@ -107,9 +112,12 @@ impl GStreamerExt for GStreamer {
                 return;
             }
             GStreamerAction::Playing => {
-                let i = self.current_playlist.previous();
-                self.do_gstreamer_action(GStreamerAction::Play(i));
-                return;
+                self.sink.stop();
+                let path = self.current_playlist.get_current_path();
+                let f = File::open(path).expect("Error in opening file");
+                let source = rodio::Decoder::new(BufReader::new(f)).unwrap();
+                self.sink.append(source);
+                self.sink.play();
             }
             GStreamerAction::Pausing => {
                 if self.sink.is_paused() {
@@ -122,7 +130,7 @@ impl GStreamerExt for GStreamer {
             GStreamerAction::Previous => {
                 let i = self.current_playlist.previous();
                 if let Some(j) = i {
-                    self.do_gstreamer_action(GStreamerAction::Play(i));
+                    self.do_gstreamer_action(GStreamerAction::Play(j));
                     return;
                 } else {
                     self.do_gstreamer_action(GStreamerAction::Pausing);
@@ -131,9 +139,12 @@ impl GStreamerExt for GStreamer {
             GStreamerAction::Play(i) => {
                 self.sink.stop();
                 let path = self.current_playlist.set(i);
-                let f = File::open(p);
+                let f = File::open(path).expect("Error in opening file");
                 let source = rodio::Decoder::new(BufReader::new(f)).unwrap();
                 self.sink.append(source);
+            }
+            GStreamerAction::Stop => {
+                self.sink.stop();
             }
             GStreamerAction::Seek(i) => {}
             GStreamerAction::RepeatOnce => {
@@ -156,41 +167,40 @@ impl GStreamerExt for GStreamer {
         let res = if self.repeat_once.load(Ordering::Relaxed) {
             info!("we are repeat playing");
             self.repeat_once.store(false, Ordering::Relaxed);
-            Some(self.current_playlist.get_current_uri())
+            Some(self.current_playlist.get_current_path())
         } else {
-            self.current_playlist.next_or_eol(&self.pool)
+            self.current_playlist.next_or_eol(&self.pool).and_then(|i| {
+                self.current_playlist
+                    .items()
+                    .get(i)
+                    .map(|t: &db::Track| t.path.clone())
+                    .map(|ref s| s.into())
+            })
         };
         match res {
             None => {
-                self.sender
-                    .send(GStreamerMessage::Stopped)
-                    .expect("Message Queue Error");
-                self.sender
-                    .send(GStreamerMessage::Stopped)
-                    .expect("Error in gstreamer sending message to gui");
+                self.do_gstreamer_action(GStreamerAction::Stop);
             }
-            Some(i) => {
-                info!("Next should play {:?}", &i);
-                self.pipeline
-                    .set_state(gstreamer::State::Ready)
-                    .expect("Error in changing gstreamer state to ready");
-                self.pipeline
-                    .set_property("uri", &i)
-                    .expect("Error setting new url for gstreamer");
-                self.pipeline
-                    .set_state(gstreamer::State::Playing)
-                    .expect("Error in changing gstreamer state to playing");
+            Some(p) => {
+                self.sink.stop();
+                let f = File::open(p).expect("Error in opening file");
+                let source = rodio::Decoder::new(BufReader::new(f)).unwrap();
+                self.sink.append(source);
+                self.sink.play();
                 self.sender
                     .send(GStreamerMessage::Playing)
-                    .expect("Error in gstreamer sending message to gui");
+                    .expect("Error in sending");
             }
-        };
+        }
     }
 
     fn get_state(&self) -> GStreamerMessage {
-        self.pipeline
-            .get_state(gstreamer::ClockTime(Some(5)))
-            .1
-            .into()
+        if self.sink.is_paused() {
+            GStreamerMessage::Pausing
+        } else if self.sink.empty() {
+            GStreamerMessage::Stopped
+        } else {
+            GStreamerMessage::Playing
+        }
     }
 }

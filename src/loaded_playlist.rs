@@ -119,7 +119,7 @@ pub trait PlaylistControls {
     fn get_current_path(&self) -> PathBuf;
     fn get_current_uri(&self) -> String;
     fn previous(&self) -> Option<usize>;
-    fn set(&self, _: i32) -> PathBuf;
+    fn set(&self, _: usize) -> PathBuf;
     fn next_or_eol(&self, _: &DBPool) -> Option<usize>;
 }
 
@@ -150,10 +150,10 @@ impl PlaylistControls for LoadedPlaylistPtr {
         }
     }
 
-    fn set(&self, i: i32) -> PathBuf {
+    fn set(&self, i: usize) -> PathBuf {
         {
             let mut s = self.write().unwrap();
-            s.current_position = i as usize;
+            s.current_position = i;
         }
         self.get_current_path()
     }
