@@ -117,10 +117,10 @@ class Main extends React.Component {
                 case "PlayChanged": this.setState({ current: msg.index, status: PlayState.Playing }); break;
                 case "ReloadPlaylist": {
                     axios.get("/playlist/").then((response) => this.setState({
-                    pl: response.data
-                }));
-                this.update_playstate();
-            }
+                        pl: response.data
+                    }));
+                    this.update_playstate();
+                }
                 default:
             }
         }
@@ -230,12 +230,13 @@ class LibraryDrawer extends React.Component {
 
 function columnWidths(index) {
     switch (index) {
-        case 0: return 100;  //number
-        case 1: return 400; //title
-        case 2: return 300; //artist
-        case 3: return 300; //album
-        case 4: return 200; //genre
-        case 5: return 100; //year
+        case 0: return 50; //number
+        case 1: return 50; //tracknumber
+        case 2: return 400; //title
+        case 3: return 300; //artist
+        case 4: return 300; //album
+        case 5: return 200; //genre
+        case 6: return 100; //year
         default: return 10000;
     }
 }
@@ -264,22 +265,24 @@ class Cell extends React.PureComponent {
             //console.log(style);
             switch (this.props.columnIndex) {
                 case 0: return <div style={style}>{this.props.rowIndex}</div>
-                case 1: return <div style={style}>{item.title}</div>
-                case 2: return <div style={style}>{item.artist}</div>
-                case 3: return <div style={style}>{item.album}</div>
-                case 4: return <div style={style}>{item.genre}</div>
-                case 5: return <div style={style}>{item.year}</div>
+                case 1: return <div style={style}>{item.tracknumber}</div>
+                case 2: return <div style={style}>{item.title}</div>
+                case 3: return <div style={style}>{item.artist}</div>
+                case 4: return <div style={style}>{item.album}</div>
+                case 5: return <div style={style}>{item.genre}</div>
+                case 6: return <div style={style}>{item.year}</div>
                 default: return <div style={this.props.style}>ERROR</div>
             }
         } else {
             switch (this.props.columnIndex) {
                 case 0: return <div style={this.props.style} onDoubleClick={this.click}>{this.props.rowIndex}</div>
                 //<PlayIndexButton style={this.props.style} index={this.props.rowIndex}></PlayIndexButton>//<div style={this.props.style}>{this.props.rowIndex}</div>
-                case 1: return <div style={this.props.style} onDoubleClick={this.click}>{item.title}</div>
-                case 2: return <div style={this.props.style} onDoubleClick={this.click}>{item.artist}</div>
-                case 3: return <div style={this.props.style} onDoubleClick={this.click}>{item.album}</div>
-                case 4: return <div style={this.props.style} onDoubleClick={this.click}>{item.genre}</div>
-                case 5: return <div style={this.props.style} onDoubleClick={this.click}>{item.year}</div>
+                case 1: return <div style={this.props.style} onDoubleClick={this.click}>{item.tracknumber}</div>
+                case 2: return <div style={this.props.style} onDoubleClick={this.click}>{item.title}</div>
+                case 3: return <div style={this.props.style} onDoubleClick={this.click}>{item.artist}</div>
+                case 4: return <div style={this.props.style} onDoubleClick={this.click}>{item.album}</div>
+                case 5: return <div style={this.props.style} onDoubleClick={this.click}>{item.genre}</div>
+                case 6: return <div style={this.props.style} onDoubleClick={this.click}>{item.year}</div>
                 default: return <div style={this.props.style}>ERROR</div>
             }
         }
@@ -296,7 +299,7 @@ class SongView extends React.Component {
         return <div><div>
             <VSGrid
                 itemData={items}
-                columnCount={6}
+                columnCount={7}
                 columnWidth={columnWidths}
                 height={700}
                 rowCount={this.props.pl.length}
