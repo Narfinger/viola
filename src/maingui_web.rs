@@ -45,8 +45,7 @@ async fn transport(
     state: web::Data<WebGui>,
     msg: web::Json<gstreamer_wrapper::GStreamerAction>,
 ) -> HttpResponse {
-    println!("stuff: {:?}", &msg);
-    state.gstreamer.do_gstreamer_action(&msg);
+    state.gstreamer.do_gstreamer_action(msg.into_inner());
 
     HttpResponse::Ok().finish()
 }
@@ -164,6 +163,7 @@ trait Web {
 impl Web for WebGui {
     fn save(&self) {
         let db = self.pool.lock().expect("DB Error");
+        println!("AutoSave");
         db.transaction::<_, diesel::result::Error, _>(|| {
             self.playlist.save(&*db)?;
             Ok(())
@@ -192,7 +192,7 @@ fn handle_gstreamer_messages(
     loop {
         //println!("loop is working");
         if let Ok(msg) = rx.try_recv() {
-            println!("received message: {:?}", msg);
+            //println!("received message: {:?}", msg);
             match msg {
                 crate::gstreamer_wrapper::GStreamerMessage::Playing => {
                     let pos = state.playlist.current_position();
@@ -246,6 +246,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
         let datac = data.clone();
         thread::spawn(move || loop {
             thread::sleep(Duration::new(10 * 60, 0));
+            info!("Saving playlist stuff");
             datac.save();
         });
     }

@@ -1,4 +1,3 @@
-use gtk;
 use owning_ref::RwLockReadGuardRef;
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use std::ops::Deref;
@@ -119,10 +118,9 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
 pub trait PlaylistControls {
     fn get_current_path(&self) -> PathBuf;
     fn get_current_uri(&self) -> String;
-    fn previous(&self) -> String;
-    fn next(&self) -> String;
-    fn set(&self, _: i32) -> String;
-    fn next_or_eol(&self, _: &DBPool) -> Option<String>;
+    fn previous(&self) -> Option<usize>;
+    fn set(&self, _: i32) -> PathBuf;
+    fn next_or_eol(&self, _: &DBPool) -> Option<usize>;
 }
 
 impl PlaylistControls for LoadedPlaylistPtr {
@@ -142,31 +140,25 @@ impl PlaylistControls for LoadedPlaylistPtr {
         )
     }
 
-    fn previous(&self) -> String {
-        {
-            let mut s = self.write().unwrap();
+    fn previous(&self) -> Option<usize> {
+        let mut s = self.write().unwrap();
+        if s.current_position == 0 {
+            None
+        } else {
             s.current_position -= 1;
+            Some(s.current_position)
         }
-        self.get_current_uri()
     }
 
-    fn next(&self) -> String {
-        {
-            let mut s = self.write().unwrap();
-            s.current_position += 1;
-        }
-        self.get_current_uri()
-    }
-
-    fn set(&self, i: i32) -> String {
+    fn set(&self, i: i32) -> PathBuf {
         {
             let mut s = self.write().unwrap();
             s.current_position = i as usize;
         }
-        self.get_current_uri()
+        self.get_current_path()
     }
 
-    fn next_or_eol(&self, pool: &DBPool) -> Option<String> {
+    fn next_or_eol(&self, pool: &DBPool) -> Option<usize> {
         {
             // update playcounter in db
             let track = {
@@ -190,7 +182,7 @@ impl PlaylistControls for LoadedPlaylistPtr {
             };
 
             if next_pos != 0 {
-                Some(self.get_current_uri())
+                Some(self.current_position())
             } else {
                 None
             }
@@ -198,7 +190,7 @@ impl PlaylistControls for LoadedPlaylistPtr {
     }
 }
 
-fn update_playcount(t_id: i32, db: &DBPool) -> glib::Continue {
+fn update_playcount(t_id: i32, db: &DBPool) {
     use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
 
@@ -216,5 +208,4 @@ fn update_playcount(t_id: i32, db: &DBPool) -> glib::Continue {
     } else {
         error!("Some problem with updating play status (gettin track)");
     }
-    glib::Continue(false)
 }
