@@ -35,6 +35,14 @@ async fn clean(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().finish()
 }
 
+#[post("/save/")]
+async fn save(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
+    println!("Saving");
+    let db = state.pool.lock().expect("Error for db");
+    state.playlist.save(&db);
+    HttpResponse::Ok().finish()
+}
+
 #[get("/transport/")]
 async fn get_transport(state: web::Data<WebGui>) -> HttpResponse {
     HttpResponse::Ok().json(state.gstreamer.get_state())
@@ -46,7 +54,7 @@ async fn transport(
     msg: web::Json<gstreamer_wrapper::GStreamerAction>,
 ) -> HttpResponse {
     println!("stuff: {:?}", &msg);
-    state.gstreamer.do_gstreamer_action(&msg);
+    state.gstreamer.do_gstreamer_action(msg.into_inner());
 
     HttpResponse::Ok().finish()
 }
@@ -258,6 +266,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
             .service(playlist)
             .service(current_id)
             .service(clean)
+            .service(save)
             .service(transport)
             .service(get_transport)
             //.service(web::resource("/libraryview/albums/").route(web::get().to(library_albums)))

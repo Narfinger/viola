@@ -81,6 +81,12 @@ function PlayButton(props) {
     return <TransportButton title="Unspecified"></TransportButton>
 }
 
+function convertSecondsToTime(seconds) {
+    let date = new Date(0);
+    date.setSeconds(seconds);
+    return date.toISOString().substr(14, 5);
+}
+
 class Main extends React.Component {
     constructor(props) {
         super(props)
@@ -151,6 +157,11 @@ class Main extends React.Component {
         this.update_playstate();
     }
 
+    save() {
+        console.log("trying to save");
+        axios.post("/save/");
+    }
+
     handleButtonPush(e) {
         if (e === ButtonEvent.Play) {
             axios.post("/transport/", { "t": "Playing" });
@@ -191,6 +202,9 @@ class Main extends React.Component {
                 </Grid>
                 <Grid item xs={2}>
                     <Button variant="contained" color="secondary" onClick={this.clean}>Clean</Button>
+                </Grid>
+                <Grid item xs={2}>
+                    <Button variant="contained" color="secondary" onClick={this.save}>Save</Button>
                 </Grid>
                 <Grid item xs={1}>
                     {playstate_to_string(this.state.status)}
@@ -237,6 +251,7 @@ function columnWidths(index) {
         case 4: return 300; //album
         case 5: return 200; //genre
         case 6: return 100; //year
+        case 7: return 100; //time
         default: return 10000;
     }
 }
@@ -271,6 +286,7 @@ class Cell extends React.PureComponent {
                 case 4: return <div style={style}>{item.album}</div>
                 case 5: return <div style={style}>{item.genre}</div>
                 case 6: return <div style={style}>{item.year}</div>
+                case 7: return <div style={style}>{convertSecondsToTime(item.length)}</div>
                 default: return <div style={this.props.style}>ERROR</div>
             }
         } else {
@@ -283,6 +299,7 @@ class Cell extends React.PureComponent {
                 case 4: return <div style={this.props.style} onDoubleClick={this.click}>{item.album}</div>
                 case 5: return <div style={this.props.style} onDoubleClick={this.click}>{item.genre}</div>
                 case 6: return <div style={this.props.style} onDoubleClick={this.click}>{item.year}</div>
+                case 7: return <div style={this.props.style} onDoubleClick={this.click}>{convertSecondsToTime(item.length)}</div>
                 default: return <div style={this.props.style}>ERROR</div>
             }
         }
@@ -299,12 +316,12 @@ class SongView extends React.Component {
         return <div><div>
             <VSGrid
                 itemData={items}
-                columnCount={7}
+                columnCount={8}
                 columnWidth={columnWidths}
                 height={700}
                 rowCount={this.props.pl.length}
                 rowHeight={(index) => { return 25; }}
-                width={1500}
+                width={1700}
             >
                 {Cell}
             </VSGrid>

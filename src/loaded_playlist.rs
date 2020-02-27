@@ -119,10 +119,9 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
 pub trait PlaylistControls {
     fn get_current_path(&self) -> PathBuf;
     fn get_current_uri(&self) -> String;
-    fn previous(&self) -> String;
-    fn next(&self) -> String;
-    fn set(&self, _: i32) -> String;
-    fn next_or_eol(&self, _: &DBPool) -> Option<String>;
+    fn previous(&self) -> Option<usize>;
+    fn set(&self, _: usize) -> usize;
+    fn next_or_eol(&self) -> Option<usize>;
 }
 
 impl PlaylistControls for LoadedPlaylistPtr {
@@ -142,58 +141,34 @@ impl PlaylistControls for LoadedPlaylistPtr {
         )
     }
 
-    fn previous(&self) -> String {
-        {
-            let mut s = self.write().unwrap();
-            s.current_position -= 1;
+    fn previous(&self) -> Option<usize> {
+        let mut s = self.write().unwrap();
+        let checked_res = s.current_position.checked_sub(1);
+        if let Some(i) = checked_res {
+            s.current_position = i;
+        } else {
+            s.current_position = 0;
         }
-        self.get_current_uri()
+        checked_res
     }
 
-    fn next(&self) -> String {
-        {
-            let mut s = self.write().unwrap();
-            s.current_position += 1;
-        }
-        self.get_current_uri()
+    fn set(&self, i: usize) -> usize {
+        let mut s = self.write().unwrap();
+        s.current_position = i as usize;
+        s.current_position as usize
     }
 
-    fn set(&self, i: i32) -> String {
-        {
+    fn next_or_eol(&self) -> Option<usize> {
+        let next_pos = {
             let mut s = self.write().unwrap();
-            s.current_position = i as usize;
-        }
-        self.get_current_uri()
-    }
+            s.current_position += 1 % s.items.len();
+            s.current_position
+        };
 
-    fn next_or_eol(&self, pool: &DBPool) -> Option<String> {
-        {
-            // update playcounter in db
-            let track = {
-                let s = self.read().unwrap();
-                s.items.get(s.current_position).map(|t| t.id)
-            };
-            if let Some(t) = track {
-                let dbc = pool.clone();
-                std::thread::spawn(move || {
-                    std::thread::sleep(std::time::Duration::new(1, 0));
-                    update_playcount(t, &dbc);
-                });
-            }
-        }
-
-        {
-            let next_pos = {
-                let mut s = self.write().unwrap();
-                s.current_position += 1 % s.items.len();
-                s.current_position
-            };
-
-            if next_pos != 0 {
-                Some(self.get_current_uri())
-            } else {
-                None
-            }
+        if next_pos != 0 {
+            Some(next_pos)
+        } else {
+            None
         }
     }
 }

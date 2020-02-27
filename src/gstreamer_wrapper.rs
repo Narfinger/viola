@@ -5,7 +5,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::Arc;
 
-use crate::loaded_playlist::PlaylistControls;
+use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls};
 //use crate::playlist_tabs::PlaylistControlsImmutable;
 use crate::types::*;
 
@@ -32,6 +32,31 @@ pub enum GStreamerMessage {
     Stopped,
     Playing,
     ChangedDuration((u64, u64)), //in seconds
+}
+
+/// Tells the GuiPtr and the gstreamer what action is performed. Splits the GuiPtr and the backend a tiny bit
+#[derive(Debug, Eq, Serialize, Deserialize, PartialEq)]
+#[serde(tag = "t", content = "c")]
+pub enum GStreamerAction {
+    Next,
+    Playing,
+    Pausing,
+    Previous,
+    Stop,
+    /// This means we selected one specific track
+    Play(usize),
+    Seek(u64),
+    RepeatOnce, // Repeat the current playing track after it finishes
+}
+
+impl From<GStreamerAction> for GStreamerMessage {
+    fn from(action: GStreamerAction) -> Self {
+        match action {
+            GStreamerAction::Pausing => GStreamerMessage::Pausing,
+            GStreamerAction::Stop => GStreamerMessage::Stopped,
+            _ => GStreamerMessage::Playing,
+        }
+    }
 }
 
 impl From<gstreamer::State> for GStreamerMessage {
@@ -104,110 +129,86 @@ pub fn new(
     Ok((res, rx))
 }
 
-/// Tells the GuiPtr and the gstreamer what action is performed. Splits the GuiPtr and the backend a tiny bit
-#[derive(Debug, Eq, Serialize, Deserialize, PartialEq)]
-#[serde(tag = "t", content = "c")]
-pub enum GStreamerAction {
-    Next,
-    Playing,
-    Pausing,
-    Previous,
-    /// This means we selected one specific track
-    Play(i32),
-    Seek(u64),
-    RepeatOnce, // Repeat the current playing track after it finishes
-}
-
 pub trait GStreamerExt {
-    fn do_gstreamer_action(&self, _: &GStreamerAction);
+    fn do_gstreamer_action(&self, _: GStreamerAction);
     fn gstreamer_update_gui(&self) -> glib::Continue;
     fn gstreamer_handle_eos(&self);
     fn get_state(&self) -> GStreamerMessage;
 }
 
 impl GStreamerExt for GStreamer {
-    fn do_gstreamer_action(&self, action: &GStreamerAction) {
+    fn do_gstreamer_action(&self, action: GStreamerAction) {
         info!("Gstreamer action {:?}", action);
-        if *action == GStreamerAction::RepeatOnce {
-            self.repeat_once.store(true, Ordering::Relaxed);
-            return;
-        }
 
-        //we need to set the state to paused and ready
-        match *action {
-            GStreamerAction::Seek(i) => {
-                let t = gstreamer::ClockTime::from_seconds(i);
-                self.pipeline
-                    .seek_simple(gstreamer::SeekFlags::NONE, t)
-                    .expect("Could not seek");
+        //everytime we call return, we do not want to send the message we got to the gui, as it will be done in a subcall we have done
+        match action {
+            GStreamerAction::Next => {
+                if let Some(i) = self.current_playlist.next_or_eol() {
+                    self.do_gstreamer_action(GStreamerAction::Play(i));
+                } else {
+                    self.do_gstreamer_action(GStreamerAction::Stop);
+                }
+                return;
             }
-            _ => {}
-        };
-
-        match *action {
-            GStreamerAction::Play(_) | GStreamerAction::Previous | GStreamerAction::Next => {
-                if gstreamer::State::Playing
-                    == self.pipeline.get_state(gstreamer::ClockTime(Some(5))).1
-                {
-                    info!("Doing (setting to paused and ready");
+            GStreamerAction::Playing => {
+                self.do_gstreamer_action(GStreamerAction::Play(
+                    self.current_playlist.current_position(),
+                ));
+                return;
+            }
+            GStreamerAction::Pausing => {
+                let is_playing = gstreamer::State::Playing
+                    == self.pipeline.get_state(gstreamer::ClockTime(Some(5))).1;
+                if is_playing {
                     self.pipeline
                         .set_state(gstreamer::State::Paused)
-                        .expect("Error in gstreamer state set, paused");
-                    self.pipeline
-                        .set_state(gstreamer::State::Ready)
-                        .expect("Error in gstreamer state set, ready");
-                }
-            }
-            _ => {}
-        }
-        //getting correct url or None
-        let url = match *action {
-            GStreamerAction::RepeatOnce => None, //this is captured above but matches need to be complete
-            GStreamerAction::Playing => Some(self.current_playlist.get_current_uri()),
-            GStreamerAction::Pausing => {
-                if gstreamer::State::Playing
-                    != self.pipeline.get_state(gstreamer::ClockTime(Some(5))).1
-                {
-                    Some(self.current_playlist.get_current_uri())
+                        .expect("Error setting gstreamer state");
                 } else {
-                    None
+                    self.do_gstreamer_action(GStreamerAction::Play(
+                        self.current_playlist.current_position(),
+                    ));
+                    return;
                 }
             }
-            GStreamerAction::Previous => Some(self.current_playlist.previous()),
-            GStreamerAction::Next => Some(self.current_playlist.next()),
-            GStreamerAction::Play(i) => Some(self.current_playlist.set(i)),
-            GStreamerAction::Seek(_) => None,
-        };
-        //setting the url
-        if let Some(u) = url {
-            if !self.current_playlist.get_current_path().exists() {
-                panic!("The file we want to play does not exist");
+            GStreamerAction::Previous => {
+                if let Some(i) = self.current_playlist.previous() {
+                    self.do_gstreamer_action(GStreamerAction::Play(i));
+                } else {
+                    self.do_gstreamer_action(GStreamerAction::Stop);
+                }
+                return;
             }
-
-            self.pipeline
-                .set_property("uri", &u)
-                .expect("Error setting new gstreamer url");
+            GStreamerAction::Stop => {
+                self.pipeline
+                    .set_state(gstreamer::State::Ready)
+                    .expect("Error setting gstreamer state");
+            }
+            GStreamerAction::Play(i) => {
+                self.current_playlist.set(i);
+                let uri = self.current_playlist.get_current_uri();
+                if !self.current_playlist.get_current_path().exists() {
+                    panic!("The file we want to play does not exist");
+                }
+                println!("Playing uri: {}", &uri);
+                self.pipeline
+                    .set_state(gstreamer::State::Ready)
+                    .expect("Error in setting gstreamer state");
+                self.pipeline
+                    .set_property("uri", &uri)
+                    .expect("Error setting new gstreamer url");
+                self.pipeline
+                    .set_state(gstreamer::State::Playing)
+                    .expect("Error setting gstreamer state");
+                println!("gstreamer state: {:?}", self.get_state());
+            }
+            GStreamerAction::Seek(u64) => {
+                panic!("NYI");
+            }
+            GStreamerAction::RepeatOnce => {
+                self.repeat_once.store(true, Ordering::Relaxed);
+            }
         }
-        //which gstreamer action
-        let gstreamer_action = if (*action == GStreamerAction::Pausing)
-            & (gstreamer::State::Playing
-                == self.pipeline.get_state(gstreamer::ClockTime(Some(5))).1)
-        {
-            println!("Obviously, we do not reach here");
-            gstreamer::State::Paused
-        } else {
-            gstreamer::State::Playing
-        };
-
-        //sending to gstreamer
-        println!("state we set to: {:?}", gstreamer_action);
-        self.pipeline
-            .set_state(gstreamer_action)
-            .expect("Error in sending to gstreamer");
-
-        self.sender
-            .send(gstreamer_action.into())
-            .expect("Error in sending");
+        self.sender.send(action.into()).expect("Error in sending");
     }
 
     /// poll the message bus and on eos start new
@@ -235,35 +236,15 @@ impl GStreamerExt for GStreamer {
         let res = if self.repeat_once.load(Ordering::Relaxed) {
             info!("we are repeat playing");
             self.repeat_once.store(false, Ordering::Relaxed);
-            Some(self.current_playlist.get_current_uri())
+            Some(self.current_playlist.current_position())
         } else {
-            self.current_playlist.next_or_eol(&self.pool)
+            self.current_playlist.next_or_eol()
         };
-        match res {
-            None => {
-                self.sender
-                    .send(GStreamerMessage::Stopped)
-                    .expect("Message Queue Error");
-                self.sender
-                    .send(GStreamerMessage::Stopped)
-                    .expect("Error in gstreamer sending message to gui");
-            }
-            Some(i) => {
-                info!("Next should play {:?}", &i);
-                self.pipeline
-                    .set_state(gstreamer::State::Ready)
-                    .expect("Error in changing gstreamer state to ready");
-                self.pipeline
-                    .set_property("uri", &i)
-                    .expect("Error setting new url for gstreamer");
-                self.pipeline
-                    .set_state(gstreamer::State::Playing)
-                    .expect("Error in changing gstreamer state to playing");
-                self.sender
-                    .send(GStreamerMessage::Playing)
-                    .expect("Error in gstreamer sending message to gui");
-            }
-        };
+        if let Some(i) = res {
+            self.do_gstreamer_action(GStreamerAction::Play(i));
+        } else {
+            self.do_gstreamer_action(GStreamerAction::Stop);
+        }
     }
 
     fn get_state(&self) -> GStreamerMessage {
