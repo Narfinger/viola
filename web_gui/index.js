@@ -1,5 +1,5 @@
-
 import ReactDOM from 'react-dom'
+import { HotKeys } from "react-hotkeys";
 import React from 'react'
 import Drawer from '@material-ui/core/Drawer';
 import Paper from '@material-ui/core/Paper';
@@ -16,9 +16,6 @@ import axios from 'axios';
 import LibraryView from './libraryviews';
 
 const e = React.createElement;
-
-
-
 
 const PlayState = Object.freeze({
     Stopped: 1,
@@ -87,6 +84,11 @@ function convertSecondsToTime(seconds) {
     return date.toISOString().substr(14, 5);
 }
 
+const keyMap = {
+    PLAYPAUSE: "space"
+};
+
+
 class Main extends React.Component {
     constructor(props) {
         super(props)
@@ -100,6 +102,17 @@ class Main extends React.Component {
         this.refresh = this.refresh.bind(this);
         this.clean = this.clean.bind(this);
         this.ws = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port + "/ws/")
+        this.hotkey_handlers = this.hotkey_handlers.bind(this);
+    }
+
+    hotkey_handlers = {
+        PLAYPAUSE: event => {
+            if (this.state.status === PlayState.Playing || this.state.status === PlayState.Stopped) {
+                this.handleButtonPush(ButtonEvent.Play);
+            } else {
+                this.handleButtonPush(ButtonEvent.Pause);
+            }
+        },
     }
 
 
@@ -186,34 +199,36 @@ class Main extends React.Component {
     }
 
     render() {
-        return <div>
-            <Grid container spacing={1}>
-                <Grid item xs={1}>
-                    <LibraryDrawer></LibraryDrawer>
+        return <HotKeys keyMap={keyMap} handlers={this.hotkey_handlers}>
+            <div>
+                <Grid container spacing={1}>
+                    <Grid item xs={1}>
+                        <LibraryDrawer></LibraryDrawer>
+                    </Grid>
+                    <Grid item xs={2}>
+                        <TransportButton title="Prev" event="ButtonEvent.Previous" click={this.handleButtonPush}></TransportButton>
+                    </Grid>
+                    <Grid item xs={2}>
+                        <PlayButton play_state={this.state.status} click={this.handleButtonPush}></PlayButton>
+                    </Grid>
+                    <Grid item xs={2}>
+                        <TransportButton title="Next" api="next" event="ButtonEvent.Next" click={this.handleButtonPush}></TransportButton>
+                    </Grid>
+                    <Grid item xs={2}>
+                        <Button variant="contained" color="secondary" onClick={this.clean}>Clean</Button>
+                    </Grid>
+                    <Grid item xs={2}>
+                        <Button variant="contained" color="secondary" onClick={this.save}>Save</Button>
+                    </Grid>
+                    <Grid item xs={1}>
+                        {playstate_to_string(this.state.status)}
+                    </Grid>
+                    <Grid item xs={10}>
+                        <SongView current={this.state.current} pl={this.state.pl} />
+                    </Grid>
                 </Grid>
-                <Grid item xs={2}>
-                    <TransportButton title="Prev" event="ButtonEvent.Previous" click={this.handleButtonPush}></TransportButton>
-                </Grid>
-                <Grid item xs={2}>
-                    <PlayButton play_state={this.state.status} click={this.handleButtonPush}></PlayButton>
-                </Grid>
-                <Grid item xs={2}>
-                    <TransportButton title="Next" api="next" event="ButtonEvent.Next" click={this.handleButtonPush}></TransportButton>
-                </Grid>
-                <Grid item xs={2}>
-                    <Button variant="contained" color="secondary" onClick={this.clean}>Clean</Button>
-                </Grid>
-                <Grid item xs={2}>
-                    <Button variant="contained" color="secondary" onClick={this.save}>Save</Button>
-                </Grid>
-                <Grid item xs={1}>
-                    {playstate_to_string(this.state.status)}
-                </Grid>
-                <Grid item xs={10}>
-                    <SongView current={this.state.current} pl={this.state.pl} />
-                </Grid>
-            </Grid>
-        </div >
+            </div >
+        </HotKeys>
     }
 }
 
