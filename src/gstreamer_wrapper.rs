@@ -26,7 +26,7 @@ impl Drop for GStreamer {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Eq, PartialEq)]
 pub enum GStreamerMessage {
     Pausing,
     Stopped,
@@ -151,10 +151,16 @@ impl GStreamerExt for GStreamer {
                 return;
             }
             GStreamerAction::Playing => {
-                self.do_gstreamer_action(GStreamerAction::Play(
-                    self.current_playlist.current_position(),
-                ));
-                return;
+                if self.get_state() == GStreamerMessage::Pausing {
+                    self.pipeline
+                        .set_state(gstreamer::State::Playing)
+                        .expect("Error in setting gstreamer state");
+                } else {
+                    self.do_gstreamer_action(GStreamerAction::Play(
+                        self.current_playlist.current_position(),
+                    ));
+                    return;
+                }
             }
             GStreamerAction::Pausing => {
                 let is_playing = gstreamer::State::Playing
@@ -235,7 +241,15 @@ impl GStreamerExt for GStreamer {
     }
 
     fn gstreamer_handle_eos(&self) {
+        use crate::db::UpdatePlayCount;
         info!("Handling EOS");
+
+        let mut old_track = self.current_playlist.get_current_track();
+        let pc = self.pool.clone();
+        std::thread::spawn(move || {
+            old_track.update_playcount(pc);
+        });
+
         let res = if self.repeat_once.load(Ordering::Relaxed) {
             info!("we are repeat playing");
             self.repeat_once.store(false, Ordering::Relaxed);

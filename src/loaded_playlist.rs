@@ -172,24 +172,3 @@ impl PlaylistControls for LoadedPlaylistPtr {
         }
     }
 }
-
-fn update_playcount(t_id: i32, db: &DBPool) -> glib::Continue {
-    use crate::schema::tracks::dsl::*;
-    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
-
-    if let Ok(mut track) = tracks
-        .filter(id.eq(t_id))
-        .first::<Track>(db.lock().expect("DB Error").deref())
-    {
-        track.playcount = Some(1 + track.playcount.unwrap_or(0));
-        if track
-            .save_changes::<Track>(db.lock().expect("DB Error").deref())
-            .is_err()
-        {
-            error!("Some problem with updating play status (cannot update)");
-        }
-    } else {
-        error!("Some problem with updating play status (gettin track)");
-    }
-    glib::Continue(false)
-}

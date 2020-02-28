@@ -12,6 +12,7 @@ use std::sync::{Arc, Mutex};
 use std::{thread, time};
 use taglib;
 //use jwalk::{WalkDir, DirEntry};
+use crate::types::*;
 use walkdir::DirEntry;
 
 #[derive(AsChangeset, Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]
@@ -32,6 +33,37 @@ pub struct Track {
 impl PartialEq for Track {
     fn eq(&self, other: &Self) -> bool {
         self.path == other.path
+    }
+}
+
+pub trait UpdatePlayCount {
+    fn update_playcount(&mut self, _: DBPool);
+}
+
+impl UpdatePlayCount for Track {
+    fn update_playcount(&mut self, pool: DBPool) {
+        use crate::rand::RngCore;
+        use crate::schema::tracks::dsl::*;
+        use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
+
+        //wait a random time
+        let mut rng = rand::thread_rng();
+        std::thread::sleep(std::time::Duration::new(0, rng.next_u32()));
+        let db = pool.lock().expect("Error in locking db");
+
+        let t_id = self.id;
+        if tracks
+            .filter(id.eq(t_id))
+            .get_result::<Track>(db.deref())
+            .is_ok()
+        {
+            self.playcount = Some(1 + self.playcount.unwrap_or(0));
+            if self.save_changes::<Track>(db.deref()).is_err() {
+                error!("Some problem with updating play status (cannot update)");
+            }
+        } else {
+            error!("Some problem with updating play status (gettin track)");
+        }
     }
 }
 
