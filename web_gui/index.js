@@ -292,10 +292,10 @@ class Cell extends React.PureComponent {
         style.width = columnWidths(this.props.columnIndex) + "em";
         if (selected) {
             style.color = "#FF0000";
-            return <div style={style}> <Typography nowrap>
+            return <div style={style}> <Typography noWrap>
                 {string}</Typography></div>
         } else {
-            return <div style={this.props.style} onDoubleClick={this.click}><Typography nowrap>{string}</Typography></div>
+            return <div style={this.props.style} onDoubleClick={this.click}><Typography noWrap>{string}</Typography></div>
         }
     }
 }
