@@ -274,34 +274,28 @@ class Cell extends React.PureComponent {
 
     render() {
         const { item, selected } = this.props.data[this.props.rowIndex];
+        //console.log(style);
+        let string = "";
+        switch (this.props.columnIndex) {
+            case 0: string = this.props.rowIndex; break;
+            case 1: string = item.tracknumber; break;
+            case 2: string = item.title; break;
+            case 3: string = item.artist; break;
+            case 4: string = item.album; break;
+            case 5: string = item.genre; break;
+            case 6: string = item.year; break;
+            case 7: string = convertSecondsToTime(item.length); break;
+            default: string = "ERROR";
+        }
+        let style = JSON.parse(JSON.stringify(this.props.style));
+        style.textOverflow = "ellipsis";
+        style.width = columnWidths(this.props.columnIndex) + "em";
         if (selected) {
-            let style = JSON.parse(JSON.stringify(this.props.style));
             style.color = "#FF0000";
-            //console.log(style);
-            switch (this.props.columnIndex) {
-                case 0: return <div style={style}>{this.props.rowIndex}</div>
-                case 1: return <div style={style}>{item.tracknumber}</div>
-                case 2: return <div style={style}>{item.title}</div>
-                case 3: return <div style={style}>{item.artist}</div>
-                case 4: return <div style={style}>{item.album}</div>
-                case 5: return <div style={style}>{item.genre}</div>
-                case 6: return <div style={style}>{item.year}</div>
-                case 7: return <div style={style}>{convertSecondsToTime(item.length)}</div>
-                default: return <div style={this.props.style}>ERROR</div>
-            }
+            return <div style={style}> <Typography nowrap>
+                {string}</Typography></div>
         } else {
-            switch (this.props.columnIndex) {
-                case 0: return <div style={this.props.style} onDoubleClick={this.click}>{this.props.rowIndex}</div>
-                //<PlayIndexButton style={this.props.style} index={this.props.rowIndex}></PlayIndexButton>//<div style={this.props.style}>{this.props.rowIndex}</div>
-                case 1: return <div style={this.props.style} onDoubleClick={this.click}>{item.tracknumber}</div>
-                case 2: return <div style={this.props.style} onDoubleClick={this.click}>{item.title}</div>
-                case 3: return <div style={this.props.style} onDoubleClick={this.click}>{item.artist}</div>
-                case 4: return <div style={this.props.style} onDoubleClick={this.click}>{item.album}</div>
-                case 5: return <div style={this.props.style} onDoubleClick={this.click}>{item.genre}</div>
-                case 6: return <div style={this.props.style} onDoubleClick={this.click}>{item.year}</div>
-                case 7: return <div style={this.props.style} onDoubleClick={this.click}>{convertSecondsToTime(item.length)}</div>
-                default: return <div style={this.props.style}>ERROR</div>
-            }
+            return <div style={this.props.style} onDoubleClick={this.click}><Typography nowrap>{string}</Typography></div>
         }
     }
 }
