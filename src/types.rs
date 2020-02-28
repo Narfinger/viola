@@ -1,6 +1,5 @@
 use app_dirs::*;
 use gstreamer::Element;
-use gtk::Builder;
 use std::sync::{Arc, Mutex, RwLock};
 
 use crate::gstreamer_wrapper::GStreamerMessage;
@@ -18,7 +17,7 @@ pub const YEAR_COLUMN: i32 = 5;
 pub const PLAYCOUNT_COLUMN: i32 = 7;
 pub const COLOR_COLUMN: u32 = 8;
 
-pub type BuilderPtr = Arc<RwLock<Builder>>;
+//pub type BuilderPtr = Arc<RwLock<Builder>>;
 pub type GstreamerPipeline = Arc<RwLock<Element>>;
 //pub type MainGuiPtr = Rc<MainGui>;
 //pub type MainGuiWeakPtr = Weak<MainGui>;

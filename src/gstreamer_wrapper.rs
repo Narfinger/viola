@@ -77,8 +77,8 @@ pub fn new(
     pool: DBPool,
 ) -> Result<(Arc<GStreamer>, Receiver<GStreamerMessage>), String> {
     gstreamer::init().unwrap();
-    let pipeline =
-        gstreamer::parse_launch("playbin").map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+    let pipeline = gstreamer::ElementFactory::make("playbin", None)
+        .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
 
     let (tx, rx) = sync_channel::<GStreamerMessage>(1);
 

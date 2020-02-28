@@ -225,11 +225,16 @@ fn handle_gstreamer_messages(
 
 pub async fn run(pool: DBPool) -> io::Result<()> {
     println!("Loading playlist");
-    let lp = Arc::new(RwLock::new(
-        restore_playlists(&pool)
-            .expect("Error restoring playlisttabs")
-            .swap_remove(0),
-    ));
+    let lp = Arc::new(RwLock::new({
+        let mut pls = restore_playlists(&pool).expect("Error restoring playlisttabs");
+        println!(
+            "pls: {:?}",
+            pls.iter()
+                .map(|ref pl| pl.name.clone())
+                .collect::<Vec<String>>()
+        );
+        pls[0].to_owned()
+    }));
 
     println!("Starting gstreamer");
     let (gst, rx) =

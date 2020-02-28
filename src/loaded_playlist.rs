@@ -1,4 +1,3 @@
-use gtk;
 use owning_ref::RwLockReadGuardRef;
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use std::ops::Deref;

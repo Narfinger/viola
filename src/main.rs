@@ -8,15 +8,10 @@ extern crate diesel;
 extern crate env_logger;
 #[macro_use]
 extern crate log;
-extern crate gdk;
-extern crate gdk_pixbuf;
-extern crate gio;
 extern crate glib;
 extern crate gstreamer;
-extern crate gtk;
 extern crate indicatif;
 extern crate open;
-extern crate pango;
 extern crate preferences;
 extern crate rand;
 extern crate rayon;
@@ -46,7 +41,6 @@ pub mod types;
 pub mod utils;
 
 use clap::{App, Arg};
-use gio::ApplicationExt;
 use preferences::{prefs_base_dir, AppInfo, Preferences, PreferencesMap};
 use std::{env, io};
 
