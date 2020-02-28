@@ -1,11 +1,12 @@
 use owning_ref::RwLockReadGuardRef;
-use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
+use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS, NON_ALPHANUMERIC};
 use std::ops::Deref;
 use std::path::PathBuf;
 
 use crate::db::Track;
 use crate::playlist::{NewPlaylist, NewPlaylistTrack, Playlist};
 use crate::types::{DBPool, LoadedPlaylistPtr};
+const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ');
 
 #[derive(Clone, Debug)]
 pub struct LoadedPlaylist {
@@ -136,7 +137,7 @@ impl PlaylistControls for LoadedPlaylistPtr {
         info!("loading from playlist with name: {}", s.name);
         format!(
             "file:////{}",
-            utf8_percent_encode(&s.items[s.current_position].path, NON_ALPHANUMERIC).to_string()
+            utf8_percent_encode(&s.items[s.current_position].path, FRAGMENT).to_string()
         )
     }
 
