@@ -189,7 +189,10 @@ impl GStreamerExt for GStreamer {
                 if !self.current_playlist.get_current_path().exists() {
                     panic!("The file we want to play does not exist");
                 }
-                println!("Playing uri: {}", &uri);
+                println!(
+                    "Playing uri: {:?}",
+                    self.current_playlist.get_current_path()
+                );
                 self.pipeline
                     .set_state(gstreamer::State::Ready)
                     .expect("Error in setting gstreamer state");

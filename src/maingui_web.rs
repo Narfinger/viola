@@ -233,7 +233,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
                 .map(|ref pl| pl.name.clone())
                 .collect::<Vec<String>>()
         );
-        pls[0].to_owned()
+        pls.swap_remove(0)
     }));
 
     println!("Starting gstreamer");
