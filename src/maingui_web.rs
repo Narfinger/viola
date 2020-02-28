@@ -39,7 +39,7 @@ async fn clean(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
 async fn save(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     println!("Saving");
     let db = state.pool.lock().expect("Error for db");
-    state.playlist.save(&db);
+    state.playlist.save(&db).expect("Error in saving");
     HttpResponse::Ok().finish()
 }
 
