@@ -51,14 +51,10 @@ impl UpdatePlayCount for Track {
         std::thread::sleep(std::time::Duration::new(0, rng.next_u32()));
         let db = pool.lock().expect("Error in locking db");
 
-        let t_id = self.id;
-        if tracks
-            .filter(id.eq(t_id))
-            .get_result::<Track>(db.deref())
-            .is_ok()
-        {
-            self.playcount = Some(1 + self.playcount.unwrap_or(0));
-            if self.save_changes::<Track>(db.deref()).is_err() {
+        let db_track: Result<Track, diesel::result::Error> = tracks.find(self.id).first(db.deref());
+        if let Ok(mut track) = db_track {
+            track.playcount = Some(1 + track.playcount.unwrap_or(0));
+            if track.save_changes::<Track>(db.deref()).is_err() {
                 error!("Some problem with updating play status (cannot update)");
             }
         } else {
