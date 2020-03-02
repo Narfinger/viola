@@ -211,11 +211,7 @@ class Main extends React.Component {
         axios.get("/pltime/").then((response) => {
             this.setState({ pltime: response.data });
         });
-        axios.get("/currentimage/").then((response) => {
-            this.setState({ image_data: response.data });
-            //console.log("image");
-            //console.log(response.data);
-        });
+        this.setState({ imageHash: Date.now() });
     }
 
     render() {
