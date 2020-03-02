@@ -101,6 +101,7 @@ class Main extends React.Component {
         this.handleButtonPush = this.handleButtonPush.bind(this);
         this.refresh = this.refresh.bind(this);
         this.clean = this.clean.bind(this);
+        this.again = this.again.bind(this);
         this.ws = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port + "/ws/")
     }
 
@@ -164,6 +165,10 @@ class Main extends React.Component {
         this.refresh();
     }
 
+    again() {
+        axios.post("/repeat/");
+    }
+
     save() {
         console.log("trying to save");
         axios.post("/save/");
@@ -210,13 +215,16 @@ class Main extends React.Component {
                     <Grid item xs={2}>
                         <PlayButton play_state={this.state.status} click={this.handleButtonPush}></PlayButton>
                     </Grid>
-                    <Grid item xs={2}>
+                    <Grid item xs={1}>
                         <TransportButton title="Next" api="next" event="ButtonEvent.Next" click={this.handleButtonPush} event={ButtonEvent.Next}></TransportButton>
                     </Grid>
-                    <Grid item xs={2}>
+                    <Grid item xs={1}>
+                        <Button variant="contained" color="primary" onClick={this.again}>Again</Button>
+                    </Grid>
+                    <Grid item xs={1}>
                         <Button variant="contained" color="secondary" onClick={this.clean}>Clean</Button>
                     </Grid>
-                    <Grid item xs={2}>
+                    <Grid item xs={1}>
                         <Button variant="contained" color="secondary" onClick={this.save}>Save</Button>
                     </Grid>
                     <Grid item xs={1}>

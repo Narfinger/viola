@@ -26,6 +26,14 @@ async fn playlist(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(items)
 }
 
+#[post("/repeat/")]
+async fn repeat(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
+    state
+        .gstreamer
+        .do_gstreamer_action(gstreamer_wrapper::GStreamerAction::RepeatOnce);
+    HttpResponse::Ok().finish()
+}
+
 // removes all already played data
 #[post("/clean/")]
 async fn clean(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
@@ -270,6 +278,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
             .app_data(data.clone())
             .service(playlist)
             .service(current_id)
+            .service(repeat)
             .service(clean)
             .service(save)
             .service(transport)
