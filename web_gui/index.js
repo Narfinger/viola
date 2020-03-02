@@ -85,7 +85,7 @@ function convertSecondsToTime(seconds) {
 }
 
 const keyMap = {
-    PLAYPAUSE: "space"
+    PLAYPAUSE: ["space", "c"]
 };
 
 
@@ -102,7 +102,6 @@ class Main extends React.Component {
         this.refresh = this.refresh.bind(this);
         this.clean = this.clean.bind(this);
         this.ws = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port + "/ws/")
-        this.hotkey_handlers = this.hotkey_handlers.bind(this);
     }
 
     hotkey_handlers = {
@@ -127,7 +126,6 @@ class Main extends React.Component {
             console.log('connected')
         }
 
-        this.update_playstate();
         this.ws.onmessage = evt => {
             var msg = JSON.parse(evt.data);
             console.log(msg);
@@ -149,14 +147,8 @@ class Main extends React.Component {
             // automatically try to reconnect on connection loss
 
         }
-    }
 
-    update_playstate() {
-        axios.get("/transport/").then((response) => {
-            this.setState({
-                state: playstate_from_string(response.data)
-            })
-        });
+        this.refresh();
     }
 
     clean() {
@@ -195,7 +187,12 @@ class Main extends React.Component {
         axios.get("/currentid/").then((response) => {
             this.setState({ current: response.data });
             this.update_playstate();
-        })
+        });
+        axios.get("/transport/").then((response) => {
+            this.setState({
+                state: playstate_from_string(response.data)
+            })
+        });
     }
 
     render() {
