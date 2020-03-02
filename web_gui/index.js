@@ -117,9 +117,13 @@ class Main extends React.Component {
 
     componentDidMount() {
         console.log("we mounted");
-        axios.get("/playlist/").then((response) => this.setState({
-            pl: response.data
-        }));
+        axios.get("/playlist/").then((response) => {
+            this.setState({
+                pl: response.data
+            });
+            this.refresh();
+        }
+        );
 
         this.ws.onopen = () => {
             // on connecting, do nothing but log it to the console
@@ -147,8 +151,6 @@ class Main extends React.Component {
             // automatically try to reconnect on connection loss
 
         }
-
-        this.refresh();
     }
 
     clean() {
@@ -159,7 +161,7 @@ class Main extends React.Component {
         axios.get("/currentid/").then((response) => {
             this.setState({ current: response.data });
         })
-        this.update_playstate();
+        this.refresh();
     }
 
     save() {
@@ -186,12 +188,12 @@ class Main extends React.Component {
     refresh() {
         axios.get("/currentid/").then((response) => {
             this.setState({ current: response.data });
-            this.update_playstate();
         });
         axios.get("/transport/").then((response) => {
             this.setState({
-                state: playstate_from_string(response.data)
-            })
+                status: playstate_from_string(response.data)
+            });
+            console.log(playstate_from_string(response.data));
         });
     }
 
