@@ -243,7 +243,7 @@ class Main extends React.Component {
                         {playstate_to_string(this.state.status)}
                     </Grid>
                     <Grid item xs={10}>
-                        <SongView current={this.state.current} pl={this.state.pl} />
+                        <SongView current={this.state.current} pl={this.state.pl} playing={this.state.status === PlayState.Playing} />
                     </Grid>
                     <Grid item xs={10}>
                         <img src={"/currentimage/" + "?" + this.state.imageHash} /> Playlist Count: {this.state.pl.length} | Left to go: {this.state.pl.length - this.state.current} | Time: {this.state.pltime}
@@ -327,13 +327,11 @@ class Cell extends React.PureComponent {
         let style = JSON.parse(JSON.stringify(this.props.style));
         style.textOverflow = "ellipsis";
         style.width = columnWidths(this.props.columnIndex) + "em";
-        if (selected) {
+        if (selected && this.props.playing) {
             style.color = "#FF0000";
-            return <div style={style}> <Typography noWrap>
-                {string}</Typography></div>
-        } else {
-            return <div style={this.props.style} onDoubleClick={this.click}><Typography noWrap>{string}</Typography></div>
         }
+        return <div style={style} onDoubleClick={this.click}><Typography noWrap>{string}</Typography></div>
+
     }
 }
 
