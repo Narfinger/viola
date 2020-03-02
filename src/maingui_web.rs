@@ -166,6 +166,21 @@ async fn current_id(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(state.playlist.current_position())
 }
 
+#[get("/pltime/")]
+async fn pltime(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
+    let current_position = state.playlist.current_position();
+    let total_length = state
+        .playlist
+        .items()
+        .iter()
+        .skip(current_position)
+        .map(|t| t.length)
+        .sum::<i32>() as u64;
+    let dur = Duration::new(total_length, 0);
+    let time = humantime::format_duration(dur).to_string();
+    HttpResponse::Ok().json(time)
+}
+
 struct WebGui {
     pool: DBPool,
     gstreamer: Arc<gstreamer_wrapper::GStreamer>,
@@ -277,7 +292,6 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
         App::new()
             .app_data(data.clone())
             .service(playlist)
-            .service(current_id)
             .service(repeat)
             .service(clean)
             .service(save)
@@ -290,6 +304,8 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
             .service(library_load)
             .service(smartplaylist)
             .service(smartplaylist_load)
+            .service(pltime)
+            .service(current_id)
             .service(web::resource("/ws/").route(web::get().to(ws_start)))
             .service(fs::Files::new("/static/", "web_gui/dist/").show_files_listing())
             .service(fs::Files::new("/", "./web_gui/").index_file("index.html"))

@@ -96,6 +96,7 @@ class Main extends React.Component {
             status: PlayState.Stopped,
             current: -1,
             pl: [],
+            pltime: "",
         };
 
         this.handleButtonPush = this.handleButtonPush.bind(this);
@@ -107,10 +108,13 @@ class Main extends React.Component {
 
     hotkey_handlers = {
         PLAYPAUSE: event => {
-            if (this.state.status === PlayState.Playing || this.state.status === PlayState.Stopped) {
+            if (this.state.status === PlayState.Paused || this.state.status === PlayState.Stopped) {
                 this.handleButtonPush(ButtonEvent.Play);
-            } else {
+            } else if (this.state.status === PlayState.Playing) {
                 this.handleButtonPush(ButtonEvent.Pause);
+            } else {
+                console.log("status is weird");
+                console.log(this.state.status);
             }
         },
     }
@@ -136,12 +140,15 @@ class Main extends React.Component {
             console.log(msg);
             switch (msg.type) {
                 case "Ping": break;
-                case "PlayChanged": this.setState({ current: msg.index, status: PlayState.Playing }); break;
+                case "PlayChanged": {
+                    this.setState({ current: msg.index, status: PlayState.Playing });
+                    this.refresh();
+                    break;
+                }
                 case "ReloadPlaylist": {
                     axios.get("/playlist/").then((response) => this.setState({
                         pl: response.data
                     }));
-                    this.update_playstate();
                 }
                 default:
             }
@@ -200,6 +207,9 @@ class Main extends React.Component {
             });
             console.log(playstate_from_string(response.data));
         });
+        axios.get("/pltime/").then((response) => {
+            this.setState({ pltime: response.data });
+        })
     }
 
     render() {
@@ -232,6 +242,9 @@ class Main extends React.Component {
                     </Grid>
                     <Grid item xs={10}>
                         <SongView current={this.state.current} pl={this.state.pl} />
+                    </Grid>
+                    <Grid item xs={10}>
+                        Playlist Count: {this.state.pl.length} | Left to go: {this.state.pl.length - this.state.current} | Time: {this.state.pltime}
                     </Grid>
                 </Grid>
             </div >
@@ -334,10 +347,10 @@ class SongView extends React.Component {
                 itemData={items}
                 columnCount={8}
                 columnWidth={columnWidths}
-                height={700}
+                height={750}
                 rowCount={this.props.pl.length}
                 rowHeight={(index) => { return 25; }}
-                width={1700}
+                width={1600}
             >
                 {Cell}
             </VSGrid>

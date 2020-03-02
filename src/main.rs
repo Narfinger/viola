@@ -10,6 +10,7 @@ extern crate env_logger;
 extern crate log;
 extern crate glib;
 extern crate gstreamer;
+extern crate humantime;
 extern crate indicatif;
 extern crate open;
 extern crate preferences;
