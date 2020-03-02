@@ -12,6 +12,7 @@ actix-web = "2.0"
 actix-web-actors="2.0"
 actix-files = "0.2"         # Static files support for actix web.
 app_dirs = "1.2"         # Put your app's data in the right place on every platform
+base64 = "0.11"
 clap = "2.33"                    # A simple to use, efficient, and full featured  Command Line Argument Parser
 diesel = { version = "1.4", features = ["sqlite", "r2d2"] }
 error-chain = "0.12"
@@ -19,6 +20,7 @@ futures = "0.3"
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 env_logger = "0.7"
 indicatif = "0.14"
+image = "0.23"
 humantime = "2.0"
 #jwalk = "0.4"    # A progress bar and cli reporting library for Rust
 taglib = "1.0"        # Rust bindings for TagLib

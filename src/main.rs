@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate actix_web;
 extern crate app_dirs;
+extern crate base64;
 #[macro_use]
 extern crate clap;
 #[macro_use]
@@ -11,6 +12,7 @@ extern crate log;
 extern crate glib;
 extern crate gstreamer;
 extern crate humantime;
+extern crate image;
 extern crate indicatif;
 extern crate open;
 extern crate preferences;

@@ -181,6 +181,17 @@ async fn pltime(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(time)
 }
 
+#[get("/currentimage/")]
+async fn current_image(
+    state: web::Data<WebGui>,
+    _: HttpRequest,
+) -> actix_web::Result<actix_files::NamedFile> {
+    let current_track_album = state.playlist.get_current_track().albumpath.expect("error");
+    println!("asking for image {:?}", &current_track_album);
+
+    Ok(actix_files::NamedFile::open(current_track_album)?)
+}
+
 struct WebGui {
     pool: DBPool,
     gstreamer: Arc<gstreamer_wrapper::GStreamer>,
@@ -306,6 +317,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
             .service(smartplaylist_load)
             .service(pltime)
             .service(current_id)
+            .service(current_image)
             .service(web::resource("/ws/").route(web::get().to(ws_start)))
             .service(fs::Files::new("/static/", "web_gui/dist/").show_files_listing())
             .service(fs::Files::new("/", "./web_gui/").index_file("index.html"))

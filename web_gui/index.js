@@ -88,7 +88,6 @@ const keyMap = {
     PLAYPAUSE: ["space", "c"]
 };
 
-
 class Main extends React.Component {
     constructor(props) {
         super(props)
@@ -97,6 +96,8 @@ class Main extends React.Component {
             current: -1,
             pl: [],
             pltime: "",
+            image_hash: "",
+            imageHash: Date.now(),
         };
 
         this.handleButtonPush = this.handleButtonPush.bind(this);
@@ -209,7 +210,12 @@ class Main extends React.Component {
         });
         axios.get("/pltime/").then((response) => {
             this.setState({ pltime: response.data });
-        })
+        });
+        axios.get("/currentimage/").then((response) => {
+            this.setState({ image_data: response.data });
+            //console.log("image");
+            //console.log(response.data);
+        });
     }
 
     render() {
@@ -244,7 +250,7 @@ class Main extends React.Component {
                         <SongView current={this.state.current} pl={this.state.pl} />
                     </Grid>
                     <Grid item xs={10}>
-                        Playlist Count: {this.state.pl.length} | Left to go: {this.state.pl.length - this.state.current} | Time: {this.state.pltime}
+                        <img src={"/currentimage/" + "?" + this.state.imageHash} /> Playlist Count: {this.state.pl.length} | Left to go: {this.state.pl.length - this.state.current} | Time: {this.state.pltime}
                     </Grid>
                 </Grid>
             </div >
