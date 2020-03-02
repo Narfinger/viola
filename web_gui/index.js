@@ -203,13 +203,13 @@ class Main extends React.Component {
                         <LibraryDrawer></LibraryDrawer>
                     </Grid>
                     <Grid item xs={2}>
-                        <TransportButton title="Prev" event="ButtonEvent.Previous" click={this.handleButtonPush}></TransportButton>
+                        <TransportButton title="Prev" event="ButtonEvent.Previous" click={this.handleButtonPush} event={ButtonEvent.Previous}></TransportButton>
                     </Grid>
                     <Grid item xs={2}>
                         <PlayButton play_state={this.state.status} click={this.handleButtonPush}></PlayButton>
                     </Grid>
                     <Grid item xs={2}>
-                        <TransportButton title="Next" api="next" event="ButtonEvent.Next" click={this.handleButtonPush}></TransportButton>
+                        <TransportButton title="Next" api="next" event="ButtonEvent.Next" click={this.handleButtonPush} event={ButtonEvent.Next}></TransportButton>
                     </Grid>
                     <Grid item xs={2}>
                         <Button variant="contained" color="secondary" onClick={this.clean}>Clean</Button>
