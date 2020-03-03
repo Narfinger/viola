@@ -333,7 +333,7 @@ class Cell extends React.PureComponent {
         }
         let style = JSON.parse(JSON.stringify(this.props.style));
         style.textOverflow = "ellipsis";
-        style.width = columnWidths(this.props.columnIndex) + "em";
+        style.width = columnWidths(this.props.columnIndex) + "px";
         if (selected) {
             style.color = "#FF0000";
         }
