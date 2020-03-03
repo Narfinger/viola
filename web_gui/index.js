@@ -320,7 +320,14 @@ class Cell extends React.PureComponent {
             case 3: string = item.artist; break;
             case 4: string = item.album; break;
             case 5: string = item.genre; break;
-            case 6: string = item.year; break;
+            case 6: {
+                if (item.year !== -1) {
+                    string = item.year;
+                } else {
+                    string = "";
+                }
+                break;
+            }
             case 7: string = convertSecondsToTime(item.length); break;
             default: string = "ERROR";
         }
@@ -337,7 +344,7 @@ class Cell extends React.PureComponent {
 
 class SongView extends React.Component {
     render() {
-        let items = this.props.pl.map((t) => ({ item: t, selected: false}));
+        let items = this.props.pl.map((t) => ({ item: t, selected: false }));
 
         // sets the correct index to playing. if there is nothing playing, we don't set anything
         if (this.props.current !== -1 && items && this.props.playing) {
