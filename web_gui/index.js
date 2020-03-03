@@ -327,7 +327,7 @@ class Cell extends React.PureComponent {
         let style = JSON.parse(JSON.stringify(this.props.style));
         style.textOverflow = "ellipsis";
         style.width = columnWidths(this.props.columnIndex) + "em";
-        if (selected && this.props.playing) {
+        if (selected) {
             style.color = "#FF0000";
         }
         return <div style={style} onDoubleClick={this.click}><Typography noWrap>{string}</Typography></div>
@@ -337,8 +337,10 @@ class Cell extends React.PureComponent {
 
 class SongView extends React.Component {
     render() {
-        let items = this.props.pl.map((t) => ({ item: t, selected: false }));
-        if (this.props.current !== -1 && items) {
+        let items = this.props.pl.map((t) => ({ item: t, selected: false}));
+
+        // sets the correct index to playing. if there is nothing playing, we don't set anything
+        if (this.props.current !== -1 && items && this.props.playing) {
             console.log(this.props.current);
             items[this.props.current].selected = true;
         }
