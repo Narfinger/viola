@@ -28,7 +28,7 @@ function playstate_from_string(input) {
         return PlayState.Stopped;
     } else if (input === "Playing") {
         return PlayState.Playing;
-    } else if (input === "Paused") {
+    } else if (input === "Pausing") {
         return PlayState.Paused;
     }
 }
@@ -206,7 +206,6 @@ class Main extends React.Component {
             this.setState({
                 status: playstate_from_string(response.data)
             });
-            console.log(playstate_from_string(response.data));
         });
         axios.get("/pltime/").then((response) => {
             this.setState({ pltime: response.data });
