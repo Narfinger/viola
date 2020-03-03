@@ -246,7 +246,7 @@ class Main extends React.Component {
                         <SongView current={this.state.current} pl={this.state.pl} playing={this.state.status === PlayState.Playing} />
                     </Grid>
                     <Grid item xs={10}>
-                        <img src={"/currentimage/" + "?" + this.state.imageHash} /> Playlist Count: {this.state.pl.length} | Left to go: {this.state.pl.length - this.state.current} | Time: {this.state.pltime}
+                        <img height="100px" width="100px" src={"/currentimage/" + "?" + this.state.imageHash} /> Playlist Count: {this.state.pl.length} | Left to go: {this.state.pl.length - this.state.current} | Time: {this.state.pltime}
                     </Grid>
                 </Grid>
             </div >
@@ -356,7 +356,7 @@ class SongView extends React.Component {
                 itemData={items}
                 columnCount={8}
                 columnWidth={columnWidths}
-                height={750}
+                height={650}
                 rowCount={this.props.pl.length}
                 rowHeight={(index) => { return 25; }}
                 width={1600}
