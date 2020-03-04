@@ -25,7 +25,7 @@ pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
 
 pub trait PlaylistTabsExt {
     fn add(&self, _: LoadedPlaylistPtr);
-    fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T;
+    fn current<'a, T>(&'a self, f: fn(&'a LoadedPlaylistPtr) -> T) -> T;
 }
 
 impl PlaylistTabsExt for PlaylistTabsPtr {
@@ -34,11 +34,11 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
         self.write().unwrap().pls = vec![lp];
     }
 
-    fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T {
-        let i = self.read().unwrap().current_pl;
-        let cur = self.read().unwrap();
-        let pl = cur.pls.get(i).unwrap();
-        f(&pl)
+    fn current<'a, T>(&'a self, f: fn(&'a LoadedPlaylistPtr) -> T) -> T {
+        let i = self.read().as_ref().unwrap().current_pl;
+        let cur = self.read().as_ref().unwrap();
+        f(self.as_ref().read().unwrap().pls.get(i).as_ref().unwrap())
+        //f(&pl)
     }
 }
 
@@ -56,7 +56,7 @@ impl LoadedPlaylistExt for PlaylistTabsPtr {
         self.current(LoadedPlaylistExt::current_position)
     }
 
-    fn items(&self) -> Vec<crate::db::Track> {
+    fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<crate::db::Track>> {
         self.current(LoadedPlaylistExt::items)
     }
 
