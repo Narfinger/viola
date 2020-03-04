@@ -1,5 +1,6 @@
 use owning_ref::RwLockReadGuardRef;
 use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS, NON_ALPHANUMERIC};
+use serde::Serialize;
 use std::ops::Deref;
 use std::path::PathBuf;
 
@@ -8,13 +9,13 @@ use crate::playlist::{NewPlaylist, NewPlaylistTrack, Playlist};
 use crate::types::{DBPool, LoadedPlaylistPtr};
 const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ');
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Serialize)]
 pub struct LoadedPlaylist {
     /// The id we have in the database for it. If none, means this was not yet saved
-    pub id: i32,
-    pub name: String,
-    pub items: Vec<Track>,
-    pub current_position: usize,
+    id: i32,
+    name: String,
+    items: Vec<Track>,
+    current_position: usize,
 }
 
 pub trait LoadedPlaylistExt {
@@ -22,12 +23,26 @@ pub trait LoadedPlaylistExt {
     fn get_playlist_full_time(&self) -> i64;
     fn current_position(&self) -> usize;
     //fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>>;
+    fn get_items_reader(&self) -> Box<dyn erased_serde::Serialize>;
     fn get_remaining_length(&self) -> u64;
     fn clean(&self);
 }
 
 pub trait SavePlaylistExt {
     fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error>;
+}
+
+pub struct LoadedPlaylistReader<'a> {
+    guard: RwLockReadGuardRef<'a, LoadedPlaylist, Vec<Track>>,
+}
+
+impl<'a> Serialize for LoadedPlaylistReader<'a> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.guard.deref().serialize(serializer)
+    }
 }
 
 impl LoadedPlaylistExt for LoadedPlaylistPtr {
@@ -49,6 +64,12 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
     //    println!("This is really inefficient");
     //    RwLockReadGuardRef::new(self.read().unwrap()).map(|s| &s.items)
     //}
+
+    fn get_items_reader(&self) -> Box<dyn erased_serde::Serialize> {
+        Box::new(LoadedPlaylistReader {
+            guard: RwLockReadGuardRef::new(self.read().unwrap().items),
+        })
+    }
 
     fn get_remaining_length(&self) -> u64 {
         let current_position = self.current_position();

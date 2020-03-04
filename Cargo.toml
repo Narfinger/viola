@@ -15,6 +15,7 @@ app_dirs = "1.2"         # Put your app's data in the right place on every platf
 base64 = "0.11"
 clap = "2.33"                    # A simple to use, efficient, and full featured  Command Line Argument Parser
 diesel = { version = "1.4", features = ["sqlite", "r2d2"] }
+erased-serde = "0.3"
 error-chain = "0.12"
 futures = "0.3"
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }

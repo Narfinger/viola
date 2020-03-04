@@ -703,6 +703,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "erased-serde"
+version = "0.3.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "error-chain"
 version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2059,6 +2067,7 @@ dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "diesel 1.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "erased-serde 0.3.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "error-chain 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "glib 0.9.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2254,6 +2263,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum encoding_rs 0.8.22 (registry+https://github.com/rust-lang/crates.io-index)" = "cd8d03faa7fe0c1431609dfad7bbe827af30f82e1e2ae6f7ee4fca6bd764bc28"
 "checksum enum-as-inner 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "eaeb00c3d7e5eed0e7c15a2ff045d76800a2e34b93f790bc38c8e3f9bfafef2b"
 "checksum env_logger 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)" = "44533bbbb3bb3c1fa17d9f2e4e38bbbaf8396ba82193c4cb1b6445d711445d36"
+"checksum erased-serde 0.3.10 (registry+https://github.com/rust-lang/crates.io-index)" = "cd7d80305c9bd8cd78e3c753eb9fb110f83621e5211f1a3afffcc812b104daf9"
 "checksum error-chain 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)" = "d371106cc88ffdfb1eabd7111e432da544f16f3e2d7bf1dfe8bf575f1df045cd"
 "checksum failure 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "f8273f13c977665c5db7eb2b99ae520952fe5ac831ae4cd09d80c4c7042b5ed9"
 "checksum failure_derive 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "0bc225b78e0391e4b8683440bf2e63c2deeeb2ce5189eab46e2b68c6d3725d08"

@@ -8,7 +8,7 @@ use crate::loaded_playlist::{
 use crate::playlist::restore_playlists;
 use crate::types::*;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct PlaylistTabs {
     current_pl: usize,
     pls: Vec<LoadedPlaylistPtr>,
@@ -25,6 +25,7 @@ pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
 
 pub trait PlaylistTabsExt {
     fn add(&self, _: LoadedPlaylistPtr);
+    fn items(&self) -> String;
 }
 
 impl PlaylistTabsExt for PlaylistTabsPtr {
@@ -116,11 +117,20 @@ impl PlaylistControls for PlaylistTabsPtr {
     }
 }
 
+struct PlaylistTabsSerializer {
+    index: usize,
+    
+}
+
 impl SavePlaylistExt for PlaylistTabsPtr {
     fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error> {
         for i in self.read().unwrap().pls.iter() {
             i.save(db)?;
         }
         Ok(())
+    }
+
+    fn items(&self) -> String {
+        serde_json::serialize(
     }
 }
