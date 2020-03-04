@@ -25,7 +25,7 @@ pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
 
 pub trait PlaylistTabsExt {
     fn add(&self, _: LoadedPlaylistPtr);
-    fn items(&self) -> String;
+    fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T;
 }
 
 impl PlaylistTabsExt for PlaylistTabsPtr {
@@ -33,73 +33,53 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
         self.write().unwrap().current_pl = 0;
         self.write().unwrap().pls = vec![lp];
     }
+
+    fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T {
+        let i = self.read().unwrap().current_pl;
+        let cur = self.read().unwrap();
+        let pl = cur.pls.get(i).unwrap();
+        f(&pl)
+    }
 }
 
 impl LoadedPlaylistExt for PlaylistTabsPtr {
     fn get_current_track(&self) -> crate::db::Track {
-        let i = self.read().unwrap().current_pl;
-        let cur = self.read().unwrap();
-        let value = cur.pls.get(i).unwrap();
-        value.get_current_track()
+        self.current(LoadedPlaylistExt::get_current_track)
+        //value.get_current_track()
     }
 
     fn get_playlist_full_time(&self) -> i64 {
-        let i = self.read().unwrap().current_pl;
-        let cur = self.read().unwrap();
-        let value = cur.pls.get(i).unwrap();
-        value.get_playlist_full_time()
+        self.current(LoadedPlaylistExt::get_playlist_full_time)
     }
 
     fn current_position(&self) -> usize {
-        let i = self.read().unwrap().current_pl;
-        let cur = self.read().unwrap();
-        let value = cur.pls.get(i).unwrap();
-        value.current_position()
+        self.current(LoadedPlaylistExt::current_position)
     }
 
-    //fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<crate::db::Track>> {
-    //    let i = self.read().unwrap().current_pl;
-    //    let cur = self.read().unwrap();
-    //    let value = cur.pls.get(i).unwrap();
-    //    println!("this is inefficient");
-    //    value.items().cloned()
-    //}
+    fn items(&self) -> Vec<crate::db::Track> {
+        self.current(LoadedPlaylistExt::items)
+    }
 
     fn get_remaining_length(&self) -> u64 {
-        let i = self.read().unwrap().current_pl;
-        let cur = self.read().unwrap();
-        let value = cur.pls.get(i).unwrap();
-        value.get_remaining_length()
+        self.current(LoadedPlaylistExt::get_remaining_length)
     }
 
     fn clean(&self) {
-        let i = self.read().unwrap().current_pl;
-        let cur = self.read().unwrap();
-        let value = cur.pls.get(i).unwrap();
-        value.clean();
+        self.current(LoadedPlaylistExt::clean)
     }
 }
 
 impl PlaylistControls for PlaylistTabsPtr {
     fn get_current_path(&self) -> PathBuf {
-        let i = self.read().unwrap().current_pl;
-        let cur = self.read().unwrap();
-        let value = cur.pls.get(i).unwrap();
-        value.get_current_path()
+        self.current(PlaylistControls::get_current_path)
     }
 
     fn get_current_uri(&self) -> String {
-        let i = self.read().unwrap().current_pl;
-        let cur = self.read().unwrap();
-        let value = cur.pls.get(i).unwrap();
-        value.get_current_uri()
+        self.current(PlaylistControls::get_current_uri)
     }
 
     fn previous(&self) -> Option<usize> {
-        let i = self.read().unwrap().current_pl;
-        let cur = self.read().unwrap();
-        let value = cur.pls.get(i).unwrap();
-        value.previous()
+        self.current(PlaylistControls::previous)
     }
 
     fn set(&self, i: usize) -> usize {
@@ -110,16 +90,8 @@ impl PlaylistControls for PlaylistTabsPtr {
     }
 
     fn next_or_eol(&self) -> Option<usize> {
-        let i = self.read().unwrap().current_pl;
-        let cur = self.read().unwrap();
-        let value = cur.pls.get(i).unwrap();
-        value.next_or_eol()
+        self.current(PLaylistControls::next_or_eol)
     }
-}
-
-struct PlaylistTabsSerializer {
-    index: usize,
-    
 }
 
 impl SavePlaylistExt for PlaylistTabsPtr {
@@ -128,9 +100,5 @@ impl SavePlaylistExt for PlaylistTabsPtr {
             i.save(db)?;
         }
         Ok(())
-    }
-
-    fn items(&self) -> String {
-        serde_json::serialize(
     }
 }

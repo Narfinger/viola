@@ -22,7 +22,7 @@ use crate::types::*;
 #[get("/playlist/")]
 async fn playlist(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     let items = state.playlist.items();
-    HttpResponse::Ok().json(items)
+    HttpResponse::Ok().json(&*items)
 }
 
 #[post("/repeat/")]

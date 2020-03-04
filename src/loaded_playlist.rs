@@ -22,8 +22,8 @@ pub trait LoadedPlaylistExt {
     fn get_current_track(&self) -> Track;
     fn get_playlist_full_time(&self) -> i64;
     fn current_position(&self) -> usize;
-    //fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>>;
-    fn get_items_reader(&self) -> Box<dyn erased_serde::Serialize>;
+    fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>>;
+    //fn get_items_reader(&self) -> std::rc::Rc<dyn erased_serde::Serialize>;
     fn get_remaining_length(&self) -> u64;
     fn clean(&self);
 }
@@ -60,16 +60,16 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
         self.read().unwrap().current_position
     }
 
-    //fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>> {
-    //    println!("This is really inefficient");
-    //    RwLockReadGuardRef::new(self.read().unwrap()).map(|s| &s.items)
-    //}
-
-    fn get_items_reader(&self) -> Box<dyn erased_serde::Serialize> {
-        Box::new(LoadedPlaylistReader {
-            guard: RwLockReadGuardRef::new(self.read().unwrap().items),
-        })
+    fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>> {
+        println!("This is really inefficient");
+        RwLockReadGuardRef::new(self.read().unwrap()).map(|s| &s.items)
     }
+
+    //fn get_items_reader(&self) -> std::rc::Rc<dyn erased_serde::Serialize> {
+    //    std::rc::Rc::new(LoadedPlaylistReader {
+    //        guard: RwLockReadGuardRef::new(self.read().unwrap()).map(|s| &s.items),
+    //    })
+    //}
 
     fn get_remaining_length(&self) -> u64 {
         let current_position = self.current_position();
