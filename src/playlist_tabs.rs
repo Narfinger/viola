@@ -1,7 +1,10 @@
-use owning_ref::RwLockReadGuardRef;
+use owning_ref::{RwLockReadGuardRef, VecRef};
+use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
-use crate::loaded_playlist::{LoadedPlaylist, SavePlaylistExt};
+use crate::loaded_playlist::{
+    LoadedPlaylist, LoadedPlaylistExt, PlaylistControls, SavePlaylistExt,
+};
 use crate::playlist::restore_playlists;
 use crate::types::*;
 
@@ -13,10 +16,7 @@ pub struct PlaylistTabs {
 
 pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
     let pls = restore_playlists(pool)?;
-    let converted_pls: Vec<LoadedPlaylistPtr> = pls
-        .into_iter()
-        .map(|pl| Arc::new(RwLock::new(pl)))
-        .collect();
+    let converted_pls: Vec<LoadedPlaylistPtr> = pls.into_iter().map(|pl| RwLock::new(pl)).collect();
     Ok(Arc::new(RwLock::new(PlaylistTabs {
         current_pl: 0,
         pls: converted_pls,
@@ -24,19 +24,95 @@ pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
 }
 
 pub trait PlaylistTabsExt {
-    fn current(&self) -> Option<LoadedPlaylistPtr>;
     fn add(&self, _: LoadedPlaylistPtr);
 }
 
 impl PlaylistTabsExt for PlaylistTabsPtr {
-    fn current(&self) -> Option<LoadedPlaylistPtr> {
-        let i = self.read().unwrap().current_pl;
-        self.read().unwrap().pls.get(i).cloned()
-    }
-
     fn add(&self, lp: LoadedPlaylistPtr) {
         self.write().unwrap().current_pl = 0;
         self.write().unwrap().pls = vec![lp];
+    }
+}
+
+impl LoadedPlaylistExt for PlaylistTabsPtr {
+    fn get_current_track(&self) -> crate::db::Track {
+        let i = self.read().unwrap().current_pl;
+        let cur = self.read().unwrap();
+        let value = cur.pls.get(i).unwrap();
+        value.get_current_track()
+    }
+
+    fn get_playlist_full_time(&self) -> i64 {
+        let i = self.read().unwrap().current_pl;
+        let cur = self.read().unwrap();
+        let value = cur.pls.get(i).unwrap();
+        value.get_playlist_full_time()
+    }
+
+    fn current_position(&self) -> usize {
+        let i = self.read().unwrap().current_pl;
+        let cur = self.read().unwrap();
+        let value = cur.pls.get(i).unwrap();
+        value.current_position()
+    }
+
+    //fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<crate::db::Track>> {
+    //    let i = self.read().unwrap().current_pl;
+    //    let cur = self.read().unwrap();
+    //    let value = cur.pls.get(i).unwrap();
+    //    println!("this is inefficient");
+    //    value.items().cloned()
+    //}
+
+    fn get_remaining_length(&self) -> u64 {
+        let i = self.read().unwrap().current_pl;
+        let cur = self.read().unwrap();
+        let value = cur.pls.get(i).unwrap();
+        value.get_remaining_length()
+    }
+
+    fn clean(&self) {
+        let i = self.read().unwrap().current_pl;
+        let cur = self.read().unwrap();
+        let value = cur.pls.get(i).unwrap();
+        value.clean();
+    }
+}
+
+impl PlaylistControls for PlaylistTabsPtr {
+    fn get_current_path(&self) -> PathBuf {
+        let i = self.read().unwrap().current_pl;
+        let cur = self.read().unwrap();
+        let value = cur.pls.get(i).unwrap();
+        value.get_current_path()
+    }
+
+    fn get_current_uri(&self) -> String {
+        let i = self.read().unwrap().current_pl;
+        let cur = self.read().unwrap();
+        let value = cur.pls.get(i).unwrap();
+        value.get_current_uri()
+    }
+
+    fn previous(&self) -> Option<usize> {
+        let i = self.read().unwrap().current_pl;
+        let cur = self.read().unwrap();
+        let value = cur.pls.get(i).unwrap();
+        value.previous()
+    }
+
+    fn set(&self, i: usize) -> usize {
+        let i = self.read().unwrap().current_pl;
+        let cur = self.read().unwrap();
+        let value = cur.pls.get(i).unwrap();
+        value.set(i)
+    }
+
+    fn next_or_eol(&self) -> Option<usize> {
+        let i = self.read().unwrap().current_pl;
+        let cur = self.read().unwrap();
+        let value = cur.pls.get(i).unwrap();
+        value.next_or_eol()
     }
 }
 

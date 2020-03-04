@@ -144,7 +144,7 @@ impl GStreamerExt for GStreamer {
         //everytime we call return, we do not want to send the message we got to the gui, as it will be done in a subcall we have done
         match action {
             GStreamerAction::Next => {
-                if let Some(i) = self.current_playlist.current().unwrap().next_or_eol() {
+                if let Some(i) = self.current_playlist.next_or_eol() {
                     self.do_gstreamer_action(GStreamerAction::Play(i));
                 } else {
                     self.do_gstreamer_action(GStreamerAction::Stop);
@@ -158,7 +158,7 @@ impl GStreamerExt for GStreamer {
                         .expect("Error in setting gstreamer state");
                 } else {
                     self.do_gstreamer_action(GStreamerAction::Play(
-                        self.current_playlist.current().unwrap().current_position(),
+                        self.current_playlist.current_position(),
                     ));
                     return;
                 }
@@ -172,13 +172,13 @@ impl GStreamerExt for GStreamer {
                         .expect("Error setting gstreamer state");
                 } else {
                     self.do_gstreamer_action(GStreamerAction::Play(
-                        self.current_playlist.current().unwrap().current_position(),
+                        self.current_playlist.current_position(),
                     ));
                     return;
                 }
             }
             GStreamerAction::Previous => {
-                if let Some(i) = self.current_playlist.current().unwrap().previous() {
+                if let Some(i) = self.current_playlist.previous() {
                     self.do_gstreamer_action(GStreamerAction::Play(i));
                 } else {
                     self.do_gstreamer_action(GStreamerAction::Stop);
@@ -191,20 +191,14 @@ impl GStreamerExt for GStreamer {
                     .expect("Error setting gstreamer state");
             }
             GStreamerAction::Play(i) => {
-                self.current_playlist.current().unwrap().set(i);
-                let uri = self.current_playlist.current().unwrap().get_current_uri();
-                if !self
-                    .current_playlist
-                    .current()
-                    .unwrap()
-                    .get_current_path()
-                    .exists()
-                {
+                self.current_playlist.set(i);
+                let uri = self.current_playlist.get_current_uri();
+                if !self.current_playlist.get_current_path().exists() {
                     panic!("The file we want to play does not exist");
                 }
                 println!(
                     "Playing uri: {:?}",
-                    self.current_playlist.current().unwrap().get_current_path()
+                    self.current_playlist.get_current_path()
                 );
                 self.pipeline
                     .set_state(gstreamer::State::Ready)
@@ -251,7 +245,7 @@ impl GStreamerExt for GStreamer {
         use crate::db::UpdatePlayCount;
         info!("Handling EOS");
 
-        let mut old_track = self.current_playlist.current().unwrap().get_current_track();
+        let mut old_track = self.current_playlist.get_current_track();
         let pc = self.pool.clone();
         std::thread::spawn(move || {
             old_track.update_playcount(pc);
@@ -260,9 +254,9 @@ impl GStreamerExt for GStreamer {
         let res = if self.repeat_once.load(Ordering::Relaxed) {
             info!("we are repeat playing");
             self.repeat_once.store(false, Ordering::Relaxed);
-            Some(self.current_playlist.current().unwrap().current_position())
+            Some(self.current_playlist.current_position())
         } else {
-            self.current_playlist.current().unwrap().next_or_eol()
+            self.current_playlist.next_or_eol()
         };
         if let Some(i) = res {
             self.do_gstreamer_action(GStreamerAction::Play(i));

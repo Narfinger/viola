@@ -24,7 +24,7 @@ pub type GstreamerPipeline = Arc<RwLock<Element>>;
 pub type DBPool = Arc<Mutex<diesel::SqliteConnection>>;
 //pub type PlaylistTabsPtr = Rc<RefCell<PlaylistTabs>>;
 pub type PlaylistTabsPtr = Arc<RwLock<PlaylistTabs>>;
-pub type LoadedPlaylistPtr = Arc<RwLock<LoadedPlaylist>>;
+pub type LoadedPlaylistPtr = RwLock<LoadedPlaylist>;
 
 /// General type to communicate with treeviews
 #[derive(Debug, Serialize, Deserialize)]

@@ -21,8 +21,7 @@ use crate::types::*;
 
 #[get("/playlist/")]
 async fn playlist(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
-    let pl = state.playlist.current().unwrap();
-    let items = &*pl.items();
+    let items = state.playlist.items();
     HttpResponse::Ok().json(items)
 }
 
@@ -38,7 +37,7 @@ async fn repeat(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
 #[post("/clean/")]
 async fn clean(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     println!("doing cleaning");
-    state.playlist.current().map(|pl| pl.clean());
+    state.playlist.clean();
     my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
@@ -86,7 +85,7 @@ async fn library_load(
     _: HttpRequest,
 ) -> HttpResponse {
     let q = level.into_inner();
-    let pl = Arc::new(RwLock::new(libraryviewstore::load_query(&state.pool, &q)));
+    let pl = RwLock::new(libraryviewstore::load_query(&state.pool, &q));
     state.playlist.add(pl);
     my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
@@ -147,7 +146,7 @@ async fn smartplaylist_load(
     let pl = spl.get(q);
 
     if let Some(p) = pl {
-        let rp = Arc::new(RwLock::new(p.load(&state.pool)));
+        let rp = RwLock::new(p.load(&state.pool));
         state.playlist.add(rp);
         my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     }
@@ -163,31 +162,13 @@ async fn smartplaylist_load(
 
 #[get("/currentid/")]
 async fn current_id(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
-    HttpResponse::Ok().json(
-        state
-            .playlist
-            .current()
-            .map(|pl| pl.current_position())
-            .unwrap(),
-    )
+    HttpResponse::Ok().json(state.playlist.current_position())
 }
 
 #[get("/pltime/")]
 async fn pltime(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
-    let current_position = state
-        .playlist
-        .current()
-        .map(|pl| pl.current_position())
-        .unwrap();
-    let total_length = state
-        .playlist
-        .current()
-        .unwrap()
-        .items()
-        .iter()
-        .skip(current_position)
-        .map(|t| t.length)
-        .sum::<i32>() as u64;
+    let current_position = state.playlist.current_position();
+    let total_length = state.playlist.get_remaining_length();
     let dur = Duration::new(total_length, 0);
     let time = humantime::format_duration(dur).to_string();
     HttpResponse::Ok().json(time)
@@ -198,11 +179,7 @@ async fn current_image(
     state: web::Data<WebGui>,
     _: HttpRequest,
 ) -> actix_web::Result<actix_files::NamedFile> {
-    let current_track_album = state
-        .playlist
-        .current()
-        .map(|pl| pl.get_current_track().albumpath.unwrap())
-        .expect("error");
+    let current_track_album = state.playlist.get_current_track().albumpath.expect("error");
     println!("asking for image {:?}", &current_track_album);
 
     Ok(actix_files::NamedFile::open(current_track_album)?)
@@ -253,7 +230,7 @@ fn handle_gstreamer_messages(
             println!("received message: {:?}", msg);
             match msg {
                 crate::gstreamer_wrapper::GStreamerMessage::Playing => {
-                    let pos = state.playlist.current().unwrap().current_position();
+                    let pos = state.playlist.current_position();
                     my_websocket::send_my_message(&state.ws, WsMessage::PlayChanged { index: pos });
                 }
                 _ => (),
