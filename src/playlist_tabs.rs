@@ -25,7 +25,7 @@ pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
 
 pub trait PlaylistTabsExt {
     fn add(&self, _: LoadedPlaylistPtr);
-    fn current<'a, T>(&'a self, f: fn(&'a LoadedPlaylistPtr) -> T) -> T;
+    fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T;
 }
 
 impl PlaylistTabsExt for PlaylistTabsPtr {
@@ -34,7 +34,7 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
         self.write().unwrap().pls = vec![lp];
     }
 
-    fn current<'a, T>(&'a self, f: fn(&'a LoadedPlaylistPtr) -> T) -> T {
+    fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T {
         let i = self.read().as_ref().unwrap().current_pl;
         let cur = self.read().as_ref().unwrap();
         f(self.as_ref().read().unwrap().pls.get(i).as_ref().unwrap())
