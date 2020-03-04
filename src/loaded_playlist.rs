@@ -23,6 +23,9 @@ pub trait LoadedPlaylistExt {
     fn current_position(&self) -> usize;
     fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>>;
     fn clean(&self);
+}
+
+pub trait SavePlaylistExt {
     fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error>;
 }
 
@@ -52,7 +55,9 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
         s.items = s.items.split_off(index);
         s.current_position = 0;
     }
+}
 
+impl SavePlaylistExt for LoadedPlaylistPtr {
     fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error> {
         use crate::schema::playlists::dsl::*;
         use crate::schema::playlisttracks::dsl::*;

@@ -12,17 +12,17 @@ use std::time::Duration;
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
 use crate::libraryviewstore;
-use crate::loaded_playlist::LoadedPlaylistExt;
+use crate::loaded_playlist::{LoadedPlaylistExt, SavePlaylistExt};
 use crate::my_websocket;
 use crate::my_websocket::*;
 use crate::playlist::restore_playlists;
-use crate::playlist_tabs;
+use crate::playlist_tabs::{PlaylistTabs, PlaylistTabsExt};
 use crate::smartplaylist_parser;
 use crate::types::*;
 
 #[get("/playlist/")]
 async fn playlist(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
-    let items = &*state.playlist.items();
+    let items = &*state.playlist.current().map(|s| s.items()).unwrap();
     HttpResponse::Ok().json(items)
 }
 
@@ -38,7 +38,7 @@ async fn repeat(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
 #[post("/clean/")]
 async fn clean(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     println!("doing cleaning");
-    state.playlist.clean();
+    state.playlist.current().map(|pl| pl.clean());
     my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
@@ -163,14 +163,26 @@ async fn smartplaylist_load(
 
 #[get("/currentid/")]
 async fn current_id(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
-    HttpResponse::Ok().json(state.playlist.current_position())
+    HttpResponse::Ok().json(
+        state
+            .playlist
+            .current()
+            .map(|pl| pl.current_position())
+            .unwrap(),
+    )
 }
 
 #[get("/pltime/")]
 async fn pltime(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
-    let current_position = state.playlist.current_position();
+    let current_position = state
+        .playlist
+        .current()
+        .map(|pl| pl.current_position())
+        .unwrap();
     let total_length = state
         .playlist
+        .current()
+        .unwrap()
         .items()
         .iter()
         .skip(current_position)
@@ -186,7 +198,11 @@ async fn current_image(
     state: web::Data<WebGui>,
     _: HttpRequest,
 ) -> actix_web::Result<actix_files::NamedFile> {
-    let current_track_album = state.playlist.get_current_track().albumpath.expect("error");
+    let current_track_album = state
+        .playlist
+        .current()
+        .map(|pl| pl.get_current_track().albumpath.unwrap())
+        .expect("error");
     println!("asking for image {:?}", &current_track_album);
 
     Ok(actix_files::NamedFile::open(current_track_album)?)
@@ -195,7 +211,7 @@ async fn current_image(
 struct WebGui {
     pool: DBPool,
     gstreamer: Arc<gstreamer_wrapper::GStreamer>,
-    playlist: LoadedPlaylistPtr,
+    playlist: PlaylistTabsPtr,
     ws: RwLock<Option<my_websocket::MyWs>>,
 }
 
@@ -237,7 +253,7 @@ fn handle_gstreamer_messages(
             println!("received message: {:?}", msg);
             match msg {
                 crate::gstreamer_wrapper::GStreamerMessage::Playing => {
-                    let pos = state.playlist.current_position();
+                    let pos = state.playlist.current().unwrap().current_position();
                     my_websocket::send_my_message(&state.ws, WsMessage::PlayChanged { index: pos });
                 }
                 _ => (),
@@ -261,13 +277,8 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
     println!("Loading playlist");
     let lp = Arc::new(RwLock::new({
         let mut pls = restore_playlists(&pool).expect("Error restoring playlisttabs");
-        println!(
-            "pls: {:?}",
-            pls.iter()
-                .map(|ref pl| pl.name.clone())
-                .collect::<Vec<String>>()
-        );
-        pls.swap_remove(0)
+        pls
+        //pls.swap_remove(0)
     }));
 
     println!("Starting gstreamer");

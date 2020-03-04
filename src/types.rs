@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex, RwLock};
 use crate::gstreamer_wrapper::GStreamerMessage;
 use crate::loaded_playlist::LoadedPlaylist;
 //use crate::maingui::MainGui;
-//use crate::playlist_tabs::PlaylistTabs;
+use crate::playlist_tabs::PlaylistTabs;
 
 pub const APP_INFO: AppInfo = AppInfo {
     name: "viola",
@@ -23,6 +23,7 @@ pub type GstreamerPipeline = Arc<RwLock<Element>>;
 //pub type MainGuiWeakPtr = Weak<MainGui>;
 pub type DBPool = Arc<Mutex<diesel::SqliteConnection>>;
 //pub type PlaylistTabsPtr = Rc<RefCell<PlaylistTabs>>;
+pub type PlaylistTabsPtr = Arc<RwLock<PlaylistTabs>>;
 pub type LoadedPlaylistPtr = Arc<RwLock<LoadedPlaylist>>;
 
 /// General type to communicate with treeviews

@@ -1,24 +1,34 @@
 use std::sync::RwLock;
 
+use crate::loaded_playlist::SavePlaylistExt;
 use crate::types::*;
 
 #[derive(Debug)]
 pub struct PlaylistTabs {
-    pub current_playlist: RwLock<Option<usize>>,
-    pub pls: Vec<LoadedPlaylistPtr>,
+    current_playlist: RwLock<Option<usize>>,
+    pls: Vec<LoadedPlaylistPtr>,
 }
 
-trait PlaylistTabsExt {
+pub trait PlaylistTabsExt {
     fn current(&self) -> Option<&LoadedPlaylistPtr>;
 }
 
-impl PlaylistTabsExt for PlaylistTabs {
+impl PlaylistTabsExt for PlaylistTabsPtr {
     fn current(&self) -> Option<&LoadedPlaylistPtr> {
-        let index = *self.current_playlist.read().unwrap();
+        let index = *self.read().unwrap().current_playlist.read().unwrap();
         if let Some(i) = index {
-            self.pls.get(i)
+            self.read().unwrap().pls.get(i)
         } else {
             None
         }
+    }
+}
+
+impl SavePlaylistExt for PlaylistTabsPtr {
+    fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error> {
+        for i in self.read().unwrap().pls.iter() {
+            i.save(db)?;
+        }
+        Ok(())
     }
 }
