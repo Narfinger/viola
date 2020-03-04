@@ -15,14 +15,14 @@ use crate::libraryviewstore;
 use crate::loaded_playlist::{LoadedPlaylistExt, SavePlaylistExt};
 use crate::my_websocket;
 use crate::my_websocket::*;
-use crate::playlist::restore_playlists;
-use crate::playlist_tabs::{PlaylistTabs, PlaylistTabsExt};
+use crate::playlist_tabs::{load, PlaylistTabs, PlaylistTabsExt};
 use crate::smartplaylist_parser;
 use crate::types::*;
 
 #[get("/playlist/")]
 async fn playlist(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
-    let items = &*state.playlist.current().map(|s| s.items()).unwrap();
+    let pl = state.playlist.current().unwrap();
+    let items = &*pl.items();
     HttpResponse::Ok().json(items)
 }
 
@@ -86,8 +86,8 @@ async fn library_load(
     _: HttpRequest,
 ) -> HttpResponse {
     let q = level.into_inner();
-    let pl = libraryviewstore::load_query(&state.pool, &q);
-    *state.playlist.write().unwrap() = pl;
+    let pl = Arc::new(RwLock::new(libraryviewstore::load_query(&state.pool, &q)));
+    state.playlist.add(pl);
     my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
@@ -147,8 +147,8 @@ async fn smartplaylist_load(
     let pl = spl.get(q);
 
     if let Some(p) = pl {
-        let rp = p.load(&state.pool);
-        *state.playlist.write().unwrap() = rp;
+        let rp = Arc::new(RwLock::new(p.load(&state.pool)));
+        state.playlist.add(rp);
         my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     }
 
@@ -275,11 +275,7 @@ fn handle_gstreamer_messages(
 
 pub async fn run(pool: DBPool) -> io::Result<()> {
     println!("Loading playlist");
-    let lp = Arc::new(RwLock::new({
-        let mut pls = restore_playlists(&pool).expect("Error restoring playlisttabs");
-        pls
-        //pls.swap_remove(0)
-    }));
+    let lp = crate::playlist_tabs::load(&pool).expect("Failure to load old playlists");
 
     println!("Starting gstreamer");
     let (gst, rx) =
@@ -337,6 +333,8 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
     .expect("Cannot bind address")
     .run()
     .await;
+
+    println!("I can probably remove the arc and rwlock for playlists and just use");
 
     //sys.block_on(server);
 
