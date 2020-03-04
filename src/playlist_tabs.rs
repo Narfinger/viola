@@ -90,7 +90,7 @@ impl PlaylistControls for PlaylistTabsPtr {
     }
 
     fn next_or_eol(&self) -> Option<usize> {
-        self.current(PLaylistControls::next_or_eol)
+        self.current(PlaylistControls::next_or_eol)
     }
 }
 
