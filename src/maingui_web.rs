@@ -21,7 +21,7 @@ use crate::types::*;
 
 #[get("/playlist/")]
 async fn playlist(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
-    let items = state.playlist.items();
+    let items = state.playlist_tabs.items();
     HttpResponse::Ok().body(items)
 }
 
@@ -37,7 +37,7 @@ async fn repeat(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
 #[post("/clean/")]
 async fn clean(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     println!("doing cleaning");
-    state.playlist.clean();
+    state.playlist_tabs.clean();
     my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
@@ -46,7 +46,7 @@ async fn clean(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
 async fn save(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     println!("Saving");
     let db = state.pool.lock().expect("Error for db");
-    state.playlist.save(&db).expect("Error in saving");
+    state.playlist_tabs.save(&db).expect("Error in saving");
     HttpResponse::Ok().finish()
 }
 
@@ -86,7 +86,7 @@ async fn library_load(
 ) -> HttpResponse {
     let q = level.into_inner();
     let pl = RwLock::new(libraryviewstore::load_query(&state.pool, &q));
-    state.playlist.add(pl);
+    state.playlist_tabs.add(pl);
     my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
@@ -147,7 +147,7 @@ async fn smartplaylist_load(
 
     if let Some(p) = pl {
         let rp = RwLock::new(p.load(&state.pool));
-        state.playlist.add(rp);
+        state.playlist_tabs.add(rp);
         my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     }
 
@@ -162,12 +162,12 @@ async fn smartplaylist_load(
 
 #[get("/currentid/")]
 async fn current_id(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
-    HttpResponse::Ok().json(state.playlist.current_position())
+    HttpResponse::Ok().json(state.playlist_tabs.current_position())
 }
 
 #[get("/pltime/")]
 async fn pltime(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
-    let total_length = state.playlist.get_remaining_length();
+    let total_length = state.playlist_tabs.get_remaining_length();
     let dur = Duration::new(total_length, 0);
     let time = humantime::format_duration(dur).to_string();
     HttpResponse::Ok().json(time)
@@ -176,7 +176,7 @@ async fn pltime(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
 #[get("/currentimage/")]
 async fn current_image(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
     state
-        .playlist
+        .playlist_tabs
         .get_current_track()
         .albumpath
         .and_then(|p| actix_files::NamedFile::open(p).ok())
@@ -187,7 +187,7 @@ async fn current_image(state: web::Data<WebGui>, req: HttpRequest) -> HttpRespon
 struct WebGui {
     pool: DBPool,
     gstreamer: Arc<gstreamer_wrapper::GStreamer>,
-    playlist: PlaylistTabsPtr,
+    playlist_tabs: PlaylistTabsPtr,
     ws: RwLock<Option<my_websocket::MyWs>>,
 }
 
@@ -199,7 +199,7 @@ impl Web for WebGui {
     fn save(&self) {
         let db = self.pool.lock().expect("DB Error");
         db.transaction::<_, diesel::result::Error, _>(|| {
-            self.playlist.save(&*db)?;
+            self.playlist_tabs.save(&*db)?;
             Ok(())
         })
         .expect("Error in saving");
@@ -229,7 +229,7 @@ fn handle_gstreamer_messages(
             println!("received message: {:?}", msg);
             match msg {
                 crate::gstreamer_wrapper::GStreamerMessage::Playing => {
-                    let pos = state.playlist.current_position();
+                    let pos = state.playlist_tabs.current_position();
                     my_websocket::send_my_message(&state.ws, WsMessage::PlayChanged { index: pos });
                 }
                 _ => (),
@@ -251,17 +251,17 @@ fn handle_gstreamer_messages(
 
 pub async fn run(pool: DBPool) -> io::Result<()> {
     println!("Loading playlist");
-    let lp = crate::playlist_tabs::load(&pool).expect("Failure to load old playlists");
+    let plt = crate::playlist_tabs::load(&pool).expect("Failure to load old playlists");
 
     println!("Starting gstreamer");
     let (gst, rx) =
-        gstreamer_wrapper::new(lp.clone(), pool.clone()).expect("Error Initializing gstreamer");
+        gstreamer_wrapper::new(plt.clone(), pool.clone()).expect("Error Initializing gstreamer");
 
     println!("Setting up gui");
     let state = WebGui {
         pool: pool.clone(),
         gstreamer: gst,
-        playlist: lp,
+        playlist_tabs: plt,
         ws: RwLock::new(None),
     };
 
