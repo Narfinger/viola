@@ -98,6 +98,7 @@ class Main extends React.Component {
             pltime: "",
             image_hash: "",
             imageHash: Date.now(),
+            eventblock: false,
         };
 
         this.handleButtonPush = this.handleButtonPush.bind(this);
@@ -183,18 +184,22 @@ class Main extends React.Component {
     }
 
     handleButtonPush(e) {
-        if (e === ButtonEvent.Play) {
-            axios.post("/transport/", { "t": "Playing" });
-            this.setState({ status: PlayState.Playing });
-        } else if (e === ButtonEvent.Pause) {
-            axios.post("/transport/", { "t": "Pausing" });
-            this.setState({ status: PlayState.Paused });
-        } else if (e === ButtonEvent.Previous) {
-            axios.post("/transport/", { "t": "Previous" });
-        } else if (e === ButtonEvent.Next) {
-            axios.post("/transport/", { "t": "Next" });
-        } else {
-            console.log("Unspecified!");
+        if (!this.state.eventblock) {
+            if (e === ButtonEvent.Play) {
+                axios.post("/transport/", { "t": "Playing" });
+                this.setState({ status: PlayState.Playing });
+            } else if (e === ButtonEvent.Pause) {
+                axios.post("/transport/", { "t": "Pausing" });
+                this.setState({ status: PlayState.Paused });
+            } else if (e === ButtonEvent.Previous) {
+                axios.post("/transport/", { "t": "Previous" });
+            } else if (e === ButtonEvent.Next) {
+                axios.post("/transport/", { "t": "Next" });
+            } else {
+                console.log("Unspecified!");
+            }
+            this.setState({ eventblock: true });
+            setTimeout(() => this.setState({ eventblock: false }), 1000);
         }
     }
 
