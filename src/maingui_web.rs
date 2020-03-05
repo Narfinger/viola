@@ -22,7 +22,7 @@ use crate::types::*;
 #[get("/playlist/")]
 async fn playlist(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     let items = state.playlist.items();
-    HttpResponse::Ok().json(&*items)
+    HttpResponse::Ok().body(items)
 }
 
 #[post("/repeat/")]
@@ -174,14 +174,14 @@ async fn pltime(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
 }
 
 #[get("/currentimage/")]
-async fn current_image(
-    state: web::Data<WebGui>,
-    _: HttpRequest,
-) -> actix_web::Result<actix_files::NamedFile> {
-    let current_track_album = state.playlist.get_current_track().albumpath.expect("error");
-    println!("asking for image {:?}", &current_track_album);
-
-    Ok(actix_files::NamedFile::open(current_track_album)?)
+async fn current_image(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+    state
+        .playlist
+        .get_current_track()
+        .albumpath
+        .and_then(|p| actix_files::NamedFile::open(p).ok())
+        .and_then(|f: actix_files::NamedFile| f.into_response(&req).ok())
+        .unwrap_or_else(|| HttpResponse::Ok().finish())
 }
 
 struct WebGui {

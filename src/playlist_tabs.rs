@@ -34,9 +34,7 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
 
     fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T {
         let i = self.read().as_ref().unwrap().current_pl;
-        let cur = self.read().as_ref().unwrap();
         f(self.as_ref().read().unwrap().pls.get(i).as_ref().unwrap())
-        //f(&pl)
     }
 
     fn items(&self) -> String {
@@ -89,11 +87,11 @@ impl PlaylistControls for PlaylistTabsPtr {
         self.current(PlaylistControls::previous)
     }
 
-    fn set(&self, i: usize) -> usize {
+    fn set(&self, index: usize) -> usize {
         let i = self.read().unwrap().current_pl;
         let cur = self.read().unwrap();
         let value = cur.pls.get(i).unwrap();
-        value.set(i)
+        value.set(index)
     }
 
     fn next_or_eol(&self) -> Option<usize> {
