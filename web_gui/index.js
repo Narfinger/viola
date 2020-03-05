@@ -95,7 +95,7 @@ class Main extends React.Component {
             image_hash: "",
             imageHash: Date.now(),
             eventblock: false,
-            tabs: ["test1", "test2", "test3"],
+            tabs: [],
         };
 
         this.handleButtonPush = this.handleButtonPush.bind(this);
@@ -128,6 +128,9 @@ class Main extends React.Component {
             this.refresh();
         }
         );
+        axios.get("/playlisttab/").then((response) => {
+            this.setState({ tabs: response.data });
+        })
 
         this.ws.onopen = () => {
             // on connecting, do nothing but log it to the console

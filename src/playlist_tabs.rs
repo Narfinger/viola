@@ -7,8 +7,8 @@ use crate::types::*;
 
 #[derive(Debug, Serialize)]
 pub struct PlaylistTabs {
-    current_pl: usize,
-    pls: Vec<LoadedPlaylistPtr>,
+    pub current_pl: usize,
+    pub pls: Vec<LoadedPlaylistPtr>,
 }
 
 pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {

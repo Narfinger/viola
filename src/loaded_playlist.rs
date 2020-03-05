@@ -32,19 +32,6 @@ pub trait SavePlaylistExt {
     fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error>;
 }
 
-pub struct LoadedPlaylistReader<'a> {
-    guard: RwLockReadGuardRef<'a, LoadedPlaylist, Vec<Track>>,
-}
-
-impl<'a> Serialize for LoadedPlaylistReader<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        self.guard.deref().serialize(serializer)
-    }
-}
-
 pub fn items(pl: &LoadedPlaylistPtr) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>> {
     RwLockReadGuardRef::new(pl.read().unwrap()).map(|s| &s.items)
 }

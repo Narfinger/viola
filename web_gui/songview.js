@@ -117,7 +117,10 @@ export default class SongView extends React.Component {
     }
 
     handleChange(event, newValue) {
-        this.setState({ value: newValue });
+        if (newValue !== this.state.value) {
+            this.setState({ value: newValue });
+            axios.post("/playlisttab/", { "index": newValue });
+        }
     }
 
     render() {

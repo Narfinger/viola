@@ -184,6 +184,36 @@ async fn current_image(state: web::Data<WebGui>, req: HttpRequest) -> HttpRespon
         .unwrap_or_else(|| HttpResponse::Ok().finish())
 }
 
+#[get("/playlisttab/")]
+async fn playlist_tab(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
+    let strings = state
+        .playlist_tabs
+        .read()
+        .unwrap()
+        .pls
+        .iter()
+        .map(|pl| pl.read().unwrap().name.to_owned())
+        .collect::<Vec<String>>();
+    HttpResponse::Ok().json(strings)
+}
+
+#[derive(Debug, Deserialize)]
+struct ChangePlaylistTabJson {
+    index: usize,
+}
+
+#[post("/playlisttab/")]
+async fn change_playlist_tab(
+    state: web::Data<WebGui>,
+    level: web::Json<ChangePlaylistTabJson>,
+    _: HttpRequest,
+) -> HttpResponse {
+    let max = state.playlist_tabs.read().unwrap().pls.len();
+    state.playlist_tabs.write().unwrap().current_pl = std::cmp::max(max - 1, level.index);
+    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
+    HttpResponse::Ok().finish()
+}
+
 struct WebGui {
     pool: DBPool,
     gstreamer: Arc<gstreamer_wrapper::GStreamer>,
@@ -301,6 +331,8 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
             .service(pltime)
             .service(current_id)
             .service(current_image)
+            .service(playlist_tab)
+            .service(change_playlist_tab)
             .service(web::resource("/ws/").route(web::get().to(ws_start)))
             .service(fs::Files::new("/static/", "web_gui/dist/").show_files_listing())
             .service(fs::Files::new("/", "./web_gui/").index_file("index.html"))
