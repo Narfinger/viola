@@ -14,6 +14,8 @@ import Tab from '@material-ui/core/Tab';
 import { VariableSizeGrid as VSGrid } from 'react-window';
 import axios from 'axios';
 import LibraryView from './libraryviews';
+import SongView from './songview';
+
 
 const e = React.createElement;
 
@@ -78,12 +80,6 @@ function PlayButton(props) {
     return <TransportButton title="Unspecified"></TransportButton>
 }
 
-function convertSecondsToTime(seconds) {
-    let date = new Date(0);
-    date.setSeconds(seconds);
-    return date.toISOString().substr(14, 5);
-}
-
 const keyMap = {
     PLAYPAUSE: ["space", "c"]
 };
@@ -99,6 +95,7 @@ class Main extends React.Component {
             image_hash: "",
             imageHash: Date.now(),
             eventblock: false,
+            tabs: ["test1", "test2", "test3"],
         };
 
         this.handleButtonPush = this.handleButtonPush.bind(this);
@@ -247,7 +244,7 @@ class Main extends React.Component {
                         {playstate_to_string(this.state.status)}
                     </Grid>
                     <Grid item xs={10}>
-                        <SongView current={this.state.current} pl={this.state.pl} playing={this.state.status === PlayState.Playing} />
+                        <SongView current={this.state.current} pl={this.state.pl} playing={this.state.status === PlayState.Playing} tabs={this.state.tabs} />
                     </Grid>
                     <Grid item xs={10}>
                         <img height="100px" width="100px" src={"/currentimage/" + "?" + this.state.imageHash} /> Playlist Count: {this.state.pl.length} | Left to go: {this.state.pl.length - this.state.current} | Time: {this.state.pltime}
@@ -280,94 +277,6 @@ class LibraryDrawer extends React.Component {
                 <LibraryView></LibraryView>
             </Drawer>
         </div>
-    }
-}
-
-function columnWidths(index) {
-    switch (index) {
-        case 0: return 50; //number
-        case 1: return 50; //tracknumber
-        case 2: return 400; //title
-        case 3: return 300; //artist
-        case 4: return 300; //album
-        case 5: return 200; //genre
-        case 6: return 100; //year
-        case 7: return 100; //time
-        default: return 10000;
-    }
-}
-
-class Cell extends React.PureComponent {
-    constructor(props) {
-        super(props)
-        this.click = this.click.bind(this);
-    }
-    click() {
-        console.log("cliicked");
-        let c = {
-            "t": "Play",
-            c: this.props.rowIndex,
-        };
-        axios.post("/transport/", c);
-
-        console.log(this.props);
-    }
-
-    render() {
-        const { item, selected } = this.props.data[this.props.rowIndex];
-        //console.log(style);
-        let string = "";
-        switch (this.props.columnIndex) {
-            case 0: string = this.props.rowIndex; break;
-            case 1: string = item.tracknumber; break;
-            case 2: string = item.title; break;
-            case 3: string = item.artist; break;
-            case 4: string = item.album; break;
-            case 5: string = item.genre; break;
-            case 6: {
-                if (item.year !== -1) {
-                    string = item.year;
-                } else {
-                    string = "";
-                }
-                break;
-            }
-            case 7: string = convertSecondsToTime(item.length); break;
-            default: string = "ERROR";
-        }
-        let style = JSON.parse(JSON.stringify(this.props.style));
-        style.textOverflow = "ellipsis";
-        style.width = columnWidths(this.props.columnIndex) + "px";
-        if (selected) {
-            style.color = "#FF0000";
-        }
-        return <div style={style} onDoubleClick={this.click}><Typography noWrap>{string}</Typography></div>
-
-    }
-}
-
-class SongView extends React.Component {
-    render() {
-        let items = this.props.pl.map((t) => ({ item: t, selected: false }));
-
-        // sets the correct index to playing. if there is nothing playing, we don't set anything
-        if (this.props.current !== -1 && items && this.props.playing) {
-            console.log(this.props.current);
-            items[this.props.current].selected = true;
-        }
-        return <div><div>
-            <VSGrid
-                itemData={items}
-                columnCount={8}
-                columnWidth={columnWidths}
-                height={650}
-                rowCount={this.props.pl.length}
-                rowHeight={(index) => { return 25; }}
-                width={1600}
-            >
-                {Cell}
-            </VSGrid>
-        </div></div>
     }
 }
 
