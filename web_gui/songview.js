@@ -142,7 +142,7 @@ export default class SongView extends React.Component {
                 width={1600}
             >
                 {Cell}
-            </VSGrid> * /}
+            </VSGrid>
         </div >
     }
 }
