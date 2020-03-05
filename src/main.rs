@@ -29,7 +29,6 @@ extern crate walkdir;
 pub mod albumviewstore;
 pub mod db;
 pub mod gstreamer_wrapper;
-pub mod gui;
 pub mod libraryviewstore;
 pub mod loaded_playlist;
 pub mod maingui;
@@ -132,7 +131,9 @@ async fn main() -> io::Result<()> {
         println!("Trying main");
         //std::thread::spawn(|| {
         println!("Starting web service");
-        maingui_web::run(pool).await;
+        maingui_web::run(pool)
+            .await
+            .expect("Error in running web gui");
         //});
 
         /*

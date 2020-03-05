@@ -1,10 +1,7 @@
-use owning_ref::{RwLockReadGuardRef, VecRef};
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
-use crate::loaded_playlist::{
-    LoadedPlaylist, LoadedPlaylistExt, PlaylistControls, SavePlaylistExt,
-};
+use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls, SavePlaylistExt};
 use crate::playlist::restore_playlists;
 use crate::types::*;
 
@@ -16,7 +13,7 @@ pub struct PlaylistTabs {
 
 pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
     let pls = restore_playlists(pool)?;
-    let converted_pls: Vec<LoadedPlaylistPtr> = pls.into_iter().map(|pl| RwLock::new(pl)).collect();
+    let converted_pls: Vec<LoadedPlaylistPtr> = pls.into_iter().map(RwLock::new).collect();
     Ok(Arc::new(RwLock::new(PlaylistTabs {
         current_pl: 0,
         pls: converted_pls,
@@ -26,6 +23,7 @@ pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
 pub trait PlaylistTabsExt {
     fn add(&self, _: LoadedPlaylistPtr);
     fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T;
+    fn items(&self) -> String;
 }
 
 impl PlaylistTabsExt for PlaylistTabsPtr {
@@ -39,6 +37,15 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
         let cur = self.read().as_ref().unwrap();
         f(self.as_ref().read().unwrap().pls.get(i).as_ref().unwrap())
         //f(&pl)
+    }
+
+    fn items(&self) -> String {
+        use crate::loaded_playlist::items;
+        let i = self.read().unwrap().current_pl;
+        let cur = self.read().unwrap();
+        let pl = cur.pls.get(i).unwrap();
+        let items = items(&pl);
+        serde_json::to_string(&*items).unwrap()
     }
 }
 
@@ -56,9 +63,9 @@ impl LoadedPlaylistExt for PlaylistTabsPtr {
         self.current(LoadedPlaylistExt::current_position)
     }
 
-    fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<crate::db::Track>> {
-        self.current(LoadedPlaylistExt::items)
-    }
+    //fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<crate::db::Track>> {
+    //    self.current(LoadedPlaylistExt::items)
+    //}
 
     fn get_remaining_length(&self) -> u64 {
         self.current(LoadedPlaylistExt::get_remaining_length)

@@ -15,7 +15,7 @@ use crate::libraryviewstore;
 use crate::loaded_playlist::{LoadedPlaylistExt, SavePlaylistExt};
 use crate::my_websocket;
 use crate::my_websocket::*;
-use crate::playlist_tabs::{load, PlaylistTabs, PlaylistTabsExt};
+use crate::playlist_tabs::PlaylistTabsExt;
 use crate::smartplaylist_parser;
 use crate::types::*;
 
@@ -167,7 +167,6 @@ async fn current_id(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
 
 #[get("/pltime/")]
 async fn pltime(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
-    let current_position = state.playlist.current_position();
     let total_length = state.playlist.get_remaining_length();
     let dur = Duration::new(total_length, 0);
     let time = humantime::format_duration(dur).to_string();
@@ -309,7 +308,8 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
     .bind("127.0.0.1:8088")
     .expect("Cannot bind address")
     .run()
-    .await;
+    .await
+    .expect("Error starting server");
 
     println!("I can probably remove the arc and rwlock for playlists and just use");
 

@@ -6,7 +6,6 @@ use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::Arc;
 
 use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls};
-use crate::playlist_tabs::{PlaylistTabs, PlaylistTabsExt};
 //use crate::playlist_tabs::PlaylistControlsImmutable;
 use crate::types::*;
 
@@ -84,7 +83,7 @@ pub fn new(
     let (tx, rx) = sync_channel::<GStreamerMessage>(1);
 
     //old method for eos
-    let (eos_tx, eos_rx) = sync_channel::<()>(1);
+    //let (eos_tx, eos_rx) = sync_channel::<()>(1);
     //pipeline
     //    .connect("about-to-finish", true, move |_| {
     //        warn!("received signal to go to next track");

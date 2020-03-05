@@ -1,28 +1,28 @@
 use owning_ref::RwLockReadGuardRef;
-use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS, NON_ALPHANUMERIC};
+use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
 use serde::Serialize;
 use std::ops::Deref;
 use std::path::PathBuf;
 
 use crate::db::Track;
 use crate::playlist::{NewPlaylist, NewPlaylistTrack, Playlist};
-use crate::types::{DBPool, LoadedPlaylistPtr};
+use crate::types::LoadedPlaylistPtr;
 const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ');
 
 #[derive(Debug, Serialize)]
 pub struct LoadedPlaylist {
     /// The id we have in the database for it. If none, means this was not yet saved
-    id: i32,
-    name: String,
-    items: Vec<Track>,
-    current_position: usize,
+    pub id: i32,
+    pub name: String,
+    pub items: Vec<Track>,
+    pub current_position: usize,
 }
 
 pub trait LoadedPlaylistExt {
     fn get_current_track(&self) -> Track;
     fn get_playlist_full_time(&self) -> i64;
     fn current_position(&self) -> usize;
-    fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>>;
+    //fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>>;
     //fn get_items_reader(&self) -> std::rc::Rc<dyn erased_serde::Serialize>;
     fn get_remaining_length(&self) -> u64;
     fn clean(&self);
@@ -45,6 +45,10 @@ impl<'a> Serialize for LoadedPlaylistReader<'a> {
     }
 }
 
+pub fn items(pl: &LoadedPlaylistPtr) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>> {
+    RwLockReadGuardRef::new(pl.read().unwrap()).map(|s| &s.items)
+}
+
 impl LoadedPlaylistExt for LoadedPlaylistPtr {
     fn get_current_track(&self) -> Track {
         let s = self.read().unwrap();
@@ -58,11 +62,6 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
 
     fn current_position(&self) -> usize {
         self.read().unwrap().current_position
-    }
-
-    fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>> {
-        println!("This is really inefficient");
-        RwLockReadGuardRef::new(self.read().unwrap()).map(|s| &s.items)
     }
 
     //fn get_items_reader(&self) -> std::rc::Rc<dyn erased_serde::Serialize> {

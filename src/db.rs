@@ -11,8 +11,6 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
 use taglib;
-//use jwalk::{WalkDir, DirEntry};
-use crate::types::*;
 use walkdir::DirEntry;
 
 #[derive(AsChangeset, Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]
@@ -44,7 +42,7 @@ impl UpdatePlayCount for Track {
     fn update_playcount(&mut self, pool: DBPool) {
         use crate::rand::RngCore;
         use crate::schema::tracks::dsl::*;
-        use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
+        use diesel::{QueryDsl, RunQueryDsl, SaveChangesDsl};
 
         //wait a random time
         let mut rng = rand::thread_rng();
