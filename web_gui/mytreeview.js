@@ -132,7 +132,7 @@ export default class MyTreeView extends React.Component {
     }
 
     handleDoubleClick(event, index) {
-        event.stopPropagation();
+        //event.stopPropagation();
         let ids = index.split("-");
         let values = [];
         let current = this.state.items;
@@ -141,14 +141,12 @@ export default class MyTreeView extends React.Component {
             values.push(val.value);
             current = val.children;
         }
-        let type = this.props.query_params_list[Math.min(ids.length, this.props.query_params_list.length - 1)];
-        axios.post("/libraryview/partial/", {
-            "search": this.state.search,
-            "lvl": {
-                "type": type,
-                "content": values,
-            }
-        });
+        let type = this.props.query_params_list[Math.min(ids.length, this.props.query_params_list.length - 1)];;
+        let param = {
+            "search": this.state.search, "lvl": { "type": type, "content": values, }
+        };
+        console.log(param);
+        axios.post("/libraryview/load/", param);
     }
 
     third_level_children(children, index, index2) {

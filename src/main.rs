@@ -131,9 +131,7 @@ async fn main() -> io::Result<()> {
         println!("Trying main");
         //std::thread::spawn(|| {
         println!("Starting web service");
-        maingui_web::run(pool)
-            .await
-            .expect("Error in running web gui");
+        maingui_web::run(pool).await.expect("Error running server");
         //});
 
         /*

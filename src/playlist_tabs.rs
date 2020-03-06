@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
-use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls, SavePlaylistExt};
+use crate::loaded_playlist::{
+    LoadedPlaylist, LoadedPlaylistExt, PlaylistControls, SavePlaylistExt,
+};
 use crate::playlist::restore_playlists;
 use crate::types::*;
 
@@ -21,15 +23,15 @@ pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
 }
 
 pub trait PlaylistTabsExt {
-    fn add(&self, _: LoadedPlaylistPtr);
+    fn add(&self, _: LoadedPlaylist);
     fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T;
     fn items(&self) -> String;
 }
 
 impl PlaylistTabsExt for PlaylistTabsPtr {
-    fn add(&self, lp: LoadedPlaylistPtr) {
+    fn add(&self, lp: LoadedPlaylist) {
         self.write().unwrap().current_pl = 0;
-        self.write().unwrap().pls = vec![lp];
+        self.write().unwrap().pls = vec![RwLock::new(lp)];
     }
 
     fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T {

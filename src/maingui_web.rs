@@ -85,7 +85,8 @@ async fn library_load(
     _: HttpRequest,
 ) -> HttpResponse {
     let q = level.into_inner();
-    let pl = RwLock::new(libraryviewstore::load_query(&state.pool, &q));
+    let pl = libraryviewstore::load_query(&state.pool, &q);
+    println!("Loading new playlist {}", pl.name);
     state.playlist_tabs.add(pl);
     my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
@@ -146,7 +147,7 @@ async fn smartplaylist_load(
     let pl = spl.get(q);
 
     if let Some(p) = pl {
-        let rp = RwLock::new(p.load(&state.pool));
+        let rp = p.load(&state.pool);
         state.playlist_tabs.add(rp);
         my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     }
@@ -341,7 +342,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
     .expect("Cannot bind address")
     .run()
     .await
-    .expect("Error starting server");
+    .expect("Running server");
 
     println!("I can probably remove the arc and rwlock for playlists and just use");
 
