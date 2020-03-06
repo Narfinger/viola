@@ -145,7 +145,6 @@ export default class MyTreeView extends React.Component {
         let param = {
             "search": this.state.search, "lvl": { "type": type, "content": values, }
         };
-        console.log(param);
         axios.post("/libraryview/load/", param);
     }
 
