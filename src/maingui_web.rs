@@ -210,8 +210,20 @@ async fn change_playlist_tab(
     _: HttpRequest,
 ) -> HttpResponse {
     let max = state.playlist_tabs.read().unwrap().pls.len();
-    println!("setting to: {}, max: {}", level.index, max - 1);
+    info!("setting to: {}, max: {}", level.index, max - 1);
     state.playlist_tabs.write().unwrap().current_pl = std::cmp::min(max - 1, level.index);
+    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
+    HttpResponse::Ok().finish()
+}
+
+#[delete("/playlisttab/")]
+async fn delete_playlist_tab(
+    state: web::Data<WebGui>,
+    index: web::Json<ChangePlaylistTabJson>,
+    _: HttpRequest,
+) -> HttpResponse {
+    state.playlist_tabs.delete(index.index);
+    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadTabs);
     my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
@@ -335,6 +347,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
             .service(current_image)
             .service(playlist_tab)
             .service(change_playlist_tab)
+            .service(delete_playlist_tab)
             .service(web::resource("/ws/").route(web::get().to(ws_start)))
             .service(fs::Files::new("/static/", "web_gui/dist/").show_files_listing())
             .service(fs::Files::new("/", "./web_gui/").index_file("index.html"))

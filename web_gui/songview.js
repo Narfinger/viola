@@ -3,6 +3,9 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import { VariableSizeGrid as VSGrid } from 'react-window';
 import Box from '@material-ui/core/Box';
+import Button from '@material-ui/core/Button';
+import DeleteIcon from '@material-ui/icons/Delete';
+import IconButton from '@material-ui/core/IconButton';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import PropTypes from 'prop-types';
@@ -101,11 +104,22 @@ function a11yProps(index) {
     };
 }
 
-TabPanel.propTypes = {
-    children: PropTypes.node,
-    index: PropTypes.any.isRequired,
-    value: PropTypes.any.isRequired,
-};
+class PlaylistTab extends React.Component {
+    constructor(props) {
+        super(props);
+        this.click = this.bind.click();
+    }
+
+    click() {
+        axios.delete("/playlisttab/", { "index": this.props.index });
+    }
+
+    render() {
+        return <div><Tab label={this.props.t} value={this.props.index} key={this.props.index} /> <IconButton aria-label="delete" onClick={this.click}>
+            <DeleteIcon fontSize="small" />
+        </IconButton></div >
+    }
+}
 
 export default class SongView extends React.Component {
     constructor(props) {
@@ -133,7 +147,7 @@ export default class SongView extends React.Component {
 
         return <div>
             <Tabs value={this.state.value} onChange={this.handleChange} aria-label="simple tabs example">
-                {this.props.tabs.map((t, index) => <Tab label={t} value={index} key={index} {...a11yProps(index)} />)}
+                {this.props.tabs.map((t, index) => <PlaylistTab key={index} t={t} index={index} />)}
             </Tabs>
             <VSGrid
                 itemData={items}

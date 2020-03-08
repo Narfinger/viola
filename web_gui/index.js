@@ -151,6 +151,13 @@ class Main extends React.Component {
                     axios.get("/playlist/").then((response) => this.setState({
                         pl: response.data
                     }));
+                    break;
+                }
+                case "ReloadTabs": {
+                    axios.get("/playlisttabs/").then((response) => this.setState({
+                        tabs: response.data
+                    }))
+                    break;
                 }
                 default:
             }
