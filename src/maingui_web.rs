@@ -210,7 +210,8 @@ async fn change_playlist_tab(
     _: HttpRequest,
 ) -> HttpResponse {
     let max = state.playlist_tabs.read().unwrap().pls.len();
-    state.playlist_tabs.write().unwrap().current_pl = std::cmp::max(max - 1, level.index);
+    println!("setting to: {}, max: {}", level.index, max - 1);
+    state.playlist_tabs.write().unwrap().current_pl = std::cmp::min(max - 1, level.index);
     my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
@@ -244,7 +245,7 @@ async fn ws_start(
 ) -> Result<HttpResponse, Error> {
     let mut ws = MyWs { addr: None };
     let (addr, resp) = ws::start_with_addr(ws.clone(), &req, stream)?;
-    println!("websocket {:?}", resp);
+    //println!("websocket {:?}", resp);
     ws.addr = Some(addr);
     *state.ws.write().unwrap() = Some(ws);
     Ok(resp)
