@@ -20,11 +20,11 @@ export default class SmartplaylistView extends MyTreeView {
         console.log(index);
         let i = parseInt(index);
         axios.post("/smartplaylist/load/",
-            i
+            { "index": i }
         );
     }
 }
 
 SmartplaylistView.defaultProps = {
     query_for_details: false,
-  };
+};

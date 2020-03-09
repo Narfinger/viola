@@ -92,29 +92,29 @@ async fn library_load(
     HttpResponse::Ok().finish()
 }
 
-use futures::StreamExt;
-#[post("/libraryview/full/")]
-async fn library_full_tree(
-    state: web::Data<WebGui>,
-    req: HttpRequest,
-    //level: web::Json<libraryviewstore::PartialQueryLevel>,
-    mut body: web::Payload,
-) -> HttpResponse {
-    let mut bytes = web::BytesMut::new();
-    while let Some(item) = body.next().await {
-        bytes.extend_from_slice(&item.unwrap());
-    }
-    format!("Body {:?}!", bytes);
-    let q = serde_json::from_slice::<libraryviewstore::PartialQueryLevel>(&bytes);
-    println!("{:?}", q);
+// use futures::StreamExt;
+// #[post("/libraryview/full/")]
+// async fn library_full_tree(
+//     state: web::Data<WebGui>,
+//     req: HttpRequest,
+//     //level: web::Json<libraryviewstore::PartialQueryLevel>,
+//     mut body: web::Payload,
+// ) -> HttpResponse {
+//     let mut bytes = web::BytesMut::new();
+//     while let Some(item) = body.next().await {
+//         bytes.extend_from_slice(&item.unwrap());
+//     }
+//     format!("Body {:?}!", bytes);
+//     let q = serde_json::from_slice::<libraryviewstore::PartialQueryLevel>(&bytes);
+//     println!("{:?}", q);
 
-    //println!("{:?}", level);
-    //let q = level.into_inner();
-    //let items = libraryviewstore::query_tree(&state.pool, &q);
-    //Ok(HttpResponse::Ok().json(items))
-    let items: Vec<String> = Vec::new();
-    HttpResponse::Ok().json(items)
-}
+//     //println!("{:?}", level);
+//     //let q = level.into_inner();
+//     //let items = libraryviewstore::query_tree(&state.pool, &q);
+//     //Ok(HttpResponse::Ok().json(items))
+//     let items: Vec<String> = Vec::new();
+//     HttpResponse::Ok().json(items)
+// }
 
 #[get("/smartplaylist/")]
 fn smartplaylist(_: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
@@ -132,19 +132,12 @@ fn smartplaylist(_: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
 #[post("/smartplaylist/load/")]
 async fn smartplaylist_load(
     state: web::Data<WebGui>,
-    //index: web::Json<usize>,
+    index: web::Json<LoadSmartPlaylistJson>,
     _: HttpRequest,
-    mut body: web::Payload,
 ) -> HttpResponse {
     use crate::smartplaylist_parser::LoadSmartPlaylist;
-    let mut bytes = web::BytesMut::new();
-    while let Some(item) = body.next().await {
-        bytes.extend_from_slice(&item.unwrap());
-    }
-    let q = serde_json::from_slice::<usize>(&bytes).expect("Error in parsing");
-
     let spl = smartplaylist_parser::construct_smartplaylists_from_config();
-    let pl = spl.get(q);
+    let pl = spl.get(index.index);
 
     if let Some(p) = pl {
         let rp = p.load(&state.pool);
@@ -196,11 +189,6 @@ async fn playlist_tab(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse 
         .map(|pl| pl.read().unwrap().name.to_owned())
         .collect::<Vec<String>>();
     HttpResponse::Ok().json(strings)
-}
-
-#[derive(Debug, Deserialize)]
-struct ChangePlaylistTabJson {
-    index: usize,
 }
 
 #[post("/playlisttab/")]
@@ -338,7 +326,6 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
             //.service(web::resource("/libraryview/albums/").route(web::get().to(library_albums)))
             //.service(web::resource("/libraryview/tracks/").route(web::get().to(library_tracks)))
             .service(library_partial_tree)
-            .service(library_full_tree)
             .service(library_load)
             .service(smartplaylist)
             .service(smartplaylist_load)

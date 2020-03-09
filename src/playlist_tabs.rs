@@ -31,8 +31,7 @@ pub trait PlaylistTabsExt {
 
 impl PlaylistTabsExt for PlaylistTabsPtr {
     fn add(&self, lp: LoadedPlaylist) {
-        self.write().unwrap().current_pl = 0;
-        self.write().unwrap().pls = vec![RwLock::new(lp)];
+        self.write().unwrap().pls.push(RwLock::new(lp));
     }
 
     fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T {
