@@ -107,7 +107,7 @@ function a11yProps(index) {
 class PlaylistTab extends React.Component {
     constructor(props) {
         super(props);
-        this.click = this.bind.click();
+        this.click = this.click.bind(this);
     }
 
     click() {
