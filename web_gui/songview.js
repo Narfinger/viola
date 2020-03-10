@@ -9,6 +9,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import PropTypes from 'prop-types';
+import { sizing } from '@material-ui/system';
 import axios from 'axios';
 
 function convertSecondsToTime(seconds) {
@@ -111,16 +112,26 @@ class PlaylistTab extends React.Component {
     }
 
 
-    click() {
-        axios.delete("/playlisttab/", { "index": this.props.index });
+    click(event) {
+        console.log("tagname" + event.target.tagName);
+        if (event.target.tagName === 'SPAN') {
+            this.props.handleChange(event, this.props.index)
+        } else if (event.target.tagName === 'svg' || event.target.tagName === 'BUTTON') {
+            console.log("deleting playlisttab id " + this.props.index);
+            axios.delete("/playlisttab/", { "index": this.props.index });
+            event.preventDefault();
+        } else {
+            return;
+        }
     }
 
     render() {
-        //return //<div className={this.props.className}>
-        return <Tab className={this.props.className} label={this.props.t} value={this.props.index} key={this.props.index} />
-        //<IconButton aria-label="delete" onClick={this.click} >
-        //<DeleteIcon fontSize="small" />
-        //</IconButton></div >
+        return <div className={this.props.className} onClick={this.click}>
+            <Tab className={this.props.className} label={this.props.t} value={this.props.index} key={this.props.index} />
+            <IconButton aria-label="delete" >
+                <DeleteIcon fontSize="small" />
+            </IconButton>
+        </div >
     }
 }
 
@@ -153,8 +164,8 @@ export default class SongView extends React.Component {
         }
 
         return <div>
-            <Tabs value={this.state.value} onChange={this.handleChange} aria-label="simple tabs example">
-                {this.props.tabs.map((t, index) => <Tab key={index} t={t} index={index} label={t} />)}
+            <Tabs value={this.state.value} /*onChange={this.handleChange}*/ aria-label="simple tabs example">
+                {this.props.tabs.map((t, index) => <PlaylistTab handleChange={this.handleChange} key={index} t={t} index={index} label={t} />)}
             </Tabs>
             <VSGrid
                 itemData={items}
