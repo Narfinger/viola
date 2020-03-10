@@ -209,7 +209,18 @@ async fn delete_playlist_tab(
     state: web::Data<WebGui>,
     index: web::Json<ChangePlaylistTabJson>,
     _: HttpRequest,
+    //mut body: web::Payload,
 ) -> HttpResponse {
+    //use futures::StreamExt;
+    //let mut bytes = web::BytesMut::new();
+    //while let Some(item) = body.next().await {
+    //    bytes.extend_from_slice(&item.unwrap());
+    //}
+    //println!("Body {:?}!", bytes);
+    //let q = serde_json::from_slice::<ChangePlaylistTabJson>(&bytes);
+    //println!("{:?}", q);
+
+    println!("deleting {}", index.index);
     state.playlist_tabs.delete(index.index);
     my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadTabs);
     my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);

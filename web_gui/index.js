@@ -139,7 +139,7 @@ class Main extends React.Component {
 
         this.ws.onmessage = evt => {
             var msg = JSON.parse(evt.data);
-            console.log("websocket msg: " + msg);
+            console.log(msg);
             switch (msg.type) {
                 case "Ping": break;
                 case "PlayChanged": {
@@ -154,7 +154,7 @@ class Main extends React.Component {
                     break;
                 }
                 case "ReloadTabs": {
-                    axios.get("/playlisttabs/").then((response) => this.setState({
+                    axios.get("/playlisttab/").then((response) => this.setState({
                         tabs: response.data
                     }))
                     break;

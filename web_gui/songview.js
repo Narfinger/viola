@@ -113,12 +113,12 @@ class PlaylistTab extends React.Component {
 
 
     click(event) {
-        console.log("tagname" + event.target.tagName);
+        console.log("tagname \"" + event.target.tagName + "\"");
         if (event.target.tagName === 'SPAN') {
             this.props.handleChange(event, this.props.index)
-        } else if (event.target.tagName === 'svg' || event.target.tagName === 'BUTTON') {
+        } else if (event.target.tagName === 'svg' || event.target.tagName === 'BUTTON' || event.target.tagName === 'path') {
             console.log("deleting playlisttab id " + this.props.index);
-            axios.delete("/playlisttab/", { "index": this.props.index });
+            axios.delete("/playlisttab/", { data: { index: this.props.index } });
             event.preventDefault();
         } else {
             return;

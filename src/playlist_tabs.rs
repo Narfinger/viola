@@ -42,7 +42,11 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
     fn delete(&self, index: usize) {
         let length = self.read().unwrap().pls.len();
         let current_pl = self.read().unwrap().current_pl;
-        if length - 1 < index {
+        println!(
+            "index {} | current {} | length {}",
+            index, current_pl, length
+        );
+        if index < length {
             self.write().unwrap().pls.remove(index);
             if current_pl >= index {
                 self.write().unwrap().current_pl = 0;
