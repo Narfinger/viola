@@ -76,22 +76,22 @@ export default function LibraryView() {
                 onChange={handleChange}
                 className={classes.tabs}
             >
-                <Tab label="Full"  {...a11yProps(0)} />
-                <Tab label="Album" {...a11yProps(1)} />
-                <Tab label="Track" {...a11yProps(2)} />
-                <Tab label="SMP" {...a11yProps(3)} />
+                <Tab label="SMP" {...a11yProps(0)} />
+                <Tab label="Full"  {...a11yProps(1)} />
+                <Tab label="Album" {...a11yProps(2)} />
+                <Tab label="Track" {...a11yProps(3)} />
             </Tabs>
             <TabPanel value={value} index={0}>
-                <MyTreeView url="/libraryview/partial/" query_params_list={["Artist", "Album", "Track"]} />
+                <SmartplaylistView url="/smartplaylist/" />
             </TabPanel>
             <TabPanel value={value} index={1}>
-                <MyTreeView url="/libraryview/partial/" query_params_list={["Album", "Track"]} />
+                <MyTreeView url="/libraryview/partial/" query_params_list={["Artist", "Album", "Track"]} />
             </TabPanel>
             <TabPanel value={value} index={2}>
-                <MyTreeView url="/libraryview/partial/" query_params_list={["Track"]} />
+                <MyTreeView url="/libraryview/partial/" query_params_list={["Album", "Track"]} />
             </TabPanel>
             <TabPanel value={value} index={3}>
-                <SmartplaylistView url="/smartplaylist/" />
+                <MyTreeView url="/libraryview/partial/" query_params_list={["Track"]} />
             </TabPanel>
         </div >
     )
