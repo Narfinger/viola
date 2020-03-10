@@ -110,14 +110,17 @@ class PlaylistTab extends React.Component {
         this.click = this.click.bind(this);
     }
 
+
     click() {
         axios.delete("/playlisttab/", { "index": this.props.index });
     }
 
     render() {
-        return <div><Tab label={this.props.t} value={this.props.index} key={this.props.index} /> <IconButton aria-label="delete" onClick={this.click}>
-            <DeleteIcon fontSize="small" />
-        </IconButton></div >
+        //return //<div className={this.props.className}>
+        return <Tab className={this.props.className} label={this.props.t} value={this.props.index} key={this.props.index} />
+        //<IconButton aria-label="delete" onClick={this.click} >
+        //<DeleteIcon fontSize="small" />
+        //</IconButton></div >
     }
 }
 
@@ -131,23 +134,27 @@ export default class SongView extends React.Component {
     }
 
     handleChange(event, newValue) {
+        console.log("change");
+        console.log(newValue);
+        console.log(this.state.value);
         if (newValue !== this.state.value) {
             this.setState({ value: newValue });
             axios.post("/playlisttab/", { "index": newValue });
         }
     }
 
+
     render() {
         let items = this.props.pl.map((t) => ({ item: t, selected: false }));
         // sets the correct index to playing. if there is nothing playing, we don't set anything
         if (this.props.current !== -1 && items && this.props.playing) {
-            console.log(this.props.current);
+            //console.log(this.props.current);
             items[this.props.current].selected = true;
         }
 
         return <div>
             <Tabs value={this.state.value} onChange={this.handleChange} aria-label="simple tabs example">
-                {this.props.tabs.map((t, index) => <PlaylistTab key={index} t={t} index={index} />)}
+                {this.props.tabs.map((t, index) => <Tab key={index} t={t} index={index} label={t} />)}
             </Tabs>
             <VSGrid
                 itemData={items}

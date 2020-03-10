@@ -1,7 +1,6 @@
 use owning_ref::RwLockReadGuardRef;
 use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
 use serde::Serialize;
-use std::ops::Deref;
 use std::path::PathBuf;
 
 use crate::db::Track;

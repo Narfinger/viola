@@ -134,12 +134,12 @@ class Main extends React.Component {
 
         this.ws.onopen = () => {
             // on connecting, do nothing but log it to the console
-            console.log('connected')
+            console.log('websocket connected')
         }
 
         this.ws.onmessage = evt => {
             var msg = JSON.parse(evt.data);
-            console.log(msg);
+            console.log("websocket msg: " + msg);
             switch (msg.type) {
                 case "Ping": break;
                 case "PlayChanged": {
@@ -164,7 +164,7 @@ class Main extends React.Component {
         }
 
         this.ws.onclose = () => {
-            console.log('disconnected')
+            console.log('websocket disconnected')
             // automatically try to reconnect on connection loss
 
         }
