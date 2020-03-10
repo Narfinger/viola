@@ -160,7 +160,7 @@ export default class SongView extends React.Component {
                 itemData={items}
                 columnCount={8}
                 columnWidth={columnWidths}
-                height={650}
+                height={600}
                 rowCount={this.props.pl.length}
                 rowHeight={(index) => { return 25; }}
                 width={1600}
