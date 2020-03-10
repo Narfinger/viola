@@ -88,7 +88,7 @@ async fn library_load(
     let pl = libraryviewstore::load_query(&state.pool, &q);
     println!("Loading new playlist {}", pl.name);
     state.playlist_tabs.add(pl);
-    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
+    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadTabs);
     HttpResponse::Ok().finish()
 }
 
@@ -142,7 +142,7 @@ async fn smartplaylist_load(
     if let Some(p) = pl {
         let rp = p.load(&state.pool);
         state.playlist_tabs.add(rp);
-        my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
+        my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadTabs);
     }
 
     HttpResponse::Ok().finish()
