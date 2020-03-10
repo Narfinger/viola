@@ -66,6 +66,7 @@ async fn main() -> io::Result<()> {
         .arg(
             Arg::with_name("fastupdate")
                 .short("f")
+                .value_name("path")
                 .long("fastupdate")
                 .help("Does a fast update of the database, doing a heuristic on time modified"),
         )
@@ -98,15 +99,19 @@ async fn main() -> io::Result<()> {
         info!("Updating Database");
         if let Ok(preferences) = PreferencesMap::<String>::load(&APP_INFO, PREFS_KEY) {
             if let Some(music_dir) = preferences.get("music_dir") {
-                db::build_db(music_dir, &pool).unwrap();
+                db::build_db(music_dir, &pool, true).unwrap();
             } else {
                 error!("Could not find music_dir");
             }
         } else {
             error!("could not find settings file");
         }
-    } else if matches.is_present("fastupdate") {
-        panic!("not yet implemented");
+    } else if let Some(path) = matches.value_of("fastupdate") {
+        info!("Updating database with path {}", path);
+        if !std::path::Path::new(path).exists() {
+            println!("Path does not seem to exist");
+        }
+        db::build_db(path, &pool, false).unwrap();
     } else if let Some(new_music_dir) = matches.value_of("music_dir") {
         let mut prefs = PreferencesMap::<String>::new();
         prefs.insert(String::from("music_dir"), String::from(new_music_dir));

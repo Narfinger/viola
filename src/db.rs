@@ -214,8 +214,8 @@ fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
 }
 
 /// Tested on 01-06-2019 with jwalk and walkdir. walkdir was faster on my machine
-pub fn build_db(path: &str, db: &DBPool) -> Result<(), String> {
-    let files = walkdir::WalkDir::new(&path)
+pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
+    let files = walkdir::WalkDir::new(&p)
         .into_iter()
         .filter(is_valid_file)
         .map(|i| String::from(i.unwrap().path().to_str().unwrap()))
@@ -225,13 +225,20 @@ pub fn build_db(path: &str, db: &DBPool) -> Result<(), String> {
 
     {
         use crate::schema::tracks::dsl::*;
-        use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
-        let old_files: HashSet<String> = HashSet::from_iter(
+        use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, TextExpressionMethods};
+        let old_files: HashSet<String> = HashSet::from_iter(if fast_delete {
             tracks
                 .select(path)
                 .load(db.lock().expect("DB Error").deref())
-                .expect("Error in loading old files"),
-        );
+                .expect("Error in loading old files")
+        } else {
+            tracks
+                .select(path)
+                //ignore files that are not in the path
+                .filter(path.like(String::from("%") + &p + "%"))
+                .load(db.lock().expect("DB Error").deref())
+                .expect("Error in loading old files")
+        });
 
         /// TODO switch this to par_iter or something
         {
