@@ -25,7 +25,7 @@ pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
 pub trait PlaylistTabsExt {
     fn add(&self, _: LoadedPlaylist);
     fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T;
-    fn delete(&self, _: usize);
+    fn delete(&self, _: &DBPool, _: usize);
     fn items(&self) -> String;
     fn current_tab(&self) -> usize;
 }
@@ -40,7 +40,7 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
         f(self.as_ref().read().unwrap().pls.get(i).as_ref().unwrap())
     }
 
-    fn delete(&self, index: usize) {
+    fn delete(&self, pool: &DBPool, index: usize) {
         let length = self.read().unwrap().pls.len();
         let current_pl = self.read().unwrap().current_pl;
         println!(
@@ -48,10 +48,20 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
             index, current_pl, length
         );
         if index < length {
-            self.write().unwrap().pls.remove(index);
+            let lp = self.write().unwrap().pls.swap_remove(index);
             if current_pl >= index {
                 self.write().unwrap().current_pl = 0;
             }
+
+            // delete in database
+            use crate::schema::playlists::dsl::*;
+            use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+            use std::ops::Deref;
+            let db = pool.lock().expect("DB Error");
+
+            diesel::delete(playlists.filter(id.eq(lp.read().unwrap().id)))
+                .execute(db.deref())
+                .expect("Error deleting");
         }
     }
 

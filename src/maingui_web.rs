@@ -231,7 +231,7 @@ async fn delete_playlist_tab(
     //println!("{:?}", q);
 
     println!("deleting {}", index.index);
-    state.playlist_tabs.delete(index.index);
+    state.playlist_tabs.delete(&state.pool, index.index);
     my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadTabs);
     my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
