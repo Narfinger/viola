@@ -27,7 +27,8 @@ function columnWidths(index) {
         case 4: return 300; //album
         case 5: return 200; //genre
         case 6: return 100; //year
-        case 7: return 100; //time
+        case 7: return 50; //time
+        case 8: return 50
         default: return 10000;
     }
 }
@@ -68,6 +69,7 @@ class Cell extends React.PureComponent {
                 break;
             }
             case 7: string = convertSecondsToTime(item.length); break;
+            case 8: string = item.playcount; break;
             default: string = "ERROR";
         }
         let style = JSON.parse(JSON.stringify(this.props.style));
@@ -173,7 +175,7 @@ export default class SongView extends React.Component {
             </Tabs>
             <VSGrid
                 itemData={items}
-                columnCount={8}
+                columnCount={9}
                 columnWidth={columnWidths}
                 height={600}
                 rowCount={this.props.pl.length}
