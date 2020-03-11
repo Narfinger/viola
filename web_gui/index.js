@@ -159,7 +159,7 @@ class Main extends React.Component {
                 }
                 case "ReloadTabs": {
                     axios.get("/playlisttab/").then((response) => this.setState({
-                        tabs: response.data,
+                        tabs: response.data.tabs,
                         initial_tab: response.data.current_tab,
                     }))
                     break;
