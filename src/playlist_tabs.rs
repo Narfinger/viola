@@ -27,6 +27,7 @@ pub trait PlaylistTabsExt {
     fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T;
     fn delete(&self, _: usize);
     fn items(&self) -> String;
+    fn current_tab(&self) -> usize;
 }
 
 impl PlaylistTabsExt for PlaylistTabsPtr {
@@ -61,6 +62,10 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
         let pl = cur.pls.get(i).unwrap();
         let items = items(&pl);
         serde_json::to_string(&*items).unwrap()
+    }
+
+    fn current_tab(&self) -> usize {
+        self.read().unwrap().current_pl
     }
 }
 

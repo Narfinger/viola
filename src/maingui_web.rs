@@ -178,6 +178,12 @@ async fn current_image(state: web::Data<WebGui>, req: HttpRequest) -> HttpRespon
         .unwrap_or_else(|| HttpResponse::Ok().finish())
 }
 
+#[derive(Debug, Serialize)]
+struct PlaylistTabs {
+    current: usize,
+    tabs: Vec<String>,
+}
+
 #[get("/playlisttab/")]
 async fn playlist_tab(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     let strings = state
@@ -188,7 +194,11 @@ async fn playlist_tab(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse 
         .iter()
         .map(|pl| pl.read().unwrap().name.to_owned())
         .collect::<Vec<String>>();
-    HttpResponse::Ok().json(strings)
+    let resp = PlaylistTabs {
+        current: state.playlist_tabs.current_tab(),
+        tabs: strings,
+    };
+    HttpResponse::Ok().json(resp)
 }
 
 #[post("/playlisttab/")]

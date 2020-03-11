@@ -96,6 +96,7 @@ class Main extends React.Component {
             imageHash: Date.now(),
             eventblock: false,
             tabs: [],
+            initial_tab: 0,
         };
 
         this.handleButtonPush = this.handleButtonPush.bind(this);
@@ -129,7 +130,10 @@ class Main extends React.Component {
         }
         );
         axios.get("/playlisttab/").then((response) => {
-            this.setState({ tabs: response.data });
+            this.setState({
+                tabs: response.data.tabs,
+                initial_tab: response.data.current_tab,
+            });
         })
 
         this.ws.onopen = () => {
@@ -149,13 +153,14 @@ class Main extends React.Component {
                 }
                 case "ReloadPlaylist": {
                     axios.get("/playlist/").then((response) => this.setState({
-                        pl: response.data
+                        pl: response.data,
                     }));
                     break;
                 }
                 case "ReloadTabs": {
                     axios.get("/playlisttab/").then((response) => this.setState({
-                        tabs: response.data
+                        tabs: response.data,
+                        initial_tab: response.data.current_tab,
                     }))
                     break;
                 }
@@ -186,7 +191,7 @@ class Main extends React.Component {
     }
 
     save() {
-        console.log("trying to save");
+        console.log("trying to save")``;
         axios.post("/save/");
     }
 
@@ -254,7 +259,7 @@ class Main extends React.Component {
                         {playstate_to_string(this.state.status)}
                     </Grid>
                     <Grid item xs={10}>
-                        <SongView current={this.state.current} pl={this.state.pl} playing={this.state.status === PlayState.Playing} tabs={this.state.tabs} />
+                        <SongView current={this.state.current} pl={this.state.pl} playing={this.state.status === PlayState.Playing} tabs={this.state.tabs} initial_tab={this.state.initial_tab} />
                     </Grid>
                     <Grid item xs={10}>
                         <img height="100px" width="100px" src={"/currentimage/" + "?" + this.state.imageHash} /> Playlist Count: {this.state.pl.length} | Left to go: {this.state.pl.length - this.state.current} | Time: {this.state.pltime}
