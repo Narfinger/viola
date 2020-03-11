@@ -49,7 +49,7 @@ class Cell extends React.PureComponent {
     }
 
     render() {
-        const { item, selected } = this.props.data[this.props.rowIndex];
+        const { item, selected, playing } = this.props.data[this.props.rowIndex];
         //console.log(style);
         let string = "";
         switch (this.props.columnIndex) {
@@ -74,7 +74,11 @@ class Cell extends React.PureComponent {
         style.textOverflow = "ellipsis";
         style.width = columnWidths(this.props.columnIndex) + "px";
         if (selected) {
-            style.color = "#FF0000";
+            if (playing) {
+                style.color = "#009100";
+            } else {
+                style.color = "#FF0000";
+            }
         }
         return <div style={style} onDoubleClick={this.click}><Typography noWrap>{string}</Typography></div>
 
@@ -156,9 +160,9 @@ export default class SongView extends React.Component {
 
 
     render() {
-        let items = this.props.pl.map((t) => ({ item: t, selected: false }));
+        let items = this.props.pl.map((t) => ({ item: t, selected: false, playing: this.props.playing }));
         // sets the correct index to playing. if there is nothing playing, we don't set anything
-        if (this.props.current !== -1 && items && this.props.playing) {
+        if (this.props.current !== -1 && items) {
             //console.log(this.props.current);
             items[this.props.current].selected = true;
         }
