@@ -10,8 +10,8 @@ use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls};
 use crate::types::*;
 
 pub struct GStreamer {
-    element: gstreamer::Element,
-    pipeline: gstreamer::Pipeline,
+    pipeline: gstreamer::Element,
+    //pipeline: gstreamer::Pipeline,
     current_playlist: PlaylistTabsPtr,
     /// Handles gstreamer changes to the gui
     sender: SyncSender<GStreamerMessage>,
@@ -126,8 +126,8 @@ pub fn new(
 
     let bus = pipeline.get_bus().unwrap();
     let res = Arc::new(GStreamer {
-        element,
-        pipeline,
+        pipeline: element,
+        //pipeline,
         current_playlist,
         sender: tx,
         pool,
@@ -235,7 +235,7 @@ impl GStreamerExt for GStreamer {
                 self.pipeline
                     .set_state(gstreamer::State::Ready)
                     .expect("Error in setting gstreamer state");
-                self.element
+                self.pipeline
                     .set_property("uri", &uri)
                     .expect("Error setting new gstreamer url");
                 self.pipeline
