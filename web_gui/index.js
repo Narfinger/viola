@@ -191,7 +191,7 @@ class Main extends React.Component {
     }
 
     save() {
-        console.log("trying to save")``;
+        console.log("trying to save");
         axios.post("/save/");
     }
 
