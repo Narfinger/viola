@@ -295,7 +295,7 @@ pub fn get_new_playlist_id(db: &DBPool) -> i32 {
         .select(crate::schema::playlists::id)
         .order(crate::schema::playlists::id.desc())
         .load(db.lock().expect("DB Error").deref())
-        .map(|mut v: Vec<i32>| v.swap_remove(0))
         .ok()
+        .and_then(|v: Vec<i32>| v.first().cloned())
         .map_or(0, |i| i + 1)
 }
