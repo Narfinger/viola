@@ -10,8 +10,7 @@ use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls};
 use crate::types::*;
 
 pub struct GStreamer {
-    pipeline: gstreamer::Element,
-    //pipeline: gstreamer::Pipeline,
+    element: gstreamer::Element,
     current_playlist: PlaylistTabsPtr,
     /// Handles gstreamer changes to the gui
     sender: SyncSender<GStreamerMessage>,
@@ -21,7 +20,7 @@ pub struct GStreamer {
 
 impl Drop for GStreamer {
     fn drop(&mut self) {
-        self.pipeline
+        self.element
             .set_state(gstreamer::State::Null)
             .expect("Error in setting gstreamer state: Null");
     }
@@ -78,55 +77,42 @@ pub fn new(
     pool: DBPool,
 ) -> Result<(Arc<GStreamer>, Receiver<GStreamerMessage>), String> {
     gstreamer::init().unwrap();
-    let (element, pipeline) = {
-        let filesrc = gstreamer::ElementFactory::make("filesrc", None)
+    let element = {
+        let playbin = gstreamer::ElementFactory::make("playbin", None)
             .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        let uridecodebin = gstreamer::ElementFactory::make("uridecodebin", None)
-            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-
-        let decodebin = gstreamer::ElementFactory::make("decodebin", None)
-            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-
         let audioconvert1 = gstreamer::ElementFactory::make("audioconvert", None)
             .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-
         let rgvolume = gstreamer::ElementFactory::make("rgvolume", None)
             .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-
         let audioconvert2 = gstreamer::ElementFactory::make("audioconvert", None)
             .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-
         let audioresample = gstreamer::ElementFactory::make("audioresample", None)
             .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-
         let autoaudiosink = gstreamer::ElementFactory::make("autoaudiosink", None)
             .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
 
-        let playbin = gstreamer::ElementFactory::make("playbin", None)
-            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        let pipeline = gstreamer::Pipeline::new(Some("pipeline"));
-        pipeline
-            .add_many(&[
-                &playbin,
-                //&uridecodebin,
-                //&audioconvert1,
-                //&rgvolume,
-                //&audioconvert2,
-                //&audioresample,
-                //&autoaudiosink,
-            ])
-            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+        //let pipeline = gstreamer::Pipeline::new(Some("pipeline"));
+        //pipeline
+        //    .add_many(&[
+        //        &playbin,
+        //&audioconvert1,
+        //&rgvolume,
+        //&audioconvert2,
+        //&audioresample,
+        //&autoaudiosink,
+        //    ])
+        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
 
         //(uridecodebin, pipeline)
 
         /// debug
-        (playbin, pipeline)
+        playbin
     };
     let (tx, rx) = sync_channel::<GStreamerMessage>(1);
 
-    let bus = pipeline.get_bus().unwrap();
+    let bus = element.get_bus().unwrap();
     let res = Arc::new(GStreamer {
-        pipeline: element,
+        element: element,
         //pipeline,
         current_playlist,
         sender: tx,
@@ -185,7 +171,7 @@ impl GStreamerExt for GStreamer {
             }
             GStreamerAction::Playing => {
                 if self.get_state() == GStreamerMessage::Pausing {
-                    self.pipeline
+                    self.element
                         .set_state(gstreamer::State::Playing)
                         .expect("Error in setting gstreamer state");
                 } else {
@@ -196,10 +182,9 @@ impl GStreamerExt for GStreamer {
                 }
             }
             GStreamerAction::Pausing => {
-                let is_playing = gstreamer::State::Playing
-                    == self.pipeline.get_state(gstreamer::ClockTime(Some(5))).1;
+                let is_playing = GStreamerMessage::Playing == self.get_state();
                 if is_playing {
-                    self.pipeline
+                    self.element
                         .set_state(gstreamer::State::Paused)
                         .expect("Error setting gstreamer state");
                 } else {
@@ -218,7 +203,7 @@ impl GStreamerExt for GStreamer {
                 return;
             }
             GStreamerAction::Stop => {
-                self.pipeline
+                self.element
                     .set_state(gstreamer::State::Ready)
                     .expect("Error setting gstreamer state");
             }
@@ -232,13 +217,13 @@ impl GStreamerExt for GStreamer {
                     "Playing uri: {:?}",
                     self.current_playlist.get_current_path()
                 );
-                self.pipeline
+                self.element
                     .set_state(gstreamer::State::Ready)
                     .expect("Error in setting gstreamer state");
-                self.pipeline
+                self.element
                     .set_property("uri", &uri)
                     .expect("Error setting new gstreamer url");
-                self.pipeline
+                self.element
                     .set_state(gstreamer::State::Playing)
                     .expect("Error setting gstreamer state");
                 println!("gstreamer state: {:?}", self.get_state());
@@ -256,6 +241,7 @@ impl GStreamerExt for GStreamer {
     /// poll the message bus and on eos start new
     fn gstreamer_update_gui(&self) -> glib::Continue {
         //update gui for running time
+        /*
         let cltime_opt: Option<gstreamer::ClockTime> = self.pipeline.query_position();
         let cltotal_opt: Option<gstreamer::ClockTime> = self.pipeline.query_duration();
         if let Some(cltime) = cltime_opt {
@@ -269,7 +255,7 @@ impl GStreamerExt for GStreamer {
                     )))
                     .expect("Error in gstreamer sending message to gui");
             }
-        }
+        } */
         glib::Continue(true)
     }
 
@@ -298,7 +284,7 @@ impl GStreamerExt for GStreamer {
     }
 
     fn get_state(&self) -> GStreamerMessage {
-        self.pipeline
+        self.element
             .get_state(gstreamer::ClockTime(Some(5)))
             .1
             .into()
