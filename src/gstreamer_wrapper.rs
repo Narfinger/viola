@@ -1,6 +1,6 @@
 use crate::glib::ObjectExt;
 use gstreamer;
-use gstreamer::{ElementExt, ElementExtManual, GstObjectExt};
+use gstreamer::{ElementExt, ElementExtManual, GstBinExtManual, GstObjectExt};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::Arc;
@@ -10,7 +10,8 @@ use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls};
 use crate::types::*;
 
 pub struct GStreamer {
-    pipeline: gstreamer::Element,
+    element: gstreamer::Element,
+    pipeline: gstreamer::Pipeline,
     current_playlist: PlaylistTabsPtr,
     /// Handles gstreamer changes to the gui
     sender: SyncSender<GStreamerMessage>,
@@ -77,23 +78,55 @@ pub fn new(
     pool: DBPool,
 ) -> Result<(Arc<GStreamer>, Receiver<GStreamerMessage>), String> {
     gstreamer::init().unwrap();
-    let pipeline = gstreamer::ElementFactory::make("playbin", None)
-        .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+    let (element, pipeline) = {
+        let filesrc = gstreamer::ElementFactory::make("filesrc", None)
+            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+        let uridecodebin = gstreamer::ElementFactory::make("uridecodebin", None)
+            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
 
+        let decodebin = gstreamer::ElementFactory::make("decodebin", None)
+            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+
+        let audioconvert1 = gstreamer::ElementFactory::make("audioconvert", None)
+            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+
+        let rgvolume = gstreamer::ElementFactory::make("rgvolume", None)
+            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+
+        let audioconvert2 = gstreamer::ElementFactory::make("audioconvert", None)
+            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+
+        let audioresample = gstreamer::ElementFactory::make("audioresample", None)
+            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+
+        let autoaudiosink = gstreamer::ElementFactory::make("autoaudiosink", None)
+            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+
+        let playbin = gstreamer::ElementFactory::make("playbin", None)
+            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+        let pipeline = gstreamer::Pipeline::new(Some("pipeline"));
+        pipeline
+            .add_many(&[
+                &playbin,
+                //&uridecodebin,
+                //&audioconvert1,
+                //&rgvolume,
+                //&audioconvert2,
+                //&audioresample,
+                //&autoaudiosink,
+            ])
+            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+
+        //(uridecodebin, pipeline)
+
+        /// debug
+        (playbin, pipeline)
+    };
     let (tx, rx) = sync_channel::<GStreamerMessage>(1);
-
-    //old method for eos
-    //let (eos_tx, eos_rx) = sync_channel::<()>(1);
-    //pipeline
-    //    .connect("about-to-finish", true, move |_| {
-    //        warn!("received signal to go to next track");
-    //eos_tx.send(()).expect("Error in sending eos to own bus");
-    //        None
-    //    })
-    //    .expect("Could not connect to about-to-finish signal");
 
     let bus = pipeline.get_bus().unwrap();
     let res = Arc::new(GStreamer {
+        element,
         pipeline,
         current_playlist,
         sender: tx,
@@ -202,7 +235,7 @@ impl GStreamerExt for GStreamer {
                 self.pipeline
                     .set_state(gstreamer::State::Ready)
                     .expect("Error in setting gstreamer state");
-                self.pipeline
+                self.element
                     .set_property("uri", &uri)
                     .expect("Error setting new gstreamer url");
                 self.pipeline
