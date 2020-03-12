@@ -91,21 +91,13 @@ pub fn new(
         let autoaudiosink = gstreamer::ElementFactory::make("autoaudiosink", None)
             .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
 
-        //let pipeline = gstreamer::Pipeline::new(Some("pipeline"));
-        //pipeline
-        //    .add_many(&[
-        //        &playbin,
-        //&audioconvert1,
-        //&rgvolume,
-        //&audioconvert2,
-        //&audioresample,
-        //&autoaudiosink,
-        //    ])
-        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-
-        //(uridecodebin, pipeline)
-
-        /// debug
+        //let bin = gstreamer::Bin::new(Some("audio_sink_bin"));
+        //bin.add_many(&[&audioconvert1, &rgvolume, &audioconvert2, &autoaudiosink])
+        //    .expect("Error in gstreamer");
+        //bin.add_pad(&autoaudiosink.get_static_pad("sink").expect("Error in pad"));
+        //playbin
+        //    .set_property("audio_sink", &bin)
+        //    .expect("elements could not be linked");
         playbin
     };
     let (tx, rx) = sync_channel::<GStreamerMessage>(1);
