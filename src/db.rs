@@ -235,7 +235,7 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
             tracks
                 .select(path)
                 //ignore files that are not in the path
-                .filter(path.like(String::from("%") + &p + "%"))
+                .filter(path.like(String::from("%") + p + "%"))
                 .load(db.lock().expect("DB Error").deref())
                 .expect("Error in loading old files")
         });

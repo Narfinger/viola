@@ -224,7 +224,7 @@ impl GStreamerExt for GStreamer {
                 panic!("NYI");
             }
             GStreamerAction::RepeatOnce => {
-                self.repeat_once.store(true, Ordering::Acquire);
+                self.repeat_once.store(true, Ordering::SeqCst);
             }
         }
         self.sender.send(action.into()).expect("Error in sending");
@@ -263,7 +263,7 @@ impl GStreamerExt for GStreamer {
 
         let res = if self.repeat_once.load(Ordering::Acquire) {
             info!("we are repeat playing");
-            self.repeat_once.store(false, Ordering::Acquire);
+            self.repeat_once.store(false, Ordering::SeqCst);
             Some(self.current_playlist.current_position())
         } else {
             self.current_playlist.next_or_eol()
