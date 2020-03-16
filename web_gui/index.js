@@ -180,9 +180,6 @@ class Main extends React.Component {
         axios.get("/playlist/").then((response) => this.setState({
             pl: response.data
         }));
-        axios.get("/currentid/").then((response) => {
-            this.setState({ current: response.data });
-        })
         this.refresh();
     }
 
