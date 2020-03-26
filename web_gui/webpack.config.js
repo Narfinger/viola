@@ -1,36 +1,24 @@
 // webpack.config.js
+const path = require('path');
+
 module.exports = {
-  entry: './index.tsx',
-  mode: "production",
-
-  // Enable sourcemaps for debugging webpack's output.
-  devtool: "source-map",
-
-  resolve: {
-    // Add '.ts' and '.tsx' as resolvable extensions.
-    extensions: [".ts", ".tsx"]
-  },
-
+  entry: './src/index.tsx',
   module: {
     rules: [
       {
-        test: /\.ts(x?)$/,
+        test: /\.tsx?$/,
+        use: 'ts-loader',
         exclude: /node_modules/,
-        use: [
-          {
-            loader: "awesome-typescript-loader"
-          }
-        ]
       },
-      // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
-      {
-        enforce: "pre",
-        test: /\.js$/,
-        loader: "source-map-loader"
-      }
-    ]
+    ],
   },
-
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js'],
+  },
+  output: {
+    filename: 'bundle.js',
+    path: path.resolve(__dirname, 'dist'),
+  },
   // When importing a module whose path matches one of the following, just
   // assume a corresponding global variable exists and use that instead.
   // This is important because it allows us to avoid bundling all of our

@@ -2,15 +2,8 @@ import ReactDOM from 'react-dom'
 import { HotKeys } from "react-hotkeys";
 import React from 'react'
 import Drawer from '@material-ui/core/Drawer';
-import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
-import TreeView from '@material-ui/lab/TreeView';
-import TreeItem from '@material-ui/lab/TreeItem';
-import Typography from '@material-ui/core/Typography';
-import Box from '@material-ui/core/Box';
-import Tabs from '@material-ui/core/Tabs';
-import Tab from '@material-ui/core/Tab';
 import { VariableSizeGrid as VSGrid } from 'react-window';
 import axios from 'axios';
 import LibraryView from './libraryviews';
