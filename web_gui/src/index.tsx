@@ -1,6 +1,6 @@
-import ReactDOM from 'react-dom'
+import { render } from 'react-dom'
 import { HotKeys } from "react-hotkeys";
-import React from 'react'
+import { Component } from 'react'
 import Drawer from '@material-ui/core/Drawer';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
@@ -45,7 +45,7 @@ const ButtonEvent = Object.freeze({
     Play: 4,
 });
 
-class TransportButton extends React.Component {
+class TransportButton extends Component {
     constructor(props) {
         super(props);
 
@@ -77,7 +77,7 @@ const keyMap = {
     PLAYPAUSE: ["space", "c"]
 };
 
-class Main extends React.Component {
+class Main extends Component {
     constructor(props) {
         super(props)
         this.state = {
@@ -260,7 +260,7 @@ class Main extends React.Component {
     }
 }
 
-class LibraryDrawer extends React.Component {
+class LibraryDrawer extends Component {
     constructor(props) {
         super(props);
 
@@ -286,4 +286,4 @@ class LibraryDrawer extends React.Component {
 }
 
 const domContainer = document.querySelector('#main_container');
-ReactDOM.render(e(Main), domContainer);
+render(e(Main), domContainer);

@@ -47,6 +47,8 @@
     "eslint-plugin-react": "^7.19.0",
     "eslint-plugin-react-hooks": "^2.5.1",
     "ts-loader": "^6.2.2",
+    "tslint": "^6.1.0",
+    "typescript-tslint-plugin": "^0.5.5",
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11"
   }
