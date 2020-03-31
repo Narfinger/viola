@@ -1,6 +1,6 @@
 import { render } from 'react-dom'
 import { HotKeys } from "react-hotkeys";
-import { Component } from 'react'
+import * as React from "react";
 import Drawer from '@material-ui/core/Drawer';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
@@ -12,11 +12,11 @@ import SongView from './songview';
 
 const e = React.createElement;
 
-const PlayState = Object.freeze({
-    Stopped: 1,
-    Paused: 2,
-    Playing: 3
-});
+enum PlayState {
+    Stopped,
+    Paused,
+    Playing
+};
 
 function playstate_from_string(input) {
     if (input === "Stopped") {
@@ -38,14 +38,24 @@ function playstate_to_string(input) {
     }
 }
 
-const ButtonEvent = Object.freeze({
-    Next: 1,
-    Previous: 2,
-    Pause: 3,
-    Play: 4,
-});
+enum ButtonEvent {
+    Next,
+    Previous,
+    Pause,
+    Play,
+};
 
-class TransportButton extends Component {
+type TransportButtonType = {
+    click: (ButtonEvent) => null,
+}
+
+type TransportButtonProps = {
+    click?: (ButtonEvent) => null,
+    title: String,
+    event?: ButtonEvent,
+}
+
+class TransportButton extends React.Component<TransportButtonProps, TransportButtonType> {
     constructor(props) {
         super(props);
 
@@ -77,7 +87,19 @@ const keyMap = {
     PLAYPAUSE: ["space", "c"]
 };
 
-class Main extends Component {
+type MainState = {
+    status: PlayState,
+    current: Number,
+    pl: Array<Object>,
+    pltime: String,
+    image_hash: String,
+    imageHash: Number,
+    eventblock: boolean,
+    tabs: Array<Object>,
+    initial_tab: Number,
+}
+
+class Main extends React.Component<{}, MainState> {
     constructor(props) {
         super(props)
         this.state = {
