@@ -1,6 +1,7 @@
 /target/
 music.db
 /web_gui/node_modules/
+/web_gui/built/
 /web_gui/dist/
 **/*.rs.bk
 ui/*.glade~

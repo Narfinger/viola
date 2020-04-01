@@ -1,21 +1,14 @@
 import { render } from 'react-dom'
 import { HotKeys } from "react-hotkeys";
 import * as React from "react";
-import Drawer from '@material-ui/core/Drawer';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import axios from 'axios';
-import LibraryView from './libraryviews';
 import SongView from './songview';
-
+import { TransportButton, ButtonEvent, PlayState, PlayButton } from './transportbutton';
+import LibraryDrawer from './librarydrawer';
 
 const e = React.createElement;
-
-enum PlayState {
-    Stopped,
-    Paused,
-    Playing
-};
 
 function playstate_from_string(input) {
     if (input === "Stopped") {
@@ -35,51 +28,6 @@ function playstate_to_string(input) {
     } else if (input === PlayState.Paused) {
         return "Paused";
     }
-}
-
-enum ButtonEvent {
-    Next,
-    Previous,
-    Pause,
-    Play,
-};
-
-type TransportButtonType = {
-    click: (ButtonEvent) => void,
-}
-
-type TransportButtonProps = {
-    click?: (ButtonEvent) => void,
-    title: string,
-    event?: ButtonEvent,
-}
-
-class TransportButton extends React.Component<TransportButtonProps, TransportButtonType> {
-    constructor(props) {
-        super(props);
-
-        // This binding is necessary to make `this` work in the callback
-        this.click = this.click.bind(this);
-    }
-    click() {
-        this.props.click(this.props.event);
-    }
-    render() {
-        return <Button variant="contained" color="primary" onClick={this.click}> {this.props.title}</Button>
-    }
-}
-
-function PlayButton(props) {
-    if (props.play_state === PlayState.Stopped) {
-        return <TransportButton title="Play" event={ButtonEvent.Play} click={props.click}></TransportButton>
-    };
-    if (props.play_state === PlayState.Paused) {
-        return <TransportButton title="Play" event={ButtonEvent.Play} click={props.click}></TransportButton>
-    };
-    if (props.play_state === PlayState.Playing) {
-        return <TransportButton title="Pause" event={ButtonEvent.Pause} click={props.click}></TransportButton>
-    }
-    return <TransportButton title="Unspecified"></TransportButton>
 }
 
 const keyMap = {
@@ -207,17 +155,17 @@ class Main extends React.Component<{}, MainState> {
         axios.post("/save/");
     }
 
-    handleButtonPush(e) {
+    handleButtonPush(event) {
         if (!this.state.eventblock) {
-            if (e === ButtonEvent.Play) {
+            if (event === ButtonEvent.Play) {
                 axios.post("/transport/", { "t": "Playing" });
                 this.setState({ status: PlayState.Playing });
-            } else if (e === ButtonEvent.Pause) {
+            } else if (event === ButtonEvent.Pause) {
                 axios.post("/transport/", { "t": "Pausing" });
                 this.setState({ status: PlayState.Paused });
-            } else if (e === ButtonEvent.Previous) {
+            } else if (event === ButtonEvent.Previous) {
                 axios.post("/transport/", { "t": "Previous" });
-            } else if (e === ButtonEvent.Next) {
+            } else if (event === ButtonEvent.Next) {
                 axios.post("/transport/", { "t": "Next" });
             } else {
                 console.log("Unspecified!");
@@ -279,35 +227,6 @@ class Main extends React.Component<{}, MainState> {
                 </Grid>
             </div >
         </HotKeys>
-    }
-}
-
-type LibraryDrawerState = {
-    open: boolean,
-}
-
-class LibraryDrawer extends React.Component<{}, LibraryDrawerState> {
-    constructor(props) {
-        super(props);
-
-        // This binding is necessary to make `this` work in the callback
-        this.click = this.click.bind(this);
-        this.close = this.close.bind(this);
-        this.state = { open: false };
-    }
-    click() {
-        this.setState({ open: true })
-    }
-    close() {
-        this.setState({ open: false })
-    }
-    render() {
-        return <div>
-            <Button onClick={this.click} color="primary" >Lib</Button>
-            <Drawer anchor="left" open={this.state.open} onClose={this.close}>
-                <LibraryView></LibraryView>
-            </Drawer>
-        </div>
     }
 }
 

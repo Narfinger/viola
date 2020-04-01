@@ -153,7 +153,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         const values = [];
         let current = this.state.items;
         for (const id of ids) {
-            const val = current[parseInt(id)];
+            const val = current[parseInt(id, 10)];
             values.push(val.value);
             current = val.children;
         }
