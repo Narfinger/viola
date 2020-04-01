@@ -198,6 +198,9 @@ async fn playlist_tab(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse 
         current: state.playlist_tabs.current_tab(),
         tabs: strings,
     };
+
+    state.save();
+
     HttpResponse::Ok().json(resp)
 }
 
