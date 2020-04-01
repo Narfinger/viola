@@ -217,7 +217,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
                 <Input defaultValue=""
                     variant={"outlined"} onChange={this.searchChange} />
             </form>
-            <TreeView height="60vh"
+            <TreeView height={"60vh"}
                 defaultCollapseIcon={<ExpandMoreIcon />}
                 defaultExpandIcon={<ChevronRightIcon />}
                 onNodeToggle={this.handleChange}
