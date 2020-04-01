@@ -24,7 +24,3 @@ export default class SmartplaylistView extends MyTreeView {
         );
     }
 }
-
-SmartplaylistView.defaultProps = {
-    query_for_details: false,
-};

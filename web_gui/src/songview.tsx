@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from "react";
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import { VariableSizeGrid as VSGrid } from 'react-window';
@@ -8,7 +8,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import IconButton from '@material-ui/core/IconButton';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
-import PropTypes from 'prop-types';
+import * as PropTypes from 'prop-types';
 import { sizing } from '@material-ui/system';
 import axios from 'axios';
 
@@ -33,7 +33,25 @@ function columnWidths(index) {
     }
 }
 
-class Cell extends React.PureComponent {
+type TrackType = {
+    trachnumber: number,
+    title: string,
+    artist: string,
+    album: string,
+    genre: string,
+}
+
+type CellProps = {
+    columnIndex: number,
+    rowIndex: number,
+    data: {
+        item: Array<TrackType>,
+        selected: number,
+        playing: boolean,
+    },
+    style: any,
+}
+class Cell extends React.PureComponent<CellProps, {}> {
     constructor(props) {
         super(props)
         this.click = this.click.bind(this);
@@ -54,7 +72,7 @@ class Cell extends React.PureComponent {
         //console.log(style);
         let string = "";
         switch (this.props.columnIndex) {
-            case 0: string = this.props.rowIndex; break;
+            case 0: string = this.props.rowIndex.toString(); break;
             case 1: string = item.tracknumber; break;
             case 2: string = item.title; break;
             case 3: string = item.artist; break;
@@ -111,7 +129,14 @@ function a11yProps(index) {
     };
 }
 
-class PlaylistTab extends React.Component {
+type PlaylistTabProps = {
+    handleChange: (event, number) => void;
+    index: number,
+    className: string,
+    t: string,
+}
+
+class PlaylistTab extends React.Component<PlaylistTabProps, {}> {
     constructor(props) {
         super(props);
         this.click = this.click.bind(this);
@@ -141,7 +166,18 @@ class PlaylistTab extends React.Component {
     }
 }
 
-export default class SongView extends React.Component {
+type SongViewProps = {
+    initial_tab: number,
+    pl: any,
+    current: number,
+    tabs: any,
+}
+
+type SongViewState = {
+    value: string,
+}
+
+export default class SongView extends React.Component<SongViewProps, SongViewState> {
     constructor(props) {
         super(props)
         this.state = {

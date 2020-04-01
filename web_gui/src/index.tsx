@@ -46,12 +46,12 @@ enum ButtonEvent {
 };
 
 type TransportButtonType = {
-    click: (ButtonEvent) => null,
+    click: (ButtonEvent) => void,
 }
 
 type TransportButtonProps = {
-    click?: (ButtonEvent) => null,
-    title: String,
+    click?: (ButtonEvent) => void,
+    title: string,
     event?: ButtonEvent,
 }
 
@@ -89,17 +89,18 @@ const keyMap = {
 
 type MainState = {
     status: PlayState,
-    current: Number,
+    current: number,
     pl: Array<Object>,
-    pltime: String,
-    image_hash: String,
-    imageHash: Number,
+    pltime: string,
+    image_hash: string,
+    imageHash: number,
     eventblock: boolean,
     tabs: Array<Object>,
-    initial_tab: Number,
+    initial_tab: number,
 }
 
 class Main extends React.Component<{}, MainState> {
+    ws: WebSocket;
     constructor(props) {
         super(props)
         this.state = {
@@ -274,7 +275,7 @@ class Main extends React.Component<{}, MainState> {
                         <SongView current={this.state.current} pl={this.state.pl} playing={this.state.status === PlayState.Playing} tabs={this.state.tabs} initial_tab={this.state.initial_tab} />
                     </Grid>
                     <Grid item xs={10}>
-                        <img height="100px" width="100px" src={"/currentimage/" + "?" + this.state.imageHash} /> Playlist Count: {this.state.pl.length} | Left to go: {this.state.pl.length - this.state.current} | Time: {this.state.pltime}
+                        <img alt="" height="100px" width="100px" src={"/currentimage/" + "?" + this.state.imageHash} /> Playlist Count: {this.state.pl.length} | Left to go: {this.state.pl.length - this.state.current} | Time: {this.state.pltime}
                     </Grid>
                 </Grid>
             </div >
@@ -282,7 +283,11 @@ class Main extends React.Component<{}, MainState> {
     }
 }
 
-class LibraryDrawer extends Component {
+type LibraryDrawerState = {
+    open: boolean,
+}
+
+class LibraryDrawer extends React.Component<{}, LibraryDrawerState> {
     constructor(props) {
         super(props);
 

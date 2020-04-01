@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from "react";
 import Paper from '@material-ui/core/Paper';
 import Input from '@material-ui/core/Input';
 import { makeStyles } from '@material-ui/core/styles';
@@ -9,7 +9,25 @@ import TreeItem from '@material-ui/lab/TreeItem';
 import AwesomeDebouncePromise from 'awesome-debounce-promise';
 import axios from 'axios';
 
-export default class MyTreeView extends React.Component {
+type Node = {
+    children?: Array<Node>,
+    value?: String,
+}
+
+type Tree = Array<Node>
+
+type MyTreeViewProps = {
+    query_for_details: boolean,
+    query_params_list: Array<String>,
+    url: string,
+    refreshDebounced: any,
+}
+
+type MyTreeViewState = {
+    items: Tree,
+    search: string,
+}
+export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeViewState> {
     constructor(props) {
         super(props)
 
@@ -212,7 +230,3 @@ export default class MyTreeView extends React.Component {
 
     }
 }
-
-MyTreeView.defaultProps = {
-    query_for_details: true,
-};

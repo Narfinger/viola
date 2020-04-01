@@ -1,10 +1,10 @@
 
-import React from 'react'
+import * as React from "react";
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
-import PropTypes from 'prop-types';
+import * as PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import axios from 'axios';
 import MyTreeView from './mytreeview';
