@@ -20,7 +20,6 @@ type MyTreeViewProps = {
     query_for_details: boolean,
     query_params_list: Array<String>,
     url: string,
-    refreshDebounced: any,
 }
 
 type MyTreeViewState = {
@@ -28,6 +27,12 @@ type MyTreeViewState = {
     search: string,
 }
 export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeViewState> {
+    refreshDebounced: any;
+
+    public static defaultProps = {
+        query_for_details: true,
+    };
+
     constructor(props) {
         super(props)
 
@@ -210,7 +215,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         return <Paper style={{ maxHeight: 800, width: 800, overflow: 'auto' }}>
             <form noValidate autoComplete="off">
                 <Input defaultValue=""
-                    variant="outlined" onChange={this.searchChange} />
+                    variant={"outlined"} onChange={this.searchChange} />
             </form>
             <TreeView height="60vh"
                 defaultCollapseIcon={<ExpandMoreIcon />}

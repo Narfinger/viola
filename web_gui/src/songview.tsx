@@ -132,8 +132,8 @@ function a11yProps(index) {
 type PlaylistTabProps = {
     handleChange: (event, number) => void;
     index: number,
-    className: string,
     t: string,
+    label: string,
 }
 
 class PlaylistTab extends React.Component<PlaylistTabProps, {}> {
@@ -157,8 +157,8 @@ class PlaylistTab extends React.Component<PlaylistTabProps, {}> {
     }
 
     render() {
-        return <div className={this.props.className} onClick={this.click}>
-            <Tab className={this.props.className} label={this.props.t} value={this.props.index} key={this.props.index} />
+        return <div /*className={this.props.className}*/ onClick={this.click}>
+            <Tab /*className={this.props.className}*/ label={this.props.t} value={this.props.index} key={this.props.index} />
             <IconButton aria-label="delete" >
                 <DeleteIcon fontSize="small" />
             </IconButton>
@@ -171,6 +171,7 @@ type SongViewProps = {
     pl: any,
     current: number,
     tabs: any,
+    playing: boolean,
 }
 
 type SongViewState = {

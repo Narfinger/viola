@@ -2,6 +2,10 @@ import axios from 'axios';
 import MyTreeView from './mytreeview';
 
 export default class SmartplaylistView extends MyTreeView {
+    public static defaultProps = {
+        query_for_details: false,
+        query_params_list: [],
+    };
     need_to_load(ids) {
         return false;
     }
