@@ -91,6 +91,10 @@ pub fn new(
         let autoaudiosink = gstreamer::ElementFactory::make("autoaudiosink", None)
             .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
 
+        playbin
+            .set_property("volume", &0.5)
+            .expect("Could not set volume");
+
         //let bin = gstreamer::Bin::new(Some("audio_sink_bin"));
         //bin.add_many(&[&audioconvert1, &rgvolume, &audioconvert2, &autoaudiosink])
         //    .expect("Error in gstreamer");
