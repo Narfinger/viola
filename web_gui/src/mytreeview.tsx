@@ -4,6 +4,7 @@ import Input from '@material-ui/core/Input';
 import { makeStyles } from '@material-ui/core/styles';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import MuiTreeView from 'material-ui-treeview';
 import TreeView from '@material-ui/lab/TreeView';
 import TreeItem from '@material-ui/lab/TreeItem';
 import AwesomeDebouncePromise from 'awesome-debounce-promise';
@@ -214,10 +215,9 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
     render() {
         return <Paper style={{ maxHeight: 800, width: 800, overflow: 'auto' }}>
             <form noValidate autoComplete="off">
-                <Input defaultValue=""
-                    variant={"outlined"} onChange={this.searchChange} />
+                <Input defaultValue="" onChange={this.searchChange} />
             </form>
-            <TreeView height={"60vh"}
+            <TreeView
                 defaultCollapseIcon={<ExpandMoreIcon />}
                 defaultExpandIcon={<ChevronRightIcon />}
                 onNodeToggle={this.handleChange}

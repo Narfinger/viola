@@ -16,7 +16,6 @@
     "@material-ui/lab": "^4.0.0-alpha.47",
     "awesome-debounce-promise": "^2.1.0",
     "axios": "^0.19.2",
-    "material-ui-treeview": "^4.1.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-hotkeys": "^2.0.0",
