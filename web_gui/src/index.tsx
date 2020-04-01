@@ -4,7 +4,6 @@ import * as React from "react";
 import Drawer from '@material-ui/core/Drawer';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
-import { VariableSizeGrid as VSGrid } from 'react-window';
 import axios from 'axios';
 import LibraryView from './libraryviews';
 import SongView from './songview';
@@ -90,12 +89,12 @@ const keyMap = {
 type MainState = {
     status: PlayState,
     current: number,
-    pl: Array<Object>,
+    pl: object[],
     pltime: string,
     image_hash: string,
     imageHash: number,
     eventblock: boolean,
-    tabs: Array<Object>,
+    tabs: object[],
     initial_tab: number,
 }
 
@@ -158,7 +157,7 @@ class Main extends React.Component<{}, MainState> {
         }
 
         this.ws.onmessage = evt => {
-            var msg = JSON.parse(evt.data);
+            const msg = JSON.parse(evt.data);
             console.log(msg);
             switch (msg.type) {
                 case "Ping": break;
@@ -275,7 +274,7 @@ class Main extends React.Component<{}, MainState> {
                         <SongView current={this.state.current} pl={this.state.pl} playing={this.state.status === PlayState.Playing} tabs={this.state.tabs} initial_tab={this.state.initial_tab} />
                     </Grid>
                     <Grid item xs={10}>
-                        <img alt="" height="100px" width="100px" src={"/currentimage/" + "?" + this.state.imageHash} /> Playlist Count: {this.state.pl.length} | Left to go: {this.state.pl.length - this.state.current} | Time: {this.state.pltime}
+                        <img alt="" height="100px" width="100px" src={"/currentimage/?" + this.state.imageHash} /> Playlist Count: {this.state.pl.length} | Left to go: {this.state.pl.length - this.state.current} | Time: {this.state.pltime}
                     </Grid>
                 </Grid>
             </div >

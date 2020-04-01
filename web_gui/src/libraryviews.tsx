@@ -6,11 +6,8 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import * as PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
-import axios from 'axios';
 import MyTreeView from './mytreeview';
 import SmartplaylistView from './smartplaylistview';
-const e = React.createElement;
-
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -44,7 +41,7 @@ function a11yProps(index) {
 
 const useStyles = makeStyles(theme => ({
     root: {
-        //flexGrow: 1,
+        // flexGrow: 1,
         backgroundColor: theme.palette.background.paper,
         display: 'flex',
         height: 500,
@@ -66,7 +63,7 @@ export default function LibraryView() {
         setValue(newValue);
     };
 
-    //try to make the size dynamic
+    // try to make the size dynamic
     return (
         <div className={classes.root} >
             <Tabs
