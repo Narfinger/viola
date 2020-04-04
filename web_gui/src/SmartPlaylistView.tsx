@@ -6,7 +6,7 @@ export default class SmartplaylistView extends MyTreeView {
         query_for_details: false,
         query_params_list: [],
     };
-    need_to_load(ids: Array<number>) {
+    need_to_load(ids: number[]) {
         return false;
     }
 
@@ -22,7 +22,7 @@ export default class SmartplaylistView extends MyTreeView {
         event.stopPropagation();
         console.log("doing event");
         console.log(index);
-        let i = parseInt(index);
+        const i = parseInt(index, 10);
         axios.post("/smartplaylist/load/",
             { "index": i }
         );

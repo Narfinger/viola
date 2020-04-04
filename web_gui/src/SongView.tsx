@@ -14,7 +14,7 @@ type SongViewProps = {
 }
 
 type SongViewState = {
-    value: string,
+    value: number,
 }
 
 export default class SongView extends React.Component<SongViewProps, SongViewState> {

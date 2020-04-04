@@ -41,7 +41,7 @@ export class TransportButton extends React.Component<TransportButtonProps, Trans
 
 type PlayButtonProps = {
     play_state: PlayState,
-    click: () => void;
+    click: (any) => void;
 }
 
 export function PlayButton(props: PlayButtonProps) {
