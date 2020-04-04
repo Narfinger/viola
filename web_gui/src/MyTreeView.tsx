@@ -49,12 +49,12 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         this.searchChange = this.searchChange.bind(this);
     }
 
-    searchChange(e: any) {
+    searchChange(e: React.ChangeEvent<HTMLInputElement>) {
         this.setState({ search: e.target.value });
         this.refreshDebounced();
     };
 
-    need_to_load(ids: Number[]) {
+    need_to_load(ids: number[]) {
         if (!this.props.query_for_details) {
             return false;
         } else if (ids.length === 0) {
@@ -69,7 +69,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
 
     handleChange(event, nodeids: string[]) {
         if (this.props.query_for_details && nodeids.length !== 0) {
-            const ids = nodeids[0].split("-");
+            const ids = nodeids[0].split("-").map(parseInt);
 
             if (this.need_to_load(ids)) {
                 let state = null;
@@ -148,7 +148,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         });
     }
 
-    handleDoubleClick(event: any, index: string) {
+    handleDoubleClick(event: React.MouseEvent, index: string) {
         const ids = index.split("-");
         const values = [];
         let current = this.state.items;
