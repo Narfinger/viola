@@ -6,7 +6,9 @@
     "jsRules": {},
     "rules": {
         "no-console": false,
-        "no-any": true
+        "no-any": true,
+        "no-relative-imports": false,
+        "react-this-binding-issue": false
     },
     "rulesDirectory": []
 }

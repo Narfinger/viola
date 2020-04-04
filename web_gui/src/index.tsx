@@ -4,9 +4,9 @@ import * as React from "react";
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import axios from 'axios';
-import SongView from './songview';
-import { TransportButton, ButtonEvent, PlayState, PlayButton } from './transportbutton';
-import LibraryDrawer from './librarydrawer';
+import SongView from './SongView';
+import { TransportButton, ButtonEvent, PlayState, PlayButton } from './TransportButton';
+import LibraryDrawer from './LibraryDrawer';
 
 const e = React.createElement;
 
@@ -191,6 +191,10 @@ class Main extends React.Component<{}, MainState> {
     }
 
     render() {
+        const is_playing = this.state.status === PlayState.Playing;
+        const left_to_go = this.state.pl.length - this.state.current;
+        const cover_src = "/currentimage/?" + this.state.imageHash;
+
         return <HotKeys keyMap={keyMap} handlers={this.hotkey_handlers}>
             <div>
                 <Grid container spacing={1}>
@@ -219,10 +223,10 @@ class Main extends React.Component<{}, MainState> {
                         {playstate_to_string(this.state.status)}
                     </Grid>
                     <Grid item xs={10}>
-                        <SongView current={this.state.current} pl={this.state.pl} playing={this.state.status === PlayState.Playing} tabs={this.state.tabs} initial_tab={this.state.initial_tab} />
+                        <SongView current={this.state.current} pl={this.state.pl} playing={is_playing} tabs={this.state.tabs} initial_tab={this.state.initial_tab} />
                     </Grid>
                     <Grid item xs={10}>
-                        <img alt="" height="100px" width="100px" src={"/currentimage/?" + this.state.imageHash} /> Playlist Count: {this.state.pl.length} | Left to go: {this.state.pl.length - this.state.current} | Time: {this.state.pltime}
+                        <img alt="" height="100px" width="100px" src={cover_src} /> Playlist Count: {this.state.pl.length} | Left to go: {left_to_go} | Time: {this.state.pltime}
                     </Grid>
                 </Grid>
             </div >

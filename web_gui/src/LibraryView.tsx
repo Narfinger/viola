@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
@@ -6,8 +5,8 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import * as PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
-import MyTreeView from './mytreeview';
-import SmartplaylistView from './smartplaylistview';
+import MyTreeView from './MyTreeView';
+import SmartplaylistView from './SmartplaylistView';
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;

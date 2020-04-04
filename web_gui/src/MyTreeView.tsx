@@ -103,12 +103,11 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
                                 if (ids[0] != index) {
                                     return obj;
                                 } else {
-                                    const nb = {
+                                    return {
                                         value: names[0], children: obj.children.map((objv2, indexv2) => {
                                             return ids[1] == indexv2 ? newObject : objv2;
                                         })
                                     };
-                                    return nb;
                                 }
                             })
                         });
@@ -167,7 +166,8 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
     third_level_children(children, index: number, index2: number) {
         if (children.length === 0) {
             if (this.props.query_for_details) {
-                return <TreeItem nodeId={"l" + index + "-" + index2} key={"l" + index + "-" + index2} label="Loading" />
+                const new_index = "l" + index + "-" + index2;
+                return <TreeItem nodeId={new_index} key={new_index} label="Loading" />
             }
         } else {
 

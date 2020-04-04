@@ -1,7 +1,7 @@
 import * as React from "react";
 import Drawer from '@material-ui/core/Drawer';
 import Button from '@material-ui/core/Button';
-import LibraryView from './libraryviews';
+import LibraryView from './LibraryView';
 
 type LibraryDrawerState = {
     open: boolean,

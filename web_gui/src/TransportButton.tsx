@@ -6,13 +6,13 @@ export enum ButtonEvent {
     Previous,
     Pause,
     Play,
-};
+}
 
 export enum PlayState {
     Stopped,
     Paused,
     Playing
-};
+}
 
 type TransportButtonType = {
     click: (ButtonEvent) => void,
