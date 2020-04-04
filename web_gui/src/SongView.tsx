@@ -12,13 +12,13 @@ import * as PropTypes from 'prop-types';
 import { sizing } from '@material-ui/system';
 import axios from 'axios';
 
-function convertSecondsToTime(seconds) {
+function convertSecondsToTime(seconds: number) {
     let date = new Date(0);
     date.setSeconds(seconds);
     return date.toISOString().substr(14, 5);
 }
 
-function columnWidths(index) {
+function columnWidths(index: number) {
     switch (index) {
         case 0: return 50; //number
         case 1: return 50; //tracknumber

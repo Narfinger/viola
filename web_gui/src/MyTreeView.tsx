@@ -49,12 +49,12 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         this.searchChange = this.searchChange.bind(this);
     }
 
-    searchChange(e) {
+    searchChange(e: any) {
         this.setState({ search: e.target.value });
         this.refreshDebounced();
     };
 
-    need_to_load(ids) {
+    need_to_load(ids: Number[]) {
         if (!this.props.query_for_details) {
             return false;
         } else if (ids.length === 0) {
@@ -67,7 +67,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         }
     }
 
-    handleChange(event, nodeids) {
+    handleChange(event, nodeids: string[]) {
         if (this.props.query_for_details && nodeids.length !== 0) {
             const ids = nodeids[0].split("-");
 
@@ -148,7 +148,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         });
     }
 
-    handleDoubleClick(event, index) {
+    handleDoubleClick(event: any, index: string) {
         const ids = index.split("-");
         const values = [];
         let current = this.state.items;
@@ -164,7 +164,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         axios.post("/libraryview/load/", param);
     }
 
-    third_level_children(children, index, index2) {
+    third_level_children(children, index: number, index2: number) {
         if (children.length === 0) {
             if (this.props.query_for_details) {
                 return <TreeItem nodeId={"l" + index + "-" + index2} key={"l" + index + "-" + index2} label="Loading" />
@@ -183,7 +183,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         }
     }
 
-    second_level_children(children, index) {
+    second_level_children(children, index: number) {
         if ((!children || children.length == 0) && this.props.query_for_details) {
             return <TreeItem nodeId={"l" + index} key={"l" + index} label="Loading" />
         } else if (!children || children.length == 0) {

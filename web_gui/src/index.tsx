@@ -10,7 +10,7 @@ import LibraryDrawer from './librarydrawer';
 
 const e = React.createElement;
 
-function playstate_from_string(input) {
+function playstate_from_string(input: string) {
     if (input === "Stopped") {
         return PlayState.Stopped;
     } else if (input === "Playing") {
@@ -20,7 +20,7 @@ function playstate_from_string(input) {
     }
 }
 
-function playstate_to_string(input) {
+function playstate_to_string(input: PlayState) {
     if (input === PlayState.Stopped) {
         return "Stopped";
     } else if (input === PlayState.Playing) {

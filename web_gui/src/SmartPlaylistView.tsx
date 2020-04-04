@@ -6,7 +6,7 @@ export default class SmartplaylistView extends MyTreeView {
         query_for_details: false,
         query_params_list: [],
     };
-    need_to_load(ids) {
+    need_to_load(ids: Array<number>) {
         return false;
     }
 
@@ -18,7 +18,7 @@ export default class SmartplaylistView extends MyTreeView {
         });
     }
 
-    handleDoubleClick(event, index) {
+    handleDoubleClick(event, index: string) {
         event.stopPropagation();
         console.log("doing event");
         console.log(index);
