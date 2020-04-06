@@ -93,19 +93,19 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
                         const newObject = { value: names[0], children: response.data[0].children };
                         this.setState({
                             items: this.state.items.map((obj, index) => {
-                                return ids[0] == index ? newObject : obj;
+                                return ids[0] === index ? newObject : obj;
                             })
                         })
                     } else if (ids.length === 2) {
                         const newObject = { value: names[1], children: response.data[0].children[0].children };
                         this.setState({
                             items: this.state.items.map((obj, index) => {
-                                if (ids[0] != index) {
+                                if (ids[0] !== index) {
                                     return obj;
                                 } else {
                                     return {
                                         value: names[0], children: obj.children.map((objv2, indexv2) => {
-                                            return ids[1] == indexv2 ? newObject : objv2;
+                                            return ids[1] === indexv2 ? newObject : objv2;
                                         })
                                     };
                                 }
@@ -123,7 +123,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
 
     refresh() {
         let queryParam = {};
-        if (this.props.query_params_list[0] != "Artist") {
+        if (this.props.query_params_list[0] !== "Artist") {
             queryParam = {
                 "search": this.state.items,
                 "lvl": {
@@ -136,9 +136,9 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         }
         axios.post(this.props.url, queryParam).then((response) => {
             let data = response.data;
-            if (this.props.query_params_list.length == 1) {
+            if (this.props.query_params_list.length === 1) {
                 data = response.data[0].children[0].children;
-            } else if (this.props.query_params_list.length == 2) {
+            } else if (this.props.query_params_list.length === 2) {
                 data = response.data[0].children;
             }
             this.setState({
@@ -163,7 +163,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         axios.post("/libraryview/load/", param);
     }
 
-    third_level_children(children, index: number, index2: number) {
+    third_level_children(children: Node[], index: number, index2: number) {
         if (children.length === 0) {
             if (this.props.query_for_details) {
                 const new_index = "l" + index + "-" + index2;
@@ -173,9 +173,9 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
 
             return children.map((v3, i3) => {
                 let label = "";
-                if (v3.optional) {
-                    label += v3.optional + "-";
-                }
+                //if (v3.optional) {
+                //    label += v3.optional + "-";
+                //}
                 label += v3.value;
                 const i = index + "-" + index2 + "-" + i3;
                 return <TreeItem nodeId={i} key={i} label={label} onDoubleClick={(e) => this.handleDoubleClick(e, i)} />
@@ -183,19 +183,19 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         }
     }
 
-    second_level_children(children, index: number) {
-        if ((!children || children.length == 0) && this.props.query_for_details) {
+    second_level_children(index: number, children?: Node[]) {
+        if ((!children || children.length === 0) && this.props.query_for_details) {
             return <TreeItem nodeId={"l" + index} key={"l" + index} label="Loading" />
-        } else if (!children || children.length == 0) {
+        } else if (!children || children.length === 0) {
             return
         } else {
             return children.map((v2, i2) => {
                 let value = null;
-                if (v2.optional) {
-                    value = v2.optional + "-" + v2.value;
-                } else {
-                    value = v2.value;
-                };
+                //if (v2.optional) {
+                //    value = v2.optional + "-" + v2.value;
+                //} else {
+                value = v2.value;
+                //};
                 const i = index + "-" + i2;
                 return <TreeItem nodeId={i} key={i} label={value} onDoubleClick={(e) => this.handleDoubleClick(e, i)} >
                     {this.third_level_children(v2.children, index, i2)}
@@ -218,7 +218,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
                     this.state.items.map((value, index) => {
                         const i = String(index);
                         return <TreeItem nodeId={i} key={i} label={value.value} onDoubleClick={(e) => this.handleDoubleClick(e, i)} >
-                            {this.second_level_children(value.children, index)}
+                            {this.second_level_children(index, value.children)}
                         </TreeItem>
                     })
                 }
