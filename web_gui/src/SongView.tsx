@@ -28,8 +28,8 @@ export default class SongView extends React.Component<SongViewProps, SongViewSta
 
     handleChange(event: React.ChangeEvent, newValue: number) {
         console.log("change");
-        console.log(newValue);
-        console.log(this.state.value);
+        console.log("new" + newValue);
+        console.log("old" + this.state.value);
         if (newValue !== this.state.value) {
             this.setState({ value: newValue });
             axios.post("/playlisttab/", { "index": newValue });
