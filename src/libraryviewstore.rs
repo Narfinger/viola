@@ -558,7 +558,7 @@ pub struct PartialQueryLevel {
 #[serde(tag = "type", content = "content")]
 pub enum PartialQueryLevelEnum {
     /// We want to get all the possible artists
-    Artist,
+    Artist(Vec<String>),
     /// We want to get all the possible albums. If Some(x), only albums of artist x
     Album(Vec<String>),
     /// We want to get all the possible tracks. If Some((x,y)), only tracks in album y or artist x
