@@ -587,7 +587,7 @@ fn basic_tree_query(
     }
 
     match level {
-        PartialQueryLevelEnum::Artist => query.order_by(artist).distinct(),
+        PartialQueryLevelEnum::Artist(_) => query.order_by(artist).distinct(),
         PartialQueryLevelEnum::Album(artist_value) => {
             if let [a] = artist_value.as_slice() {
                 query.order_by(path).filter(artist.eq(a)).distinct()
@@ -640,7 +640,7 @@ pub fn query_partial_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist>
     info!("query: {}", sql);
 
     match level {
-        PartialQueryLevelEnum::Artist => {
+        PartialQueryLevelEnum::Artist(_) => {
             let res = query
                 .select(artist)
                 .order_by(artist)
