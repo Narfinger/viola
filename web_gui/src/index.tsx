@@ -1,4 +1,4 @@
-import { render } from 'react-dom'
+import * as ReactDOM from 'react-dom'
 import { HotKeys } from "react-hotkeys";
 import * as React from "react";
 import Button from '@material-ui/core/Button';
@@ -233,6 +233,4 @@ class Main extends React.Component<{}, MainState> {
         </HotKeys>
     }
 }
-
-const domContainer = document.querySelector('#main_container');
-render(e(Main), domContainer);
+ReactDOM.render(<Main></Main>, document.querySelector('#main_container'));

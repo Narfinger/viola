@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --progress --mode=production",
-    "watch": "webpack --progress --watch"
+    "watch": "webpack --progress --watch --mode=development"
   },
   "author": "",
   "license": "ISC",
@@ -30,7 +30,7 @@
     "@babel/preset-react": "^7.9.4",
     "@types/axios": "^0.14.0",
     "@types/material-ui": "^0.21.7",
-    "@types/react": "^16.9.31",
+    "@types/react": "^16.9.34",
     "@types/react-dom": "^16.9.6",
     "@types/react-window": "^1.8.1",
     "@typescript-eslint/eslint-plugin": "^2.26.0",

@@ -122,18 +122,8 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
     }
 
     refresh() {
-        let queryParam = {};
-        if (this.props.query_params_list[0] !== "Artist") {
-            queryParam = {
-                "search": this.state.items,
-                "lvl": {
-                    "type": this.props.query_params_list[0],
-                    "content": []
-                }
-            };
-        } else {
-            queryParam = { "search": this.state.search, "lvl": { "type": this.props.query_params_list[0] } };
-        }
+        const queryParam = { "search": this.state.search, "lvl": { "type": this.props.query_params_list[0], "content": [] } };
+        console.log(queryParam);
         axios.post(this.props.url, queryParam).then((response) => {
             let data = response.data;
             if (this.props.query_params_list.length === 1) {
