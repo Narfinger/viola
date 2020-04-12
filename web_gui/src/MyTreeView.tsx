@@ -6,6 +6,7 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import TreeView from '@material-ui/lab/TreeView';
 import TreeItem from '@material-ui/lab/TreeItem';
 import AwesomeDebouncePromise from 'awesome-debounce-promise';
+import LibraryMenu from './LibraryMenu';
 import axios from 'axios';
 
 type Node = {
@@ -24,6 +25,7 @@ type MyTreeViewProps = {
 type MyTreeViewState = {
     items: Tree,
     search: string,
+    menu_open: boolean,
 }
 export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeViewState> {
     refreshDebounced: any;
@@ -39,11 +41,13 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
             items: [
             ],
             search: "",
+            menu_open: false
         };
 
         this.refresh = this.refresh.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.need_to_load = this.need_to_load.bind(this);
+        this.onContextMenu = this.onContextMenu.bind(this);
         this.handleDoubleClick = this.handleDoubleClick.bind(this);
         this.refreshDebounced = AwesomeDebouncePromise(this.refresh, 500);
         this.searchChange = this.searchChange.bind(this);
@@ -168,7 +172,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
                 //}
                 label += v3.value;
                 const i = index + "-" + index2 + "-" + i3;
-                return <TreeItem nodeId={i} key={i} label={label} onDoubleClick={(e) => this.handleDoubleClick(e, i)} />
+                return <TreeItem nodeId={i} key={i} label={label} onContextMenu={(e) => this.contextMenu(e, i)} onDoubleClick={(e) => this.handleDoubleClick(e, i)} />
             })
         }
     }
@@ -187,7 +191,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
                 value = v2.value;
                 //};
                 const i = index + "-" + i2;
-                return <TreeItem nodeId={i} key={i} label={value} onDoubleClick={(e) => this.handleDoubleClick(e, i)} >
+                return <TreeItem nodeId={i} key={i} label={value} onContextMenu={(e) => this.contextMenu(e, i)} onDoubleClick={(e) => this.handleDoubleClick(e, i)} >
                     {this.third_level_children(v2.children, index, i2)}
                 </TreeItem>
             })
@@ -207,9 +211,12 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
                 {
                     this.state.items.map((value, index) => {
                         const i = String(index);
-                        return <TreeItem nodeId={i} key={i} label={value.value} onDoubleClick={(e) => this.handleDoubleClick(e, i)} >
+                        let menu: LibraryMenu = new LibraryMenu({});
+                        return <div><TreeItem nodeId={i} key={i} label={value.value} onContextMenu={(e) => menu.show(i)} onDoubleClick={(e) => this.handleDoubleClick(e, i)} >
                             {this.second_level_children(index, value.children)}
                         </TreeItem>
+                            {menu}
+                        </div>
                     })
                 }
             </TreeView >
