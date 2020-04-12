@@ -172,7 +172,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
                 //}
                 label += v3.value;
                 const i = index + "-" + index2 + "-" + i3;
-                return <TreeItem nodeId={i} key={i} label={label} onContextMenu={(e) => this.contextMenu(e, i)} onDoubleClick={(e) => this.handleDoubleClick(e, i)} />
+                return <TreeItem nodeId={i} key={i} label={label} onDoubleClick={(e) => this.handleDoubleClick(e, i)} />
             })
         }
     }
@@ -191,7 +191,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
                 value = v2.value;
                 //};
                 const i = index + "-" + i2;
-                return <TreeItem nodeId={i} key={i} label={value} onContextMenu={(e) => this.contextMenu(e, i)} onDoubleClick={(e) => this.handleDoubleClick(e, i)} >
+                return <TreeItem nodeId={i} key={i} label={value} onDoubleClick={(e) => this.handleDoubleClick(e, i)} >
                     {this.third_level_children(v2.children, index, i2)}
                 </TreeItem>
             })
