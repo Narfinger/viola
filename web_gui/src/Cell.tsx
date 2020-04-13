@@ -3,15 +3,17 @@ import Typography from '@material-ui/core/Typography';
 import axios from 'axios';
 
 
-type TrackType = {
+export type TrackType = {
     trachnumber: number,
     title: string,
     artist: string,
     album: string,
     genre: string,
+    year: number,
+    length: number,
 }
 
-function convertSecondsToTime(seconds: number) {
+export function convertSecondsToTime(seconds: number) {
     const date = new Date(0);
     date.setSeconds(seconds);
     return date.toISOString().substr(14, 5);

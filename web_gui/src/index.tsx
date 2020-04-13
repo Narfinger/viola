@@ -7,6 +7,7 @@ import axios from 'axios';
 import SongView from './SongView';
 import { TransportButton, ButtonEvent, PlayState, PlayButton } from './TransportButton';
 import LibraryDrawer from './LibraryDrawer';
+import { convertSecondsToTime, TrackType } from './Cell';
 
 const e = React.createElement;
 
@@ -37,13 +38,14 @@ const keyMap = {
 type MainState = {
     status: PlayState,
     current: number,
-    pl: object[],
+    pl: TrackType[],
     pltime: string,
     image_hash: string,
     imageHash: number,
     eventblock: boolean,
     tabs: object[],
     initial_tab: number,
+    time_state_str: string,
 }
 
 class Main extends React.Component<{}, MainState> {
@@ -60,6 +62,7 @@ class Main extends React.Component<{}, MainState> {
             eventblock: false,
             tabs: [],
             initial_tab: 0,
+            time_state_str: "",
         };
 
         this.handleButtonPush = this.handleButtonPush.bind(this);
@@ -194,6 +197,11 @@ class Main extends React.Component<{}, MainState> {
         const is_playing = this.state.status === PlayState.Playing;
         const left_to_go = this.state.pl.length - this.state.current;
         const cover_src = "/currentimage/?" + this.state.imageHash;
+        let current_total_time = "";
+        if (this.state.pl && this.state.pl[this.state.current] && this.state.pl[this.state.current]) {
+            current_total_time = convertSecondsToTime(this.state.pl[this.state.current].length);
+        }
+
 
         return <HotKeys keyMap={keyMap} handlers={this.hotkey_handlers}>
             <div>
@@ -222,11 +230,25 @@ class Main extends React.Component<{}, MainState> {
                     <Grid item xs={1}>
                         {playstate_to_string(this.state.status)}
                     </Grid>
-                    <Grid item xs={10}>
+                    <Grid item xs={12}>
                         <SongView current={this.state.current} pl={this.state.pl} playing={is_playing} tabs={this.state.tabs} initial_tab={this.state.initial_tab} />
                     </Grid>
-                    <Grid item xs={10}>
-                        <img alt="" height="100px" width="100px" src={cover_src} /> Playlist Count: {this.state.pl.length} | Left to go: {left_to_go} | Time: {this.state.pltime}
+                    <Grid container alignItems="center">
+                        <Grid item xs={2}>
+                            <img alt="" height="100px" width="100px" src={cover_src} />
+                        </Grid>
+                        <Grid item xs={2}>
+                            Playlist Count: {this.state.pl.length}
+                        </Grid>
+                        <Grid item xs={2}>
+                            Left to go: {left_to_go}
+                        </Grid>
+                        <Grid item xs={2}>
+                            Time: {this.state.pltime}
+                        </Grid>
+                        <Grid item xs={2}>
+                            --- {current_total_time}
+                        </Grid>
                     </Grid>
                 </Grid>
             </div >
