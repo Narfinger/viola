@@ -47,7 +47,6 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         this.refresh = this.refresh.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.need_to_load = this.need_to_load.bind(this);
-        this.onContextMenu = this.onContextMenu.bind(this);
         this.handleDoubleClick = this.handleDoubleClick.bind(this);
         this.refreshDebounced = AwesomeDebouncePromise(this.refresh, 500);
         this.searchChange = this.searchChange.bind(this);

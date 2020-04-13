@@ -1,5 +1,5 @@
 import axios from 'axios';
-import MyTreeView from './mytreeview';
+import MyTreeView from './MyTreeView';
 
 export default class SmartplaylistView extends MyTreeView {
     public static defaultProps = {
