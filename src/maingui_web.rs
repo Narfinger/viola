@@ -199,7 +199,7 @@ async fn playlist_tab(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse 
         tabs: strings,
     };
 
-    state.save();
+    //state.save();
 
     HttpResponse::Ok().json(resp)
 }
@@ -333,6 +333,19 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
         thread::spawn(move || loop {
             thread::sleep(Duration::new(10 * 60, 0));
             datac.save();
+        });
+    }
+    {
+        let datac = data.clone();
+        thread::spawn(move || loop {
+            thread::sleep(Duration::new(10 * 60, 0));
+            if datac.gstreamer.get_state() == crate::gstreamer_wrapper::GStreamerMessage::Playing {
+                let data = datac.gstreamer.get_elapsed().unwrap_or(0);
+                my_websocket::send_my_message(
+                    &datac.ws,
+                    WsMessage::CurrentTimeChanged { index: data },
+                );
+            }
         });
     }
 

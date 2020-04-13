@@ -149,6 +149,7 @@ pub trait GStreamerExt {
     fn gstreamer_update_gui(&self) -> glib::Continue;
     fn gstreamer_handle_eos(&self);
     fn get_state(&self) -> GStreamerMessage;
+    fn get_elapsed(&self) -> Option<u64>;
 }
 
 impl GStreamerExt for GStreamer {
@@ -236,22 +237,6 @@ impl GStreamerExt for GStreamer {
 
     /// poll the message bus and on eos start new
     fn gstreamer_update_gui(&self) -> glib::Continue {
-        //update gui for running time
-        /*
-        let cltime_opt: Option<gstreamer::ClockTime> = self.pipeline.query_position();
-        let cltotal_opt: Option<gstreamer::ClockTime> = self.pipeline.query_duration();
-        if let Some(cltime) = cltime_opt {
-            if let Some(cl) = cltotal_opt {
-                let total = cl.seconds().unwrap_or(0);
-                //warn!("total: {}", total);
-                self.sender
-                    .send(GStreamerMessage::ChangedDuration((
-                        cltime.seconds().unwrap_or(0),
-                        total,
-                    )))
-                    .expect("Error in gstreamer sending message to gui");
-            }
-        } */
         glib::Continue(true)
     }
 
@@ -284,5 +269,10 @@ impl GStreamerExt for GStreamer {
             .get_state(gstreamer::ClockTime(Some(5)))
             .1
             .into()
+    }
+
+    fn get_elapsed(&self) -> Option<u64> {
+        let cltime_opt: Option<gstreamer::ClockTime> = self.element.query_position();
+        cltime_opt.and_then(|s| s.seconds())
     }
 }

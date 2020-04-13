@@ -45,7 +45,7 @@ type MainState = {
     eventblock: boolean,
     tabs: object[],
     initial_tab: number,
-    time_state_str: string,
+    time_state: number,
 }
 
 class Main extends React.Component<{}, MainState> {
@@ -62,7 +62,7 @@ class Main extends React.Component<{}, MainState> {
             eventblock: false,
             tabs: [],
             initial_tab: 0,
-            time_state_str: "",
+            time_state: 0,
         };
 
         this.handleButtonPush = this.handleButtonPush.bind(this);
@@ -113,13 +113,18 @@ class Main extends React.Component<{}, MainState> {
             switch (msg.type) {
                 case "Ping": break;
                 case "PlayChanged": {
-                    this.setState({ current: msg.index, status: PlayState.Playing });
+                    this.setState({ current: msg.index, status: PlayState.Playing, time_state: 0 });
                     this.refresh();
+                    break;
+                }
+                case " CurrentTimeChanged": {
+                    this.setState({ time_state: parseInt(msg.index, 10) });
                     break;
                 }
                 case "ReloadPlaylist": {
                     axios.get("/playlist/").then((response) => this.setState({
                         pl: response.data,
+                        time_state: 0,
                     }));
                     break;
                 }
@@ -127,6 +132,7 @@ class Main extends React.Component<{}, MainState> {
                     axios.get("/playlisttab/").then((response) => this.setState({
                         tabs: response.data.tabs,
                         initial_tab: response.data.current_tab,
+                        time_state: 0,
                     }))
                     break;
                 }
@@ -201,6 +207,7 @@ class Main extends React.Component<{}, MainState> {
         if (this.state.pl && this.state.pl[this.state.current] && this.state.pl[this.state.current]) {
             current_total_time = convertSecondsToTime(this.state.pl[this.state.current].length);
         }
+        const timestate = convertSecondsToTime(this.state.time_state);
 
 
         return <HotKeys keyMap={keyMap} handlers={this.hotkey_handlers}>
@@ -247,7 +254,7 @@ class Main extends React.Component<{}, MainState> {
                             Time: {this.state.pltime}
                         </Grid>
                         <Grid item xs={2}>
-                            --- {current_total_time}
+                            {timestate} --- {current_total_time}
                         </Grid>
                     </Grid>
                 </Grid>
