@@ -109,7 +109,7 @@ class Main extends React.Component<{}, MainState> {
 
         this.ws.onmessage = evt => {
             const msg = JSON.parse(evt.data);
-            console.log(msg);
+            //console.log(msg);
             switch (msg.type) {
                 case "Ping": break;
                 case "PlayChanged": {
@@ -117,7 +117,7 @@ class Main extends React.Component<{}, MainState> {
                     this.refresh();
                     break;
                 }
-                case " CurrentTimeChanged": {
+                case "CurrentTimeChanged": {
                     this.setState({ time_state: parseInt(msg.index, 10) });
                     break;
                 }
@@ -248,13 +248,13 @@ class Main extends React.Component<{}, MainState> {
                             Playlist Count: {this.state.pl.length}
                         </Grid>
                         <Grid item xs={2}>
-                            Left to go: {left_to_go}
+                            Tracks left: {left_to_go}
                         </Grid>
                         <Grid item xs={2}>
                             Time: {this.state.pltime}
                         </Grid>
                         <Grid item xs={2}>
-                            {timestate} --- {current_total_time}
+                            Time: {timestate}---{current_total_time}
                         </Grid>
                     </Grid>
                 </Grid>

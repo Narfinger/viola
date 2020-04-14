@@ -165,11 +165,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         } else {
 
             return children.map((v3, i3) => {
-                let label = "";
-                //if (v3.optional) {
-                //    label += v3.optional + "-";
-                //}
-                label += v3.value;
+                const label = "" + v3.value;
                 const i = index + "-" + index2 + "-" + i3;
                 return <TreeItem nodeId={i} key={i} label={label} onDoubleClick={(e) => this.handleDoubleClick(e, i)} />
             })
@@ -183,12 +179,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
             return
         } else {
             return children.map((v2, i2) => {
-                let value = null;
-                //if (v2.optional) {
-                //    value = v2.optional + "-" + v2.value;
-                //} else {
-                value = v2.value;
-                //};
+                const value = v2.value;
                 const i = index + "-" + i2;
                 return <TreeItem nodeId={i} key={i} label={value} onDoubleClick={(e) => this.handleDoubleClick(e, i)} >
                     {this.third_level_children(v2.children, index, i2)}
@@ -211,11 +202,10 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
                     this.state.items.map((value, index) => {
                         const i = String(index);
                         let menu: LibraryMenu = new LibraryMenu({});
-                        return <div><TreeItem nodeId={i} key={i} label={value.value} onContextMenu={(e) => menu.show(i)} onDoubleClick={(e) => this.handleDoubleClick(e, i)} >
+                        return <TreeItem nodeId={i} key={i} label={value.value} onContextMenu={(e) => menu.show(i)} onDoubleClick={(e) => this.handleDoubleClick(e, i)} >
+                            {menu}
                             {this.second_level_children(index, value.children)}
                         </TreeItem>
-                            {menu}
-                        </div>
                     })
                 }
             </TreeView >
