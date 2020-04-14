@@ -46,6 +46,7 @@ type MainState = {
     tabs: object[],
     initial_tab: number,
     time_state: number,
+    repeat: boolean,
 }
 
 class Main extends React.Component<{}, MainState> {
@@ -63,6 +64,7 @@ class Main extends React.Component<{}, MainState> {
             tabs: [],
             initial_tab: 0,
             time_state: 0,
+            repeat: false,
         };
 
         this.handleButtonPush = this.handleButtonPush.bind(this);
@@ -113,7 +115,7 @@ class Main extends React.Component<{}, MainState> {
             switch (msg.type) {
                 case "Ping": break;
                 case "PlayChanged": {
-                    this.setState({ current: msg.index, status: PlayState.Playing, time_state: 0 });
+                    this.setState({ current: msg.index, status: PlayState.Playing, time_state: 0, repeat: false });
                     this.refresh();
                     break;
                 }
@@ -157,6 +159,7 @@ class Main extends React.Component<{}, MainState> {
 
     again() {
         axios.post("/repeat/");
+        this.setState({ repeat: true });
     }
 
     save() {
@@ -208,6 +211,10 @@ class Main extends React.Component<{}, MainState> {
             current_total_time = convertSecondsToTime(this.state.pl[this.state.current].length);
         }
         const timestate = convertSecondsToTime(this.state.time_state);
+        let repeat = "";
+        if (this.state.repeat) {
+            repeat = "repeat";
+        }
 
 
         return <HotKeys keyMap={keyMap} handlers={this.hotkey_handlers}>
@@ -255,6 +262,9 @@ class Main extends React.Component<{}, MainState> {
                         </Grid>
                         <Grid item xs={2}>
                             Time: {timestate}---{current_total_time}
+                        </Grid>
+                        <Grid item xs={1}>
+                            {repeat}
                         </Grid>
                     </Grid>
                 </Grid>
