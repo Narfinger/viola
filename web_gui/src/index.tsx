@@ -111,7 +111,7 @@ class Main extends React.Component<{}, MainState> {
 
         this.ws.onmessage = evt => {
             const msg = JSON.parse(evt.data);
-            //console.log(msg);
+            console.log(msg);
             switch (msg.type) {
                 case "Ping": break;
                 case "PlayChanged": {

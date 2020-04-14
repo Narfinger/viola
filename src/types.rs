@@ -48,6 +48,7 @@ impl From<GStreamerMessage> for PlayerStatus {
             GStreamerMessage::Stopped => PlayerStatus::Stopped,
             GStreamerMessage::Playing => PlayerStatus::Playing,
             GStreamerMessage::ChangedDuration(i) => PlayerStatus::ChangedDuration(i),
+            GStreamerMessage::Nop => PlayerStatus::Playing,
         }
     }
 }

@@ -31,6 +31,7 @@ pub enum GStreamerMessage {
     Pausing,
     Stopped,
     Playing,
+    Nop,
     ChangedDuration((u64, u64)), //in seconds
 }
 
@@ -54,7 +55,11 @@ impl From<GStreamerAction> for GStreamerMessage {
         match action {
             GStreamerAction::Pausing => GStreamerMessage::Pausing,
             GStreamerAction::Stop => GStreamerMessage::Stopped,
-            _ => GStreamerMessage::Playing,
+            GStreamerAction::Seek(_) | GStreamerAction::RepeatOnce => GStreamerMessage::Nop,
+            GStreamerAction::Next
+            | GStreamerAction::Previous
+            | GStreamerAction::Play(_)
+            | GStreamerAction::Playing => GStreamerMessage::Playing,
         }
     }
 }
