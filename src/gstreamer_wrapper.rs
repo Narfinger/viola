@@ -211,29 +211,34 @@ impl GStreamerExt for GStreamer {
             }
             GStreamerAction::Play(i) => {
                 self.current_playlist.set(i);
-                let uri = self.current_playlist.get_current_uri().expect("URI Error");
-                if !self
-                    .current_playlist
-                    .get_current_path()
-                    .expect("URI Error")
-                    .exists()
-                {
-                    panic!("The file we want to play does not exist");
+                if let Some(uri) = self.current_playlist.get_current_uri() {
+                    if !self
+                        .current_playlist
+                        .get_current_path()
+                        .expect("URI Error")
+                        .exists()
+                    {
+                        panic!("The file we want to play does not exist");
+                    }
+                    println!(
+                        "Playing uri: {:?}",
+                        self.current_playlist.get_current_path()
+                    );
+                    self.element
+                        .set_state(gstreamer::State::Ready)
+                        .expect("Error in setting gstreamer state");
+                    self.element
+                        .set_property("uri", &uri)
+                        .expect("Error setting new gstreamer url");
+                    self.element
+                        .set_state(gstreamer::State::Playing)
+                        .expect("Error setting gstreamer state");
+                    println!("gstreamer state: {:?}", self.get_state());
+                } else {
+                    self.current_playlist.set(0);
+                    self.do_gstreamer_action(GStreamerAction::Stop);
+                    return;
                 }
-                println!(
-                    "Playing uri: {:?}",
-                    self.current_playlist.get_current_path()
-                );
-                self.element
-                    .set_state(gstreamer::State::Ready)
-                    .expect("Error in setting gstreamer state");
-                self.element
-                    .set_property("uri", &uri)
-                    .expect("Error setting new gstreamer url");
-                self.element
-                    .set_state(gstreamer::State::Playing)
-                    .expect("Error setting gstreamer state");
-                println!("gstreamer state: {:?}", self.get_state());
             }
             GStreamerAction::Seek(u64) => {
                 panic!("NYI");
