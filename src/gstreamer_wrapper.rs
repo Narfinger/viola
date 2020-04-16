@@ -211,8 +211,13 @@ impl GStreamerExt for GStreamer {
             }
             GStreamerAction::Play(i) => {
                 self.current_playlist.set(i);
-                let uri = self.current_playlist.get_current_uri();
-                if !self.current_playlist.get_current_path().exists() {
+                let uri = self.current_playlist.get_current_uri().expect("URI Error");
+                if !self
+                    .current_playlist
+                    .get_current_path()
+                    .expect("URI Error")
+                    .exists()
+                {
                     panic!("The file we want to play does not exist");
                 }
                 println!(

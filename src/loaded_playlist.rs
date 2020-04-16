@@ -140,28 +140,34 @@ impl SavePlaylistExt for LoadedPlaylistPtr {
 }
 
 pub trait PlaylistControls {
-    fn get_current_path(&self) -> PathBuf;
-    fn get_current_uri(&self) -> String;
+    fn get_current_path(&self) -> Option<PathBuf>;
+    fn get_current_uri(&self) -> Option<String>;
     fn previous(&self) -> Option<usize>;
     fn set(&self, _: usize) -> usize;
     fn next_or_eol(&self) -> Option<usize>;
 }
 
 impl PlaylistControls for LoadedPlaylistPtr {
-    fn get_current_path(&self) -> PathBuf {
+    fn get_current_path(&self) -> Option<PathBuf> {
         let mut pb = PathBuf::new();
         let s = self.read().unwrap();
-        pb.push(&s.items[s.current_position].path);
-        pb
+        if let Some(t) = s.items.get(s.current_position) {
+            pb.push(t.path.clone());
+            Some(pb)
+        } else {
+            None
+        }
     }
 
-    fn get_current_uri(&self) -> String {
+    fn get_current_uri(&self) -> Option<String> {
         let s = self.read().unwrap();
         info!("loading from playlist with name: {}", s.name);
-        format!(
-            "file:////{}",
-            utf8_percent_encode(&s.items[s.current_position].path, FRAGMENT).to_string()
-        )
+        s.items.get(s.current_position).as_ref().map(|p| {
+            format!(
+                "file:////{}",
+                utf8_percent_encode(&p.path, FRAGMENT).to_string()
+            )
+        })
     }
 
     fn previous(&self) -> Option<usize> {
@@ -184,7 +190,7 @@ impl PlaylistControls for LoadedPlaylistPtr {
     fn next_or_eol(&self) -> Option<usize> {
         let next_pos = {
             let mut s = self.write().unwrap();
-            s.current_position += 1 % s.items.len();
+            s.current_position += 1 % (s.items.len() - 1);
             s.current_position
         };
 

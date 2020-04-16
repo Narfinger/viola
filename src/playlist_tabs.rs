@@ -111,11 +111,11 @@ impl LoadedPlaylistExt for PlaylistTabsPtr {
 }
 
 impl PlaylistControls for PlaylistTabsPtr {
-    fn get_current_path(&self) -> PathBuf {
+    fn get_current_path(&self) -> Option<PathBuf> {
         self.current(PlaylistControls::get_current_path)
     }
 
-    fn get_current_uri(&self) -> String {
+    fn get_current_uri(&self) -> Option<String> {
         self.current(PlaylistControls::get_current_uri)
     }
 
