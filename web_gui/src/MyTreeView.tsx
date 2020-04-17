@@ -6,6 +6,7 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import TreeView from '@material-ui/lab/TreeView';
 import TreeItem from '@material-ui/lab/TreeItem';
 import AwesomeDebouncePromise from 'awesome-debounce-promise';
+import Popover from '@material-ui/core/Popover';
 import LibraryMenu from './LibraryMenu';
 import axios from 'axios';
 
@@ -202,9 +203,11 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
                     this.state.items.map((value, index) => {
                         const i = String(index);
                         let menu: LibraryMenu = new LibraryMenu({});
-                        return <TreeItem nodeId={i} key={i} label={value.value} onContextMenu={(e) => menu.show(i)} onDoubleClick={(e) => this.handleDoubleClick(e, i)} >
-                            {menu}
-                            {this.second_level_children(index, value.children)}
+                        return <TreeItem nodeId={i} key={i} label={value.value} onDoubleClick={(e) => this.handleDoubleClick(e, i)} >
+                            <div>
+                                {menu}
+                                {this.second_level_children(index, value.children)}
+                            </div>
                         </TreeItem>
                     })
                 }
