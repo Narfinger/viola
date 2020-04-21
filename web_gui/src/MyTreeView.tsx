@@ -204,10 +204,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
                         const i = String(index);
                         let menu: LibraryMenu = new LibraryMenu({});
                         return <TreeItem nodeId={i} key={i} label={value.value} onDoubleClick={(e) => this.handleDoubleClick(e, i)} >
-                            <div>
-                                {menu}
-                                {this.second_level_children(index, value.children)}
-                            </div>
+                            {this.second_level_children(index, value.children)}
                         </TreeItem>
                     })
                 }
