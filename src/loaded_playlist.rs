@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use crate::db::Track;
 use crate::playlist::{NewPlaylist, NewPlaylistTrack, Playlist};
 use crate::types::LoadedPlaylistPtr;
-const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ');
+const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ').add(b'#');
 
 #[derive(Debug, Serialize)]
 pub struct LoadedPlaylist {
