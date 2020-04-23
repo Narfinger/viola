@@ -7,6 +7,7 @@ import axios from 'axios';
 import SongView from './SongView';
 import { TransportButton, ButtonEvent, PlayState, PlayButton } from './TransportButton';
 import LibraryDrawer from './LibraryDrawer';
+import DeleteRangeButton from './DeleteRangeButton';
 import { convertSecondsToTime, TrackType } from './Cell';
 
 const e = React.createElement;
@@ -239,7 +240,10 @@ class Main extends React.Component<{}, MainState> {
                         <Button variant="contained" color="secondary" onClick={this.clean}>Clean</Button>
                     </Grid>
                     <Grid item xs={1}>
-                        <Button variant="contained" color="secondary" onClick={this.save}>Save</Button>
+                        <DeleteRangeButton></DeleteRangeButton>
+                    </Grid>
+                    <Grid item xs={1}>
+                        <Button variant="contained" color="primary" onClick={this.save}>Save</Button>
                     </Grid>
                     <Grid item xs={1}>
                         {playstate_to_string(this.state.status)}
