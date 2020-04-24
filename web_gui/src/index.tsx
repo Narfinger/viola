@@ -97,13 +97,14 @@ class Main extends React.Component<{}, MainState> {
                 pl: response.data
             });
             this.refresh();
-        }
-        );
+        });
         axios.get("/playlisttab/").then((response) => {
+            console.log(response);
             this.setState({
                 tabs: response.data.tabs,
             });
-            this.songview.current.setTab(response.data.current_tab);
+            console.log(response.data.current)
+            this.songview.current.setTab(response.data.current);
         })
 
         this.ws.onopen = () => {
@@ -141,7 +142,7 @@ class Main extends React.Component<{}, MainState> {
                             tabs: response.data.tabs,
                             time_state: 0,
                         });
-                        this.songview.current.setTab(response.data.current_tab);
+                        this.songview.current.setTab(response.data.current);
                     });
                     break;
                 }
