@@ -36,6 +36,9 @@ export default class SongView extends React.Component<SongViewProps, SongViewSta
         }
     }
 
+    static getDerivedStateFromProps(props, state) {
+        state.value = props.initial_tab;
+    }
 
     render() {
         const items = this.props.pl.map((t) => ({ item: t, selected: false, playing: this.props.playing }));
