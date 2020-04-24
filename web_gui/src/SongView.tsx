@@ -6,7 +6,6 @@ import PlaylistTab from './PlaylistTab';
 import { columnWidths, Cell } from './Cell';
 
 type SongViewProps = {
-    initial_tab: number,
     pl: any,
     current: number,
     tabs: any,
@@ -21,7 +20,7 @@ export default class SongView extends React.Component<SongViewProps, SongViewSta
     constructor(props) {
         super(props)
         this.state = {
-            value: props.initial_tab,
+            value: 0,
         };
         this.handleChange = this.handleChange.bind(this);
     }
@@ -36,8 +35,8 @@ export default class SongView extends React.Component<SongViewProps, SongViewSta
         }
     }
 
-    static getDerivedStateFromProps(props, state) {
-        state.value = props.initial_tab;
+    setTab(i: number) {
+        this.setState({ value: i });
     }
 
     render() {

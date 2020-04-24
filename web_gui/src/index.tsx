@@ -45,13 +45,14 @@ type MainState = {
     imageHash: number,
     eventblock: boolean,
     tabs: object[],
-    initial_tab: number,
     time_state: number,
     repeat: boolean,
 }
 
 class Main extends React.Component<{}, MainState> {
     ws: WebSocket;
+    songview: React.RefObject<SongView>;
+
     constructor(props) {
         super(props)
         this.state = {
@@ -63,7 +64,6 @@ class Main extends React.Component<{}, MainState> {
             imageHash: Date.now(),
             eventblock: false,
             tabs: [],
-            initial_tab: 0,
             time_state: 0,
             repeat: false,
         };
@@ -73,6 +73,7 @@ class Main extends React.Component<{}, MainState> {
         this.clean = this.clean.bind(this);
         this.again = this.again.bind(this);
         this.ws = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port + "/ws/")
+        this.songview = React.createRef();
     }
 
     hotkey_handlers = {
@@ -101,8 +102,8 @@ class Main extends React.Component<{}, MainState> {
         axios.get("/playlisttab/").then((response) => {
             this.setState({
                 tabs: response.data.tabs,
-                initial_tab: response.data.current_tab,
             });
+            this.songview.current.setTab(response.data.current_tab);
         })
 
         this.ws.onopen = () => {
@@ -135,11 +136,13 @@ class Main extends React.Component<{}, MainState> {
                 }
                 case "ReloadTabs": {
                     console.log(msg);
-                    axios.get("/playlisttab/").then((response) => this.setState({
-                        tabs: response.data.tabs,
-                        initial_tab: response.data.current_tab,
-                        time_state: 0,
-                    }))
+                    axios.get("/playlisttab/").then((response) => {
+                        this.setState({
+                            tabs: response.data.tabs,
+                            time_state: 0,
+                        });
+                        this.songview.current.setTab(response.data.current_tab);
+                    });
                     break;
                 }
                 default:
@@ -252,7 +255,7 @@ class Main extends React.Component<{}, MainState> {
                         {playstate_to_string(this.state.status)}
                     </Grid>
                     <Grid item xs={12}>
-                        <SongView current={this.state.current} pl={this.state.pl} playing={is_playing} tabs={this.state.tabs} initial_tab={this.state.initial_tab} />
+                        <SongView ref={this.songview} current={this.state.current} pl={this.state.pl} playing={is_playing} tabs={this.state.tabs} />
                     </Grid>
                     <Grid container alignItems="center">
                         <Grid item xs={2}>
