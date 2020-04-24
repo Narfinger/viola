@@ -130,6 +130,13 @@ impl PlaylistControls for PlaylistTabsPtr {
         value.set(index)
     }
 
+    fn delete_range(&self, range: crate::types::Range) {
+        let i = self.read().unwrap().current_pl;
+        let cur = self.read().unwrap();
+        let value = cur.pls.get(i).unwrap();
+        value.delete_range(range);
+    }
+
     fn next_or_eol(&self) -> Option<usize> {
         self.current(PlaylistControls::next_or_eol)
     }

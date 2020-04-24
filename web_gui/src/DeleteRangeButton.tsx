@@ -49,9 +49,11 @@ export default class DeleteRangeButton extends React.Component<{}, DeleteRangeBu
 
     handleSubmit() {
         const range = this.state.text.split("-");
-        axios.post("/deletefromplaylist/", {
-            from: range[0],
-            to: range[1],
+        axios.delete("/deletefromplaylist/", {
+            data: {
+                from: range[0],
+                to: range[1],
+            }
         })
     }
 

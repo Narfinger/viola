@@ -53,6 +53,12 @@ impl From<GStreamerMessage> for PlayerStatus {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Range {
+    pub from: usize,
+    pub to: usize,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct ChangePlaylistTabJson {
     pub index: usize,

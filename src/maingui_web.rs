@@ -2,6 +2,7 @@ use actix_files as fs;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 use diesel::Connection;
+use std::convert::AsRef;
 use std::io;
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
@@ -12,7 +13,7 @@ use std::time::Duration;
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
 use crate::libraryviewstore;
-use crate::loaded_playlist::{LoadedPlaylistExt, SavePlaylistExt};
+use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls, SavePlaylistExt};
 use crate::my_websocket;
 use crate::my_websocket::*;
 use crate::playlist_tabs::PlaylistTabsExt;
@@ -23,6 +24,21 @@ use crate::types::*;
 async fn playlist(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     let items = state.playlist_tabs.items();
     HttpResponse::Ok().body(items)
+}
+
+#[delete("/playlist/")]
+async fn playlist_delete_range(
+    state: web::Data<WebGui>,
+    _: HttpRequest,
+    msg: web::Json<Range>,
+) -> HttpResponse {
+    println!("Deleting range: {:?}", &msg);
+    state.playlist_tabs.delete_range(msg.into_inner());
+    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
+
+    let db = state.pool.lock().expect("Error from db");
+    state.playlist_tabs.save(&db).expect("Error in saving");
+    HttpResponse::Ok().finish()
 }
 
 #[post("/repeat/")]
