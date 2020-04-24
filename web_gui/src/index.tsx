@@ -92,20 +92,18 @@ class Main extends React.Component<{}, MainState> {
 
     componentDidMount() {
         console.log("we mounted");
-        axios.get("/playlist/").then((response) => {
+        axios.all([
+            axios.get("/playlist/"),
+            axios.get("/playlisttab/")
+        ]).then((responseArr) => {
             this.setState({
-                pl: response.data
+                tabs: responseArr[1].data.tabs,
+                pl: responseArr[0].data,
             });
+            this.songview.current.setTab(responseArr[1].data.current);
             this.refresh();
         });
-        axios.get("/playlisttab/").then((response) => {
-            console.log(response);
-            this.setState({
-                tabs: response.data.tabs,
-            });
-            console.log(response.data.current)
-            this.songview.current.setTab(response.data.current);
-        })
+
 
         this.ws.onopen = () => {
             // on connecting, do nothing but log it to the console
@@ -196,18 +194,19 @@ class Main extends React.Component<{}, MainState> {
     }
 
     refresh() {
-        axios.get("/currentid/").then((response) => {
-            this.setState({ current: response.data });
-        });
-        axios.get("/transport/").then((response) => {
+        axios.all([
+            axios.get("/currentid/"),
+            axios.get("/transport/"),
+            axios.get("/pltime/")
+        ]).then((responseArr) => {
             this.setState({
-                status: playstate_from_string(response.data)
+                current: responseArr[0].data,
+                status: playstate_from_string(responseArr[1].data),
+                pltime: responseArr[2].data,
+                imageHash: Date.now(),
+
             });
         });
-        axios.get("/pltime/").then((response) => {
-            this.setState({ pltime: response.data });
-        });
-        this.setState({ imageHash: Date.now() });
     }
 
     render() {
