@@ -112,10 +112,11 @@ class Main extends React.Component<{}, MainState> {
 
         this.ws.onmessage = evt => {
             const msg = JSON.parse(evt.data);
-            console.log(msg);
+            //console.log(msg);
             switch (msg.type) {
                 case "Ping": break;
                 case "PlayChanged": {
+                    console.log(msg);
                     this.setState({ current: msg.index, status: PlayState.Playing, time_state: 0, repeat: false });
                     this.refresh();
                     break;
@@ -125,6 +126,7 @@ class Main extends React.Component<{}, MainState> {
                     break;
                 }
                 case "ReloadPlaylist": {
+                    console.log(msg);
                     axios.get("/playlist/").then((response) => this.setState({
                         pl: response.data,
                         time_state: 0,
@@ -132,6 +134,7 @@ class Main extends React.Component<{}, MainState> {
                     break;
                 }
                 case "ReloadTabs": {
+                    console.log(msg);
                     axios.get("/playlisttab/").then((response) => this.setState({
                         tabs: response.data.tabs,
                         initial_tab: response.data.current_tab,
