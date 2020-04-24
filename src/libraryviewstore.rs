@@ -620,9 +620,17 @@ pub fn load_query(pool: &DBPool, pql: &PartialQueryLevel) -> loaded_playlist::Lo
     let items = basic_tree_query(pql)
         .load(p.deref())
         .expect("Error in loading");
+    let name = match &pql.lvl {
+        PartialQueryLevelEnum::Artist(x) => x.first(),
+        PartialQueryLevelEnum::Album(x) => x.first(),
+        PartialQueryLevelEnum::Track(x) => x.first(),
+    }
+    .cloned()
+    .unwrap_or_else(|| "Default".to_string());
+
     loaded_playlist::LoadedPlaylist {
         id: -1,
-        name: "Default".to_string(),
+        name,
         items,
         current_position: 0,
     }
