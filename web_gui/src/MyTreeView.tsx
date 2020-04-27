@@ -193,7 +193,7 @@ export default class MyTreeView extends React.Component<
             nodeId={i}
             key={i}
             label={label}
-            onDoubleClick={(e) => this.handleDoubleClick(e, i)}
+            onDoubleClick={(e): void => this.handleDoubleClick(e, i)}
           />
         );
       });
@@ -219,7 +219,7 @@ export default class MyTreeView extends React.Component<
             nodeId={i}
             key={i}
             label={value}
-            onDoubleClick={(e) => this.handleDoubleClick(e, i)}
+            onDoubleClick={(e): void => this.handleDoubleClick(e, i)}
           >
             {this.third_level_children(v2.children, index, i2)}
           </TreeItem>
@@ -247,7 +247,7 @@ export default class MyTreeView extends React.Component<
                 nodeId={i}
                 key={i}
                 label={value.value}
-                onDoubleClick={(e) => this.handleDoubleClick(e, i)}
+                onDoubleClick={(e): void => this.handleDoubleClick(e, i)}
               >
                 {this.second_level_children(index, value.children)}
               </TreeItem>

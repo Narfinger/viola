@@ -15,9 +15,7 @@ import LibraryDrawer from "./LibraryDrawer";
 import DeleteRangeButton from "./DeleteRangeButton";
 import { convertSecondsToTime, TrackType } from "./Cell";
 
-const e = React.createElement;
-
-function playstate_from_string(input: string) {
+function playstate_from_string(input: string): PlayState {
   if (input === "Stopped") {
     return PlayState.Stopped;
   } else if (input === "Playing") {
@@ -27,7 +25,7 @@ function playstate_from_string(input: string) {
   }
 }
 
-function playstate_to_string(input: PlayState) {
+function playstate_to_string(input: PlayState): string {
   if (input === PlayState.Stopped) {
     return "Stopped";
   } else if (input === PlayState.Playing) {
@@ -84,7 +82,7 @@ class Main extends React.Component<{}, MainState> {
   }
 
   hotkey_handlers = {
-    PLAYPAUSE: (event) => {
+    PLAYPAUSE: (event): void => {
       if (
         this.state.status === PlayState.Paused ||
         this.state.status === PlayState.Stopped
@@ -99,7 +97,7 @@ class Main extends React.Component<{}, MainState> {
     },
   };
 
-  componentDidMount() {
+  componentDidMount(): void {
     console.log("we mounted");
     axios
       .all([axios.get("/playlist/"), axios.get("/playlisttab/")])
@@ -112,12 +110,12 @@ class Main extends React.Component<{}, MainState> {
         this.refresh();
       });
 
-    this.ws.onopen = () => {
+    this.ws.onopen = (): void => {
       // on connecting, do nothing but log it to the console
       console.log("websocket connected");
     };
 
-    this.ws.onmessage = (evt) => {
+    this.ws.onmessage = (evt): void => {
       const msg = JSON.parse(evt.data);
       //console.log(msg);
       switch (msg.type) {
@@ -163,13 +161,13 @@ class Main extends React.Component<{}, MainState> {
       }
     };
 
-    this.ws.onclose = () => {
+    this.ws.onclose = (): void => {
       console.log("websocket disconnected");
       // automatically try to reconnect on connection loss
     };
   }
 
-  clean() {
+  clean(): void {
     axios.post("/clean/");
     axios.get("/playlist/").then((response) =>
       this.setState({
