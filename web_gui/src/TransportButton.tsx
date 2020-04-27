@@ -34,7 +34,7 @@ export class TransportButton extends React.Component<
     // This binding is necessary to make `this` work in the callback
     this.click = this.click.bind(this);
   }
-  click() {
+  click(): void {
     this.props.click(this.props.event);
   }
   render() {
