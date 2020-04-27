@@ -2,7 +2,6 @@ use actix_files as fs;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 use diesel::Connection;
-use std::convert::AsRef;
 use std::io;
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;

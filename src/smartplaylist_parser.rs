@@ -5,7 +5,6 @@ use preferences::prefs_base_dir;
 use rand::prelude::*;
 use std::fs;
 use std::ops::Deref;
-use toml;
 
 use crate::db;
 use crate::db::Track;

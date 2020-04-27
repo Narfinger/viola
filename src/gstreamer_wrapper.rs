@@ -1,5 +1,4 @@
 use crate::glib::ObjectExt;
-use gstreamer;
 use gstreamer::{ElementExt, ElementExtManual, GstBinExtManual, GstObjectExt};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};

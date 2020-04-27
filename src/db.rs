@@ -1,7 +1,6 @@
 use crate::schema::tracks;
 use crate::types::{DBPool, APP_INFO};
 use app_dirs::*;
-use diesel;
 use diesel::{Connection, SqliteConnection};
 use indicatif::{ProgressBar, ProgressStyle};
 use std::collections::HashSet;
@@ -10,7 +9,6 @@ use std::ops::Deref;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
-use taglib;
 use walkdir::DirEntry;
 
 #[derive(AsChangeset, Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]

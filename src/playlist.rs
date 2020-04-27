@@ -1,5 +1,4 @@
 use crate::schema::{playlists, playlisttracks};
-use diesel;
 use std::ops::Deref;
 
 use crate::db::Track;
