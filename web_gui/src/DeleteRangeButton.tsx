@@ -19,7 +19,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 
 type DeleteRangeButtonState = {
     open: boolean,
-    text: String,
+    text: string,
 }
 
 export default class DeleteRangeButton extends React.Component<{}, DeleteRangeButtonState> {
