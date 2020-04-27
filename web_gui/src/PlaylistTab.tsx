@@ -1,8 +1,8 @@
-import * as React from 'react';
-import DeleteIcon from '@material-ui/icons/Delete';
-import IconButton from '@material-ui/core/IconButton';
-import Tab from '@material-ui/core/Tab';
-import axios from 'axios';
+import * as React from "react";
+import DeleteIcon from "@material-ui/icons/Delete";
+import IconButton from "@material-ui/core/IconButton";
+import Tab from "@material-ui/core/Tab";
+import axios from "axios";
 
 type PlaylistTabProps = {
   handleChange: (e: React.ChangeEvent, i: number) => void;
@@ -17,23 +17,23 @@ export default class PlaylistTab extends React.Component<PlaylistTabProps, {}> {
     this.click = this.click.bind(this);
   }
 
-  click(event) {
+  click(event): void {
     console.log('tagname "' + event.target.tagName + '"');
-    if (event.target.tagName === 'SPAN') {
+    if (event.target.tagName === "SPAN") {
       this.props.handleChange(event, this.props.index);
     } else if (
-      event.target.tagName === 'svg' ||
-      event.target.tagName === 'path'
+      event.target.tagName === "svg" ||
+      event.target.tagName === "path"
     ) {
-      console.log('deleting playlisttab id ' + this.props.index);
-      axios.delete('/playlisttab/', { data: { index: this.props.index } });
+      console.log("deleting playlisttab id " + this.props.index);
+      axios.delete("/playlisttab/", { data: { index: this.props.index } });
       event.preventDefault();
     } else {
       return;
     }
   }
 
-  render() {
+  render(): JSX.Element {
     return (
       <div /*className={this.props.className}*/ onClick={this.click}>
         <Tab

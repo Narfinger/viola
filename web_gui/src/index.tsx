@@ -1,44 +1,44 @@
-import * as ReactDOM from 'react-dom';
-import { HotKeys } from 'react-hotkeys';
-import * as React from 'react';
-import Button from '@material-ui/core/Button';
-import Grid from '@material-ui/core/Grid';
-import axios from 'axios';
-import SongView from './SongView';
+import * as ReactDOM from "react-dom";
+import { HotKeys } from "react-hotkeys";
+import * as React from "react";
+import Button from "@material-ui/core/Button";
+import Grid from "@material-ui/core/Grid";
+import axios from "axios";
+import SongView from "./SongView";
 import {
   TransportButton,
   ButtonEvent,
   PlayState,
   PlayButton,
-} from './TransportButton';
-import LibraryDrawer from './LibraryDrawer';
-import DeleteRangeButton from './DeleteRangeButton';
-import { convertSecondsToTime, TrackType } from './Cell';
+} from "./TransportButton";
+import LibraryDrawer from "./LibraryDrawer";
+import DeleteRangeButton from "./DeleteRangeButton";
+import { convertSecondsToTime, TrackType } from "./Cell";
 
 const e = React.createElement;
 
 function playstate_from_string(input: string) {
-  if (input === 'Stopped') {
+  if (input === "Stopped") {
     return PlayState.Stopped;
-  } else if (input === 'Playing') {
+  } else if (input === "Playing") {
     return PlayState.Playing;
-  } else if (input === 'Pausing') {
+  } else if (input === "Pausing") {
     return PlayState.Paused;
   }
 }
 
 function playstate_to_string(input: PlayState) {
   if (input === PlayState.Stopped) {
-    return 'Stopped';
+    return "Stopped";
   } else if (input === PlayState.Playing) {
-    return 'Playing';
+    return "Playing";
   } else if (input === PlayState.Paused) {
-    return 'Paused';
+    return "Paused";
   }
 }
 
 const keyMap = {
-  PLAYPAUSE: ['space', 'c'],
+  PLAYPAUSE: ["space", "c"],
 };
 
 type MainState = {
@@ -64,8 +64,8 @@ class Main extends React.Component<{}, MainState> {
       status: PlayState.Stopped,
       current: -1,
       pl: [],
-      pltime: '',
-      image_hash: '',
+      pltime: "",
+      image_hash: "",
       imageHash: Date.now(),
       eventblock: false,
       tabs: [],
@@ -78,7 +78,7 @@ class Main extends React.Component<{}, MainState> {
     this.clean = this.clean.bind(this);
     this.again = this.again.bind(this);
     this.ws = new WebSocket(
-      'ws://' + window.location.hostname + ':' + window.location.port + '/ws/'
+      "ws://" + window.location.hostname + ":" + window.location.port + "/ws/"
     );
     this.songview = React.createRef();
   }
@@ -93,16 +93,16 @@ class Main extends React.Component<{}, MainState> {
       } else if (this.state.status === PlayState.Playing) {
         this.handleButtonPush(ButtonEvent.Pause);
       } else {
-        console.log('status is weird');
+        console.log("status is weird");
         console.log(this.state.status);
       }
     },
   };
 
   componentDidMount() {
-    console.log('we mounted');
+    console.log("we mounted");
     axios
-      .all([axios.get('/playlist/'), axios.get('/playlisttab/')])
+      .all([axios.get("/playlist/"), axios.get("/playlisttab/")])
       .then((responseArr) => {
         this.setState({
           tabs: responseArr[1].data.tabs,
@@ -114,16 +114,16 @@ class Main extends React.Component<{}, MainState> {
 
     this.ws.onopen = () => {
       // on connecting, do nothing but log it to the console
-      console.log('websocket connected');
+      console.log("websocket connected");
     };
 
     this.ws.onmessage = (evt) => {
       const msg = JSON.parse(evt.data);
       //console.log(msg);
       switch (msg.type) {
-        case 'Ping':
+        case "Ping":
           break;
-        case 'PlayChanged': {
+        case "PlayChanged": {
           console.log(msg);
           this.setState({
             current: msg.index,
@@ -134,13 +134,13 @@ class Main extends React.Component<{}, MainState> {
           this.refresh();
           break;
         }
-        case 'CurrentTimeChanged': {
+        case "CurrentTimeChanged": {
           this.setState({ time_state: parseInt(msg.index, 10) });
           break;
         }
-        case 'ReloadPlaylist': {
+        case "ReloadPlaylist": {
           console.log(msg);
-          axios.get('/playlist/').then((response) =>
+          axios.get("/playlist/").then((response) =>
             this.setState({
               pl: response.data,
               time_state: 0,
@@ -148,9 +148,9 @@ class Main extends React.Component<{}, MainState> {
           );
           break;
         }
-        case 'ReloadTabs': {
+        case "ReloadTabs": {
           console.log(msg);
-          axios.get('/playlisttab/').then((response) => {
+          axios.get("/playlisttab/").then((response) => {
             this.setState({
               tabs: response.data.tabs,
               time_state: 0,
@@ -164,14 +164,14 @@ class Main extends React.Component<{}, MainState> {
     };
 
     this.ws.onclose = () => {
-      console.log('websocket disconnected');
+      console.log("websocket disconnected");
       // automatically try to reconnect on connection loss
     };
   }
 
   clean() {
-    axios.post('/clean/');
-    axios.get('/playlist/').then((response) =>
+    axios.post("/clean/");
+    axios.get("/playlist/").then((response) =>
       this.setState({
         pl: response.data,
       })
@@ -179,42 +179,42 @@ class Main extends React.Component<{}, MainState> {
     this.refresh();
   }
 
-  again() {
-    axios.post('/repeat/');
+  again(): void {
+    axios.post("/repeat/");
     this.setState({ repeat: true });
   }
 
-  save() {
-    console.log('trying to save');
-    axios.post('/save/');
+  save(): void {
+    console.log("trying to save");
+    axios.post("/save/");
   }
 
-  handleButtonPush(event) {
+  handleButtonPush(event): void {
     if (!this.state.eventblock) {
       if (event === ButtonEvent.Play) {
-        axios.post('/transport/', { t: 'Playing' });
+        axios.post("/transport/", { t: "Playing" });
         this.setState({ status: PlayState.Playing });
       } else if (event === ButtonEvent.Pause) {
-        axios.post('/transport/', { t: 'Pausing' });
+        axios.post("/transport/", { t: "Pausing" });
         this.setState({ status: PlayState.Paused });
       } else if (event === ButtonEvent.Previous) {
-        axios.post('/transport/', { t: 'Previous' });
+        axios.post("/transport/", { t: "Previous" });
       } else if (event === ButtonEvent.Next) {
-        axios.post('/transport/', { t: 'Next' });
+        axios.post("/transport/", { t: "Next" });
       } else {
-        console.log('Unspecified!');
+        console.log("Unspecified!");
       }
       this.setState({ eventblock: true });
       setTimeout(() => this.setState({ eventblock: false }), 1000);
     }
   }
 
-  refresh() {
+  refresh(): void {
     axios
       .all([
-        axios.get('/currentid/'),
-        axios.get('/transport/'),
-        axios.get('/pltime/'),
+        axios.get("/currentid/"),
+        axios.get("/transport/"),
+        axios.get("/pltime/"),
       ])
       .then((responseArr) => {
         this.setState({
@@ -226,11 +226,11 @@ class Main extends React.Component<{}, MainState> {
       });
   }
 
-  render() {
+  render(): JSX.Element {
     const is_playing = this.state.status === PlayState.Playing;
     const left_to_go = this.state.pl.length - this.state.current;
-    const cover_src = '/currentimage/?' + this.state.imageHash;
-    let current_total_time = '';
+    const cover_src = "/currentimage/?" + this.state.imageHash;
+    let current_total_time = "";
     if (
       this.state.pl &&
       this.state.pl[this.state.current] &&
@@ -241,9 +241,9 @@ class Main extends React.Component<{}, MainState> {
       );
     }
     const timestate = convertSecondsToTime(this.state.time_state);
-    let repeat = '';
+    let repeat = "";
     if (this.state.repeat) {
-      repeat = 'repeat';
+      repeat = "repeat";
     }
 
     return (
@@ -333,4 +333,4 @@ class Main extends React.Component<{}, MainState> {
     );
   }
 }
-ReactDOM.render(<Main></Main>, document.querySelector('#main_container'));
+ReactDOM.render(<Main></Main>, document.querySelector("#main_container"));

@@ -1,6 +1,6 @@
-import * as React from 'react';
-import Typography from '@material-ui/core/Typography';
-import axios from 'axios';
+import * as React from "react";
+import Typography from "@material-ui/core/Typography";
+import axios from "axios";
 
 export type TrackType = {
   trachnumber: number;
@@ -12,13 +12,13 @@ export type TrackType = {
   length: number;
 };
 
-export function convertSecondsToTime(seconds: number) {
+export function convertSecondsToTime(seconds: number): string {
   const date = new Date(0);
   date.setSeconds(seconds);
   return date.toISOString().substr(14, 5);
 }
 
-export function columnWidths(index: number) {
+export function columnWidths(index: number): number {
   switch (index) {
     case 0:
       return 50; // number
@@ -58,21 +58,21 @@ export class Cell extends React.PureComponent<CellProps, {}> {
     super(props);
     this.click = this.click.bind(this);
   }
-  click() {
-    console.log('clicked');
+  click(): void {
+    console.log("clicked");
     const c = {
-      t: 'Play',
+      t: "Play",
       c: this.props.rowIndex,
     };
-    axios.post('/transport/', c);
+    axios.post("/transport/", c);
 
     console.log(this.props);
   }
 
-  render() {
+  render(): JSX.Element {
     const { item, selected, playing } = this.props.data[this.props.rowIndex];
     // console.log(style);
-    let st = '';
+    let st = "";
     switch (this.props.columnIndex) {
       case 0:
         st = this.props.rowIndex.toString();
@@ -96,7 +96,7 @@ export class Cell extends React.PureComponent<CellProps, {}> {
         if (item.year !== -1) {
           st = item.year;
         } else {
-          st = '';
+          st = "";
         }
         break;
       }
@@ -107,16 +107,16 @@ export class Cell extends React.PureComponent<CellProps, {}> {
         st = item.playcount;
         break;
       default:
-        st = 'ERROR';
+        st = "ERROR";
     }
     const style = JSON.parse(JSON.stringify(this.props.style));
-    style.textOverflow = 'ellipsis';
-    style.width = columnWidths(this.props.columnIndex) + 'px';
+    style.textOverflow = "ellipsis";
+    style.width = columnWidths(this.props.columnIndex) + "px";
     if (selected) {
       if (playing) {
-        style.color = '#009100';
+        style.color = "#009100";
       } else {
-        style.color = '#FF0000';
+        style.color = "#FF0000";
       }
     }
     return (

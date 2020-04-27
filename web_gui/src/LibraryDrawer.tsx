@@ -1,7 +1,7 @@
-import * as React from 'react';
-import Drawer from '@material-ui/core/Drawer';
-import Button from '@material-ui/core/Button';
-import LibraryView from './LibraryView';
+import * as React from "react";
+import Drawer from "@material-ui/core/Drawer";
+import Button from "@material-ui/core/Button";
+import LibraryView from "./LibraryView";
 
 type LibraryDrawerState = {
   open: boolean;
@@ -19,13 +19,13 @@ export default class LibraryDrawer extends React.Component<
     this.close = this.close.bind(this);
     this.state = { open: false };
   }
-  click() {
+  click(): void {
     this.setState({ open: true });
   }
-  close() {
+  close(): void {
     this.setState({ open: false });
   }
-  render() {
+  render(): JSX.Element {
     return (
       <div>
         <Button onClick={this.click} color="primary">

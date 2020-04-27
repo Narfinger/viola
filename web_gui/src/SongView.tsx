@@ -1,9 +1,9 @@
-import * as React from 'react';
-import { VariableSizeGrid as VSGrid } from 'react-window';
-import Tabs from '@material-ui/core/Tabs';
-import axios from 'axios';
-import PlaylistTab from './PlaylistTab';
-import { columnWidths, Cell } from './Cell';
+import * as React from "react";
+import { VariableSizeGrid as VSGrid } from "react-window";
+import Tabs from "@material-ui/core/Tabs";
+import axios from "axios";
+import PlaylistTab from "./PlaylistTab";
+import { columnWidths, Cell } from "./Cell";
 
 type SongViewProps = {
   pl: any;
@@ -28,21 +28,21 @@ export default class SongView extends React.Component<
     this.handleChange = this.handleChange.bind(this);
   }
 
-  handleChange(event: React.ChangeEvent, newValue: number) {
-    console.log('change');
-    console.log('new' + newValue);
-    console.log('old' + this.state.value);
+  handleChange(event: React.ChangeEvent, newValue: number): void {
+    console.log("change");
+    console.log("new" + newValue);
+    console.log("old" + this.state.value);
     if (newValue !== this.state.value) {
       this.setState({ value: newValue });
-      axios.post('/playlisttab/', { index: newValue });
+      axios.post("/playlisttab/", { index: newValue });
     }
   }
 
-  setTab(i: number) {
+  setTab(i: number): void {
     this.setState({ value: i });
   }
 
-  render() {
+  render(): JSX.Element {
     const items = this.props.pl.map((t) => ({
       item: t,
       selected: false,

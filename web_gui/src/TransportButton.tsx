@@ -1,5 +1,5 @@
-import * as React from 'react';
-import Button from '@material-ui/core/Button';
+import * as React from "react";
+import Button from "@material-ui/core/Button";
 
 export enum ButtonEvent {
   Next,
@@ -37,10 +37,10 @@ export class TransportButton extends React.Component<
   click(): void {
     this.props.click(this.props.event);
   }
-  render() {
+  render(): JSX.Element {
     return (
       <Button variant="contained" color="primary" onClick={this.click}>
-        {' '}
+        {" "}
         {this.props.title}
       </Button>
     );
@@ -52,7 +52,7 @@ type PlayButtonProps = {
   click: (any) => void;
 };
 
-export function PlayButton(props: PlayButtonProps) {
+export function PlayButton(props: PlayButtonProps): JSX.Element {
   if (props.play_state === PlayState.Stopped) {
     return (
       <TransportButton
