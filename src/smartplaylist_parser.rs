@@ -35,7 +35,8 @@ struct SmartPlaylistParsed {
     album_include: Option<Vec<String>>,
     artist_include: Option<Vec<String>>,
     genre_include: Option<Vec<String>>,
-    play_count_include: Option<i32>,
+    play_count_least_include: Option<i32>,
+    play_count_exact_include: Option<i32>,
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -44,7 +45,8 @@ pub enum IncludeTag {
     Album(Vec<String>),
     Artist(Vec<String>),
     Genre(Vec<String>),
-    PlayCount(i32),
+    PlayCountLeast(i32),
+    PlayCountExact(i32),
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -83,8 +85,12 @@ fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
     vec_option_insert!(IncludeTag::Album, smp.album_include, include_query);
     vec_option_insert!(IncludeTag::Genre, smp.genre_include, include_query);
 
-    if let Some(v) = smp.play_count_include {
-        include_query.push(IncludeTag::PlayCount(v));
+    if let Some(v) = smp.play_count_least_include {
+        include_query.push(IncludeTag::PlayCountLeast(v));
+    }
+
+    if let Some(v) = smp.play_count_exact_include {
+        include_query.push(IncludeTag::PlayCountExact(v));
     }
 
     let mut exclude_query = Vec::new();
@@ -157,9 +163,16 @@ impl LoadSmartPlaylist for SmartPlaylist {
                         s.load(db.lock().expect("DB Error").deref())
                             .expect("Error in loading smart playlist")
                     }
-                    IncludeTag::PlayCount(v) => {
+                    IncludeTag::PlayCountLeast(v) => {
                         let mut s = tracks.into_boxed::<Sqlite>();
                         s = s.or_filter(playcount.ge(v));
+
+                        s.load(db.lock().expect("DB Error").deref())
+                            .expect("Error in loading smart playlist")
+                    }
+                    IncludeTag::PlayCountExact(v) => {
+                        let mut s = tracks.into_boxed::<Sqlite>();
+                        s = s.or_filter(playcount.eq(v));
 
                         s.load(db.lock().expect("DB Error").deref())
                             .expect("Error in loading smart playlist")
