@@ -1,12 +1,12 @@
-import * as React from "react";
-import Typography from "@material-ui/core/Typography";
-import Box from "@material-ui/core/Box";
-import Tabs from "@material-ui/core/Tabs";
-import Tab from "@material-ui/core/Tab";
-import * as PropTypes from "prop-types";
-import { makeStyles } from "@material-ui/core/styles";
-import MyTreeView from "./MyTreeView";
-import SmartplaylistView from "./SmartplaylistView";
+import * as React from 'react';
+import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
+import * as PropTypes from 'prop-types';
+import { makeStyles } from '@material-ui/core/styles';
+import MyTreeView from './MyTreeView';
+import SmartplaylistView from './SmartplaylistView';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -38,7 +38,7 @@ TabPanel.propTypes = {
 function a11yProps(index) {
   return {
     id: `vertical-tab-${index}`,
-    "aria-controls": `vertical-tabpanel-${index}`,
+    'aria-controls': `vertical-tabpanel-${index}`,
   };
 }
 
@@ -46,7 +46,7 @@ const useStyles = makeStyles((theme) => ({
   root: {
     // flexGrow: 1,
     backgroundColor: theme.palette.background.paper,
-    display: "flex",
+    display: 'flex',
     height: 500,
     width: 800,
   },
@@ -85,17 +85,17 @@ export default function LibraryView() {
       <TabPanel value={value} index={1}>
         <MyTreeView
           url="/libraryview/partial/"
-          query_params_list={["Artist", "Album", "Track"]}
+          query_params_list={['Artist', 'Album', 'Track']}
         />
       </TabPanel>
       <TabPanel value={value} index={2}>
         <MyTreeView
           url="/libraryview/partial/"
-          query_params_list={["Album", "Track"]}
+          query_params_list={['Album', 'Track']}
         />
       </TabPanel>
       <TabPanel value={value} index={3}>
-        <MyTreeView url="/libraryview/partial/" query_params_list={["Track"]} />
+        <MyTreeView url="/libraryview/partial/" query_params_list={['Track']} />
       </TabPanel>
     </div>
   );

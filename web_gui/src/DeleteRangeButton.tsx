@@ -1,21 +1,21 @@
-import * as React from "react";
-import Paper from "@material-ui/core/Paper";
-import Input from "@material-ui/core/Input";
-import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
-import ChevronRightIcon from "@material-ui/icons/ChevronRight";
-import TreeView from "@material-ui/lab/TreeView";
-import TreeItem from "@material-ui/lab/TreeItem";
-import AwesomeDebouncePromise from "awesome-debounce-promise";
-import Popover from "@material-ui/core/Popover";
-import LibraryMenu from "./LibraryMenu";
-import axios from "axios";
-import Button from "@material-ui/core/Button";
-import TextField from "@material-ui/core/TextField";
-import Dialog from "@material-ui/core/Dialog";
-import DialogActions from "@material-ui/core/DialogActions";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogContentText from "@material-ui/core/DialogContentText";
-import DialogTitle from "@material-ui/core/DialogTitle";
+import * as React from 'react';
+import Paper from '@material-ui/core/Paper';
+import Input from '@material-ui/core/Input';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import TreeView from '@material-ui/lab/TreeView';
+import TreeItem from '@material-ui/lab/TreeItem';
+import AwesomeDebouncePromise from 'awesome-debounce-promise';
+import Popover from '@material-ui/core/Popover';
+import LibraryMenu from './LibraryMenu';
+import axios from 'axios';
+import Button from '@material-ui/core/Button';
+import TextField from '@material-ui/core/TextField';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
 
 type DeleteRangeButtonState = {
   open: boolean;
@@ -30,7 +30,7 @@ export default class DeleteRangeButton extends React.Component<
     super(props);
     this.state = {
       open: false,
-      text: "",
+      text: '',
     };
     this.handleClickOpen = this.handleClickOpen.bind(this);
     this.handleCancel = this.handleCancel.bind(this);
@@ -47,12 +47,12 @@ export default class DeleteRangeButton extends React.Component<
   }
 
   handleCancel() {
-    this.setState({ open: false, text: "" });
+    this.setState({ open: false, text: '' });
   }
 
   handleSubmit() {
-    const range = this.state.text.split("-");
-    axios.delete("/deletefromplaylist/", {
+    const range = this.state.text.split('-');
+    axios.delete('/deletefromplaylist/', {
       data: {
         from: range[0],
         to: range[1],

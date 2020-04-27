@@ -1,14 +1,14 @@
-import * as React from "react";
-import Paper from "@material-ui/core/Paper";
-import Input from "@material-ui/core/Input";
-import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
-import ChevronRightIcon from "@material-ui/icons/ChevronRight";
-import TreeView from "@material-ui/lab/TreeView";
-import TreeItem from "@material-ui/lab/TreeItem";
-import AwesomeDebouncePromise from "awesome-debounce-promise";
-import Popover from "@material-ui/core/Popover";
-import LibraryMenu from "./LibraryMenu";
-import axios from "axios";
+import * as React from 'react';
+import Paper from '@material-ui/core/Paper';
+import Input from '@material-ui/core/Input';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import TreeView from '@material-ui/lab/TreeView';
+import TreeItem from '@material-ui/lab/TreeItem';
+import AwesomeDebouncePromise from 'awesome-debounce-promise';
+import Popover from '@material-ui/core/Popover';
+import LibraryMenu from './LibraryMenu';
+import axios from 'axios';
 
 type Node = {
   children?: Node[];
@@ -43,7 +43,7 @@ export default class MyTreeView extends React.Component<
 
     this.state = {
       items: [],
-      search: "",
+      search: '',
       menu_open: false,
     };
 
@@ -78,7 +78,7 @@ export default class MyTreeView extends React.Component<
 
   handleChange(event, nodeids: string[]) {
     if (this.props.query_for_details && nodeids.length !== 0) {
-      const ids = nodeids[0].split("-").map(parseInt);
+      const ids = nodeids[0].split('-').map(parseInt);
 
       if (this.need_to_load(ids)) {
         let state = null;
@@ -94,7 +94,7 @@ export default class MyTreeView extends React.Component<
         }
 
         state = this.props.query_params_list[ids.length];
-        const queryParam = { lvl: { type: state, content: names }, search: "" };
+        const queryParam = { lvl: { type: state, content: names }, search: '' };
 
         axios.post(this.props.url, queryParam).then((response) => {
           if (ids.length === 1) {
@@ -156,7 +156,7 @@ export default class MyTreeView extends React.Component<
   }
 
   handleDoubleClick(event: React.MouseEvent, index: string) {
-    const ids = index.split("-");
+    const ids = index.split('-');
     const values = [];
     let current = this.state.items;
     for (const id of ids) {
@@ -171,19 +171,19 @@ export default class MyTreeView extends React.Component<
       search: this.state.search,
       lvl: { type: type, content: values },
     };
-    axios.post("/libraryview/load/", param);
+    axios.post('/libraryview/load/', param);
   }
 
   third_level_children(children: Node[], index: number, index2: number) {
     if (children.length === 0) {
       if (this.props.query_for_details) {
-        const new_index = "l" + index + "-" + index2;
+        const new_index = 'l' + index + '-' + index2;
         return <TreeItem nodeId={new_index} key={new_index} label="Loading" />;
       }
     } else {
       return children.map((v3, i3) => {
-        const label = "" + v3.value;
-        const i = index + "-" + index2 + "-" + i3;
+        const label = '' + v3.value;
+        const i = index + '-' + index2 + '-' + i3;
         return (
           <TreeItem
             nodeId={i}
@@ -199,14 +199,14 @@ export default class MyTreeView extends React.Component<
   second_level_children(index: number, children?: Node[]) {
     if ((!children || children.length === 0) && this.props.query_for_details) {
       return (
-        <TreeItem nodeId={"l" + index} key={"l" + index} label="Loading" />
+        <TreeItem nodeId={'l' + index} key={'l' + index} label="Loading" />
       );
     } else if (!children || children.length === 0) {
       return;
     } else {
       return children.map((v2, i2) => {
         const value = v2.value;
-        const i = index + "-" + i2;
+        const i = index + '-' + i2;
         return (
           <TreeItem
             nodeId={i}
@@ -223,7 +223,7 @@ export default class MyTreeView extends React.Component<
 
   render() {
     return (
-      <Paper style={{ maxHeight: 800, width: 800, overflow: "auto" }}>
+      <Paper style={{ maxHeight: 800, width: 800, overflow: 'auto' }}>
         <form noValidate autoComplete="off">
           <Input defaultValue="" onChange={this.searchChange} />
         </form>
@@ -234,7 +234,7 @@ export default class MyTreeView extends React.Component<
         >
           {this.state.items.map((value, index) => {
             const i = String(index);
-            let menu: LibraryMenu = new LibraryMenu({});
+            const menu: LibraryMenu = new LibraryMenu({});
             return (
               <TreeItem
                 nodeId={i}

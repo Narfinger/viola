@@ -1,5 +1,5 @@
-import axios from "axios";
-import MyTreeView from "./MyTreeView";
+import axios from 'axios';
+import MyTreeView from './MyTreeView';
 
 export default class SmartplaylistView extends MyTreeView {
   public static defaultProps = {
@@ -20,9 +20,9 @@ export default class SmartplaylistView extends MyTreeView {
 
   handleDoubleClick(event, index: string) {
     event.stopPropagation();
-    console.log("doing event");
+    console.log('doing event');
     console.log(index);
     const i = parseInt(index, 10);
-    axios.post("/smartplaylist/load/", { index: i });
+    axios.post('/smartplaylist/load/', { index: i });
   }
 }
