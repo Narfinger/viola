@@ -26,12 +26,11 @@ type MyTreeViewProps = {
 type MyTreeViewState = {
   items: Tree;
   search: string;
-  menu_open: boolean;
+  menuOpen: boolean;
+  menuIndex: string;
+  anchor: any;
 };
-export default class MyTreeView extends React.Component<
-  MyTreeViewProps,
-  MyTreeViewState
-> {
+export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeViewState> {
   refreshDebounced: any;
 
   public static defaultProps = {
@@ -44,12 +43,15 @@ export default class MyTreeView extends React.Component<
     this.state = {
       items: [],
       search: "",
-      menu_open: false,
+      menuOpen: false,
+      menuIndex: "",
+      anchor: null,
     };
 
     this.refresh = this.refresh.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.need_to_load = this.need_to_load.bind(this);
+    this.handleClick = this.handleClick.bind(this);
     this.handleDoubleClick = this.handleDoubleClick.bind(this);
     this.refreshDebounced = AwesomeDebouncePromise(this.refresh, 500);
     this.searchChange = this.searchChange.bind(this);
@@ -155,6 +157,14 @@ export default class MyTreeView extends React.Component<
     });
   }
 
+  handleClick(event: React.MouseEvent, index: string): void {
+    this.setState({
+      menuOpen: true,
+      menuIndex: index,
+      anchor: event.target,
+    });
+  }
+
   handleDoubleClick(event: React.MouseEvent, index: string): void {
     const ids = index.split("-");
     const values = [];
@@ -239,19 +249,18 @@ export default class MyTreeView extends React.Component<
           defaultExpandIcon={<ChevronRightIcon />}
           onNodeToggle={this.handleChange}
         >
+          <LibraryMenu open={this.state.menuOpen} index={this.state.menuIndex} anchor={this.state.anchor} closeFn={() => this.setState({ menuOpen: false })} />
           {this.state.items.map((value, index) => {
             const i = String(index);
-            const menu: LibraryMenu = new LibraryMenu({});
-            return (
-              <TreeItem
-                nodeId={i}
-                key={i}
-                label={value.value}
-                onDoubleClick={(e): void => this.handleDoubleClick(e, i)}
-              >
-                {this.second_level_children(index, value.children)}
-              </TreeItem>
-            );
+            return <TreeItem
+              nodeId={i}
+              key={i}
+              label={value.value}
+              onClick={(e): void => this.handleClick(e, i)}
+              onDoubleClick={(e): void => this.handleDoubleClick(e, i)}
+            >
+              {this.second_level_children(index, value.children)}
+            </TreeItem>
           })}
         </TreeView>
       </Paper>

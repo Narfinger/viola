@@ -4,7 +4,6 @@
         "plugin:react/recommended",
         "plugin:@typescript-eslint/recommended",
         "prettier/@typescript-eslint",
-        "plugin:prettier/recommended"
     ],
     "plugins": [
         "react",
@@ -15,14 +14,6 @@
         "browser": true,
         "jasmine": true,
         "jest": true
-    },
-    "rules": {
-        "prettier/prettier": [
-            "error",
-            {
-                "singleQuote": false
-            }
-        ]
     },
     "settings": {
         "react": {
