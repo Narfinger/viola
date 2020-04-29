@@ -68,7 +68,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
     } else if (ids.length === 0) {
       return true;
     } else if (ids.length === 1) {
-      console.log(this.state.items[ids[0]].children);
+      //console.log(this.state.items[ids[0]].children);
       return this.state.items[ids[0]].children.length === 0;
     } else if (ids.length === 2) {
       return (
@@ -163,6 +163,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
       menuIndex: index,
       anchor: event.target,
     });
+    event.preventDefault();
   }
 
   handleDoubleClick(event: React.MouseEvent, index: string): void {
@@ -203,6 +204,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
             nodeId={i}
             key={i}
             label={label}
+            onContextMenu={(e): void => this.handleClick(e, i)}
             onDoubleClick={(e): void => this.handleDoubleClick(e, i)}
           />
         );
@@ -229,6 +231,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
             nodeId={i}
             key={i}
             label={value}
+            onContextMenu={(e): void => this.handleClick(e, i)}
             onDoubleClick={(e): void => this.handleDoubleClick(e, i)}
           >
             {this.third_level_children(v2.children, index, i2)}
@@ -256,7 +259,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
               nodeId={i}
               key={i}
               label={value.value}
-              onClick={(e): void => this.handleClick(e, i)}
+              onContextMenu={(e): void => this.handleClick(e, i)}
               onDoubleClick={(e): void => this.handleDoubleClick(e, i)}
             >
               {this.second_level_children(index, value.children)}
