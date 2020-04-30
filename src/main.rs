@@ -89,6 +89,12 @@ async fn main() -> io::Result<()> {
                 .long("editsmartplaylists")
                 .help("Opens an editor to edit the smartplaylist file"),
         )
+        .arg(
+            Arg::with_name("no-webview")
+                .short("w")
+                .long("nowebview")
+                .help("Does not run the embedded webview"),
+        )
         .get_matches();
 
     env::set_var("RUST_LOG", "actix_web=debug,actix_server=info");
@@ -132,31 +138,35 @@ async fn main() -> io::Result<()> {
         let mut path = prefs_base_dir().expect("Could not find base dir");
         path.extend(&["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
-    } else {
-        println!("Trying main");
+    } else if matches.is_present("no-webview") {
+        //println!("Trying main");
         //std::thread::spawn(|| {
-        println!("Starting web service");
+        //println!("Starting web service");
         maingui_web::run(pool).await.expect("Error running server");
-        //});
-
-        /*
+    //});
+    } else {
+        std::thread::spawn(|| {
+            let mut sys = actix_rt::System::new("test");
+            println!("Starting web service");
+            let srv = maingui_web::run(pool);
+            sys.block_on(srv)
+        });
         std::thread::sleep(std::time::Duration::from_secs(1));
 
         use web_view::*;
         println!("Starting webview");
         WebViewBuilder::new()
-            .title("Minimal webview example")
+            .title("Viola")
             .content(Content::Url("http://localhost:8088"))
-            .size(800, 600)
+            .size(1920, 1080)
             .resizable(true)
-            .debug(true)
+            //.debug(true)
             .user_data(())
             .invoke_handler(|_webview, _arg| Ok(()))
             .build()
             .unwrap()
             .run()
             .unwrap();
-            */
     };
     Ok(())
 }
