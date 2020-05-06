@@ -59,7 +59,6 @@ export class Cell extends React.PureComponent<CellProps, {}> {
     this.click = this.click.bind(this);
   }
   click(): void {
-    console.log("clicked");
     const c = {
       t: "Play",
       c: this.props.rowIndex,
