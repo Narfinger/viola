@@ -386,6 +386,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
             .service(playlist)
             .service(repeat)
             .service(clean)
+            .service(delete_from_playlist)
             .service(save)
             .service(transport)
             .service(get_transport)

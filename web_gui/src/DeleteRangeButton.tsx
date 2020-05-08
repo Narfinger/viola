@@ -45,8 +45,8 @@ export default class DeleteRangeButton extends React.Component<
     const range = this.state.text.split("-");
     axios.delete("/deletefromplaylist/", {
       data: {
-        from: range[0],
-        to: range[1],
+        from: parseInt(range[0], 10),
+        to: parseInt(range[1], 10),
       },
     });
     this.setState({ open: false, text: "" });
