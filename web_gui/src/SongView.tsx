@@ -8,6 +8,7 @@ import { columnWidths, Cell } from "./Cell";
 type SongViewProps = {
   pl: any;
   current: number;
+  current_playing: number;
   tabs: any;
   playing: boolean;
 };
@@ -19,7 +20,7 @@ type SongViewState = {
 export default class SongView extends React.Component<
   SongViewProps,
   SongViewState
-> {
+  > {
   constructor(props) {
     super(props);
     this.state = {
@@ -29,9 +30,6 @@ export default class SongView extends React.Component<
   }
 
   handleChange(event: React.ChangeEvent, newValue: number): void {
-    console.log("change");
-    console.log("new" + newValue);
-    console.log("old" + this.state.value);
     if (newValue !== this.state.value) {
       this.setState({ value: newValue });
       axios.post("/playlisttab/", { index: newValue });

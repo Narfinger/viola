@@ -42,6 +42,7 @@ const keyMap = {
 type MainState = {
   status: PlayState;
   current: number;
+  current_playing: number;
   pl: TrackType[];
   pltime: string;
   image_hash: string;
@@ -61,6 +62,7 @@ class Main extends React.Component<{}, MainState> {
     this.state = {
       status: PlayState.Stopped,
       current: -1,
+      current_playing: -1,
       pl: [],
       pltime: "",
       image_hash: "",
@@ -125,6 +127,7 @@ class Main extends React.Component<{}, MainState> {
           console.log(msg);
           this.setState({
             current: msg.index,
+            current_playing: msg.index,
             status: PlayState.Playing,
             time_state: 0,
             repeat: false,
@@ -217,6 +220,7 @@ class Main extends React.Component<{}, MainState> {
       .then((responseArr) => {
         this.setState({
           current: responseArr[0].data,
+          current_playing: responseArr[0].data,
           status: playstate_from_string(responseArr[1].data),
           pltime: responseArr[2].data,
           imageHash: Date.now(),
@@ -229,11 +233,7 @@ class Main extends React.Component<{}, MainState> {
     const left_to_go = this.state.pl.length - this.state.current;
     const cover_src = "/currentimage/?" + this.state.imageHash;
     let current_total_time = "";
-    if (
-      this.state.pl &&
-      this.state.pl[this.state.current] &&
-      this.state.pl[this.state.current]
-    ) {
+    if (this.state.pl && this.state.pl[this.state.current]) {
       current_total_time = convertSecondsToTime(
         this.state.pl[this.state.current].length
       );
@@ -300,6 +300,7 @@ class Main extends React.Component<{}, MainState> {
               <SongView
                 ref={this.songview}
                 current={this.state.current}
+                current_playing={this.state.current_playing}
                 pl={this.state.pl}
                 playing={is_playing}
                 tabs={this.state.tabs}

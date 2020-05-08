@@ -10,6 +10,7 @@ use crate::types::*;
 #[derive(Debug, Serialize)]
 pub struct PlaylistTabs {
     pub current_pl: usize,
+    pub current_playing_in: usize,
     pub pls: Vec<LoadedPlaylistPtr>,
 }
 
@@ -22,6 +23,7 @@ pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
     let converted_pls: Vec<LoadedPlaylistPtr> = pls.into_iter().map(RwLock::new).collect();
     Ok(Arc::new(RwLock::new(PlaylistTabs {
         current_pl: 0,
+        current_playing_in: 0,
         pls: converted_pls,
     })))
 }
@@ -32,6 +34,8 @@ pub trait PlaylistTabsExt {
     fn delete(&self, _: &DBPool, _: usize);
     fn items(&self) -> String;
     fn current_tab(&self) -> usize;
+    fn current_playing_in(&self) -> usize;
+    fn update_current_playing_in(&self);
 }
 
 impl PlaylistTabsExt for PlaylistTabsPtr {
@@ -81,6 +85,15 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
     fn current_tab(&self) -> usize {
         self.read().unwrap().current_pl
     }
+
+    fn current_playing_in(&self) -> usize {
+        self.read().unwrap().current_playing_in
+    }
+
+    fn update_current_playing_in(&self) {
+        let cur = self.read().unwrap().current_pl;
+        self.write().unwrap().current_playing_in = cur;
+    }
 }
 
 impl LoadedPlaylistExt for PlaylistTabsPtr {
@@ -120,10 +133,13 @@ impl PlaylistControls for PlaylistTabsPtr {
     }
 
     fn previous(&self) -> Option<usize> {
+        self.update_current_playing_in();
         self.current(PlaylistControls::previous)
     }
 
     fn set(&self, index: usize) -> usize {
+        self.update_current_playing_in();
+
         let i = self.read().unwrap().current_pl;
         let cur = self.read().unwrap();
         let value = cur.pls.get(i).unwrap();
@@ -138,6 +154,7 @@ impl PlaylistControls for PlaylistTabsPtr {
     }
 
     fn next_or_eol(&self) -> Option<usize> {
+        self.update_current_playing_in();
         self.current(PlaylistControls::next_or_eol)
     }
 }

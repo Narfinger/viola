@@ -57,6 +57,18 @@ async fn clean(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().finish()
 }
 
+#[delete("/deletefromplaylist/")]
+async fn delete_from_playlist(
+    state: web::Data<WebGui>,
+    deleterange: web::Json<Range>,
+    _: HttpRequest,
+) -> HttpResponse {
+    println!("Doing delete");
+    state.playlist_tabs.delete_range(deleterange.into_inner());
+    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
+    HttpResponse::Ok().finish()
+}
+
 #[post("/save/")]
 async fn save(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     println!("Saving");
@@ -196,6 +208,7 @@ async fn current_image(state: web::Data<WebGui>, req: HttpRequest) -> HttpRespon
 #[derive(Debug, Serialize)]
 struct PlaylistTabs {
     current: usize,
+    current_playing_in: usize,
     tabs: Vec<String>,
 }
 
@@ -211,6 +224,7 @@ async fn playlist_tab(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse 
         .collect::<Vec<String>>();
     let resp = PlaylistTabs {
         current: state.playlist_tabs.current_tab(),
+        current_playing_in: state.playlist_tabs.current_playing_in(),
         tabs: strings,
     };
 

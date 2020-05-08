@@ -16,7 +16,7 @@ type DeleteRangeButtonState = {
 export default class DeleteRangeButton extends React.Component<
   {},
   DeleteRangeButtonState
-> {
+  > {
   constructor(props) {
     super(props);
     this.state = {
@@ -49,6 +49,7 @@ export default class DeleteRangeButton extends React.Component<
         to: range[1],
       },
     });
+    this.setState({ open: false, text: "" });
   }
 
   render(): JSX.Element {
