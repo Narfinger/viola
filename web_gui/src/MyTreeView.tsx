@@ -21,6 +21,7 @@ type MyTreeViewProps = {
   query_for_details: boolean;
   query_params_list: string[];
   url: string;
+  close_fn: () => void;
 };
 
 type MyTreeViewState = {
@@ -163,6 +164,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
       menuIndex: index,
       anchor: event.target,
     });
+    this.props.close_fn();
     event.preventDefault();
   }
 
@@ -182,6 +184,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
       search: this.state.search,
       lvl: { type: type, content: values },
     };
+    this.props.close_fn();
     axios.post("/libraryview/load/", param);
   }
 

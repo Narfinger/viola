@@ -7,6 +7,7 @@ import * as PropTypes from "prop-types";
 import { makeStyles } from "@material-ui/core/styles";
 import MyTreeView from "./MyTreeView";
 import SmartplaylistView from "./SmartplaylistView";
+import { render } from "react-dom";
 
 function TabPanel(props): JSX.Element {
   const { children, value, index, ...other } = props;
@@ -56,47 +57,54 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function LibraryView(): JSX.Element {
-  const classes = useStyles();
-  const [value, setValue] = React.useState(0);
+type LibraryViewProps = {
+  close_fn: () => void;
+}
 
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-  };
+export default class LibraryView extends React.Component<LibraryViewProps, {}> {
+  render() {
+    const classes = useStyles();
+    const [value, setValue] = React.useState(0);
 
-  // try to make the size dynamic
-  return (
-    <div className={classes.root}>
-      <Tabs
-        orientation="vertical"
-        variant="scrollable"
-        value={value}
-        onChange={handleChange}
-        className={classes.tabs}
-      >
-        <Tab label="SMP" {...a11yProps(0)} />
-        <Tab label="Full" {...a11yProps(1)} />
-        <Tab label="Album" {...a11yProps(2)} />
-        <Tab label="Track" {...a11yProps(3)} />
-      </Tabs>
-      <TabPanel value={value} index={0}>
-        <SmartplaylistView url="/smartplaylist/" />
-      </TabPanel>
-      <TabPanel value={value} index={1}>
-        <MyTreeView
-          url="/libraryview/partial/"
-          query_params_list={["Artist", "Album", "Track"]}
-        />
-      </TabPanel>
-      <TabPanel value={value} index={2}>
-        <MyTreeView
-          url="/libraryview/partial/"
-          query_params_list={["Album", "Track"]}
-        />
-      </TabPanel>
-      <TabPanel value={value} index={3}>
-        <MyTreeView url="/libraryview/partial/" query_params_list={["Track"]} />
-      </TabPanel>
-    </div>
-  );
+    const handleChange = (event, newValue) => {
+      setValue(newValue);
+    };
+
+    // try to make the size dynamic
+    return (
+      <div className={classes.root}>
+        <Tabs
+          orientation="vertical"
+          variant="scrollable"
+          value={value}
+          onChange={handleChange}
+          className={classes.tabs}
+        >
+          <Tab label="SMP" {...a11yProps(0)} />
+          <Tab label="Full" {...a11yProps(1)} />
+          <Tab label="Album" {...a11yProps(2)} />
+          <Tab label="Track" {...a11yProps(3)} />
+        </Tabs>
+        <TabPanel value={value} index={0}>
+          <SmartplaylistView url="/smartplaylist/" close_fn={this.props.close_fn} />
+        </TabPanel>
+        <TabPanel value={value} index={1}>
+          <MyTreeView close_fn={this.props.close_fn}
+            url="/libraryview/partial/"
+            query_params_list={["Artist", "Album", "Track"]}
+          />
+        </TabPanel>
+        <TabPanel value={value} index={2}>
+          <MyTreeView
+            close_fn={this.props.close_fn}
+            url="/libraryview/partial/"
+            query_params_list={["Album", "Track"]}
+          />
+        </TabPanel>
+        <TabPanel value={value} index={3}>
+          <MyTreeView close_fn={this.props.close_fn} url="/libraryview/partial/" query_params_list={["Track"]} />
+        </TabPanel>
+      </div>
+    );
+  }
 }

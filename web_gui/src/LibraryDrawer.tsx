@@ -10,7 +10,7 @@ type LibraryDrawerState = {
 export default class LibraryDrawer extends React.Component<
   {},
   LibraryDrawerState
-> {
+  > {
   constructor(props) {
     super(props);
 
@@ -32,7 +32,7 @@ export default class LibraryDrawer extends React.Component<
           Lib
         </Button>
         <Drawer anchor="left" open={this.state.open} onClose={this.close}>
-          <LibraryView></LibraryView>
+          <LibraryView close_fn={this.close}></LibraryView>
         </Drawer>
       </div>
     );
