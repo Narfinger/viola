@@ -192,13 +192,7 @@ impl PlaylistControls for LoadedPlaylistPtr {
         let mut s = self.write().unwrap();
         println!("removing with range: {}", &range);
 
-        s.items.drain(range.from..range.to + 1);
-
-        //this code does not work for some reason.
-        //for i in range.from..range.to {
-        //    println!("removeing element at {}", i);
-        //    s.items.remove(i);
-        //}
+        s.items.drain(range.from..=range.to);
 
         if s.current_position >= range.from && s.current_position <= range.to {
             s.current_position = 0;

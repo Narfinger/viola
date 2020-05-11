@@ -206,7 +206,7 @@ async fn current_image(state: web::Data<WebGui>, req: HttpRequest) -> HttpRespon
 }
 
 #[derive(Debug, Serialize)]
-struct PlaylistTabs {
+struct PlaylistTabsJSON {
     current: usize,
     current_playing_in: usize,
     tabs: Vec<String>,
@@ -222,7 +222,7 @@ async fn playlist_tab(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse 
         .iter()
         .map(|pl| pl.read().unwrap().name.to_owned())
         .collect::<Vec<String>>();
-    let resp = PlaylistTabs {
+    let resp = PlaylistTabsJSON {
         current: state.playlist_tabs.current_tab(),
         current_playing_in: state.playlist_tabs.current_playing_in(),
         tabs: strings,
