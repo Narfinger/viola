@@ -59,6 +59,12 @@ pub struct Range {
     pub to: usize,
 }
 
+impl std::fmt::Display for Range {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {})", self.from, self.to)
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct ChangePlaylistTabJson {
     pub index: usize,
