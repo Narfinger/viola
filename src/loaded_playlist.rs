@@ -70,7 +70,7 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
     fn clean(&self) {
         let index = self.current_position();
         let mut s = self.write().unwrap();
-        s.items.drain(0..=index);
+        s.items.drain(0..index);
         s.current_position = 0;
     }
 }
