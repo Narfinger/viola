@@ -1,10 +1,11 @@
 import * as React from "react";
 import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
+import Paper from "@material-ui/core/Paper";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
 import * as PropTypes from "prop-types";
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, withStyles } from "@material-ui/core/styles";
 import MyTreeView from "./MyTreeView";
 import SmartplaylistView from "./SmartplaylistView";
 import { render } from "react-dom";
@@ -43,68 +44,79 @@ function a11yProps(index) {
   };
 }
 
-const useStyles = makeStyles((theme) => ({
+const styles = theme => ({
   root: {
-    // flexGrow: 1,
+    flexGrow: 1,
     backgroundColor: theme.palette.background.paper,
-    display: "flex",
+    display: 'flex',
     height: 500,
-    width: 800,
+    width: 500,
   },
   tabs: {
     borderRight: `1px solid ${theme.palette.divider}`,
-    width: 100,
+    width: 20,
   },
-}));
+});
 
 type LibraryViewProps = {
   close_fn: () => void;
+  classes: any;
 }
 
-export default class LibraryView extends React.Component<LibraryViewProps, {}> {
+type LibraryViewState = {
+  value: any;
+}
+
+class LibraryView extends React.Component<LibraryViewProps, LibraryViewState> {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+    this.state = {
+      value: 0,
+    }
+  }
+
+  handleChange(event, newValue) {
+    this.setState({ value: newValue });
+  }
+
   render() {
-    const classes = useStyles();
-    const [value, setValue] = React.useState(0);
-
-    const handleChange = (event, newValue) => {
-      setValue(newValue);
-    };
-
-    // try to make the size dynamic
+    const { classes } = this.props;
     return (
-      <div className={classes.root}>
+      <div className={classes.root} >
         <Tabs
           orientation="vertical"
           variant="scrollable"
-          value={value}
-          onChange={handleChange}
-          className={classes.tabs}
+          value={this.state.value}
+          onChange={this.handleChange}
         >
           <Tab label="SMP" {...a11yProps(0)} />
           <Tab label="Full" {...a11yProps(1)} />
           <Tab label="Album" {...a11yProps(2)} />
           <Tab label="Track" {...a11yProps(3)} />
         </Tabs>
-        <TabPanel value={value} index={0}>
+        <TabPanel value={this.state.value} index={0}>
           <SmartplaylistView url="/smartplaylist/" close_fn={this.props.close_fn} />
         </TabPanel>
-        <TabPanel value={value} index={1}>
+        <TabPanel value={this.state.value} index={1}>
           <MyTreeView close_fn={this.props.close_fn}
             url="/libraryview/partial/"
             query_params_list={["Artist", "Album", "Track"]}
           />
         </TabPanel>
-        <TabPanel value={value} index={2}>
+        <TabPanel value={this.state.value} index={2}>
           <MyTreeView
             close_fn={this.props.close_fn}
             url="/libraryview/partial/"
             query_params_list={["Album", "Track"]}
           />
         </TabPanel>
-        <TabPanel value={value} index={3}>
+        <TabPanel value={this.state.value} index={3}>
           <MyTreeView close_fn={this.props.close_fn} url="/libraryview/partial/" query_params_list={["Track"]} />
         </TabPanel>
       </div>
     );
   }
 }
+
+export default withStyles(styles)(LibraryView);

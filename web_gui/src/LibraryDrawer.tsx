@@ -2,6 +2,7 @@ import * as React from "react";
 import Drawer from "@material-ui/core/Drawer";
 import Button from "@material-ui/core/Button";
 import LibraryView from "./LibraryView";
+import { withStyles } from "@material-ui/core/styles";
 
 type LibraryDrawerState = {
   open: boolean;
@@ -26,6 +27,7 @@ export default class LibraryDrawer extends React.Component<
     this.setState({ open: false });
   }
   render(): JSX.Element {
+    const classes = this.props;
     return (
       <div>
         <Button onClick={this.click} color="primary">
