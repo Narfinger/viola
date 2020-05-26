@@ -186,6 +186,11 @@ async fn current_id(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(state.playlist_tabs.current_position())
 }
 
+#[get("/current_track/")]
+async fn current_track(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
+    HttpResponse::Ok().json(state.playlist_tabs.get_current_track())
+}
+
 #[get("/pltime/")]
 async fn pltime(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     let total_length = state.playlist_tabs.get_remaining_length();
@@ -401,6 +406,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
             .service(smartplaylist_load)
             .service(pltime)
             .service(current_id)
+            .service(current_track)
             .service(current_image)
             .service(playlist_tab)
             .service(change_playlist_tab)
