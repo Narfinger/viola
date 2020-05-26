@@ -16,8 +16,12 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "viola-code.helloWorld",
-				"title": "Hello World"
+				"command": "viola-code.play",
+				"title": "Viola: Play"
+			},
+			{
+				"command": "viola-code.pause",
+				"title": "Viola: Pause"
 			}
 		]
 	},

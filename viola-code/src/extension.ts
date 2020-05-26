@@ -13,6 +13,17 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	myStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	subscriptions.push(myStatusBarItem);
 
+
+	let pausing = vscode.commands.registerCommand('viola-code.pause', () => {
+		axios.post("http://localhost:8088/transport/", { t: "Pausing" });
+	});
+	let playing = vscode.commands.registerCommand('viola-code.play', () => {
+		axios.post("http://localhost:8088/transport/", { t: "Playing" });
+	});
+
+	subscriptions.push(pausing);
+	subscriptions.push(playing)
+
 	// update status bar item once at start
 	updateStatusBarItem();
 	setTimeout(updateStatusBarItem,500);
