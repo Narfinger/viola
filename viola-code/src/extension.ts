@@ -20,9 +20,14 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 
 function updateStatusBarItem(): void {
 	myStatusBarItem.show();
-	myStatusBarItem.text = "testsss";
-	axios.get("http://localhost:8088/transport/").then((response: any) => {
-		myStatusBarItem.text = response.data;
+	axios.all([axios.get("http://localhost:8088/transport/"), axios.get("http://localhost:8088/current_track/")]).then(axios.spread((...response: any) => {
+		const transport = response[0].data;
+		const track = response[1].data;
+		console.log(response[1]);
+		myStatusBarItem.text = transport + ": " + track.title + " by "+ track.artist;
 		myStatusBarItem.show();
+	})).catch(error => {
+		console.log(error);
+		myStatusBarItem.text = "We found some error";
 	});
 }
