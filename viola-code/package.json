@@ -4,7 +4,7 @@
 	"publisher": "Narfinger",
 	"repository": "https://github.com/narfinger/viola",
 	"description": "",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"engines": {
 		"vscode": "^1.45.0"
 	},
@@ -24,6 +24,10 @@
 			{
 				"command": "viola-code.pause",
 				"title": "Viola: Pause"
+			},
+			{
+				"command": "viola-code.repeat",
+				"title": "Viola: Repeat"
 			}
 		]
 	},
