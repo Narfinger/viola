@@ -1,6 +1,8 @@
 {
 	"name": "viola-code",
 	"displayName": "viola-code",
+	"publisher": "Narfinger",
+	"repository": "https://github.com/narfinger/viola",
 	"description": "",
 	"version": "0.0.1",
 	"engines": {
