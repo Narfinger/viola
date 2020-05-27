@@ -45,6 +45,7 @@ async fn repeat(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     state
         .gstreamer
         .do_gstreamer_action(gstreamer_wrapper::GStreamerAction::RepeatOnce);
+    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::Repeat);
     HttpResponse::Ok().finish()
 }
 

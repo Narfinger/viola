@@ -11,6 +11,7 @@ pub enum WsMessage {
     CurrentTimeChanged { index: u64 },
     ReloadTabs,
     ReloadPlaylist,
+    Repeat,
     Ping,
 }
 
