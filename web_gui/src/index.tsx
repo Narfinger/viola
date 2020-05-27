@@ -160,6 +160,9 @@ class Main extends React.Component<{}, MainState> {
           });
           break;
         }
+        case "Repeat": {
+          this.setState({ repeat: true });
+        }
         default:
       }
     };
@@ -182,7 +185,8 @@ class Main extends React.Component<{}, MainState> {
 
   again(): void {
     axios.post("/repeat/");
-    this.setState({ repeat: true });
+    // this is done by the websocket message
+    // this.setState({ repeat: true });
   }
 
   save(): void {
