@@ -20,13 +20,17 @@ export function activate({ subscriptions }: vscode.ExtensionContext) {
 	let playing = vscode.commands.registerCommand('viola-code.play', () => {
 		axios.post("http://localhost:8088/transport/", { t: "Playing" });
 	});
+	let repeat = vscode.commands.registerCommand('viola-code.repeat', () => {
+		axios.post("http://localhost:8088/repeat/");
+	});
 
 	subscriptions.push(pausing);
-	subscriptions.push(playing)
+	subscriptions.push(playing);
+	subscriptions.push(repeat);
 
 	// update status bar item once at start
 	updateStatusBarItem();
-	setTimeout(updateStatusBarItem,500);
+	setInterval(updateStatusBarItem,1000 * 10);
 }
 
 function updateStatusBarItem(): void {
