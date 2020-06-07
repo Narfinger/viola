@@ -109,7 +109,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         }
 
         state = this.props.query_params_list[ids.length];
-        const queryParam = { lvl: { type: state, content: names }, search: "" };
+        const queryParam = { type: state, content: names };
 
         axios.post(this.props.url, queryParam).then((response) => {
           if (ids.length === 1) {
@@ -152,10 +152,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
   }
 
   refresh(): void {
-    const queryParam = {
-      search: this.state.search,
-      lvl: { type: this.props.query_params_list[0], content: [] },
-    };
+    const queryParam = { type: this.props.query_params_list[0] };
     console.log(queryParam);
     axios.post(this.props.url, queryParam).then((response) => {
       let data = response.data;
