@@ -67,6 +67,17 @@ type LibraryViewState = {
   value: any;
 }
 
+enum QueryType {
+  Artist,
+  Album,
+  Track,
+}
+
+type Query = {
+  query_type: QueryType,
+  query: string,
+}
+
 class LibraryView extends React.Component<LibraryViewProps, LibraryViewState> {
   constructor(props) {
     super(props);
@@ -101,18 +112,20 @@ class LibraryView extends React.Component<LibraryViewProps, LibraryViewState> {
         <TabPanel value={this.state.value} index={1}>
           <MyTreeView close_fn={this.props.close_fn}
             url="/libraryview/partial/"
-            query_params_list={["Artist", "Album", "Track"]}
-          />
+            query_params_list={[{ query_type: QueryType.Artist, query: "" },
+            { query_type: QueryType.Album, query: "" },
+            { query_type: QueryType.Track, query: "" }]} />
         </TabPanel>
         <TabPanel value={this.state.value} index={2}>
           <MyTreeView
             close_fn={this.props.close_fn}
             url="/libraryview/partial/"
-            query_params_list={["Album", "Track"]}
+            query_params_list={[{ query_type: QueryType.Album, query: "" },
+            { query_type: QueryType.Track, query: "" }]}
           />
         </TabPanel>
         <TabPanel value={this.state.value} index={3}>
-          <MyTreeView close_fn={this.props.close_fn} url="/libraryview/partial/" query_params_list={["Track"]} />
+          <MyTreeView close_fn={this.props.close_fn} url="/libraryview/partial/" query_params_list={[{ query_type: QueryType.Track, query: "" }]} />
         </TabPanel>
       </div>
     );

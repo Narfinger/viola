@@ -114,7 +114,7 @@ async fn library_load(
 ) -> HttpResponse {
     let q = level.into_inner();
     let pl = libraryviewstore::load_query(&state.pool, &q);
-    println!("Loading new playlist {}", pl.name);
+    println!("Loading new playlist {}, query was: {:?}", pl.name, q);
     state.playlist_tabs.add(pl);
     my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadTabs);
     HttpResponse::Ok().finish()

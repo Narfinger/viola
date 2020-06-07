@@ -17,9 +17,21 @@ type Node = {
 
 type Tree = Node[];
 
+enum QueryType {
+  Artist,
+  Album,
+  Track,
+}
+
+type Query = {
+  query_type: QueryType,
+  query: string,
+}
+
+
 type MyTreeViewProps = {
   query_for_details: boolean;
-  query_params_list: string[];
+  query_params_list: Query[];
   url: string;
   close_fn: () => void;
 };
@@ -172,20 +184,25 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
     const ids = index.split("-");
     const values = [];
     let current = this.state.items;
+    //fill with queries
     for (const id of ids) {
       const val = current[parseInt(id, 10)];
       values.push(val.value);
       current = val.children;
     }
-    const type = this.props.query_params_list[
-      Math.min(ids.length, this.props.query_params_list.length - 1)
-    ];
-    const param = {
-      search: this.state.search,
-      lvl: { type: type, content: values },
-    };
+    console.log(values);
+    let q = Object.assign(this.props.query_params_list);
+
+
+    q.forEach(function (item, index, array) {
+      item.query = values[index];
+    });
+
+    console.log("load query send");
+    console.log(q);
+
     this.props.close_fn();
-    axios.post("/libraryview/load/", param);
+    axios.post("/libraryview/load/", q);
   }
 
   third_level_children(
