@@ -94,6 +94,8 @@ async fn transport(
     HttpResponse::Ok().finish()
 }
 
+use futures::StreamExt;
+use std::iter::Iterator;
 #[post("/libraryview/partial/")]
 async fn library_partial_tree(
     state: web::Data<WebGui>,
@@ -102,7 +104,7 @@ async fn library_partial_tree(
 ) -> HttpResponse {
     let q = level.into_inner();
     let items = libraryviewstore::query_partial_tree(&state.pool, &q);
-    //println!("items: {:?}", items);
+    //println!("{:?}", items);
     HttpResponse::Ok().json(items)
 }
 

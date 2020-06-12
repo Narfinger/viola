@@ -1,6 +1,7 @@
 use crate::db;
 use crate::loaded_playlist;
 use crate::types::*;
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::HashMap;
 use std::ops::Deref;
 
@@ -50,11 +51,12 @@ pub enum PartialQueryLevelEnum {
     Track(Vec<String>),
 }*/
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize_repr, Deserialize_repr)]
+#[repr(u16)]
 pub enum PartialQueryLevelEnum {
-    Artist,
-    Album,
-    Track,
+    Artist = 0,
+    Album = 1,
+    Track = 2,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -132,6 +134,7 @@ pub fn query_partial_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist>
         PartialQueryLevelEnum::Artist => {
             let res = query
                 .select(artist)
+                .distinct()
                 .order_by(artist)
                 .load(p.deref())
                 .expect("Error in loading");
@@ -142,6 +145,7 @@ pub fn query_partial_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist>
         PartialQueryLevelEnum::Album => {
             let res = query
                 .select((album, year))
+                .distinct()
                 .order_by(year)
                 .distinct()
                 .load(p.deref())
@@ -158,6 +162,7 @@ pub fn query_partial_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist>
         PartialQueryLevelEnum::Track => {
             let res: Vec<(Option<i32>, String)> = query
                 .select((tracknumber, title))
+                .distinct()
                 .order_by(tracknumber)
                 .distinct()
                 .load(p.deref())

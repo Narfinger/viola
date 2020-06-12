@@ -152,7 +152,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
   }
 
   refresh(): void {
-    const queryParam = { type: this.props.query_params_list[0] };
+    const queryParam = [this.props.query_params_list[0]];
     console.log(queryParam);
     axios.post(this.props.url, queryParam).then((response) => {
       let data = response.data;
