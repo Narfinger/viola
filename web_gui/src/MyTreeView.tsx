@@ -96,7 +96,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
       const ids = nodeids[0].split("-").map(parseInt);
 
       if (this.need_to_load(ids)) {
-        let state = null;
+        let state: Query;
         // format we look at is
         // {"type": "album", "content": "foo"};
 
@@ -109,7 +109,8 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         }
 
         state = this.props.query_params_list[ids.length];
-        const queryParam = { type: state, content: names };
+        state.query = names[ids.length - 1];
+        const queryParam = { search: this.state.search, pql: state };
 
         axios.post(this.props.url, queryParam).then((response) => {
           if (ids.length === 1) {
