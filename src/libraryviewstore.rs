@@ -65,7 +65,11 @@ pub struct PartialQueryLevelComponent {
     query: String,
 }
 
-pub type PartialQueryLevel = Vec<PartialQueryLevelComponent>;
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PartialQueryLevel {
+    pql: Vec<PartialQueryLevelComponent>,
+    search: String,
+}
 
 /// basic query function to model tracks with the apropiate values selected
 fn basic_tree_query(
@@ -78,15 +82,15 @@ fn basic_tree_query(
         .filter(artist.is_not_null())
         .filter(artist.ne(""))
         .into_boxed();
-    /*if !pql.search.is_empty() {
-            let s = String::from("%") + &pql.search + "%";
-            query = query
-                .filter(artist.like(s.clone()))
-                .or_filter(album.like(s.clone()))
-                .or_filter(title.like(s));
-        }
-    */
-    for i in pql.iter().filter(|i| !i.query.is_empty()) {
+    if !pql.search.is_empty() {
+        let s = String::from("%") + &pql.search + "%";
+        query = query
+            .filter(artist.like(s.clone()))
+            .or_filter(album.like(s.clone()))
+            .or_filter(title.like(s));
+    }
+
+    for i in pql.pql.iter().filter(|i| !i.query.is_empty()) {
         query = match i.query_type {
             PartialQueryLevelEnum::Artist => query.filter(artist.eq(&i.query)),
             PartialQueryLevelEnum::Album => query.filter(album.eq(&i.query)),
@@ -124,7 +128,7 @@ pub fn query_partial_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist>
     use crate::schema::tracks::dsl::*;
     use diesel::{QueryDsl, RunQueryDsl};
     let p = pool.lock().expect("Error in lock");
-    let level = &pql.first().unwrap().query_type;
+    let level = &pql.pql.first().unwrap().query_type;
     let query = basic_tree_query(pql);
 
     let sql = diesel::debug_query(&query).to_string();
