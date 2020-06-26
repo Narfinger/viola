@@ -13,7 +13,7 @@
   "dependencies": {
     "@material-ui/core": "^4.9.14",
     "@material-ui/icons": "^4.9.1",
-    "@material-ui/lab": "^4.0.0-alpha.53",
+    "@material-ui/lab": "^4.0.0-alpha.56",
     "awesome-debounce-promise": "^2.1.0",
     "axios": "^0.19.2",
     "react": "^16.13.1",
