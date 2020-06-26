@@ -11,7 +11,7 @@ clap = "2.33"                    # A simple to use, efficient, and full featured
 diesel = { version = "1.4", features = ["sqlite", "r2d2"] }
 error-chain = "0.12"
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
-env_logger = "0.6"
+env_logger = "0.7"
 indicatif = "0.11"
 #jwalk = "0.4"    # A progress bar and cli reporting library for Rust
 taglib = "1.0"        # Rust bindings for TagLib
