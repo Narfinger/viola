@@ -1,24 +1,14 @@
-name: Rust
+on: [push]
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-
-env:
-  CARGO_TERM_COLOR: always
-
+name: CI
 jobs:
-  build:
-
+  build_and_test:
+    name: Rust project
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
-    - name: InstallDeps
-      run: apt install  librust-gstreamer-sys-dev
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: apt install libgstreamer1.0-dev
+      - run: cargo build --release --all-features
