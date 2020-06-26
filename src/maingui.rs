@@ -1,5 +1,5 @@
 //! The main gui parts.
-
+/*
 use gdk;
 use gdk_pixbuf;
 use gtk;
@@ -8,6 +8,7 @@ use gtk::prelude::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::mpsc::sync_channel;
+use std::sync::Arc;
 
 use crate::db;
 use crate::gstreamer_wrapper;
@@ -15,7 +16,6 @@ use crate::gstreamer_wrapper::{GStreamer, GStreamerAction, GStreamerExt};
 use crate::loaded_playlist::LoadedPlaylist;
 use crate::playlist;
 use crate::playlist_tabs;
-use crate::playlist_tabs::PlaylistTabsExt;
 use crate::types::*;
 use crate::utils::format_into_full_duration;
 
@@ -36,11 +36,12 @@ pub struct MainGui {
     repeat_once: gtk::Image,
     last_marked: RefCell<Option<gtk::TreeIter>>,
     playlist_tabs: PlaylistTabsPtr,
-    gstreamer: Rc<GStreamer>,
+    gstreamer: Arc<GStreamer>,
     update_playtime_channel: std::sync::mpsc::SyncSender<i64>,
 }
 
-/// Constructs a new gui, given a BuilderPtr and a loaded playlist.
+/// Constructs a new gui, given a BuilderPtr and a loaded playlist
+/*.
 pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
     let pltabs = playlist_tabs::new();
     let (gst, recv) = gstreamer_wrapper::new(pltabs.clone(), pool.clone()).unwrap();
@@ -130,6 +131,7 @@ pub fn new(pool: &DBPool, builder: &BuilderPtr) -> MainGuiPtr {
 
     g
 }
+*/
 
 /// This is a trait for all gui related functions that do not need a GuiPtr, only a reference to the gui.
 /// The main indication is: This are all functions that do not need to have gtk callbacks.
@@ -402,3 +404,4 @@ impl MainGuiPtrExt for MainGuiPtr {
         }
     }
 }
+*/

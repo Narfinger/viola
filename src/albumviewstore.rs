@@ -1,3 +1,4 @@
+/*
 use crate::db::Track;
 use crate::loaded_playlist::LoadedPlaylist;
 use gdk;
@@ -8,7 +9,7 @@ use std::ops::Deref;
 use std::rc::Rc;
 use std::string::String;
 
-use crate::maingui::{MainGuiExt, MainGuiPtrExt};
+//use crate::maingui::{MainGuiExt, MainGuiPtrExt};
 use crate::types::*;
 
 pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
@@ -41,7 +42,7 @@ pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
         .order(album)
         .filter(album.ne(""))
         .distinct()
-        .load(db.deref())
+        .load(db.lock().expect("DB Error").deref())
         .expect("Error in db connection");
 
     fmodel.refilter();
@@ -184,20 +185,22 @@ fn get_tracks_for_selection(
         album_name.to_owned(),
         query
             .filter(album.eq(&album_name))
-            .load(db.deref())
+            .load(db.lock().expect("Lock Error").deref())
             .expect("Error in query"),
     ))
 }
 
 fn do_new(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
-    let (name, res) = get_tracks_for_selection(pool, tv).expect("Error in getting tracks");
-    let pl = LoadedPlaylist {
-        id: Cell::new(None),
-        name,
-        items: res,
-        current_position: 0,
-    };
-    gui.add_page(pl);
+    /*
+        let (name, res) = get_tracks_for_selection(pool, tv).expect("Error in getting tracks");
+        let pl = LoadedPlaylist {
+            id: Cell::new(None),
+            name,
+            items: res,
+            current_position: 0,
+        };
+        gui.add_page(pl);
+    */
 }
 
 fn do_append(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
@@ -247,3 +250,4 @@ fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gd
         }
     }
 }
+*/

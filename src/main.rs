@@ -1,4 +1,7 @@
+#[macro_use]
+extern crate actix_web;
 extern crate app_dirs;
+extern crate base64;
 #[macro_use]
 extern crate clap;
 #[macro_use]
@@ -6,15 +9,12 @@ extern crate diesel;
 extern crate env_logger;
 #[macro_use]
 extern crate log;
-extern crate gdk;
-extern crate gdk_pixbuf;
-extern crate gio;
 extern crate glib;
 extern crate gstreamer;
-extern crate gtk;
+extern crate humantime;
+extern crate image;
 extern crate indicatif;
 extern crate open;
-extern crate pango;
 extern crate preferences;
 extern crate rand;
 extern crate rayon;
@@ -23,17 +23,17 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 extern crate toml;
-extern crate url;
 extern crate walkdir;
 //extern crate jwalk;
 
 pub mod albumviewstore;
 pub mod db;
 pub mod gstreamer_wrapper;
-pub mod gui;
 pub mod libraryviewstore;
 pub mod loaded_playlist;
 pub mod maingui;
+pub mod maingui_web;
+pub mod my_websocket;
 pub mod playlist;
 pub mod playlist_manager;
 pub mod playlist_tabs;
@@ -43,8 +43,8 @@ pub mod types;
 pub mod utils;
 
 use clap::{App, Arg};
-use gio::ApplicationExt;
 use preferences::{prefs_base_dir, AppInfo, Preferences, PreferencesMap};
+use std::{env, io};
 
 const APP_INFO: AppInfo = AppInfo {
     name: "viola",
@@ -52,7 +52,8 @@ const APP_INFO: AppInfo = AppInfo {
 };
 const PREFS_KEY: &str = "viola_prefs";
 
-fn main() {
+#[actix_rt::main]
+async fn main() -> io::Result<()> {
     let matches = App::new("Viola")
         .about("Music Player")
         .version(crate_version!())
@@ -65,6 +66,7 @@ fn main() {
         .arg(
             Arg::with_name("fastupdate")
                 .short("f")
+                .value_name("path")
                 .long("fastupdate")
                 .help("Does a fast update of the database, doing a heuristic on time modified"),
         )
@@ -87,8 +89,15 @@ fn main() {
                 .long("editsmartplaylists")
                 .help("Opens an editor to edit the smartplaylist file"),
         )
+        .arg(
+            Arg::with_name("no-webview")
+                .short("w")
+                .long("nowebview")
+                .help("Does not run the embedded webview"),
+        )
         .get_matches();
 
+    env::set_var("RUST_LOG", "actix_web=debug,actix_server=info");
     env_logger::init();
 
     let pool = db::setup_db_connection();
@@ -96,15 +105,19 @@ fn main() {
         info!("Updating Database");
         if let Ok(preferences) = PreferencesMap::<String>::load(&APP_INFO, PREFS_KEY) {
             if let Some(music_dir) = preferences.get("music_dir") {
-                db::build_db(music_dir, &pool.clone()).unwrap();
+                db::build_db(music_dir, &pool, true).unwrap();
             } else {
                 error!("Could not find music_dir");
             }
         } else {
             error!("could not find settings file");
         }
-    } else if matches.is_present("fastupdate") {
-        panic!("not yet implemented");
+    } else if let Some(path) = matches.value_of("fastupdate") {
+        info!("Updating database with path {}", path);
+        if !std::path::Path::new(path).exists() {
+            println!("Path does not seem to exist");
+        }
+        db::build_db(path, &pool, false).unwrap();
     } else if let Some(new_music_dir) = matches.value_of("music_dir") {
         let mut prefs = PreferencesMap::<String>::new();
         prefs.insert(String::from("music_dir"), String::from(new_music_dir));
@@ -125,17 +138,35 @@ fn main() {
         let mut path = prefs_base_dir().expect("Could not find base dir");
         path.extend(&["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
+    } else if matches.is_present("no-webview") {
+        //println!("Trying main");
+        //std::thread::spawn(|| {
+        //println!("Starting web service");
+        maingui_web::run(pool).await.expect("Error running server");
+    //});
     } else {
-        use gio::ApplicationExtManual;
-        let application = gtk::Application::new(
-            Some("com.github.narfinger.viola"),
-            gio::ApplicationFlags::empty(),
-        )
-        .expect("Initialization failed...");
-        application.connect_startup(move |app| {
-            gui::build_gui(app, &pool);
+        std::thread::spawn(|| {
+            let mut sys = actix_rt::System::new("test");
+            println!("Starting web service");
+            let srv = maingui_web::run(pool);
+            sys.block_on(srv)
         });
-        application.connect_activate(|_| {});
-        application.run(&[]);
-    }
+        std::thread::sleep(std::time::Duration::from_secs(1));
+
+        use web_view::*;
+        println!("Starting webview");
+        WebViewBuilder::new()
+            .title("Viola")
+            .content(Content::Url("http://localhost:8088"))
+            .size(1920, 1080)
+            .resizable(true)
+            //.debug(true)
+            .user_data(())
+            .invoke_handler(|_webview, _arg| Ok(()))
+            .build()
+            .unwrap()
+            .run()
+            .unwrap();
+    };
+    Ok(())
 }

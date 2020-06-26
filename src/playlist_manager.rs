@@ -1,3 +1,4 @@
+/*
 use crate::loaded_playlist::LoadedPlaylist;
 use crate::smartplaylist_parser;
 use crate::smartplaylist_parser::{LoadSmartPlaylist, SmartPlaylist};
@@ -7,7 +8,10 @@ use gtk::prelude::*;
 use std::cell::Cell;
 use std::ops::Deref;
 use std::string::String;
+use std::sync::atomic::AtomicUsize;
+use std::sync::Arc;
 
+use crate::db::get_new_playlist_id;
 use crate::maingui::MainGuiPtrExt;
 use crate::types::*;
 
@@ -44,7 +48,7 @@ pub fn new(pool: DBPool, builder: &BuilderPtr, gui: MainGuiPtr) -> PlaylistManag
 
 fn signalhandler(
     pool: &DBPool,
-    gui: &MainGuiPtr,
+    //gui: &MainGuiPtr,
     sm: &[SmartPlaylist],
     tv: &gtk::TreeView,
     event: &gdk::Event,
@@ -61,24 +65,28 @@ fn signalhandler(
 }
 
 fn add_playlist(db: &DBPool, sm: &[SmartPlaylist], index: i32) -> LoadedPlaylist {
+    use crate::schema::playlists::dsl::*;
     use crate::schema::tracks::dsl::*;
-    use diesel::{QueryDsl, RunQueryDsl};
+    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
     info!("You selected index: {}", index);
     if index == 0 {
         let results = tracks
             .order(path)
-            .load(db.deref())
+            .load(db.lock().expect("DB Error").deref())
             .expect("Problem loading playlist");
 
+        let new_id = get_new_playlist_id(db);
+
         LoadedPlaylist {
-            id: Cell::new(None),
+            id: new_id,
             name: String::from("Full Collection"),
             items: results,
-            current_position: 0,
+            current_position: Arc::new(AtomicUsize::new(0)),
         }
     } else {
         let i = index - 1 as i32;
         sm[i as usize].load(db)
     }
 }
+*/

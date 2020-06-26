@@ -3,11 +3,10 @@ use diesel::sqlite::Sqlite;
 use diesel::{QueryDsl, RunQueryDsl};
 use preferences::prefs_base_dir;
 use rand::prelude::*;
-use std::cell::Cell;
 use std::fs;
 use std::ops::Deref;
-use toml;
 
+use crate::db;
 use crate::db::Track;
 use crate::loaded_playlist::LoadedPlaylist;
 use crate::types::*;
@@ -35,7 +34,8 @@ struct SmartPlaylistParsed {
     album_include: Option<Vec<String>>,
     artist_include: Option<Vec<String>>,
     genre_include: Option<Vec<String>>,
-    play_count_include: Option<i32>,
+    play_count_least_include: Option<i32>,
+    play_count_exact_include: Option<i32>,
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -44,7 +44,8 @@ pub enum IncludeTag {
     Album(Vec<String>),
     Artist(Vec<String>),
     Genre(Vec<String>),
-    PlayCount(i32),
+    PlayCountLeast(i32),
+    PlayCountExact(i32),
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -83,8 +84,12 @@ fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
     vec_option_insert!(IncludeTag::Album, smp.album_include, include_query);
     vec_option_insert!(IncludeTag::Genre, smp.genre_include, include_query);
 
-    if let Some(v) = smp.play_count_include {
-        include_query.push(IncludeTag::PlayCount(v));
+    if let Some(v) = smp.play_count_least_include {
+        include_query.push(IncludeTag::PlayCountLeast(v));
+    }
+
+    if let Some(v) = smp.play_count_exact_include {
+        include_query.push(IncludeTag::PlayCountExact(v));
     }
 
     let mut exclude_query = Vec::new();
@@ -116,7 +121,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
 
         let basic: Vec<Track> = if self.include_query.is_empty() {
             tracks
-                .load(db.deref())
+                .load(db.lock().expect("DB Error").deref())
                 .expect("Error in loading smart playlist")
         } else {
             self.include_query
@@ -127,7 +132,8 @@ impl LoadSmartPlaylist for SmartPlaylist {
                         for value in v {
                             s = s.or_filter(album.eq(value))
                         }
-                        s.load(db.deref()).expect("Error in loading smart playlist")
+                        s.load(db.lock().expect("DB Error").deref())
+                            .expect("Error in loading smart playlist")
                     }
                     IncludeTag::Artist(v) => {
                         let mut s = tracks.into_boxed::<Sqlite>();
@@ -135,7 +141,8 @@ impl LoadSmartPlaylist for SmartPlaylist {
                             s = s.or_filter(artist.eq(value));
                         }
                         //println!("Query ArtistInclude: {:?}", debug_query(&s));
-                        s.load(db.deref()).expect("Error in loading smart playlist")
+                        s.load(db.lock().expect("DB Error").deref())
+                            .expect("Error in loading smart playlist")
                     }
                     IncludeTag::Dir(v) => {
                         let mut s = tracks.into_boxed::<Sqlite>();
@@ -143,7 +150,8 @@ impl LoadSmartPlaylist for SmartPlaylist {
                             s = s.or_filter(path.like(String::from("%") + &value + "%"));
                         }
                         //println!("Query DirInclude: {:?}", debug_query(&s));
-                        s.load(db.deref()).expect("Error in loading smart playlist")
+                        s.load(db.lock().expect("DB Error").deref())
+                            .expect("Error in loading smart playlist")
                     }
                     IncludeTag::Genre(v) => {
                         let mut s = tracks.into_boxed::<Sqlite>();
@@ -151,13 +159,22 @@ impl LoadSmartPlaylist for SmartPlaylist {
                             s = s.or_filter(genre.eq(value));
                         }
                         //println!("Query GenreInclude: {:?}", debug_query(&s));
-                        s.load(db.deref()).expect("Error in loading smart playlist")
+                        s.load(db.lock().expect("DB Error").deref())
+                            .expect("Error in loading smart playlist")
                     }
-                    IncludeTag::PlayCount(v) => {
+                    IncludeTag::PlayCountLeast(v) => {
                         let mut s = tracks.into_boxed::<Sqlite>();
                         s = s.or_filter(playcount.ge(v));
 
-                        s.load(db.deref()).expect("Error in loading smart playlist")
+                        s.load(db.lock().expect("DB Error").deref())
+                            .expect("Error in loading smart playlist")
+                    }
+                    IncludeTag::PlayCountExact(v) => {
+                        let mut s = tracks.into_boxed::<Sqlite>();
+                        s = s.or_filter(playcount.eq(v));
+
+                        s.load(db.lock().expect("DB Error").deref())
+                            .expect("Error in loading smart playlist")
                     }
                 })
                 .flat_map(std::iter::IntoIterator::into_iter)
@@ -183,7 +200,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
         }
 
         LoadedPlaylist {
-            id: Cell::new(None),
+            id: db::get_new_playlist_id(db),
             name: self.name.clone(),
             items: filtered,
             current_position: 0,
