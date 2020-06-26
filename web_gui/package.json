@@ -21,7 +21,7 @@
     "react-hotkeys": "^2.0.0",
     "react-window": "^1.8.5",
     "source-map-loader": "^0.2.4",
-    "typescript": "^3.9.3"
+    "typescript": "^3.9.5"
   },
   "devDependencies": {
     "@babel/core": "^7.10.3",
