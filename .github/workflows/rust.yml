@@ -16,6 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: InstallDeps
+      run: apt install  librust-gstreamer-sys-dev
     - name: Build
       run: cargo build --verbose
     - name: Run tests
