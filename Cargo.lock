@@ -963,7 +963,7 @@ dependencies = [
 
 [[package]]
 name = "gstreamer"
-version = "0.15.5"
+version = "0.15.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2177,7 +2177,7 @@ dependencies = [
  "error-chain 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "glib 0.9.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gstreamer 0.15.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gstreamer 0.15.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "humantime 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.23.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "indicatif 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2417,7 +2417,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum glib 0.9.3 (registry+https://github.com/rust-lang/crates.io-index)" = "40fb573a09841b6386ddf15fd4bc6655b4f5b106ca962f57ecaecde32a0061c0"
 "checksum glib-sys 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)" = "95856f3802f446c05feffa5e24859fe6a183a7cb849c8449afc35c86b1e316e2"
 "checksum gobject-sys 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)" = "31d1a804f62034eccf370006ccaef3708a71c31d561fee88564abe71177553d9"
-"checksum gstreamer 0.15.5 (registry+https://github.com/rust-lang/crates.io-index)" = "5918f609a4309c98347fc58b7259eac99fe5c69adcdd23cf617d967d7d4da1d1"
+"checksum gstreamer 0.15.7 (registry+https://github.com/rust-lang/crates.io-index)" = "ce8664a114cd6ec16bece783d5eee59496919915b1f6884400ba4a953274a163"
 "checksum gstreamer-sys 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)" = "1d18da01b97d0ab5896acd5151e4c155acefd0e6c03c3dd24dd133ba054053db"
 "checksum gtk-sys 0.9.2 (registry+https://github.com/rust-lang/crates.io-index)" = "53def660c7b48b00b510c81ef2d2fbd3c570f1527081d8d7947f471513e1a4c1"
 "checksum h2 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)" = "377038bf3c89d18d6ca1431e7a5027194fbd724ca10592b9487ede5e8e144f42"
