@@ -57,46 +57,47 @@ type MyTreeItemNodeProp = {
   start: QueryType,
 }
 
+class MyTreeItemNode {
+  children = [];
+  id: string = "";
+  title: string = "";
 
-class MyTreeItemNode extends React.Component<MyTreeItemNodeProp, any> {
-  constructor(props) {
-    super(props);
-    this.state = {
-      children: [],
-    };
+  constructor(children, id, title) {
+    this.children = children;
+    this.id = id;
+    this.title = title;
   }
 
-  populate_children(): void {
-    console.log("Trying to populate my children, having index: " + this.props.index);
-    axios.post("/libraryview/partial/", {
-      index: this.props.index === "" ? [] : this.props.index.split("-").map((val) => parseInt(val, 10)),
-      start: this.props.start,
-    }).then((response) => {
-      this.setState({
-        children: response.data.map((v, index) => {
-          <MyTreeItemNode start={this.props.start} index={this.props.index + "-" + index}></MyTreeItemNode>
-        }),
+  populate_children() {
+    if (this.children.length === 0) {
+      axios.post("/libraryview/partial/", {
+        index: this.id,
+      }).then((response) => {
+        this.children = response.data.map((val, index) => {
+          return new MyTreeItemNode([], this.id + "-" + String(index), "test");
+        }
+        )
       })
-    });
+    }
   }
+}
 
+class MyTreeItemRender extends React.Component<{ mynode: MyTreeItemNode }, {}> {
   render(): JSX.Element {
-    return <TreeItem nodeId={this.props.index}>
-      {
-        this.state.children.map((value, index) => {
-          return value;
-        })
-      }
-    </TreeItem >;
+    return <TreeItem nodeId={this.props.mynode.id} key={this.props.mynode.id} label={this.props.mynode.title}>
+      {this.props.mynode.children.map((val) => {
+        <MyTreeItemRender mynode={val} />
+      })}
+    </TreeItem>
   }
 }
 
 type MyTreeViewState = {
   main: MyTreeItemNode;
-  search: string,
-  menuOpen: boolean,
-  menuIndex: string,
-  anchor: any,
+  search: string;
+  menuOpen: boolean;
+  menuIndex: string;
+  anchor: any;
 };
 
 type MyTreeViewProps = {
@@ -113,25 +114,29 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
     super(props);
     this.handleChange = this.handleChange.bind(this);
     this.state = {
-      main: new MyTreeItemNode({ index: "", start: this.props.start }),
+      main: new MyTreeItemNode([], "", ""),
       search: "",
       menuOpen: false,
       menuIndex: "",
       anchor: null,
     }
-    this.state.main.populate_children();
   }
 
   searchChange(): void {
 
   }
 
+  componentDidMount() {
+    this.state.main.populate_children();
+    this.setState({ main: this.state.main });
+  }
+
   handleChange(event, nodeids: string[]): void {
-    let cur = this.state.main;
-    for (const i in nodeids) {
-      cur = cur.state.children[i];
-    }
-    cur.populate_children();
+    //let cur = this.state.main;
+    //for (const i in nodeids) {
+    //  cur = cur.state.children[i];
+    //}
+    //cur.populate_children();
   }
 
   render(): JSX.Element {
@@ -146,7 +151,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
           onNodeToggle={this.handleChange}
         >
           <LibraryMenu open={this.state.menuOpen} index={this.state.menuIndex} anchor={this.state.anchor} closeFn={() => this.setState({ menuOpen: false })} />
-          {this.state.main.state.children}
+          <MyTreeItemRender mynode={this.state.main} />
         </TreeView>
       </Paper>
     );
@@ -155,17 +160,17 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
 
 /*
 export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeViewState> {
-  refreshDebounced: any;
+        refreshDebounced: any;
 
   public static defaultProps = {
-    query_for_details: true,
+        query_for_details: true,
   };
 
   constructor(props) {
-    super(props);
+        super(props);
 
     this.state = {
-      items: [],
+        items: [],
       search: "",
       menuOpen: false,
       menuIndex: "",
@@ -182,7 +187,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
   }
 
   searchChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    this.setState({ search: e.target.value });
+        this.setState({ search: e.target.value });
     this.refreshDebounced();
   }
 
@@ -207,7 +212,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
       const ids = nodeids[0].split("-").map(parseInt);
 
       if (this.need_to_load(ids)) {
-        const queryParam = { search: this.state.search, pql: this.props.query_params_list.slice(ids.length) };
+        const queryParam = {search: this.state.search, pql: this.props.query_params_list.slice(ids.length) };
         queryParam.pql[0].query = ids.slice(-1)[0];
         axios.post(this.props.url, queryParam).then((response) => {
           //fill into the tree
@@ -217,31 +222,31 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
   }
 
   componentDidMount(): void {
-    this.refresh();
+          this.refresh();
   }
 
   refresh(): void {
-    const queryParam = { search: this.state.search, pql: [this.props.query_params_list[0]] };
+    const queryParam = {search: this.state.search, pql: [this.props.query_params_list[0]] };
     console.log(queryParam);
     axios.post(this.props.url, queryParam).then((response) => {
-      let data = response.data;
+          let data = response.data;
       if (this.props.query_params_list.length === 1) {
-        data = response.data[0].children[0].children;
+          data = response.data[0].children[0].children;
       } else if (this.props.query_params_list.length === 2) {
-        data = response.data[0].children;
+          data = response.data[0].children;
       }
       this.setState({
-        items: data,
+          items: data,
       });
     });
   }
 
   handleClick(event: React.MouseEvent, index: string): void {
-    this.setState({
-      menuOpen: true,
-      menuIndex: index,
-      anchor: event.target,
-    });
+          this.setState({
+            menuOpen: true,
+            menuIndex: index,
+            anchor: event.target,
+          });
     this.props.close_fn();
     event.preventDefault();
   }
@@ -261,7 +266,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
 
 
     q.forEach(function (item, index, array) {
-      item.query = values[index];
+          item.query = values[index];
     });
 
     console.log("load query send");
@@ -287,12 +292,12 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         const i = index + "-" + index2 + "-" + i3;
         return (
           <TreeItem
-            nodeId={i}
-            key={i}
-            label={label}
-            onContextMenu={(e): void => this.handleClick(e, i)}
-            onDoubleClick={(e): void => this.handleDoubleClick(e, i)}
-          />
+          nodeId={i}
+          key={i}
+          label={label}
+          onContextMenu={(e): void => this.handleClick(e, i)}
+          onDoubleClick={(e): void => this.handleDoubleClick(e, i)}
+        />
         );
       });
     }
@@ -314,14 +319,14 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         const i = index + "-" + i2;
         return (
           <TreeItem
-            nodeId={i}
-            key={i}
-            label={value}
-            onContextMenu={(e): void => this.handleClick(e, i)}
-            onDoubleClick={(e): void => this.handleDoubleClick(e, i)}
-          >
-            {this.third_level_children(v2.children, index, i2)}
-          </TreeItem>
+          nodeId={i}
+          key={i}
+          label={value}
+          onContextMenu={(e): void => this.handleClick(e, i)}
+          onDoubleClick={(e): void => this.handleDoubleClick(e, i)}
+        >
+          {this.third_level_children(v2.children, index, i2)}
+        </TreeItem>
         );
       });
     }
@@ -330,29 +335,29 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
   render(): JSX.Element {
     return (
       <Paper style={{ maxHeight: 800, width: 800, overflow: "auto" }}>
-        <form noValidate autoComplete="off">
-          <Input defaultValue="" onChange={this.searchChange} />
-        </form>
-        <TreeView
-          defaultCollapseIcon={<ExpandMoreIcon />}
-          defaultExpandIcon={<ChevronRightIcon />}
-          onNodeToggle={this.handleChange}
-        >
-          <LibraryMenu open={this.state.menuOpen} index={this.state.menuIndex} anchor={this.state.anchor} closeFn={() => this.setState({ menuOpen: false })} />
-          {this.state.items.map((value, index) => {
-            const i = String(index);
-            return <TreeItem
-              nodeId={i}
-              key={i}
-              label={value.value}
-              onContextMenu={(e): void => this.handleClick(e, i)}
-              onDoubleClick={(e): void => this.handleDoubleClick(e, i)}
-            >
-              {this.second_level_children(index, value.children)}
-            </TreeItem>
-          })}
-        </TreeView>
-      </Paper>
+          <form noValidate autoComplete="off">
+            <Input defaultValue="" onChange={this.searchChange} />
+          </form>
+          <TreeView
+            defaultCollapseIcon={<ExpandMoreIcon />}
+            defaultExpandIcon={<ChevronRightIcon />}
+            onNodeToggle={this.handleChange}
+          >
+            <LibraryMenu open={this.state.menuOpen} index={this.state.menuIndex} anchor={this.state.anchor} closeFn={() => this.setState({ menuOpen: false })} />
+            {this.state.items.map((value, index) => {
+              const i = String(index);
+              return <TreeItem
+                nodeId={i}
+                key={i}
+                label={value.value}
+                onContextMenu={(e): void => this.handleClick(e, i)}
+                onDoubleClick={(e): void => this.handleDoubleClick(e, i)}
+              >
+                {this.second_level_children(index, value.children)}
+              </TreeItem>
+            })}
+          </TreeView>
+        </Paper>
     );
   }
 }

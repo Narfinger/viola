@@ -145,6 +145,7 @@ pub fn query_partial_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<String>
     let query = basic_tree_query(pool, pql);
     let levels = index_to_level_slice(pql);
     let level = levels.last().map(|(_, lvl)| lvl).unwrap_or(&pql.start);
+    println!("doing level {:?}", level);
     let p = pool.lock().expect("Error in lock");
     match level {
         PartialQueryLevelEnum::Artist => {
