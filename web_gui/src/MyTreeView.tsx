@@ -46,9 +46,17 @@ type MyTreeViewState = {
 };
 */
 
+enum QueryType {
+  Artist,
+  Album,
+  Track,
+}
+
 type MyTreeItemNodeProp = {
   index?: string,
+  start: QueryType,
 }
+
 
 class MyTreeItemNode extends React.Component<MyTreeItemNodeProp, any> {
   constructor(props) {
@@ -61,11 +69,12 @@ class MyTreeItemNode extends React.Component<MyTreeItemNodeProp, any> {
   populate_children(): void {
     console.log("Trying to populate my children, having index: " + this.props.index);
     axios.post("/libraryview/partial", {
-      index: this.props.index,
+      index: this.props.index.split("-"),
+      start: this.props.start,
     }).then((response) => {
       this.setState({
         children: response.data.map((v, index) => {
-          <MyTreeItemNode index={this.props.index + "-" + index}></MyTreeItemNode>
+          <MyTreeItemNode start={this.props.start} index={this.props.index + "-" + index}></MyTreeItemNode>
         }),
       })
     });
@@ -90,21 +99,9 @@ type MyTreeViewState = {
   anchor: any,
 };
 
-enum QueryType {
-  Artist,
-  Album,
-  Track,
-}
-
-type Query = {
-  query_type: QueryType,
-  query: string,
-}
-
 type MyTreeViewProps = {
-  query_params_list: Query[];
-  url: string;
   close_fn: () => void;
+  start: QueryType;
 };
 
 export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeViewState> {
@@ -116,7 +113,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
     super(props);
     this.handleChange = this.handleChange.bind(this);
     this.state = {
-      main: new MyTreeItemNode({ index: "0" }),
+      main: new MyTreeItemNode({ index: "0", start: this.props.start }),
       search: "",
       menuOpen: false,
       menuIndex: "",

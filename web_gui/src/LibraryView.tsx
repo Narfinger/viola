@@ -101,30 +101,18 @@ class LibraryView extends React.Component<LibraryViewProps, LibraryViewState> {
           value={this.state.value}
           onChange={this.handleChange}
         >
-          <Tab label="SMP" {...a11yProps(0)} />
-          <Tab label="Full" {...a11yProps(1)} />
-          <Tab label="Album" {...a11yProps(2)} />
-          <Tab label="Track" {...a11yProps(3)} />
+          <Tab label="Full" {...a11yProps(0)} />
+          <Tab label="Album" {...a11yProps(1)} />
+          <Tab label="Track" {...a11yProps(2)} />
         </Tabs>
         <TabPanel value={this.state.value} index={0}>
+          <MyTreeView close_fn={this.props.close_fn} start={QueryType.Artist} />
         </TabPanel>
         <TabPanel value={this.state.value} index={1}>
-          <MyTreeView close_fn={this.props.close_fn}
-            url="/libraryview/partial/"
-            query_params_list={[{ query_type: QueryType.Artist, query: "" },
-            { query_type: QueryType.Album, query: "" },
-            { query_type: QueryType.Track, query: "" }]} />
+          <MyTreeView close_fn={this.props.close_fn} start={QueryType.Album} />
         </TabPanel>
         <TabPanel value={this.state.value} index={2}>
-          <MyTreeView
-            close_fn={this.props.close_fn}
-            url="/libraryview/partial/"
-            query_params_list={[{ query_type: QueryType.Album, query: "" },
-            { query_type: QueryType.Track, query: "" }]}
-          />
-        </TabPanel>
-        <TabPanel value={this.state.value} index={3}>
-          <MyTreeView close_fn={this.props.close_fn} url="/libraryview/partial/" query_params_list={[{ query_type: QueryType.Track, query: "" }]} />
+          <MyTreeView close_fn={this.props.close_fn} start={QueryType.Track} />
         </TabPanel>
       </div>
     );

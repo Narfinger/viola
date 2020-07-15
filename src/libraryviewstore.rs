@@ -1,4 +1,5 @@
 use crate::db;
+use crate::diesel::RunQueryDsl;
 use crate::loaded_playlist;
 use crate::types::*;
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -60,19 +61,14 @@ pub enum PartialQueryLevelEnum {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PartialQueryLevelComponent {
-    query_type: PartialQueryLevelEnum,
-    query: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct PartialQueryLevel {
-    pql: Vec<PartialQueryLevelComponent>,
-    search: String,
+    index: Vec<usize>,
+    start: PartialQueryLevelEnum,
 }
 
 /// basic query function to model tracks with the apropiate values selected
 fn basic_tree_query(
+    pool: &DBPool,
     pql: &PartialQueryLevel,
 ) -> crate::schema::tracks::BoxedQuery<diesel::sqlite::Sqlite> {
     use crate::schema::tracks::dsl::*;
@@ -82,19 +78,48 @@ fn basic_tree_query(
         .filter(artist.is_not_null())
         .filter(artist.ne(""))
         .into_boxed();
-    if !pql.search.is_empty() {
-        let s = String::from("%") + &pql.search + "%";
-        query = query
-            .filter(artist.like(s.clone()))
-            .or_filter(album.like(s.clone()))
-            .or_filter(title.like(s));
-    }
 
-    for i in pql.pql.iter().filter(|i| !i.query.is_empty()) {
-        query = match i.query_type {
-            PartialQueryLevelEnum::Artist => query.filter(artist.eq(&i.query)),
-            PartialQueryLevelEnum::Album => query.filter(album.eq(&i.query)),
-            PartialQueryLevelEnum::Track => query.filter(title.eq(&i.query)),
+    //if !pql.search.is_empty() {
+    //    let s = String::from("%") + &pql.search + "%";
+    //    query = query
+    //        .filter(artist.like(s.clone()))
+    //        .or_filter(album.like(s.clone()))
+    //        .or_filter(title.like(s));
+    //}
+
+    let vals = match pql.start {
+        PartialQueryLevelEnum::Artist => pql.index.iter().zip(
+            [
+                PartialQueryLevelEnum::Artist,
+                PartialQueryLevelEnum::Album,
+                PartialQueryLevelEnum::Track,
+            ]
+            .iter(),
+        ),
+        PartialQueryLevelEnum::Album => pql
+            .index
+            .iter()
+            .zip([PartialQueryLevelEnum::Album, PartialQueryLevelEnum::Track].iter()),
+        PartialQueryLevelEnum::Track => pql.index.iter().zip([PartialQueryLevelEnum::Track].iter()),
+    };
+
+    for (index, level) in vals {
+        let mut level_query = tracks
+            .filter(artist.is_not_null())
+            .filter(artist.ne(""))
+            .into_boxed();
+        let p = pool.lock().expect("Error in lock");
+        let group = match level {
+            PartialQueryLevelEnum::Artist => level_query.select(artist).distinct(),
+            PartialQueryLevelEnum::Album => level_query.select(album).distinct(),
+            PartialQueryLevelEnum::Track => level_query.select(title).distinct(),
+        };
+        let val: String = group.offset(index.clone() as i64).first(p.deref()).unwrap();
+
+        query = match level {
+            PartialQueryLevelEnum::Artist => query.filter(artist.eq(&val)),
+            PartialQueryLevelEnum::Album => query.filter(album.eq(&val)),
+            PartialQueryLevelEnum::Track => query.filter(title.eq(&val)),
         };
     }
     query
@@ -103,7 +128,7 @@ fn basic_tree_query(
 pub fn load_query(pool: &DBPool, pql: &PartialQueryLevel) -> loaded_playlist::LoadedPlaylist {
     use diesel::RunQueryDsl;
     let p = pool.lock().expect("Error in lock");
-    let items = basic_tree_query(pql)
+    let items = basic_tree_query(pool, pql)
         .load(p.deref())
         .expect("Error in loading");
     //let name = match &pql.lvl {
@@ -198,52 +223,6 @@ pub fn query_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist> {
     let query = basic_tree_query(pql);
 
     let mut q_tracks: Vec<db::Track> = query.load(p.deref()).expect("Error in DB");
-
-    //Artist, Album, Track
-    let mut hashmap: HashMap<String, HashMap<String, Vec<db::Track>>> = HashMap::new();
-    for t in q_tracks.drain(0..) {
-        if let Some(ref mut artist_hash) = hashmap.get_mut(&t.artist) {
-            if let Some(ref mut album_vec) = artist_hash.get_mut(&t.album) {
-                album_vec.push(t);
-            } else {
-                let k = t.artist.clone();
-                let v = vec![t];
-                artist_hash.insert(k, v);
-            }
-        } else {
-            let mut v = HashMap::new();
-            let kb = t.album.clone();
-            let ka = t.artist.clone();
-            let v2 = vec![t];
-            v.insert(kb, v2);
-            hashmap.insert(ka, v);
-        }
-    }
-
-    hashmap
-        .drain()
-        .map(|(k, mut m): (String, HashMap<String, Vec<db::Track>>)| {
-            let children = m
-                .drain()
-                .map(|(k2, v): (String, Vec<db::Track>)| Album {
-                    value: k2,
-                    optional: None,
-                    children: v
-                        .into_iter()
-                        .map(|v| Track {
-                            value: v.title,
-                            optional: v.tracknumber,
-                        })
-                        .collect(),
-                })
-                .collect();
-            Artist {
-                value: k,
-                optional: None,
-                children,
-            }
-        })
-        .collect::<Vec<Artist>>()
 }
 
 // TODO This could be much more general by having the fill_fn in general
