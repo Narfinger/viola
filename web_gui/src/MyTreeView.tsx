@@ -68,8 +68,8 @@ class MyTreeItemNode extends React.Component<MyTreeItemNodeProp, any> {
 
   populate_children(): void {
     console.log("Trying to populate my children, having index: " + this.props.index);
-    axios.post("/libraryview/partial", {
-      index: this.props.index.split("-"),
+    axios.post("/libraryview/partial/", {
+      index: this.props.index === "" ? [] : this.props.index.split("-").map((val) => parseInt(val, 10)),
       start: this.props.start,
     }).then((response) => {
       this.setState({
@@ -113,7 +113,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
     super(props);
     this.handleChange = this.handleChange.bind(this);
     this.state = {
-      main: new MyTreeItemNode({ index: "0", start: this.props.start }),
+      main: new MyTreeItemNode({ index: "", start: this.props.start }),
       search: "",
       menuOpen: false,
       menuIndex: "",
