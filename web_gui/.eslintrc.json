@@ -3,12 +3,16 @@
         "eslint:recommended",
         "plugin:react/recommended",
         "plugin:@typescript-eslint/recommended",
+        "plugin:import/errors",
+        "plugin:import/warnings",
         "prettier/@typescript-eslint",
     ],
     "plugins": [
         "react",
         "@typescript-eslint",
-        "prettier"
+        "prettier",
+        "jsx-a11y",
+        "flowtype"
     ],
     "env": {
         "browser": true,
