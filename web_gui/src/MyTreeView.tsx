@@ -10,6 +10,7 @@ import Popover from "@material-ui/core/Popover";
 import LibraryMenu from "./LibraryMenu";
 import axios from "axios";
 
+/*
 type Node = {
   children?: Node[];
   value?: string;
@@ -25,7 +26,7 @@ enum QueryType {
 
 type Query = {
   query_type: QueryType,
-  query: string,
+  query: Number,
 }
 
 
@@ -43,6 +44,119 @@ type MyTreeViewState = {
   menuIndex: string;
   anchor: any;
 };
+*/
+
+type MyTreeItemNodeProp = {
+  index?: string,
+}
+
+class MyTreeItemNode extends React.Component<MyTreeItemNodeProp, any> {
+  constructor(props) {
+    super(props);
+    this.state = {
+      children: [],
+    };
+  }
+
+  populate_children(): void {
+    console.log("Trying to populate my children, having index: " + this.props.index);
+    axios.post("/libraryview/partial", {
+      index: this.props.index,
+    }).then((response) => {
+      this.setState({
+        children: response.data.map((v, index) => {
+          <MyTreeItemNode index={this.props.index + "-" + index}></MyTreeItemNode>
+        }),
+      })
+    });
+  }
+
+  render(): JSX.Element {
+    return <TreeItem nodeId={this.props.index}>
+      {
+        this.state.children.map((value, index) => {
+          return value;
+        })
+      }
+    </TreeItem >;
+  }
+}
+
+type MyTreeViewState = {
+  main: MyTreeItemNode;
+  search: string,
+  menuOpen: boolean,
+  menuIndex: string,
+  anchor: any,
+};
+
+enum QueryType {
+  Artist,
+  Album,
+  Track,
+}
+
+type Query = {
+  query_type: QueryType,
+  query: string,
+}
+
+type MyTreeViewProps = {
+  query_params_list: Query[];
+  url: string;
+  close_fn: () => void;
+};
+
+export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeViewState> {
+  public static defaultProps = {
+    query_for_details: true,
+  };
+
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+    this.state = {
+      main: new MyTreeItemNode({ index: "0" }),
+      search: "",
+      menuOpen: false,
+      menuIndex: "",
+      anchor: null,
+    }
+    this.state.main.populate_children();
+  }
+
+  searchChange(): void {
+
+  }
+
+  handleChange(event, nodeids: string[]): void {
+    let cur = this.state.main;
+    for (const i in nodeids) {
+      cur = cur.state.children[i];
+    }
+    cur.populate_children();
+  }
+
+  render(): JSX.Element {
+    return (
+      <Paper style={{ maxHeight: 800, width: 800, overflow: "auto" }}>
+        <form noValidate autoComplete="off">
+          <Input defaultValue="" onChange={this.searchChange} />
+        </form>
+        <TreeView
+          defaultCollapseIcon={<ExpandMoreIcon />}
+          defaultExpandIcon={<ChevronRightIcon />}
+          onNodeToggle={this.handleChange}
+        >
+          <LibraryMenu open={this.state.menuOpen} index={this.state.menuIndex} anchor={this.state.anchor} closeFn={() => this.setState({ menuOpen: false })} />
+          {this.state.main.state.children}
+        </TreeView>
+      </Paper>
+    );
+  }
+}
+
+/*
 export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeViewState> {
   refreshDebounced: any;
 
@@ -96,53 +210,10 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
       const ids = nodeids[0].split("-").map(parseInt);
 
       if (this.need_to_load(ids)) {
-        let state: Query;
-        // format we look at is
-        // {"type": "album", "content": "foo"};
-
-        const names = [];
-        names.push(this.state.items[ids[0]].value);
-        if (ids.length === 2) {
-          names.push(this.state.items[ids[0]].children[ids[1]].value);
-        } else {
-          names.push();
-        }
-
-        state = this.props.query_params_list[ids.length];
-        state.query = names[ids.length - 1];
-        const queryParam = { search: this.state.search, pql: state };
-
+        const queryParam = { search: this.state.search, pql: this.props.query_params_list.slice(ids.length) };
+        queryParam.pql[0].query = ids.slice(-1)[0];
         axios.post(this.props.url, queryParam).then((response) => {
-          if (ids.length === 1) {
-            const newObject = {
-              value: names[0],
-              children: response.data[0].children,
-            };
-            this.setState({
-              items: this.state.items.map((obj, index) => {
-                return ids[0] === index ? newObject : obj;
-              }),
-            });
-          } else if (ids.length === 2) {
-            const newObject = {
-              value: names[1],
-              children: response.data[0].children[0].children,
-            };
-            this.setState({
-              items: this.state.items.map((obj, index) => {
-                if (ids[0] !== index) {
-                  return obj;
-                } else {
-                  return {
-                    value: names[0],
-                    children: obj.children.map((objv2, indexv2) => {
-                      return ids[1] === indexv2 ? newObject : objv2;
-                    }),
-                  };
-                }
-              }),
-            });
-          }
+          //fill into the tree
         });
       }
     }
@@ -288,3 +359,4 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
     );
   }
 }
+*/

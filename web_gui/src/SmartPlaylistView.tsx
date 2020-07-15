@@ -2,6 +2,7 @@ import axios from "axios";
 import MyTreeView from "./MyTreeView";
 
 export default class SmartplaylistView extends MyTreeView {
+  /*
   public static defaultProps = {
     query_for_details: false,
     query_params_list: [],
@@ -25,4 +26,5 @@ export default class SmartplaylistView extends MyTreeView {
     const i = parseInt(index, 10);
     axios.post("/smartplaylist/load/", { index: i });
   }
+  */
 }

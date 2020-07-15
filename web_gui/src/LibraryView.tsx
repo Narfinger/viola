@@ -107,7 +107,6 @@ class LibraryView extends React.Component<LibraryViewProps, LibraryViewState> {
           <Tab label="Track" {...a11yProps(3)} />
         </Tabs>
         <TabPanel value={this.state.value} index={0}>
-          <SmartplaylistView url="/smartplaylist/" close_fn={this.props.close_fn} />
         </TabPanel>
         <TabPanel value={this.state.value} index={1}>
           <MyTreeView close_fn={this.props.close_fn}
