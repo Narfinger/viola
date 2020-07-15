@@ -61,10 +61,12 @@ class MyTreeItemNode {
   children = [];
   id: string = "";
   title: string = "";
+  start: QueryType = QueryType.Artist;
 
-  constructor(children, id, title) {
+  constructor(children, id, start, title) {
     this.children = children;
     this.id = id;
+    this.start = start;
     this.title = title;
   }
 
@@ -72,9 +74,10 @@ class MyTreeItemNode {
     if (this.children.length === 0) {
       axios.post("/libraryview/partial/", {
         index: this.id,
+        start: this.start,
       }).then((response) => {
         this.children = response.data.map((val, index) => {
-          return new MyTreeItemNode([], this.id + "-" + String(index), "test");
+          return new MyTreeItemNode([], this.id + "-" + String(index), this.start, "test");
         }
         )
       })
@@ -114,7 +117,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
     super(props);
     this.handleChange = this.handleChange.bind(this);
     this.state = {
-      main: new MyTreeItemNode([], "", ""),
+      main: new MyTreeItemNode([], "", this.props.start, ""),
       search: "",
       menuOpen: false,
       menuIndex: "",
@@ -132,11 +135,12 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
   }
 
   handleChange(event, nodeids: string[]): void {
-    //let cur = this.state.main;
-    //for (const i in nodeids) {
-    //  cur = cur.state.children[i];
-    //}
-    //cur.populate_children();
+    let cur = this.state.main;
+    for (const i in nodeids) {
+      cur = cur.children[i];
+    }
+    cur.populate_children();
+    this.setState({ main: this.state.main });
   }
 
   render(): JSX.Element {
