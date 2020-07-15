@@ -10,5 +10,5 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - run: sudo apt install libgstreamer1.0-dev
+      - run: sudo apt install libgstreamer1.0-dev libpango1.0-dev
       - run: cargo build --release --all-features
