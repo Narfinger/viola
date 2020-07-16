@@ -10,42 +10,6 @@ import Popover from "@material-ui/core/Popover";
 import LibraryMenu from "./LibraryMenu";
 import axios from "axios";
 
-/*
-type Node = {
-  children?: Node[];
-  value?: string;
-};
-
-type Tree = Node[];
-
-enum QueryType {
-  Artist,
-  Album,
-  Track,
-}
-
-type Query = {
-  query_type: QueryType,
-  query: Number,
-}
-
-
-type MyTreeViewProps = {
-  query_for_details: boolean;
-  query_params_list: Query[];
-  url: string;
-  close_fn: () => void;
-};
-
-type MyTreeViewState = {
-  items: Tree;
-  search: string;
-  menuOpen: boolean;
-  menuIndex: string;
-  anchor: any;
-};
-*/
-
 enum QueryType {
   Artist,
   Album,
@@ -73,11 +37,11 @@ class MyTreeItemNode {
   populate_children() {
     if (this.children.length === 0) {
       axios.post("/libraryview/partial/", {
-        index: this.id,
+        index: this.id == "" ? [] : this.id.split("-"),
         start: this.start,
       }).then((response) => {
         this.children = response.data.map((val, index) => {
-          return new MyTreeItemNode([], this.id + "-" + String(index), this.start, "test");
+          return new MyTreeItemNode([], this.id + "-" + String(index), this.start, val);
         }
         )
       })
@@ -87,9 +51,9 @@ class MyTreeItemNode {
 
 class MyTreeItemRender extends React.Component<{ mynode: MyTreeItemNode }, {}> {
   render(): JSX.Element {
-    return <TreeItem nodeId={this.props.mynode.id} key={this.props.mynode.id} label={this.props.mynode.title}>
+    return <TreeItem nodeId={this.props.mynode.id} label={this.props.mynode.title} key={this.props.mynode.id}>
       {this.props.mynode.children.map((val) => {
-        <MyTreeItemRender mynode={val} />
+        return <MyTreeItemRender mynode={val} />
       })}
     </TreeItem>
   }
@@ -130,17 +94,25 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
   }
 
   componentDidMount() {
-    this.state.main.populate_children();
-    this.setState({ main: this.state.main });
+    let new_main = this.state.main;
+    new_main.populate_children();
+    console.log(this.state.main);
+    //react can't do nested updates because of course it can't
+    this.setState({ main: new_main },
+      () => {
+        console.log("inside");
+        console.log(this.state.main);
+        console.log(this.state.main.children);
+      });
   }
 
   handleChange(event, nodeids: string[]): void {
-    let cur = this.state.main;
-    for (const i in nodeids) {
-      cur = cur.children[i];
-    }
-    cur.populate_children();
-    this.setState({ main: this.state.main });
+    //let cur = this.state.main;
+    //for (const i in nodeids) {
+    //  cur = cur.children[i];
+    //}
+    //cur.populate_children();
+    //this.setState({ main: this.state.main });
   }
 
   render(): JSX.Element {
@@ -149,13 +121,17 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
         <form noValidate autoComplete="off">
           <Input defaultValue="" onChange={this.searchChange} />
         </form>
+        <LibraryMenu open={this.state.menuOpen} index={this.state.menuIndex} anchor={this.state.anchor} closeFn={() => this.setState({ menuOpen: false })} />
         <TreeView
           defaultCollapseIcon={<ExpandMoreIcon />}
           defaultExpandIcon={<ChevronRightIcon />}
           onNodeToggle={this.handleChange}
         >
-          <LibraryMenu open={this.state.menuOpen} index={this.state.menuIndex} anchor={this.state.anchor} closeFn={() => this.setState({ menuOpen: false })} />
-          <MyTreeItemRender mynode={this.state.main} />
+          <TreeItem nodeId="test" label="test" key="test">
+            {this.state.main.children.map((val) => {
+              return <MyTreeItemRender mynode={val} />
+            })}
+          </TreeItem>
         </TreeView>
       </Paper>
     );
