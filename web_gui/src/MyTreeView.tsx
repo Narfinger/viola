@@ -9,6 +9,7 @@ import AwesomeDebouncePromise from "awesome-debounce-promise";
 import Popover from "@material-ui/core/Popover";
 import LibraryMenu from "./LibraryMenu";
 import axios from "axios";
+import { immerable, produce } from "immer";
 
 enum QueryType {
   Artist,
@@ -22,6 +23,8 @@ type MyTreeItemNodeProp = {
 }
 
 class MyTreeItemNode {
+  [immerable] = true;
+
   children = [];
   id: string = "";
   title: string = "";
@@ -34,22 +37,27 @@ class MyTreeItemNode {
     this.title = title;
   }
 
-  populate_children() {
+  async populate_children(): Promise<Array<MyTreeItemNode>> {
     if (this.children.length === 0) {
-      axios.post("/libraryview/partial/", {
+      return axios.post("/libraryview/partial/", {
         index: this.id == "" ? [] : this.id.split("-"),
         start: this.start,
       }).then((response) => {
-        this.children = response.data.map((val, index) => {
+        return response.data.map((val, index) => {
           return new MyTreeItemNode([], this.id + "-" + String(index), this.start, val);
         }
         )
       })
+    } else {
+      return [];
     }
   }
 }
 
 class MyTreeItemRender extends React.Component<{ mynode: MyTreeItemNode }, {}> {
+  nodeId = "render" + this.props.mynode.id;
+  key = "render" + this.props.mynode.id;
+
   render(): JSX.Element {
     return <TreeItem nodeId={this.props.mynode.id} label={this.props.mynode.title} key={this.props.mynode.id}>
       {this.props.mynode.children.map((val) => {
@@ -93,17 +101,15 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
 
   }
 
-  componentDidMount() {
-    let new_main = this.state.main;
-    new_main.populate_children();
-    console.log(this.state.main);
-    //react can't do nested updates because of course it can't
-    this.setState({ main: new_main },
-      () => {
-        console.log("inside");
+  async componentDidMount() {
+    const new_children = await this.state.main.populate_children();
+    this.setState(
+      produce(draft => {
+        draft.main.children = new_children;
+      }), () => {
         console.log(this.state.main);
-        console.log(this.state.main.children);
-      });
+      }
+    )
   }
 
   handleChange(event, nodeids: string[]): void {
@@ -127,11 +133,9 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
           defaultExpandIcon={<ChevronRightIcon />}
           onNodeToggle={this.handleChange}
         >
-          <TreeItem nodeId="test" label="test" key="test">
-            {this.state.main.children.map((val) => {
-              return <MyTreeItemRender mynode={val} />
-            })}
-          </TreeItem>
+          {this.state.main.children.map((val, index) => {
+            return <MyTreeItemRender mynode={val} />
+          })}
         </TreeView>
       </Paper>
     );
