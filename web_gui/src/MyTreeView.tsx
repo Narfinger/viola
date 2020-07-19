@@ -25,10 +25,10 @@ type MyTreeItemNodeProp = {
 class MyTreeItemNode {
   [immerable] = true;
 
-  children = [];
-  id: string = "";
-  title: string = "";
-  start: QueryType = QueryType.Artist;
+  public children = [];
+  public id: string = "";
+  public title: string = "";
+  public start: QueryType = QueryType.Artist;
 
   constructor(children, id, start, title) {
     this.children = children;
@@ -137,6 +137,7 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
           cur.children = new_children);
       }, () => {
         console.log("Update children");
+        //this.setState({ expaned: nodeids });
       })
     )
     //this.setState({ main: this.state.main });
