@@ -38,15 +38,15 @@ class MyTreeItemNode {
   }
 
   async populate_children(): Promise<Array<MyTreeItemNode>> {
+    console.log("populating with" + this.id.substr(1).split("-"));
     if (this.children.length === 0) {
       return axios.post("/libraryview/partial/", {
-        index: this.id == "" ? [] : this.id.split("-"),
+        index: this.id == "" ? [] : this.id.substr(1).split("-").map((val) => parseInt(val, 10)),
         start: this.start,
       }).then((response) => {
         return response.data.map((val, index) => {
           return new MyTreeItemNode([], this.id + "-" + String(index), this.start, val);
-        }
-        )
+        })
       })
     } else {
       return [];
@@ -59,11 +59,17 @@ class MyTreeItemRender extends React.Component<{ mynode: MyTreeItemNode }, {}> {
   key = "render" + this.props.mynode.id;
 
   render(): JSX.Element {
-    return <TreeItem nodeId={this.props.mynode.id} label={this.props.mynode.title} key={this.props.mynode.id}>
-      {this.props.mynode.children.map((val) => {
-        return <MyTreeItemRender mynode={val} />
-      })}
-    </TreeItem>
+    if (this.props.mynode.children.length === 0) {
+      return <TreeItem nodeId={this.props.mynode.id} label={this.props.mynode.title} key={this.props.mynode.id}>
+        <TreeItem key={this.props.mynode.id} nodeId={this.props.mynode.id} label="Loading" />
+      </TreeItem >;
+    } else {
+      return <TreeItem nodeId={this.props.mynode.id} label={this.props.mynode.title} key={this.props.mynode.id}>
+        {this.props.mynode.children.map((val) => {
+          return <MyTreeItemRender mynode={val} />;
+        })}
+      </TreeItem>
+    };
   }
 }
 
@@ -113,11 +119,26 @@ export default class MyTreeView extends React.Component<MyTreeViewProps, MyTreeV
   }
 
   handleChange(event, nodeids: string[]): void {
-    //let cur = this.state.main;
-    //for (const i in nodeids) {
-    //  cur = cur.children[i];
-    //}
-    //cur.populate_children();
+    console.log('we currently go into a recursion for some reason");')
+
+
+    console.log("called with" + "\"" + nodeids + "\"");
+    let new_ids = nodeids;
+    new_ids[0] = new_ids[0].substr(1);
+    console.log("newids" + new_ids);
+    this.setState(
+      produce((draft) => {
+        let cur = draft.main;
+        for (const i of new_ids) {
+          console.log(i);
+          cur = cur.children[parseInt(i, 10)];
+        }
+        cur.populate_children().then((new_children) =>
+          cur.children = new_children);
+      }, () => {
+        console.log("Update children");
+      })
+    )
     //this.setState({ main: this.state.main });
   }
 
