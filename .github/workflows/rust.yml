@@ -9,7 +9,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - run: sudo apt install librust-gstreamer-sys-dev
+      - run: sudo apt install libgstreamer1.0-dev gnome-devel
       - run: cargo build --release --all-features
   build_web:
     name: Build NPM
@@ -21,5 +21,5 @@ jobs:
           node-version: '12.x'
       - run: npm install
         working-directory: "web_gui"
-      - run: npm build
+      - run: npm run build
         working-directory: "web_gui"
