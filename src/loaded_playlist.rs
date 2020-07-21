@@ -191,13 +191,14 @@ impl PlaylistControls for LoadedPlaylistPtr {
     fn delete_range(&self, range: crate::types::Range) {
         let mut s = self.write().unwrap();
         println!("removing with range: {}", &range);
+        let range_to = range.to.unwrap_or(s.items.len() - 1);
 
-        s.items.drain(range.from..=range.to);
+        s.items.drain(range.from..=range_to);
 
-        if s.current_position >= range.from && s.current_position <= range.to {
+        if s.current_position >= range.from && s.current_position <= range_to {
             s.current_position = 0;
-        } else if s.current_position > range.to {
-            s.current_position -= range.to - range.from;
+        } else if s.current_position > range_to {
+            s.current_position -= range_to - range.from;
         }
     }
 

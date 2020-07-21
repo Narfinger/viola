@@ -13,10 +13,7 @@ type DeleteRangeButtonState = {
   text: string;
 };
 
-export default class DeleteRangeButton extends React.Component<
-  {},
-  DeleteRangeButtonState
-  > {
+export default class DeleteRangeButton extends React.Component<{}, DeleteRangeButtonState> {
   constructor(props) {
     super(props);
     this.state = {
@@ -43,11 +40,15 @@ export default class DeleteRangeButton extends React.Component<
 
   handleSubmit(): void {
     const range = this.state.text.split("-");
-    axios.delete("/deletefromplaylist/", {
-      data: {
+    const upper = parseInt(range[1], 10);
+    const s_data = isNaN(upper) ? {
+      from: parseInt(range[0], 10),
+    } : {
         from: parseInt(range[0], 10),
-        to: parseInt(range[1], 10),
-      },
+        to: upper,
+      };
+    axios.delete("/deletefromplaylist/", {
+      data: s_data
     });
     this.setState({ open: false, text: "" });
   }
