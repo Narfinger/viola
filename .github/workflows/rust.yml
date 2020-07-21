@@ -2,7 +2,7 @@ on: [push]
 
 name: CI
 jobs:
-  build_and_test:
+  build_rust:
     name: Rust project
     runs-on: ubuntu-latest
     steps:
@@ -10,5 +10,17 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - run: sudo apt install libgstreamer1.0-dev libpango1.0-dev libatk1.0-dev libsoup-gnome2.4-dev libgdk3.0-cil-dev
+      - run: sudo apt install librust-gstreamer-sys-dev
       - run: cargo build --release --all-features
+  build_web:
+    name: Build NPM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - run: npm install
+        working-directory: "web_gui"
+      - run: npm build
+        working-directory: "web_gui'
