@@ -7,7 +7,7 @@ import Tab from "@material-ui/core/Tab";
 import * as PropTypes from "prop-types";
 import { makeStyles, withStyles } from "@material-ui/core/styles";
 import MyTreeView from "./MyTreeView";
-import SmartplaylistView from "./SmartplaylistView";
+import SmartplaylistView from "./SmartPlaylistView";
 import { render } from "react-dom";
 
 function TabPanel(props): JSX.Element {
