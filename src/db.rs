@@ -87,7 +87,8 @@ fn is_valid_file(s: &Result<DirEntry, walkdir::Error>) -> bool {
         if sp.metadata().unwrap().file_type().is_file() {
             Some(true)
                 == sp.path().extension().map(|ex| {
-                    vec!["ogg", "flac", "mp3", "wma", "aac", "opus"].contains(&ex.to_str().unwrap())
+                    vec!["ogg", "flac", "mp3", "wma", "aac", "opus", "m4a"]
+                        .contains(&ex.to_str().unwrap())
                 })
         } else {
             false
