@@ -10,7 +10,7 @@ jobs:
         with:
           toolchain: stable
       - run: sudo apt update
-      - run: sudo apt install libgstreamer1.0-dev gnome-devel libsoup2.4-dev
+      - run: sudo apt install libgstreamer1.0-dev gnome-devel libsoup2.4-dev libwebkit2gtk-4.0-dev
       - run: cargo build --release --all-features
   build_web:
     name: Build NPM
