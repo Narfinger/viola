@@ -51,6 +51,7 @@ type MainState = {
   tabs: object[];
   time_state: number;
   repeat: boolean;
+  songview: any;
 };
 
 class Main extends React.Component<{}, MainState> {
@@ -71,6 +72,13 @@ class Main extends React.Component<{}, MainState> {
       tabs: [],
       time_state: 0,
       repeat: false,
+      songview: React.createElement(SongView, {
+        ref: this.songview,
+        current: this.state.current,
+        current_playing: this.state.current_playing,
+        pl: this.state.pl,
+        tabs: this.state.tabs,
+      }),
     };
 
     this.handleButtonPush = this.handleButtonPush.bind(this);
@@ -147,6 +155,11 @@ class Main extends React.Component<{}, MainState> {
               time_state: 0,
             })
           );
+          break;
+        }
+        case "IncrementPlay": {
+          console.log(msg);
+          this.state.songview.increment(msg.data);
           break;
         }
         case "ReloadTabs": {
@@ -297,14 +310,7 @@ class Main extends React.Component<{}, MainState> {
               {playstate_to_string(this.state.status)}
             </Grid>
             <Grid item xs={12}>
-              <SongView
-                ref={this.songview}
-                current={this.state.current}
-                current_playing={this.state.current_playing}
-                pl={this.state.pl}
-                playing={is_playing}
-                tabs={this.state.tabs}
-              />
+              {this.state.songview}
             </Grid>
             <Grid container alignItems="center">
               <Grid item xs={2}>

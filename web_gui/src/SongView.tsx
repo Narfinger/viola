@@ -6,25 +6,24 @@ import PlaylistTab from "./PlaylistTab";
 import { columnWidths, Cell } from "./Cell";
 
 type SongViewProps = {
-  pl: any;
   current: number;
   current_playing: number;
   tabs: any;
   playing: boolean;
+  pl: any;
 };
 
 type SongViewState = {
+  pl: any;
   value: number;
 };
 
-export default class SongView extends React.Component<
-  SongViewProps,
-  SongViewState
-  > {
+export default class SongView extends React.Component<SongViewProps, SongViewState> {
   constructor(props) {
     super(props);
     this.state = {
       value: 0,
+      pl: this.props.pl,
     };
     this.handleChange = this.handleChange.bind(this);
   }
@@ -40,8 +39,22 @@ export default class SongView extends React.Component<
     this.setState({ value: i });
   }
 
+  increment(i: number): void {
+    console.log("NYI");
+    this.setState({
+      pl: this.state.pl.map((t, j) => {
+        if (i == j) {
+          t.playcount += 1;
+          return t;
+        } else {
+          return t;
+        }
+      })
+    });
+  }
+
   render(): JSX.Element {
-    const items = this.props.pl.map((t) => ({
+    const items = this.state.pl.map((t) => ({
       item: t,
       selected: false,
       playing: this.props.playing,
@@ -73,7 +86,7 @@ export default class SongView extends React.Component<
           columnCount={9}
           columnWidth={columnWidths}
           height={600}
-          rowCount={this.props.pl.length}
+          rowCount={this.state.pl.length}
           rowHeight={(index) => {
             return 25;
           }}

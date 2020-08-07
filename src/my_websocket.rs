@@ -9,6 +9,7 @@ use std::sync::RwLock;
 pub enum WsMessage {
     PlayChanged { index: usize },
     CurrentTimeChanged { index: u64 },
+    IncrementPlay { index: u64 },
     ReloadTabs,
     ReloadPlaylist,
     Ping,
