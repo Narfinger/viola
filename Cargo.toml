@@ -6,7 +6,7 @@ authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-actix = "0.9"
+actix = "0.10"
 actix-rt = "1.1"
 actix-web = "2.0"
 actix-web-actors="2.0"
