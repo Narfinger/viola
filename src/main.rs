@@ -6,6 +6,7 @@ extern crate base64;
 extern crate clap;
 #[macro_use]
 extern crate diesel;
+#[macro_use] extern crate diesel_migrations;
 extern crate env_logger;
 #[macro_use]
 extern crate log;
@@ -22,6 +23,7 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
+extern crate rusqlite;
 extern crate toml;
 extern crate walkdir;
 //extern crate jwalk;
@@ -45,6 +47,7 @@ pub mod utils;
 use clap::{App, Arg};
 use preferences::{prefs_base_dir, AppInfo, Preferences, PreferencesMap};
 use std::{env, io};
+use std::sync::{Arc, Mutex};
 
 const APP_INFO: AppInfo = AppInfo {
     name: "viola",
@@ -100,7 +103,15 @@ async fn main() -> io::Result<()> {
     env::set_var("RUST_LOG", "actix_web=debug,actix_server=info");
     env_logger::init();
 
-    let pool = db::setup_db_connection();
+    let tmp_pool = db::setup_db_connection();
+    if tmp_pool.is_err() {
+        println!("Something is wrong with db, creating it.");
+        db::create_db();
+        println!("Please call viola with -m to set the music dir.");
+        println!("Afterwards, update the music library by calling with -u.");
+        return Ok(());
+    }
+    let pool = Arc::new(Mutex::new(tmp_pool.unwrap()));
     if matches.is_present("update") {
         info!("Updating Database");
         if let Ok(preferences) = PreferencesMap::<String>::load(&APP_INFO, PREFS_KEY) {
@@ -129,7 +140,7 @@ async fn main() -> io::Result<()> {
         let mut p = prefs_base_dir().expect("Base dir cannot be founds");
         p.push("viola");
         let s = p.to_str().expect("Error in convert");
-        error!(
+        println!(
             "The config path can be found under {}.\n Please add the file smartplaylists.toml\
              if you want to add smartplaylists",
             s

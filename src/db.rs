@@ -2,6 +2,7 @@ use crate::schema::tracks;
 use crate::types::{DBPool, APP_INFO};
 use app_dirs::*;
 use diesel::{Connection, SqliteConnection};
+use diesel_migrations;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::collections::HashSet;
 use std::iter::FromIterator;
@@ -73,13 +74,22 @@ pub struct NewTrack {
     albumpath: Option<String>,
 }
 
-pub fn setup_db_connection() -> DBPool {
+embed_migrations!("migrations/");
+pub fn setup_db_connection() -> Result<diesel::SqliteConnection, diesel::ConnectionError> {
+
     let mut db_file =
         get_app_root(AppDataType::UserConfig, &APP_INFO).expect("Could not get app root");
     db_file.push("music.db");
-    Arc::new(Mutex::new(
-        SqliteConnection::establish(&db_file.to_str().unwrap()).expect("Could not open database"),
-    ))
+    SqliteConnection::establish(&db_file.to_str().unwrap())
+}
+
+pub fn create_db() {
+    let mut db_file =
+        get_app_root(AppDataType::UserConfig, &APP_INFO).expect("Could not get app root");
+    db_file.push("music.db");
+    let db = rusqlite::Connection::open(&db_file).expect("Cannot create db, something is wrong");
+    let connection = SqliteConnection::establish(&db_file.to_str().unwrap()).expect("Something wrong");
+    embedded_migrations::run(&connection).expect("Could not run migration");
 }
 
 fn is_valid_file(s: &Result<DirEntry, walkdir::Error>) -> bool {

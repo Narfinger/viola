@@ -41,6 +41,9 @@ export default class SongView extends React.Component<
   }
 
   render(): JSX.Element {
+    if (this.props.pl.length == 0) {
+      return (<div></div>)
+    }
     const items = this.props.pl.map((t) => ({
       item: t,
       selected: false,

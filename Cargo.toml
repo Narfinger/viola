@@ -15,6 +15,7 @@ app_dirs = "1.2"         # Put your app's data in the right place on every platf
 base64 = "0.12"
 clap = "2.33"                    # A simple to use, efficient, and full featured  Command Line Argument Parser
 diesel = { version = "1.4", features = ["sqlite", "r2d2"] }
+diesel_migrations = {version = "1.4", features = ["sqlite"]}
 erased-serde = "0.3"
 error-chain = "0.12"
 futures = "0.3"
@@ -35,6 +36,7 @@ serde_json = "1.0"
 serde = "1.0"                      # A generic serialization/deserialization framework
 open = "1.4"
 rand = "0.7"
+rusqlite = "0.23"
 toml = "0.5"
 owning_ref = "0.4"
 walkdir = "2"
