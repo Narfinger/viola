@@ -25,8 +25,14 @@ export default class PlaylistTab extends React.Component<PlaylistTabProps, {}> {
       event.target.tagName === "svg" ||
       event.target.tagName === "path"
     ) {
-      console.log("deleting playlisttab id " + this.props.index);
-      axios.delete("/playlisttab/", { data: { index: this.props.index } });
+      console.log("deleting playlisttab id changed " + this.props.index);
+      axios({
+        method: 'delete',
+        url: '/playlisttab/',
+        data: {
+          index: this.props.index,
+        }
+      });
       event.preventDefault();
     } else {
       return;
