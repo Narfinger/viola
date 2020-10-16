@@ -163,6 +163,7 @@ impl GStreamerExt for GStreamer {
         //everytime we call return, we do not want to send the message we got to the gui, as it will be done in a subcall we have done
         match action {
             GStreamerAction::Next => {
+                self.repeat_once.store(false, Ordering::SeqCst);
                 if let Some(i) = self.current_playlist.next_or_eol() {
                     self.do_gstreamer_action(GStreamerAction::Play(i));
                 } else {
@@ -196,6 +197,7 @@ impl GStreamerExt for GStreamer {
                 }
             }
             GStreamerAction::Previous => {
+                self.repeat_once.store(false, Ordering::SeqCst);
                 if let Some(i) = self.current_playlist.previous() {
                     self.do_gstreamer_action(GStreamerAction::Play(i));
                 } else {
