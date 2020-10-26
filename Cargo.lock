@@ -120,7 +120,7 @@ dependencies = [
  "rand",
  "regex",
  "serde 1.0.117",
- "serde_json 1.0.58",
+ "serde_json 1.0.59",
  "serde_urlencoded",
  "sha-1",
  "slab",
@@ -287,7 +287,7 @@ dependencies = [
  "pin-project",
  "regex",
  "serde 1.0.117",
- "serde_json 1.0.58",
+ "serde_json 1.0.59",
  "serde_urlencoded",
  "socket2",
  "time 0.2.22",
@@ -449,7 +449,7 @@ dependencies = [
  "percent-encoding",
  "rand",
  "serde 1.0.117",
- "serde_json 1.0.58",
+ "serde_json 1.0.59",
  "serde_urlencoded",
 ]
 
@@ -2136,9 +2136,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.58"
+version = "1.0.59"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a230ea9107ca2220eea9d46de97eddcb04cd00e92d13dda78e478dd33fa82bd4"
+checksum = "dcac07dbffa1c65e7f816ab9eba78eb142c6d44410f4eeba1e26e4f5dfa56b95"
 dependencies = [
  "itoa 0.4.6",
  "ryu",
@@ -2287,7 +2287,7 @@ dependencies = [
  "quote",
  "serde 1.0.117",
  "serde_derive",
- "serde_json 1.0.58",
+ "serde_json 1.0.59",
  "sha1",
  "syn",
 ]
@@ -2763,7 +2763,7 @@ dependencies = [
  "rusqlite",
  "serde 1.0.117",
  "serde_derive",
- "serde_json 1.0.58",
+ "serde_json 1.0.59",
  "taglib",
  "toml",
  "walkdir",
