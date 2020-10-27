@@ -1,12 +1,11 @@
 use seed::{prelude::*, *};
 use serde;
-#[macro_use]
-use serde_json;
 
 struct Model {
     tracks: Vec<Track>,
     playlist_tabs: Vec<PlaylistTab>,
     current_playlist_tab: usize,
+    play_status: GStreamerAction,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -37,6 +36,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         tracks: vec![],
         playlist_tabs: vec![],
         current_playlist_tab: 0,
+        play_status: GStreamerAction::Stop,
     }
 }
 enum Msg {
@@ -44,10 +44,23 @@ enum Msg {
     InitPlaylistRecv(Vec<Track>),
     InitPlaylistTabs,
     InitPlaylistTabRecv((usize, Vec<PlaylistTab>)),
-    ButtonPrev,
-    ButtonPlay,
-    ButtonPause,
-    ButtonNext,
+    Transport(GStreamerAction),
+    RefreshPlayStatus,
+    RefreshPlayStatusRecv(GStreamerAction),
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(tag = "t", content = "c")]
+pub enum GStreamerAction {
+    Next,
+    Playing,
+    Pausing,
+    Previous,
+    Stop,
+    // This means we selected one specific track
+    //Play(usize),
+    //Seek(u64),
+    //RepeatOnce, // Repeat the current playing track after it finishes
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -91,6 +104,29 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.playlist_tabs = tabs;
             model.current_playlist_tab = current;
         }
+        Msg::Transport(t) => {
+            orders.perform_cmd(async move {
+                let req = Request::new("/transport/")
+                    .method(Method::Post)
+                    .json(&t)
+                    .expect("Could not build result");
+                fetch(req).await.expect("Could not send message");
+                Msg::RefreshPlayStatus
+            });
+        }
+        Msg::RefreshPlayStatus => {
+            orders.perform_cmd(async {
+                let req = fetch("/transport/").await.expect("Could not send req");
+                let action = req
+                    .json::<GStreamerAction>()
+                    .await
+                    .expect("Could not parse transport");
+                Msg::RefreshPlayStatusRecv(action)
+            });
+        }
+        Msg::RefreshPlayStatusRecv(a) => {
+            model.play_status = a;
+        }
     }
 }
 
@@ -102,7 +138,7 @@ fn view_button(model: &Model) -> Node<Msg> {
             button![
                 C!["btn", "btn-primary"],
                 "Prev",
-                ev(Ev::Click, |_| Msg::ButtonPrev)
+                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Previous))
             ]
         ],
         div![
@@ -110,7 +146,7 @@ fn view_button(model: &Model) -> Node<Msg> {
             button![
                 C!["btn", "btn-primary"],
                 "Play",
-                ev(Ev::Click, |_| Msg::ButtonPlay)
+                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Playing))
             ]
         ],
         div![
@@ -118,7 +154,7 @@ fn view_button(model: &Model) -> Node<Msg> {
             button![
                 C!["btn", "btn-primary"],
                 "Pause",
-                ev(Ev::Click, |_| Msg::ButtonPause)
+                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
             ]
         ],
         div![
@@ -126,7 +162,7 @@ fn view_button(model: &Model) -> Node<Msg> {
             button![
                 C!["btn", "btn-primary"],
                 "Next",
-                ev(Ev::Click, |_| Msg::ButtonNext)
+                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Next))
             ]
         ],
     ]
