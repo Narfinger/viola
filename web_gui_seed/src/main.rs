@@ -44,6 +44,10 @@ enum Msg {
     InitPlaylistRecv(Vec<Track>),
     InitPlaylistTabs,
     InitPlaylistTabRecv((usize, Vec<PlaylistTab>)),
+    ButtonPrev,
+    ButtonPlay,
+    ButtonPause,
+    ButtonNext,
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -90,16 +94,47 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-fn view(model: &Model) -> Node<Msg> {
-    div![div![
-        C!["container"],
+fn view_button(model: &Model) -> Node<Msg> {
+    div![
+        C!["row"],
         div![
-            C!["row"],
-            div![C!["col-sm"], button![C!["btn", "btn-primary"], "Prev"]],
-            div![C!["col-sm"], button![C!["btn", "btn-primary"], "Play"]],
-            div![C!["col-sm"], button![C!["btn", "btn-primary"], "Pause"]],
-            div![C!["col-sm"], button![C!["btn", "btn-primary"], "Next"]],
+            C!["col-sm"],
+            button![
+                C!["btn", "btn-primary"],
+                "Prev",
+                ev(Ev::Click, |_| Msg::ButtonPrev)
+            ]
         ],
+        div![
+            C!["col-sm"],
+            button![
+                C!["btn", "btn-primary"],
+                "Play",
+                ev(Ev::Click, |_| Msg::ButtonPlay)
+            ]
+        ],
+        div![
+            C!["col-sm"],
+            button![
+                C!["btn", "btn-primary"],
+                "Pause",
+                ev(Ev::Click, |_| Msg::ButtonPause)
+            ]
+        ],
+        div![
+            C!["col-sm"],
+            button![
+                C!["btn", "btn-primary"],
+                "Next",
+                ev(Ev::Click, |_| Msg::ButtonNext)
+            ]
+        ],
+    ]
+}
+
+fn view_tabs(model: &Model) -> Node<Msg> {
+    div![
+        C!["row"],
         ul![
             C!["nav", "nav-tabs"],
             model.playlist_tabs.iter().enumerate().map(|(pos, tab)| {
@@ -109,7 +144,27 @@ fn view(model: &Model) -> Node<Msg> {
                     li![&tab.name]
                 }
             })
-        ],
+        ]
+    ]
+}
+
+fn view_track(t: &Track) -> Node<Msg> {
+    tr![
+        td![&t.tracknumber],
+        td![&t.title],
+        td![&t.artist],
+        td![&t.album],
+        td![&t.genre],
+        td![&t.year],
+        td![&t.length],
+    ]
+}
+
+fn view(model: &Model) -> Node<Msg> {
+    div![div![
+        C!["container"],
+        view_button(model),
+        view_tabs(model),
         table![
             C!["table", "table-dark"],
             tr![
@@ -121,17 +176,7 @@ fn view(model: &Model) -> Node<Msg> {
                 th!["Year"],
                 th!["Length"],
             ],
-            model.tracks.iter().map(|t| {
-                tr![
-                    td![&t.tracknumber],
-                    td![&t.title],
-                    td![&t.artist],
-                    td![&t.album],
-                    td![&t.genre],
-                    td![&t.year],
-                    td![&t.length],
-                ]
-            })
+            model.tracks.iter().map(view_track)
         ]
     ]]
 }
