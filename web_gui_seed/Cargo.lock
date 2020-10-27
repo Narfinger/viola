@@ -762,6 +762,9 @@ name = "web_gui_seed"
 version = "0.1.0"
 dependencies = [
  "seed",
+ "serde",
+ "serde_derive",
+ "serde_json",
 ]
 
 [[package]]

@@ -1,52 +1,63 @@
 use seed::{prelude::*, *};
-
-// ------ ------
-//     Init
-// ------ ------
-
-// `init` describes what should happen when your app started.
-fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
-    Model::default()
+use serde;
+#[macro_use]
+use serde_json;
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct Track {
+    pub id: i32,
+    pub title: String,
+    pub artist: String,
+    pub album: String,
+    pub genre: String,
+    pub tracknumber: Option<i32>,
+    pub year: Option<i32>,
+    pub path: String,
+    pub length: i32,
+    pub albumpath: Option<String>,
+    pub playcount: Option<i32>,
 }
 
-// ------ ------
-//     Model
-// ------ ------
+struct Model {
+    tracks: Vec<Track>,
+}
 
-// `Model` describes our app state.
-type Model = i32;
-
-// ------ ------
-//    Update
-// ------ ------
-
-// (Remove the line below once any of your `Msg` variants doesn't implement `Copy`.)
-#[derive(Copy, Clone)]
-// `Msg` describes the different events you can modify state with.
+fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
+    orders.send_msg(Msg::Init);
+    Model { tracks: vec![] }
+}
 enum Msg {
-    Increment,
+    Init,
+    InitRecv(Vec<Track>),
 }
 
-// `update` describes how to handle each `Msg`.
-fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::Increment => *model += 1,
+        Msg::Init => {
+            orders.perform_cmd(async {
+                let response = fetch("/playlist/").await.expect("HTTP request failed");
+                let tracks = response
+                    .check_status() // ensure we've got 2xx status
+                    .expect("status check failed")
+                    .json::<Vec<Track>>()
+                    .await
+                    .expect("deserialization failed");
+                Msg::InitRecv(tracks)
+            });
+        }
+        Msg::InitRecv(t) => {
+            model.tracks = t;
+        }
     }
 }
 
-// ------ ------
-//     View
-// ------ ------
-
-// (Remove the line below once your `Model` become more complex.)
-#[allow(clippy::trivially_copy_pass_by_ref)]
-// `view` describes what to display.
 fn view(model: &Model) -> Node<Msg> {
-    div![
-        "This is a counter: ",
-        C!["counter"],
-        button![model, ev(Ev::Click, |_| Msg::Increment),],
-    ]
+    div![table![
+        C!["table"],
+        model
+            .tracks
+            .iter()
+            .map(|t| { tr![td![&t.title], td![&t.artist], td![&t.album]] })
+    ]]
 }
 
 fn main() {
