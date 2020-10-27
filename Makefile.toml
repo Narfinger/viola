@@ -1,0 +1,15 @@
+[tasks.build_backend]
+command = "cargo"
+args = ["build --release"]
+
+[tasks.build_frontend]
+install_crate = { crate_name = "trunk" }
+command = "trunk"
+args = ["build"]
+
+
+[tasks.build]
+run_task = [
+    { name = "build_backend"},
+    { name = "build_frontent"}
+]
