@@ -96,7 +96,24 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     .json()
                     .await
                     .expect("Deserilization failed");
-                Msg::InitPlaylistTabRecv((playlisttabs.current, vec![]))
+                let mut tabs = Vec::new();
+                for (i, val) in playlisttabs.tabs.into_iter().enumerate() {
+                    let res = fetch(format! {"/playlist/{}/", i})
+                        .await
+                        .expect("Error in request");
+                    let items: Vec<Track> = res
+                        .check_status()
+                        .expect("status check failed")
+                        .json()
+                        .await
+                        .expect("Deserilization failed");
+                    let new_tab = PlaylistTab {
+                        name: val,
+                        tracks: items,
+                    };
+                    tabs.push(new_tab);
+                }
+                Msg::InitPlaylistTabRecv((playlisttabs.current, tabs))
                 //Msg::InitPlaylistTabRecv((playlisttabs.current, playlisttabs.iter().map(|tab_name| {PlaylistTab {name: tab_name, tracks: vec![]}}.collect()))
             });
         }
@@ -196,24 +213,33 @@ fn view_track(t: &Track) -> Node<Msg> {
     ]
 }
 
+fn view_status(model: &Model) -> Node<Msg> {
+    div![C!["row"], div![C!["col-sm"], "NYI"]]
+}
+
 fn view(model: &Model) -> Node<Msg> {
     div![div![
         C!["container"],
         view_button(model),
         view_tabs(model),
-        table![
-            C!["table", "table-dark"],
-            tr![
-                th!["TrackNumber"],
-                th!["Title"],
-                th!["Artist"],
-                th!["Album"],
-                th!["Genre"],
-                th!["Year"],
-                th!["Length"],
-            ],
-            model.tracks.iter().map(view_track)
-        ]
+        div![
+            C!["container"],
+            style!(St::Overflow => "auto"),
+            table![
+                C!["table", "table-fixed"],
+                tr![
+                    th!["TrackNumber"],
+                    th!["Title"],
+                    th!["Artist"],
+                    th!["Album"],
+                    th!["Genre"],
+                    th!["Year"],
+                    th!["Length"],
+                ],
+                model.tracks.iter().map(view_track)
+            ]
+        ],
+        view_status(model),
     ]]
 }
 

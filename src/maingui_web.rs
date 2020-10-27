@@ -25,6 +25,16 @@ async fn playlist(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().body(items)
 }
 
+#[get("/playlist/{index}/")]
+async fn playlist_for(
+    state: web::Data<WebGui>,
+    web::Path(index): web::Path<usize>,
+    _: HttpRequest,
+) -> HttpResponse {
+    let items = state.playlist_tabs.items_for(index);
+    HttpResponse::Ok().body(items)
+}
+
 #[delete("/playlist/")]
 async fn playlist_delete_range(
     state: web::Data<WebGui>,
@@ -387,6 +397,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
         App::new()
             .app_data(data.clone())
             .service(playlist)
+            .service(playlist_for)
             .service(repeat)
             .service(clean)
             .service(delete_from_playlist)
