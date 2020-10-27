@@ -6,7 +6,8 @@ extern crate base64;
 extern crate clap;
 #[macro_use]
 extern crate diesel;
-#[macro_use] extern crate diesel_migrations;
+#[macro_use]
+extern crate diesel_migrations;
 extern crate env_logger;
 #[macro_use]
 extern crate log;
@@ -22,8 +23,8 @@ extern crate rayon;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
 extern crate rusqlite;
+extern crate serde_json;
 extern crate toml;
 extern crate walkdir;
 //extern crate jwalk;
@@ -46,8 +47,8 @@ pub mod utils;
 
 use clap::{App, Arg};
 use preferences::{prefs_base_dir, AppInfo, Preferences, PreferencesMap};
-use std::{env, io};
 use std::sync::{Arc, Mutex};
+use std::{env, io};
 
 const APP_INFO: AppInfo = AppInfo {
     name: "viola",

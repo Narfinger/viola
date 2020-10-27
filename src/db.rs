@@ -76,25 +76,30 @@ pub struct NewTrack {
 
 embed_migrations!("migrations/");
 pub fn setup_db_connection() -> Result<diesel::SqliteConnection, String> {
-    let mut db_file =
-        get_app_root(AppDataType::UserConfig, &APP_INFO).map_err(|_| String::from("Could not get app root"))?;
+    let mut db_file = get_app_root(AppDataType::UserConfig, &APP_INFO)
+        .map_err(|_| String::from("Could not get app root"))?;
     if !db_file.exists() {
         return Err(String::from("Dir does not exists"));
     }
     db_file.push("music.db");
-    SqliteConnection::establish(&db_file.to_str().unwrap()).map_err(|_| String::from("DB Connection error"))
+    SqliteConnection::establish(&db_file.to_str().unwrap())
+        .map_err(|_| String::from("DB Connection error"))
 }
 
 pub fn create_db() {
-    let db_dir  = get_app_root(AppDataType::UserConfig, &APP_INFO).map_err(|_| String::from("Could not get app root")).expect("Error getting app dir");
+    let db_dir = get_app_root(AppDataType::UserConfig, &APP_INFO)
+        .map_err(|_| String::from("Could not get app root"))
+        .expect("Error getting app dir");
     if !db_dir.exists() {
-        std::fs::create_dir(get_app_root(AppDataType::UserConfig, &APP_INFO).unwrap()).expect("We could not create app dir");
+        std::fs::create_dir(get_app_root(AppDataType::UserConfig, &APP_INFO).unwrap())
+            .expect("We could not create app dir");
     }
     let mut db_file =
         get_app_root(AppDataType::UserConfig, &APP_INFO).expect("Could not get app root");
     db_file.push("music.db");
     let db = rusqlite::Connection::open(&db_file).expect("Cannot create db, something is wrong");
-    let connection = SqliteConnection::establish(&db_file.to_str().unwrap()).expect("Something wrong");
+    let connection =
+        SqliteConnection::establish(&db_file.to_str().unwrap()).expect("Something wrong");
     embedded_migrations::run(&connection).expect("Could not run migration");
 }
 
