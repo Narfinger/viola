@@ -44,6 +44,7 @@ enum Msg {
     InitPlaylistRecv(Vec<Track>),
     InitPlaylistTabs,
     InitPlaylistTabRecv((usize, Vec<PlaylistTab>)),
+    PlaylistTabChange(usize),
     Transport(GStreamerAction),
     RefreshPlayStatus,
     RefreshPlayStatusRecv(GStreamerAction),
@@ -121,6 +122,19 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.playlist_tabs = tabs;
             model.current_playlist_tab = current;
         }
+        Msg::PlaylistTabChange(index) => {
+            model.current_playlist_tab = index;
+            orders.perform_cmd(async move {
+                #[derive(serde::Serialize)]
+                struct ChangePlaylistTabJson {
+                    pub index: usize,
+                }
+                let req = Request::new("/playlisttab/")
+                    .method(Method::Post)
+                    .json(&ChangePlaylistTabJson { index: index })
+                    .expect("Error in setting stuff");
+            });
+        }
         Msg::Transport(t) => {
             orders.perform_cmd(async move {
                 let req = Request::new("/transport/")
@@ -187,16 +201,34 @@ fn view_button(model: &Model) -> Node<Msg> {
 
 fn view_tabs(model: &Model) -> Node<Msg> {
     div![
-        C!["row"],
-        ul![
-            C!["nav", "nav-tabs"],
-            model.playlist_tabs.iter().enumerate().map(|(pos, tab)| {
-                if pos == model.current_playlist_tab {
-                    li![C!["active"], &tab.name]
-                } else {
-                    li![&tab.name]
-                }
-            })
+        div![C!["row"], model.current_playlist_tab],
+        div![
+            C!["row"],
+            ul![
+                C!["nav", "nav-tabs"],
+                model.playlist_tabs.iter().enumerate().map(|(pos, tab)| {
+                    if pos == model.current_playlist_tab {
+                        li![
+                            C!["nav-item"],
+                            a![
+                                attrs! {At::Href => "#"},
+                                C!["nav-link", "active"],
+                                &tab.name,
+                                ev(Ev::Click, move |_| Msg::PlaylistTabChange(pos))
+                            ]
+                        ]
+                    } else {
+                        li![
+                            C!["nav-item"],
+                            a![
+                                C!["nav-link"],
+                                &tab.name,
+                                ev(Ev::Click, move |_| Msg::PlaylistTabChange(pos))
+                            ]
+                        ]
+                    }
+                })
+            ]
         ]
     ]
 }
@@ -236,7 +268,13 @@ fn view(model: &Model) -> Node<Msg> {
                     th!["Year"],
                     th!["Length"],
                 ],
-                model.tracks.iter().map(view_track)
+                model
+                    .playlist_tabs
+                    .get(model.current_playlist_tab)
+                    .map(|t| &t.tracks)
+                    .unwrap_or(&vec![])
+                    .iter()
+                    .map(view_track)
             ]
         ],
         view_status(model),
