@@ -79,7 +79,8 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     .json()
                     .await
                     .expect("Deserilization failed");
-                Msg::InitPlaylistTabRecv((playlisttabs.current, playlisttabs.iter().map(|tab_name| {PlaylistTab {name: tab_name, tracks: vec![]}}.collect()))
+                Msg::InitPlaylistTabRecv((playlisttabs.current, vec![]))
+                //Msg::InitPlaylistTabRecv((playlisttabs.current, playlisttabs.iter().map(|tab_name| {PlaylistTab {name: tab_name, tracks: vec![]}}.collect()))
             });
         }
         Msg::InitPlaylistTabRecv((current, tabs)) => {
@@ -90,9 +91,17 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 }
 
 fn view(model: &Model) -> Node<Msg> {
-    div![
+    div![div![
+        C!["container"],
+        div![
+            C!["row"],
+            div![C!["col-sm"], button![C!["btn", "btn-primary"], "Prev"]],
+            div![C!["col-sm"], button![C!["btn", "btn-primary"], "Play"]],
+            div![C!["col-sm"], button![C!["btn", "btn-primary"], "Pause"]],
+            div![C!["col-sm"], button![C!["btn", "btn-primary"], "Next"]],
+        ],
         ul![
-            C!["nav nav-tabs"],
+            C!["nav", "nav-tabs"],
             model.playlist_tabs.iter().enumerate().map(|(pos, tab)| {
                 if pos == model.current_playlist_tab {
                     li![C!["active"], &tab.name]
@@ -124,7 +133,7 @@ fn view(model: &Model) -> Node<Msg> {
                 ]
             })
         ]
-    ]
+    ]]
 }
 
 fn main() {
