@@ -1,3 +1,5 @@
+pub mod websocket;
+
 use seed::{prelude::*, *};
 use serde;
 use viola_common::{GStreamerAction, Track};

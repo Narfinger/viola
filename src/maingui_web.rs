@@ -8,6 +8,7 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use std::thread;
 use std::time::Duration;
+use viola_common::WsMessage;
 
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
@@ -43,7 +44,7 @@ async fn playlist_delete_range(
 ) -> HttpResponse {
     println!("Deleting range: {:?}", &msg);
     state.playlist_tabs.delete_range(msg.into_inner());
-    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
+    my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
 
     let db = state.pool.lock().expect("Error from db");
     state.playlist_tabs.save(&db).expect("Error in saving");
@@ -63,7 +64,7 @@ async fn repeat(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
 async fn clean(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     println!("doing cleaning");
     state.playlist_tabs.clean();
-    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
+    my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
 
@@ -75,7 +76,7 @@ async fn delete_from_playlist(
 ) -> HttpResponse {
     println!("Doing delete");
     state.playlist_tabs.delete_range(deleterange.into_inner());
-    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
+    my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
 
@@ -125,7 +126,7 @@ async fn library_load(
     let pl = libraryviewstore::load_query(&state.pool, &q);
     println!("Loading new playlist {}", pl.name);
     state.playlist_tabs.add(pl);
-    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadTabs);
+    my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
     HttpResponse::Ok().finish()
 }
 
@@ -179,7 +180,7 @@ async fn smartplaylist_load(
     if let Some(p) = pl {
         let rp = p.load(&state.pool);
         state.playlist_tabs.add(rp);
-        my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadTabs);
+        my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
     }
 
     HttpResponse::Ok().finish()
@@ -252,7 +253,7 @@ async fn change_playlist_tab(
     let max = state.playlist_tabs.read().unwrap().pls.len();
     info!("setting to: {}, max: {}", level.index, max - 1);
     state.playlist_tabs.write().unwrap().current_pl = std::cmp::min(max - 1, level.index);
-    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
+    my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
 
@@ -274,8 +275,8 @@ async fn delete_playlist_tab(
 
     println!("deleting {}", index.index);
     state.playlist_tabs.delete(&state.pool, index.index);
-    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadTabs);
-    my_websocket::send_my_message(&state.ws, my_websocket::WsMessage::ReloadPlaylist);
+    my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
+    my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
 

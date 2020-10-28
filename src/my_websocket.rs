@@ -2,23 +2,7 @@ use actix::prelude::*;
 use actix::{Actor, StreamHandler};
 use actix_web_actors::ws;
 use std::sync::RwLock;
-
-#[derive(Clone, Message, Serialize)]
-#[serde(tag = "type")]
-#[rtype(result = "()")]
-pub enum WsMessage {
-    PlayChanged { index: usize },
-    CurrentTimeChanged { index: u64 },
-    ReloadTabs,
-    ReloadPlaylist,
-    Ping,
-}
-
-impl From<WsMessage> for String {
-    fn from(msg: WsMessage) -> Self {
-        serde_json::to_string(&msg).unwrap()
-    }
-}
+use viola_common::WsMessage;
 
 #[derive(Clone)]
 pub struct MyWs {
