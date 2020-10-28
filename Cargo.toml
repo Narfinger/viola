@@ -41,3 +41,4 @@ toml = "0.5"
 owning_ref = "0.4"
 walkdir = "2"
 web-view = "0.6"
+viola_common = {path ="viola_common", features =["db_support"]}
