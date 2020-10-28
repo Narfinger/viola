@@ -7,6 +7,7 @@ use std::sync::Arc;
 use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls};
 //use crate::playlist_tabs::PlaylistControlsImmutable;
 use crate::types::*;
+use viola_common::GStreamerAction;
 
 pub struct GStreamer {
     element: gstreamer::Element,
@@ -32,21 +33,6 @@ pub enum GStreamerMessage {
     Playing,
     Nop,
     ChangedDuration((u64, u64)), //in seconds
-}
-
-/// Tells the GuiPtr and the gstreamer what action is performed. Splits the GuiPtr and the backend a tiny bit
-#[derive(Debug, Eq, Serialize, Deserialize, PartialEq)]
-#[serde(tag = "t", content = "c")]
-pub enum GStreamerAction {
-    Next,
-    Playing,
-    Pausing,
-    Previous,
-    Stop,
-    /// This means we selected one specific track
-    Play(usize),
-    Seek(u64),
-    RepeatOnce, // Repeat the current playing track after it finishes
 }
 
 impl From<GStreamerAction> for GStreamerMessage {

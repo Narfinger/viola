@@ -11,27 +11,7 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
 use walkdir::DirEntry;
-
-#[derive(AsChangeset, Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]
-pub struct Track {
-    pub id: i32,
-    pub title: String,
-    pub artist: String,
-    pub album: String,
-    pub genre: String,
-    pub tracknumber: Option<i32>,
-    pub year: Option<i32>,
-    pub path: String,
-    pub length: i32,
-    pub albumpath: Option<String>,
-    pub playcount: Option<i32>,
-}
-
-impl PartialEq for Track {
-    fn eq(&self, other: &Self) -> bool {
-        self.path == other.path
-    }
-}
+use viola_common::Track;
 
 pub trait UpdatePlayCount {
     fn update_playcount(&mut self, _: DBPool);

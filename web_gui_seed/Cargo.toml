@@ -11,3 +11,4 @@ seed = "0.8.0"
 serde_derive = "1.0"                   # Macros 1.1 implementation of #[derive(Serialize, Deserialize)]
 serde_json = "1.0"
 serde = "1.0"
+viola_common = { path = "../viola_common", version = "0.1.0" }

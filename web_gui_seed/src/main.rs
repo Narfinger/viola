@@ -1,26 +1,13 @@
 use seed::{prelude::*, *};
 use serde;
+use viola_common::{GStreamerAction, Track};
 
 struct Model {
     tracks: Vec<Track>,
     playlist_tabs: Vec<PlaylistTab>,
     current_playlist_tab: usize,
     play_status: GStreamerAction,
-}
-
-#[derive(serde::Serialize, serde::Deserialize)]
-struct Track {
-    id: i32,
-    title: String,
-    artist: String,
-    album: String,
-    genre: String,
-    tracknumber: Option<i32>,
-    year: Option<i32>,
-    path: String,
-    length: i32,
-    albumpath: Option<String>,
-    playcount: Option<i32>,
+    web_socket: WebSocket,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -37,6 +24,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         playlist_tabs: vec![],
         current_playlist_tab: 0,
         play_status: GStreamerAction::Stop,
+        web_socket: crate::websocket::create_websocket(orders),
     }
 }
 enum Msg {
@@ -48,20 +36,6 @@ enum Msg {
     Transport(GStreamerAction),
     RefreshPlayStatus,
     RefreshPlayStatusRecv(GStreamerAction),
-}
-
-#[derive(serde::Serialize, serde::Deserialize)]
-#[serde(tag = "t", content = "c")]
-pub enum GStreamerAction {
-    Next,
-    Playing,
-    Pausing,
-    Previous,
-    Stop,
-    // This means we selected one specific track
-    //Play(usize),
-    //Seek(u64),
-    //RepeatOnce, // Repeat the current playing track after it finishes
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {

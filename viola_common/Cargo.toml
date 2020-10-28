@@ -1,0 +1,13 @@
+[package]
+name = "viola_common"
+version = "0.1.0"
+authors = ["Narfinger <narfinger@noreply.github.com>"]
+edition = "2018"
+
+[features]
+db_support = ["diesel"]
+
+[dependencies]
+diesel = { version = "1.4", features = ["sqlite"], optional=true}
+serde_json = "1.0"
+serde = {version = "1.0", features = ["derive"]}
