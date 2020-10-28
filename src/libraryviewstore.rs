@@ -732,27 +732,29 @@ pub fn query_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist> {
 
     hashmap
         .drain()
-        .map(|(k, mut m): (String, HashMap<String, Vec<viola_common::Track>>)| {
-            let children = m
-                .drain()
-                .map(|(k2, v): (String, Vec<viola_common::Track>)| Album {
-                    value: k2,
+        .map(
+            |(k, mut m): (String, HashMap<String, Vec<viola_common::Track>>)| {
+                let children = m
+                    .drain()
+                    .map(|(k2, v): (String, Vec<viola_common::Track>)| Album {
+                        value: k2,
+                        optional: None,
+                        children: v
+                            .into_iter()
+                            .map(|v| Track {
+                                value: v.title,
+                                optional: v.tracknumber,
+                            })
+                            .collect(),
+                    })
+                    .collect();
+                Artist {
+                    value: k,
                     optional: None,
-                    children: v
-                        .into_iter()
-                        .map(|v| Track {
-                            value: v.title,
-                            optional: v.tracknumber,
-                        })
-                        .collect(),
-                })
-                .collect();
-            Artist {
-                value: k,
-                optional: None,
-                children,
-            }
-        })
+                    children,
+                }
+            },
+        )
         .collect::<Vec<Artist>>()
 }
 

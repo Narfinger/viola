@@ -1,16 +1,33 @@
-[tasks.build_backend]
+[tasks.build_debug_backend]
 command = "cargo"
-args = ["build --release"]
+args = ["build"]
 
-[tasks.build_frontend]
+[tasks.build_debug_frontend]
 install_crate = { crate_name = "trunk", binary = "trunk", test_arg = ["--version"]}
 cwd = "web_gui_seed/"
 command = "trunk"
 args = ["build"]
 
 
+[tasks.build_backend]
+command = "cargo"
+args = ["build", "--release"]
+
+[tasks.build_frontend]
+install_crate = { crate_name = "trunk", binary = "trunk", test_arg = ["--version"]}
+cwd = "web_gui_seed/"
+command = "trunk"
+args = ["build", "--release"]
+
+
 [tasks.build]
-run_task = [
+run_tasks = [
     { name = "build_backend"},
-    { name = "build_frontent"}
+    { name = "build_frontend"}
+]
+
+[tasks.build_debug]
+run_tasks = [
+    {name = "build_debug_backend"},
+    {name = "build_debug_frontend"}
 ]
