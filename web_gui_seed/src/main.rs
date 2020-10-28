@@ -16,6 +16,7 @@ struct Model {
 struct PlaylistTab {
     tracks: Vec<Track>,
     name: String,
+    current_index: usize,
 }
 
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
@@ -38,6 +39,7 @@ enum Msg {
     Transport(GStreamerAction),
     RefreshPlayStatus,
     RefreshPlayStatusRecv(GStreamerAction),
+    PlaylistIndexChange(usize),
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -133,6 +135,11 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::RefreshPlayStatusRecv(a) => {
             model.play_status = a;
+        }
+        Msg::PlaylistIndexChange(index) => {
+            if let Some(tab) = model.playlist_tabs.get(model.current_playlist_tab) {
+                tab.current_index = index;
+            }
         }
     }
 }

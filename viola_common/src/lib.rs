@@ -55,8 +55,8 @@ pub enum GStreamerAction {
 #[cfg_attr(feature = "backend", derive(Message))]
 #[cfg_attr(feature = "backend", rtype(result = "()"))]
 pub enum WsMessage {
-    PlayChanged { index: usize },
-    CurrentTimeChanged { index: u64 },
+    PlayChanged(usize),
+    CurrentTimeChanged(u64),
     ReloadTabs,
     ReloadPlaylist,
     Ping,
