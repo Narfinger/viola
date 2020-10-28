@@ -1,9 +1,9 @@
-use crate::schema::{playlists, playlisttracks};
 use std::ops::Deref;
+use viola_common::schema::{playlists, playlisttracks};
 
-use crate::db::Track;
 use crate::loaded_playlist::LoadedPlaylist;
 use crate::types::DBPool;
+use viola_common::Track;
 
 #[derive(Identifiable, Queryable, Associations)]
 pub struct Playlist {
@@ -64,10 +64,10 @@ fn create_loaded_from_playlist(
 }
 
 pub fn restore_playlists(db: &DBPool) -> Result<Vec<LoadedPlaylist>, diesel::result::Error> {
-    use crate::schema::playlists::dsl::*;
-    use crate::schema::playlisttracks::dsl::*;
-    use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+    use viola_common::schema::playlists::dsl::*;
+    use viola_common::schema::playlisttracks::dsl::*;
+    use viola_common::schema::tracks::dsl::*;
 
     let pls = playlists.load::<Playlist>(db.lock().expect("DB Error").deref())?;
     pls.iter()

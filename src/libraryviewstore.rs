@@ -1,6 +1,6 @@
 /*
 
-use crate::db::Track;
+use viola_common::Track;
 use crate::loaded_playlist::LoadedPlaylist;
 use gdk;
 use gtk;
@@ -42,7 +42,7 @@ fn idle_fill<I>(db: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> gt
 where
     I: Iterator<Item = String>,
 {
-    use crate::schema::tracks::dsl::*;
+    use viola_common::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
 
     ///TODO replace this with const fn
@@ -107,7 +107,7 @@ where
 }
 
 pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
-    use crate::schema::tracks::dsl::*;
+    use viola_common::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
 
     let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
@@ -390,7 +390,7 @@ fn get_tracks_for_selection(
     db: &DBPool,
     tv: &gtk::TreeView,
 ) -> Result<(String, Vec<Track>), String> {
-    use crate::schema::tracks::dsl::*;
+    use viola_common::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, TextExpressionMethods};
 
     let (m, iter) = get_model_and_iter_for_selection(tv);
@@ -568,9 +568,9 @@ pub enum PartialQueryLevelEnum {
 /// basic query function to model tracks with the apropiate values selected
 fn basic_tree_query(
     pql: &PartialQueryLevel,
-) -> crate::schema::tracks::BoxedQuery<diesel::sqlite::Sqlite> {
-    use crate::schema::tracks::dsl::*;
+) -> viola_common::schema::tracks::BoxedQuery<diesel::sqlite::Sqlite> {
     use diesel::{ExpressionMethods, QueryDsl, TextExpressionMethods};
+    use viola_common::schema::tracks::dsl::*;
 
     let level = &pql.lvl;
 
@@ -638,8 +638,8 @@ pub fn load_query(pool: &DBPool, pql: &PartialQueryLevel) -> loaded_playlist::Lo
 
 /// Queries the tree but only returns not filled in results, i.e., children might be unpopulated
 pub fn query_partial_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist> {
-    use crate::schema::tracks::dsl::*;
     use diesel::{QueryDsl, RunQueryDsl};
+    use viola_common::schema::tracks::dsl::*;
     let p = pool.lock().expect("Error in lock");
     let level = &pql.lvl;
     let query = basic_tree_query(pql);
@@ -707,10 +707,10 @@ pub fn query_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist> {
     let p = pool.lock().expect("Error in lock");
     let query = basic_tree_query(pql);
 
-    let mut q_tracks: Vec<db::Track> = query.load(p.deref()).expect("Error in DB");
+    let mut q_tracks: Vec<viola_common::Track> = query.load(p.deref()).expect("Error in DB");
 
     //Artist, Album, Track
-    let mut hashmap: HashMap<String, HashMap<String, Vec<db::Track>>> = HashMap::new();
+    let mut hashmap: HashMap<String, HashMap<String, Vec<viola_common::Track>>> = HashMap::new();
     for t in q_tracks.drain(0..) {
         if let Some(ref mut artist_hash) = hashmap.get_mut(&t.artist) {
             if let Some(ref mut album_vec) = artist_hash.get_mut(&t.album) {
@@ -732,10 +732,10 @@ pub fn query_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist> {
 
     hashmap
         .drain()
-        .map(|(k, mut m): (String, HashMap<String, Vec<db::Track>>)| {
+        .map(|(k, mut m): (String, HashMap<String, Vec<viola_common::Track>>)| {
             let children = m
                 .drain()
-                .map(|(k2, v): (String, Vec<db::Track>)| Album {
+                .map(|(k2, v): (String, Vec<viola_common::Track>)| Album {
                     value: k2,
                     optional: None,
                     children: v
@@ -761,7 +761,7 @@ pub fn query_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist> {
 // TODO we need to not have the empty strings for stuff around
 /*
 pub fn get_artist_trees(pool: &DBPool) -> Vec<Artist> {
-    use crate::schema::tracks::dsl::*;
+    use viola_common::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
     let p = pool.lock().expect("Error in lock");
     tracks

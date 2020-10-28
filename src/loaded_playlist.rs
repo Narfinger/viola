@@ -77,16 +77,16 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
 
 impl SavePlaylistExt for LoadedPlaylistPtr {
     fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error> {
-        use crate::schema::playlists::dsl::*;
-        use crate::schema::playlisttracks::dsl::*;
         use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+        use viola_common::schema::playlists::dsl::*;
+        use viola_common::schema::playlisttracks::dsl::*;
 
         let pl = self.read().expect("Could not read lock to save playlist");
 
         info!("playlist id {:?}", pl.id);
 
         let exists = diesel::select(diesel::dsl::exists(
-            playlists.filter(crate::schema::playlists::id.eq(pl.id)),
+            playlists.filter(viola_common::schema::playlists::id.eq(pl.id)),
         ))
         .get_result(db)
         .expect("Error in db");

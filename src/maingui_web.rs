@@ -54,7 +54,7 @@ async fn playlist_delete_range(
 async fn repeat(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     state
         .gstreamer
-        .do_gstreamer_action(gstreamer_wrapper::GStreamerAction::RepeatOnce);
+        .do_gstreamer_action(viola_common::GStreamerAction::RepeatOnce);
     HttpResponse::Ok().finish()
 }
 
@@ -95,7 +95,7 @@ async fn get_transport(state: web::Data<WebGui>) -> HttpResponse {
 #[post("/transport/")]
 async fn transport(
     state: web::Data<WebGui>,
-    msg: web::Json<gstreamer_wrapper::GStreamerAction>,
+    msg: web::Json<viola_common::GStreamerAction>,
 ) -> HttpResponse {
     println!("stuff: {:?}", &msg);
     state.gstreamer.do_gstreamer_action(msg.into_inner());

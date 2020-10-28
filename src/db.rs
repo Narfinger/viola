@@ -1,4 +1,3 @@
-use crate::schema::tracks;
 use crate::types::{DBPool, APP_INFO};
 use app_dirs::*;
 use diesel::{Connection, SqliteConnection};
@@ -10,8 +9,9 @@ use std::ops::Deref;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
-use walkdir::DirEntry;
+use viola_common::schema::tracks;
 use viola_common::Track;
+use walkdir::DirEntry;
 
 pub trait UpdatePlayCount {
     fn update_playcount(&mut self, _: DBPool);
@@ -20,8 +20,8 @@ pub trait UpdatePlayCount {
 impl UpdatePlayCount for Track {
     fn update_playcount(&mut self, pool: DBPool) {
         use crate::rand::RngCore;
-        use crate::schema::tracks::dsl::*;
         use diesel::{QueryDsl, RunQueryDsl, SaveChangesDsl};
+        use viola_common::schema::tracks::dsl::*;
 
         //wait a random time
         let mut rng = rand::thread_rng();
@@ -178,8 +178,8 @@ fn insert_track_with_error_retries(s: &str, db: &DBPool) -> Result<(), String> {
 }
 
 fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
-    use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
+    use viola_common::schema::tracks::dsl::*;
 
     let new_track = construct_track_from_path(s)?;
     let old_track_perhaps = tracks
@@ -224,8 +224,8 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
     let file_count = files.len();
 
     {
-        use crate::schema::tracks::dsl::*;
         use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, TextExpressionMethods};
+        use viola_common::schema::tracks::dsl::*;
         let old_files: HashSet<String> = HashSet::from_iter(if fast_delete {
             tracks
                 .select(path)
@@ -289,11 +289,11 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
 
 // returns an id for a newly created playlist. Returns 0 if no playlists yet in db
 pub fn get_new_playlist_id(db: &DBPool) -> i32 {
-    use crate::schema::playlists::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+    use viola_common::schema::playlists::dsl::*;
     playlists
-        .select(crate::schema::playlists::id)
-        .order(crate::schema::playlists::id.desc())
+        .select(viola_common::schema::playlists::id)
+        .order(viola_common::schema::playlists::id.desc())
         .load(db.lock().expect("DB Error").deref())
         .ok()
         .and_then(|v: Vec<i32>| v.first().cloned())

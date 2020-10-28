@@ -4,7 +4,7 @@ extern crate diesel;
 
 #[cfg(feature = "db_support")]
 #[macro_use]
-mod schema;
+pub mod schema;
 
 #[cfg(feature = "db_support")]
 use crate::schema::tracks;

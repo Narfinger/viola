@@ -40,7 +40,6 @@ pub mod my_websocket;
 pub mod playlist;
 pub mod playlist_manager;
 pub mod playlist_tabs;
-pub mod schema;
 pub mod smartplaylist_parser;
 pub mod types;
 pub mod utils;

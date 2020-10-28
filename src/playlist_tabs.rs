@@ -63,9 +63,9 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
             }
 
             // delete in database
-            use crate::schema::playlists::dsl::*;
             use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
             use std::ops::Deref;
+            use viola_common::schema::playlists::dsl::*;
             let db = pool.lock().expect("DB Error");
 
             diesel::delete(playlists.filter(id.eq(lp.read().unwrap().id)))
@@ -106,7 +106,7 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
 }
 
 impl LoadedPlaylistExt for PlaylistTabsPtr {
-    fn get_current_track(&self) -> crate::db::Track {
+    fn get_current_track(&self) -> viola_common::Track {
         self.current(LoadedPlaylistExt::get_current_track)
         //value.get_current_track()
     }
