@@ -12,4 +12,5 @@ jobs:
       - run: sudo apt update
       - run: sudo apt install libgstreamer1.0-dev gnome-devel libsoup2.4-dev libwebkit2gtk-4.0-dev libtag1-dev libtagc0-dev
       - run: cargo install cargo-make
-      - run: cargo make --makefile Makefile.toml build_debug
+      - run: cargo make --makefile Makefile.toml build_frontend
+      - run: cargo make --makefile Makefile.toml build_backend
