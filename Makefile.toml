@@ -21,13 +21,4 @@ args = ["build", "--release"]
 
 
 [tasks.build]
-run_tasks = [
-    { name = "build_backend"},
-    { name = "build_frontend"}
-]
-
-[tasks.build_debug]
-run_tasks = [
-    {name = "build_debug_backend"},
-    {name = "build_debug_frontend"}
-]
+dependencies = ["build_backend", "build_frontend"]
