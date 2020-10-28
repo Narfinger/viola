@@ -4,6 +4,7 @@ args = ["build --release"]
 
 [tasks.build_frontend]
 install_crate = { crate_name = "trunk", binary = "trunk", test_arg = ["--version"]}
+cwd = "web_gui_seed/"
 command = "trunk"
 args = ["build"]
 
