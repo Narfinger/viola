@@ -11,7 +11,6 @@ jobs:
           override: true
       - uses: davidB/rust-cargo-make@v1
       - uses: actions/checkout@v1
-      - name: Run tests
       - run: sudo apt update
       - run: sudo apt install libgstreamer1.0-dev gnome-devel libsoup2.4-dev libwebkit2gtk-4.0-dev libtag1-dev libtagc0-dev
       - run: cargo make ci-flow
