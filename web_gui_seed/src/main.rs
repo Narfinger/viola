@@ -2,13 +2,13 @@ pub mod websocket;
 
 use seed::{prelude::*, *};
 use serde;
-use viola_common::{GStreamerAction, Track};
+use viola_common::{GStreamerAction, GStreamerMessage, Track};
 
 struct Model {
     tracks: Vec<Track>,
     playlist_tabs: Vec<PlaylistTab>,
     current_playlist_tab: usize,
-    play_status: GStreamerAction,
+    play_status: GStreamerMessage,
     web_socket: WebSocket,
 }
 
@@ -26,7 +26,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         tracks: vec![],
         playlist_tabs: vec![],
         current_playlist_tab: 0,
-        play_status: GStreamerAction::Stop,
+        play_status: GStreamerMessage::Nop,
         web_socket: crate::websocket::create_websocket(orders),
     }
 }
@@ -38,7 +38,7 @@ enum Msg {
     PlaylistTabChange(usize),
     Transport(GStreamerAction),
     RefreshPlayStatus,
-    RefreshPlayStatusRecv(GStreamerAction),
+    RefreshPlayStatusRecv(GStreamerMessage),
     PlaylistIndexChange(usize),
 }
 
@@ -89,6 +89,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     let new_tab = PlaylistTab {
                         name: val,
                         tracks: items,
+                        current_index: 0,
                     };
                     tabs.push(new_tab);
                 }
@@ -127,7 +128,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.perform_cmd(async {
                 let req = fetch("/transport/").await.expect("Could not send req");
                 let action = req
-                    .json::<GStreamerAction>()
+                    .json::<GStreamerMessage>()
                     .await
                     .expect("Could not parse transport");
                 Msg::RefreshPlayStatusRecv(action)
@@ -137,7 +138,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.play_status = a;
         }
         Msg::PlaylistIndexChange(index) => {
-            if let Some(tab) = model.playlist_tabs.get(model.current_playlist_tab) {
+            if let Some(tab) = model.playlist_tabs.get_mut(model.current_playlist_tab) {
                 tab.current_index = index;
             }
         }

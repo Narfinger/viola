@@ -317,16 +317,16 @@ async fn ws_start(
 
 fn handle_gstreamer_messages(
     state: web::Data<WebGui>,
-    rx: Receiver<crate::gstreamer_wrapper::GStreamerMessage>,
+    rx: Receiver<viola_common::GStreamerMessage>,
 ) {
     loop {
         //println!("loop is working");
         if let Ok(msg) = rx.try_recv() {
             println!("received message: {:?}", msg);
             match msg {
-                crate::gstreamer_wrapper::GStreamerMessage::Playing => {
+                viola_common::GStreamerMessage::Playing => {
                     let pos = state.playlist_tabs.current_position();
-                    my_websocket::send_my_message(&state.ws, WsMessage::PlayChanged { index: pos });
+                    my_websocket::send_my_message(&state.ws, WsMessage::PlayChanged(pos));
                 }
                 _ => (),
             }
@@ -379,12 +379,9 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
         let datac = data.clone();
         thread::spawn(move || loop {
             thread::sleep(Duration::new(1, 0));
-            if datac.gstreamer.get_state() == crate::gstreamer_wrapper::GStreamerMessage::Playing {
+            if datac.gstreamer.get_state() == viola_common::GStreamerMessage::Playing {
                 let data = datac.gstreamer.get_elapsed().unwrap_or(0);
-                my_websocket::send_my_message(
-                    &datac.ws,
-                    WsMessage::CurrentTimeChanged { index: data },
-                );
+                my_websocket::send_my_message(&datac.ws, WsMessage::CurrentTimeChanged(data));
             }
         });
     }

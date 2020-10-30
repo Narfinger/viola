@@ -1,7 +1,6 @@
 use crate::types::{DBPool, APP_INFO};
 use app_dirs::*;
 use diesel::{Connection, SqliteConnection};
-use diesel_migrations;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::collections::HashSet;
 use std::iter::FromIterator;

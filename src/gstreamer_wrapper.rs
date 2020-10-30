@@ -7,7 +7,7 @@ use std::sync::Arc;
 use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls};
 //use crate::playlist_tabs::PlaylistControlsImmutable;
 use crate::types::*;
-use viola_common::GStreamerAction;
+use viola_common::{GStreamerAction, GStreamerMessage};
 
 pub struct GStreamer {
     element: gstreamer::Element,
@@ -23,42 +23,6 @@ impl Drop for GStreamer {
         self.element
             .set_state(gstreamer::State::Null)
             .expect("Error in setting gstreamer state: Null");
-    }
-}
-
-#[derive(Debug, Serialize, Eq, PartialEq)]
-pub enum GStreamerMessage {
-    Pausing,
-    Stopped,
-    Playing,
-    Nop,
-    ChangedDuration((u64, u64)), //in seconds
-}
-
-impl From<GStreamerAction> for GStreamerMessage {
-    fn from(action: GStreamerAction) -> Self {
-        match action {
-            GStreamerAction::Pausing => GStreamerMessage::Pausing,
-            GStreamerAction::Stop => GStreamerMessage::Stopped,
-            GStreamerAction::Seek(_) | GStreamerAction::RepeatOnce => GStreamerMessage::Nop,
-            GStreamerAction::Next
-            | GStreamerAction::Previous
-            | GStreamerAction::Play(_)
-            | GStreamerAction::Playing => GStreamerMessage::Playing,
-        }
-    }
-}
-
-impl From<gstreamer::State> for GStreamerMessage {
-    fn from(state: gstreamer::State) -> GStreamerMessage {
-        match state {
-            gstreamer::State::VoidPending => GStreamerMessage::Stopped,
-            gstreamer::State::Null => GStreamerMessage::Stopped,
-            gstreamer::State::Ready => GStreamerMessage::Stopped,
-            gstreamer::State::Paused => GStreamerMessage::Pausing,
-            gstreamer::State::Playing => GStreamerMessage::Playing,
-            _ => GStreamerMessage::Stopped,
-        }
     }
 }
 
@@ -266,11 +230,15 @@ impl GStreamerExt for GStreamer {
         }
     }
 
-    fn get_state(&self) -> GStreamerMessage {
-        self.element
-            .get_state(gstreamer::ClockTime(Some(5)))
-            .1
-            .into()
+    fn get_state(&self) -> viola_common::GStreamerMessage {
+        match self.element.get_state(gstreamer::ClockTime(Some(5))).1 {
+            gstreamer::State::VoidPending => GStreamerMessage::Stopped,
+            gstreamer::State::Null => GStreamerMessage::Stopped,
+            gstreamer::State::Ready => GStreamerMessage::Stopped,
+            gstreamer::State::Paused => GStreamerMessage::Pausing,
+            gstreamer::State::Playing => GStreamerMessage::Playing,
+            _ => GStreamerMessage::Stopped,
+        }
     }
 
     fn get_elapsed(&self) -> Option<u64> {

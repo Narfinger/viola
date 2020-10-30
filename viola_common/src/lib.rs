@@ -36,8 +36,8 @@ impl PartialEq for Track {
     }
 }
 
+/// Actions we want to perform on gstreamer, such as playing and pausing
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "t", content = "c")]
 pub enum GStreamerAction {
     Next,
     Playing,
@@ -48,6 +48,30 @@ pub enum GStreamerAction {
     Play(usize),
     Seek(u64),
     RepeatOnce, // Repeat the current playing track after it finishes
+}
+
+/// Messages that gstreamer sends such as the state it is going into
+#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+pub enum GStreamerMessage {
+    Pausing,
+    Stopped,
+    Playing,
+    Nop,
+    ChangedDuration((u64, u64)), //in seconds
+}
+
+impl From<GStreamerAction> for GStreamerMessage {
+    fn from(action: GStreamerAction) -> Self {
+        match action {
+            GStreamerAction::Pausing => GStreamerMessage::Pausing,
+            GStreamerAction::Stop => GStreamerMessage::Stopped,
+            GStreamerAction::Seek(_) | GStreamerAction::RepeatOnce => GStreamerMessage::Nop,
+            GStreamerAction::Next
+            | GStreamerAction::Previous
+            | GStreamerAction::Play(_)
+            | GStreamerAction::Playing => GStreamerMessage::Playing,
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize)]

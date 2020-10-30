@@ -1,6 +1,6 @@
 use seed::{prelude::*, *};
 use viola_common::WsMessage;
-const WS_URL: &str = "ws://127.0.0.1:9000/ws";
+const WS_URL: &str = "ws://127.0.0.1:8088/ws/";
 
 pub fn create_websocket(orders: &impl Orders<crate::Msg>) -> WebSocket {
     let msg_sender = orders.msg_sender();
