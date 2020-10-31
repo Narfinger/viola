@@ -146,6 +146,20 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 }
 
 fn view_buttons(model: &Model) -> Node<Msg> {
+    let play_button: seed::virtual_dom::node::Node<Msg> =
+        if model.play_status == GStreamerMessage::Playing {
+            button![
+                C!["btn", "btn-primary"],
+                "Pause",
+                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
+            ]
+        } else {
+            button![
+                C!["btn", "btn-primary"],
+                "Play",
+                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Playing))
+            ]
+        };
     div![
         C!["row"],
         div![
@@ -156,14 +170,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Previous))
             ]
         ],
-        div![
-            C!["col-sm"],
-            button![
-                C!["btn", "btn-primary"],
-                "Play",
-                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Playing))
-            ]
-        ],
+        div![C!["col-sm"], play_button],
         div![
             C!["col-sm"],
             button![
@@ -217,23 +224,60 @@ fn view_tabs(model: &Model) -> Node<Msg> {
     ]
 }
 
-fn view_track(t: &Track) -> Node<Msg> {
+fn view_track(t: &Track, is_selected: bool) -> Node<Msg> {
+    let length = format!("{}:{:02}", t.length / 60, t.length % 60);
     tr![
+        IF!(is_selected => style!(St::Color => "Red")),
         td![&t.tracknumber],
         td![&t.title],
         td![&t.artist],
         td![&t.album],
         td![&t.genre],
         td![&t.year],
-        td![&t.length],
+        td![&length],
     ]
 }
 
 fn view_status(model: &Model) -> Node<Msg> {
+    let track_option = model
+        .playlist_tabs
+        .get(model.current_playlist_tab)
+        .and_then(|tab| tab.tracks.get(tab.current_index));
+    let mut track_status_string = if let Some(track) = track_option {
+        format!("{} - {} - {}", track.title, track.artist, track.album)
+    } else {
+        format!("Nothing Playing")
+    };
+    if !(model.play_status == GStreamerMessage::Playing
+        || model.play_status == GStreamerMessage::Pausing)
+    {
+        track_status_string = format!("Nothing playing")
+    }
+
     div![
         C!["row"],
-        div![C!["col-sm"], format!("Status: {}", model.play_status)]
+        style!(St::Padding => unit!(10,px)),
+        div![C!["col-sm"], format!("Status: {}", model.play_status)],
+        div![C!["col-sm"], track_status_string]
     ]
+}
+
+/// puts true where the track is selected and otherwise false
+fn tuple_to_selected_true<'a>(model: &'a Model, id: usize, track: &'a Track) -> (&'a Track, bool) {
+    (
+        track,
+        if model.play_status == GStreamerMessage::Playing
+            || model.play_status == GStreamerMessage::Pausing
+        {
+            model
+                .playlist_tabs
+                .get(model.current_playlist_tab)
+                .map(|tab| tab.current_index == id)
+                .unwrap_or(false)
+        } else {
+            false
+        },
+    )
 }
 
 fn view(model: &Model) -> Node<Msg> {
@@ -243,7 +287,7 @@ fn view(model: &Model) -> Node<Msg> {
         view_tabs(model),
         div![
             C!["table-responsive"],
-            style!(St::Overflow => "auto", St::Height => "80%"),
+            style!(St::Overflow => "auto", St::Height => unit!(80, %)),
             table![
                 C!["table"],
                 thead![
@@ -262,7 +306,9 @@ fn view(model: &Model) -> Node<Msg> {
                     .map(|t| &t.tracks)
                     .unwrap_or(&vec![])
                     .iter()
-                    .map(view_track)
+                    .enumerate()
+                    .map(|(id, t)| tuple_to_selected_true(model, id, t))
+                    .map(|(t, is_selected)| view_track(t, is_selected))
             ]
         ],
         view_status(model),
