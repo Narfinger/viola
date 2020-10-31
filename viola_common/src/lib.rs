@@ -60,6 +60,18 @@ pub enum GStreamerMessage {
     ChangedDuration((u64, u64)), //in seconds
 }
 
+impl std::fmt::Display for GStreamerMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GStreamerMessage::Pausing => write!(f, "Paused"),
+            GStreamerMessage::Stopped => write!(f, "Stopped"),
+            GStreamerMessage::Playing => write!(f, "Playing"),
+            GStreamerMessage::Nop => write!(f, "NOP"),
+            GStreamerMessage::ChangedDuration((_, _)) => write!(f, "NOP"),
+        }
+    }
+}
+
 impl From<GStreamerAction> for GStreamerMessage {
     fn from(action: GStreamerAction) -> Self {
         match action {
@@ -75,7 +87,6 @@ impl From<GStreamerAction> for GStreamerMessage {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
 #[cfg_attr(feature = "backend", derive(Message))]
 #[cfg_attr(feature = "backend", rtype(result = "()"))]
 pub enum WsMessage {

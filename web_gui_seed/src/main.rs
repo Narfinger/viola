@@ -145,7 +145,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
-fn view_button(model: &Model) -> Node<Msg> {
+fn view_buttons(model: &Model) -> Node<Msg> {
     div![
         C!["row"],
         div![
@@ -185,9 +185,9 @@ fn view_button(model: &Model) -> Node<Msg> {
 
 fn view_tabs(model: &Model) -> Node<Msg> {
     div![
-        div![C!["row"], model.current_playlist_tab],
+        div![C!["col-sm"], "Tab: ", model.current_playlist_tab],
         div![
-            C!["row"],
+            C!["col-sm"],
             ul![
                 C!["nav", "nav-tabs"],
                 model.playlist_tabs.iter().enumerate().map(|(pos, tab)| {
@@ -230,20 +230,24 @@ fn view_track(t: &Track) -> Node<Msg> {
 }
 
 fn view_status(model: &Model) -> Node<Msg> {
-    div![C!["row"], div![C!["col-sm"], "NYI"]]
+    div![
+        C!["row"],
+        div![C!["col-sm"], format!("Status: {}", model.play_status)]
+    ]
 }
 
 fn view(model: &Model) -> Node<Msg> {
-    div![div![
-        C!["container"],
-        view_button(model),
+    div![
+        style!(St::Padding => "10px"),
+        view_buttons(model),
         view_tabs(model),
         div![
-            C!["container"],
-            style!(St::Overflow => "auto"),
+            C!["table-responsive"],
+            style!(St::Overflow => "auto", St::Height => "80%"),
             table![
-                C!["table", "table-fixed"],
-                tr![
+                C!["table"],
+                thead![
+                    style!(St::Position => "sticky"),
                     th!["TrackNumber"],
                     th!["Title"],
                     th!["Artist"],
@@ -262,7 +266,7 @@ fn view(model: &Model) -> Node<Msg> {
             ]
         ],
         view_status(model),
-    ]]
+    ]
 }
 
 fn main() {
