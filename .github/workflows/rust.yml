@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v1
       - run: sudo apt update
       - run: sudo apt install libgstreamer1.0-dev gnome-devel libsoup2.4-dev libwebkit2gtk-4.0-dev libtag1-dev libtagc0-dev npm
-      - run: cd web_gui_seed/
-      - run: npm install
-      - run: cd ../
+      - name: "NPM Install"
+        working-directory: "web_gui_seed"
+        run: npm install
       - run: cargo make ci-flow

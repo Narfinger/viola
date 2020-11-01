@@ -1,7 +1,6 @@
 pub mod websocket;
 
 use seed::{prelude::*, *};
-use serde;
 use viola_common::{GStreamerAction, GStreamerMessage, Track};
 
 struct Model {
@@ -10,6 +9,7 @@ struct Model {
     current_playlist_tab: usize,
     play_status: GStreamerMessage,
     web_socket: WebSocket,
+    is_repeat_once: bool,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -17,6 +17,13 @@ struct PlaylistTab {
     tracks: Vec<Track>,
     name: String,
     current_index: usize,
+}
+
+fn get_current_playlisttab_tracks<'a>(model: &'a Model) -> Option<&'a Vec<Track>> {
+    model
+        .playlist_tabs
+        .get(model.current_playlist_tab)
+        .map(|tab| &tab.tracks)
 }
 
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
@@ -28,8 +35,29 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         current_playlist_tab: 0,
         play_status: GStreamerMessage::Nop,
         web_socket: crate::websocket::create_websocket(orders),
+        is_repeat_once: false,
     }
 }
+
+fn format_time_string(time_in_seconds: i32) -> String {
+    let mut res = String::new();
+    let seconds = time_in_seconds % 60;
+    let minutes = (time_in_seconds / 60) % 60;
+    let hours = (time_in_seconds / 60 / 60) % 24;
+    let days = time_in_seconds / 60 / 60 / 24;
+    if days != 0 {
+        res.push_str(&format!("{} Days, ", days));
+    }
+    if days != 0 || hours != 0 {
+        res.push_str(&format!("{}:", hours));
+    }
+    if days != 0 || hours != 0 || minutes != 0 {
+        res.push_str(&format!("{:02}:", minutes));
+    }
+    res.push_str(&format!("{:02}", seconds));
+    res
+}
+
 enum Msg {
     InitPlaylist,
     InitPlaylistRecv(Vec<Track>),
@@ -40,6 +68,7 @@ enum Msg {
     RefreshPlayStatus,
     RefreshPlayStatusRecv(GStreamerMessage),
     PlaylistIndexChange(usize),
+    Clean,
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -110,8 +139,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 }
                 let req = Request::new("/playlisttab/")
                     .method(Method::Post)
-                    .json(&ChangePlaylistTabJson { index: index })
+                    .json(&ChangePlaylistTabJson { index })
                     .expect("Error in setting stuff");
+                fetch(req).await.expect("Could not send message");
             });
         }
         Msg::Transport(t) => {
@@ -138,9 +168,18 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.play_status = a;
         }
         Msg::PlaylistIndexChange(index) => {
+            model.is_repeat_once = false;
             if let Some(tab) = model.playlist_tabs.get_mut(model.current_playlist_tab) {
                 tab.current_index = index;
             }
+        }
+        Msg::Clean => {
+            model.is_repeat_once = true;
+            orders.perform_cmd(async {
+                let req = Request::new("/clean/").method(Method::Post);
+                fetch(req).await.expect("Could not send request");
+                Msg::InitPlaylist
+            });
         }
     }
 }
@@ -185,6 +224,22 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 C!["btn", "btn-primary"],
                 "Next",
                 ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Next))
+            ]
+        ],
+        div![
+            C!["col-sm"],
+            button![
+                C!["btn", "btn-secondary"],
+                "Again",
+                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::RepeatOnce))
+            ]
+        ],
+        div![
+            C!["col-sm"],
+            button![
+                C!["btn", "btn-danger"],
+                "Clean",
+                ev(Ev::Click, |_| Msg::Clean)
             ]
         ],
     ]
@@ -246,19 +301,28 @@ fn view_status(model: &Model) -> Node<Msg> {
     let mut track_status_string = if let Some(track) = track_option {
         format!("{} - {} - {}", track.title, track.artist, track.album)
     } else {
-        format!("Nothing Playing")
+        "Nothing Playing".to_string()
     };
     if !(model.play_status == GStreamerMessage::Playing
         || model.play_status == GStreamerMessage::Pausing)
     {
-        track_status_string = format!("Nothing playing")
+        track_status_string = "Nothing playing".to_string();
     }
+
+    let total_time: i32 = get_current_playlisttab_tracks(model)
+        .unwrap_or(&vec![])
+        .iter()
+        .map(|track| track.length)
+        .sum();
+    let total_time_string = format_time_string(total_time);
 
     div![
         C!["row"],
         style!(St::Padding => unit!(10,px)),
         div![C!["col-sm"], format!("Status: {}", model.play_status)],
-        div![C!["col-sm"], track_status_string]
+        div![C!["col-sm"], track_status_string],
+        div![C!["col-sm"], "Total Time: ", total_time_string],
+        div![C!["col-sm"], IF!(model.is_repeat_once => "Repeat")]
     ]
 }
 
@@ -289,7 +353,7 @@ fn view(model: &Model) -> Node<Msg> {
             C!["table-responsive"],
             style!(St::Overflow => "auto", St::Height => unit!(80, %)),
             table![
-                C!["table"],
+                C!["table", "table-sm"],
                 thead![
                     style!(St::Position => "sticky"),
                     th!["TrackNumber"],
