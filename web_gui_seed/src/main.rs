@@ -169,6 +169,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::PlaylistIndexChange(index) => {
             model.is_repeat_once = false;
+            model.play_status = GStreamerMessage::Playing;
             if let Some(tab) = model.playlist_tabs.get_mut(model.current_playlist_tab) {
                 tab.current_index = index;
             }
@@ -279,17 +280,25 @@ fn view_tabs(model: &Model) -> Node<Msg> {
     ]
 }
 
-fn view_track(t: &Track, is_selected: bool) -> Node<Msg> {
+fn view_track(t: &Track, is_selected: bool, pos: usize) -> Node<Msg> {
     let length = format!("{}:{:02}", t.length / 60, t.length % 60);
     tr![
         IF!(is_selected => style!(St::Color => "Red")),
-        td![&t.tracknumber],
-        td![&t.title],
-        td![&t.artist],
-        td![&t.album],
-        td![&t.genre],
-        td![&t.year],
-        td![&length],
+        td![
+            &t.tracknumber,
+            ev(Ev::DblClick, move |_| Msg::Transport(
+                GStreamerAction::Play(pos)
+            ))
+        ],
+        td![&t.title,],
+        td![&t.artist,],
+        td![&t.album,],
+        td![&t.genre,],
+        td![&t.year,],
+        td![&length,],
+        ev(Ev::DblClick, move |_| Msg::Transport(
+            GStreamerAction::Play(pos)
+        ))
     ]
 }
 
@@ -327,7 +336,11 @@ fn view_status(model: &Model) -> Node<Msg> {
 }
 
 /// puts true where the track is selected and otherwise false
-fn tuple_to_selected_true<'a>(model: &'a Model, id: usize, track: &'a Track) -> (&'a Track, bool) {
+fn tuple_to_selected_true<'a>(
+    model: &'a Model,
+    id: usize,
+    track: &'a Track,
+) -> (&'a Track, bool, usize) {
     (
         track,
         if model.play_status == GStreamerMessage::Playing
@@ -341,6 +354,7 @@ fn tuple_to_selected_true<'a>(model: &'a Model, id: usize, track: &'a Track) -> 
         } else {
             false
         },
+        id,
     )
 }
 
@@ -372,7 +386,7 @@ fn view(model: &Model) -> Node<Msg> {
                     .iter()
                     .enumerate()
                     .map(|(id, t)| tuple_to_selected_true(model, id, t))
-                    .map(|(t, is_selected)| view_track(t, is_selected))
+                    .map(|(t, is_selected, pos)| view_track(t, is_selected, pos))
             ]
         ],
         view_status(model),
