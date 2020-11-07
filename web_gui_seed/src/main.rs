@@ -1,7 +1,7 @@
 pub mod websocket;
 
 use seed::{prelude::*, *};
-use viola_common::{GStreamerAction, GStreamerMessage, Track};
+use viola_common::{GStreamerAction, GStreamerMessage, GeneralTreeViewJson, Smartplaylists, Track};
 
 struct Model {
     tracks: Vec<Track>,
@@ -10,6 +10,11 @@ struct Model {
     play_status: GStreamerMessage,
     web_socket: WebSocket,
     is_repeat_once: bool,
+    sidebar: Sidebar,
+}
+
+struct Sidebar {
+    smartplaylists: Vec<String>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -29,6 +34,9 @@ fn get_current_playlisttab_tracks<'a>(model: &'a Model) -> Option<&'a Vec<Track>
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
     orders.send_msg(Msg::InitPlaylist);
     orders.send_msg(Msg::InitPlaylistTabs);
+    let sidebar = Sidebar {
+        smartplaylists: vec![],
+    };
     Model {
         tracks: vec![],
         playlist_tabs: vec![],
@@ -36,6 +44,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         play_status: GStreamerMessage::Nop,
         web_socket: crate::websocket::create_websocket(orders),
         is_repeat_once: false,
+        sidebar,
     }
 }
 
@@ -69,6 +78,11 @@ enum Msg {
     RefreshPlayStatusRecv(GStreamerMessage),
     PlaylistIndexChange(usize),
     Clean,
+    /// Loads the names of all smart playlists
+    LoadSmartPlaylistList,
+    LoadSmartPlaylistListRecv(Vec<String>),
+    /// Load a smartplaylist
+    LoadSmartPlaylist(usize),
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -182,6 +196,31 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 Msg::InitPlaylist
             });
         }
+        Msg::LoadSmartPlaylistList => {
+            orders.perform_cmd(async {
+                let fill = fetch("/smartplaylist/")
+                    .await
+                    .expect("Error in request")
+                    .json::<Smartplaylists>()
+                    .await
+                    .expect("Could not fetch smartplaylists");
+                Msg::LoadSmartPlaylistListRecv(fill)
+            });
+        }
+        Msg::LoadSmartPlaylistListRecv(list) => {
+            model.sidebar.smartplaylists = list;
+        }
+        Msg::LoadSmartPlaylist(index) => {
+            orders.perform_cmd(async move {
+                let data = viola_common::LoadSmartPlaylistJson { index: index };
+                let req = Request::new("/smartplaylist/load/")
+                    .method(Method::Post)
+                    .json(&data)
+                    .expect("could not construct query");
+                fetch(req).await.expect("Could not send request");
+                Msg::InitPlaylistTabs
+            });
+        }
     }
 }
 
@@ -201,6 +240,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
             ]
         };
     div![
+        C!["row"],
         div![
             C!["col-sm"],
             button![
@@ -209,7 +249,6 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 "Menu"
             ]
         ],
-        C!["row"],
         div![
             C!["col-sm"],
             button![
@@ -256,7 +295,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
 
 fn view_tabs(model: &Model) -> Node<Msg> {
     div![
-        div![C!["col-sm"], "Tab: ", model.current_playlist_tab],
+        C!["row"],
         div![
             C!["col-sm"],
             ul![
@@ -366,48 +405,82 @@ fn tuple_to_selected_true<'a>(
     )
 }
 
+fn view_smartplaylists(model: &Model) -> Node<Msg> {
+    div![
+        C!["modal", "fade"],
+        attrs![At::from("aria-hidden") => "true", At::Id => "sm_modal"],
+        div![
+            C!["modal-dialog"],
+            div![
+                C!["modal-content"],
+                div![
+                    C!["modal-body"],
+                    ul![model
+                        .sidebar
+                        .smartplaylists
+                        .iter()
+                        .enumerate()
+                        .map(|(i, smp)| li![a![
+                            smp,
+                            ev(Ev::Click, move |_| Msg::LoadSmartPlaylist(i))
+                        ]])]
+                ]
+            ]
+        ]
+    ]
+}
+
 fn view(model: &Model) -> Node<Msg> {
     div![
-        style!(St::Padding => "10px"),
+        C!["container"],
         div![
-            C!["collapse"],
-            attrs![At::Id => "sidebar"],
-            ul![
-                li!["SmartPlaylists"],
-                li!["General"],
-                li!["Album"],
-                li!["Track"],
-            ],
-        ],
-        view_buttons(model),
-        view_tabs(model),
-        div![
-            C!["table-responsive"],
-            style!(St::Overflow => "auto", St::Height => unit!(80, %)),
-            table![
-                C!["table", "table-sm"],
-                thead![
-                    style!(St::Position => "sticky"),
-                    th!["TrackNumber"],
-                    th!["Title"],
-                    th!["Artist"],
-                    th!["Album"],
-                    th!["Genre"],
-                    th!["Year"],
-                    th!["Length"],
+            C!["row"],
+            style!(St::Padding => "10px"),
+            div![
+                //side bar
+                C!["collapse", "col-xs"],
+                attrs![At::Id => "sidebar"],
+                nav![
+                    C!["nav", "flex-column"],
+                    button![
+                        C!["btn", "btn-primary"],
+                        attrs![At::from("data-toggle") => "modal", At::from("data-target") => "#sm_modal"],
+                        "SmartPlaylist",
+                        ev(Ev::Click, move |_| Msg::LoadSmartPlaylistList),
+                    ]
                 ],
-                model
-                    .playlist_tabs
-                    .get(model.current_playlist_tab)
-                    .map(|t| &t.tracks)
-                    .unwrap_or(&vec![])
-                    .iter()
-                    .enumerate()
-                    .map(|(id, t)| tuple_to_selected_true(model, id, t))
-                    .map(|(t, is_selected, pos)| view_track(t, is_selected, pos))
-            ]
-        ],
-        view_status(model),
+            ],
+            view_buttons(model),
+            view_tabs(model),
+            view_smartplaylists(model),
+            div![
+                C!["col-xs", "table-responsive"],
+                style!(St::Overflow => "auto", St::Height => unit!(80, %)),
+                table![
+                    C!["table", "table-sm"],
+                    thead![
+                        style!(St::Position => "sticky"),
+                        th!["TrackNumber"],
+                        th!["Title"],
+                        th!["Artist"],
+                        th!["Album"],
+                        th!["Genre"],
+                        th!["Year"],
+                        th!["Length"],
+                    ],
+                    model
+                        .playlist_tabs
+                        .get(model.current_playlist_tab)
+                        .map(|t| &t.tracks)
+                        .unwrap_or(&vec![])
+                        .iter()
+                        .enumerate()
+                        .map(|(id, t)| tuple_to_selected_true(model, id, t))
+                        .map(|(t, is_selected, pos)| view_track(t, is_selected, pos))
+                ]
+            ],
+            view_status(model),
+        ]
     ]
 }
 

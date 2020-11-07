@@ -26,14 +26,6 @@ pub type DBPool = Arc<Mutex<diesel::SqliteConnection>>;
 pub type PlaylistTabsPtr = Arc<RwLock<PlaylistTabs>>;
 pub type LoadedPlaylistPtr = RwLock<LoadedPlaylist>;
 
-/// General type to communicate with treeviews
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GeneralTreeViewJson<T> {
-    pub value: String,
-    pub children: Vec<T>,
-    pub optional: Option<i32>,
-}
-
 pub enum PlayerStatus {
     Playing,
     Paused,
@@ -72,10 +64,5 @@ impl std::fmt::Display for Range {
 
 #[derive(Debug, Deserialize)]
 pub struct ChangePlaylistTabJson {
-    pub index: usize,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct LoadSmartPlaylistJson {
     pub index: usize,
 }

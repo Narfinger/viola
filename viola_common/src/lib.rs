@@ -102,3 +102,40 @@ impl From<WsMessage> for String {
         serde_json::to_string(&msg).unwrap()
     }
 }
+
+/// General type to communicate with treeviews
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GeneralTreeViewJson<T> {
+    pub value: String,
+    pub children: Vec<T>,
+    pub optional: Option<i32>,
+}
+
+pub type Album = GeneralTreeViewJson<Track>;
+pub type Artist = GeneralTreeViewJson<Album>;
+pub type Smartplaylists = Vec<String>;
+
+impl From<(String, Option<i32>)> for Album {
+    fn from(s: (String, Option<i32>)) -> Self {
+        Album {
+            value: s.0,
+            children: vec![],
+            optional: s.1,
+        }
+    }
+}
+
+impl From<String> for Artist {
+    fn from(s: String) -> Self {
+        Artist {
+            value: s,
+            optional: None,
+            children: vec![],
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LoadSmartPlaylistJson {
+    pub index: usize,
+}

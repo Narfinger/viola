@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use std::thread;
 use std::time::Duration;
-use viola_common::WsMessage;
+use viola_common::{GeneralTreeViewJson, WsMessage};
 
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
@@ -158,19 +158,15 @@ async fn library_load(
 fn smartplaylist(_: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     let spl = smartplaylist_parser::construct_smartplaylists_from_config()
         .into_iter()
-        .map(|pl| GeneralTreeViewJson::<String> {
-            value: pl.name,
-            children: Vec::new(),
-            optional: None,
-        })
-        .collect::<Vec<GeneralTreeViewJson<String>>>();
+        .map(|pl| pl.name)
+        .collect::<Vec<String>>();
     HttpResponse::Ok().json(spl)
 }
 
 #[post("/smartplaylist/load/")]
 async fn smartplaylist_load(
     state: web::Data<WebGui>,
-    index: web::Json<LoadSmartPlaylistJson>,
+    index: web::Json<viola_common::LoadSmartPlaylistJson>,
     _: HttpRequest,
 ) -> HttpResponse {
     use crate::smartplaylist_parser::LoadSmartPlaylist;
