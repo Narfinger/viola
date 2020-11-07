@@ -201,6 +201,14 @@ fn view_buttons(model: &Model) -> Node<Msg> {
             ]
         };
     div![
+        div![
+            C!["col-sm"],
+            button![
+                C!["btn", "btn-info"],
+                attrs!(At::from("data-toggle") => "collapse", At::from("data-target") => "#sidebar", At::from("aria-expanded") => "false", At::from("aria-controls") => "sidebar"),
+                "Menu"
+            ]
+        ],
         C!["row"],
         div![
             C!["col-sm"],
@@ -361,6 +369,16 @@ fn tuple_to_selected_true<'a>(
 fn view(model: &Model) -> Node<Msg> {
     div![
         style!(St::Padding => "10px"),
+        div![
+            C!["collapse"],
+            attrs![At::Id => "sidebar"],
+            ul![
+                li!["SmartPlaylists"],
+                li!["General"],
+                li!["Album"],
+                li!["Track"],
+            ],
+        ],
         view_buttons(model),
         view_tabs(model),
         div![
