@@ -3,9 +3,10 @@ pub mod websocket;
 use seed::{prelude::*, *};
 use viola_common::{GStreamerAction, GStreamerMessage, GeneralTreeViewJson, Smartplaylists, Track};
 
+#[derive(Debug)]
 struct Model {
-    tracks: Vec<Track>,
     playlist_tabs: Vec<PlaylistTab>,
+    playlist_window: PlaylistWindow,
     current_playlist_tab: usize,
     play_status: GStreamerMessage,
     web_socket: WebSocket,
@@ -13,23 +14,39 @@ struct Model {
     sidebar: Sidebar,
 }
 
+trait ModelImpl {
+    fn get_current_playlist_tab_tracks(&self) -> Option<&Vec<Track>>;
+}
+
+impl ModelImpl for Model {
+    fn get_current_playlist_tab_tracks(&self) -> Option<&Vec<Track>> {
+        self.playlist_tabs
+            .get(self.current_playlist_tab)
+            .map(|tab| &tab.tracks)
+    }
+}
+
+#[derive(Debug)]
 struct Sidebar {
     smartplaylists: Vec<String>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 struct PlaylistTab {
     tracks: Vec<Track>,
     name: String,
     current_index: usize,
 }
 
-fn get_current_playlisttab_tracks<'a>(model: &'a Model) -> Option<&'a Vec<Track>> {
-    model
-        .playlist_tabs
-        .get(model.current_playlist_tab)
-        .map(|tab| &tab.tracks)
+/// Struct for having a window into our playlist and slowly fill it
+#[derive(Debug, Default)]
+struct PlaylistWindow {
+    current_window: Option<usize>,
+    stream_handle: Option<StreamHandle>,
 }
+
+const WINDOW_INCREMENT: usize = 100;
+const WINDOW_INCREMENT_INTERVALL: u32 = 250;
 
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
     orders.send_msg(Msg::InitPlaylist);
@@ -38,8 +55,8 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         smartplaylists: vec![],
     };
     Model {
-        tracks: vec![],
         playlist_tabs: vec![],
+        playlist_window: PlaylistWindow::default(),
         current_playlist_tab: 0,
         play_status: GStreamerMessage::Nop,
         web_socket: crate::websocket::create_websocket(orders),
@@ -67,12 +84,15 @@ fn format_time_string(time_in_seconds: i32) -> String {
     res
 }
 
+#[derive(Debug)]
 enum Msg {
     InitPlaylist,
     InitPlaylistRecv(Vec<Track>),
     InitPlaylistTabs,
     InitPlaylistTabRecv((usize, Vec<PlaylistTab>)),
     PlaylistTabChange(usize),
+    /// Increments the playlist window
+    PlaylistWindowIncrement,
     Transport(GStreamerAction),
     RefreshPlayStatus,
     RefreshPlayStatusRecv(GStreamerMessage),
@@ -99,9 +119,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 Msg::InitPlaylistRecv(tracks)
             });
         }
-        Msg::InitPlaylistRecv(t) => {
-            model.tracks = t;
-        }
+        Msg::InitPlaylistRecv(t) => {}
 
         Msg::InitPlaylistTabs => {
             orders.perform_cmd(async {
@@ -144,6 +162,23 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.playlist_tabs = tabs;
             model.current_playlist_tab = current;
         }
+        Msg::PlaylistWindowIncrement => {
+            model.playlist_window.current_window = Some(
+                model
+                    .playlist_window
+                    .current_window
+                    .unwrap_or(WINDOW_INCREMENT),
+            );
+            // stop the timer
+            if model
+                .get_current_playlist_tab_tracks()
+                .map(|tracks| tracks.len())
+                .unwrap_or(0)
+                >= model.playlist_window.current_window.unwrap_or(0)
+            {
+                model.playlist_window.stream_handle = None;
+            }
+        }
         Msg::PlaylistTabChange(index) => {
             model.current_playlist_tab = index;
             orders.perform_cmd(async move {
@@ -157,6 +192,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     .expect("Error in setting stuff");
                 fetch(req).await.expect("Could not send message");
             });
+            model.playlist_window.stream_handle = Some(orders.stream_with_handle(
+                streams::interval(WINDOW_INCREMENT_INTERVALL, || Msg::PlaylistWindowIncrement),
+            ));
         }
         Msg::Transport(t) => {
             orders.perform_cmd(async move {
@@ -365,7 +403,8 @@ fn view_status(model: &Model) -> Node<Msg> {
         track_status_string = "Nothing playing".to_string();
     }
 
-    let total_time: i32 = get_current_playlisttab_tracks(model)
+    let total_time: i32 = model
+        .get_current_playlisttab_tracks()
         .unwrap_or(&vec![])
         .iter()
         .map(|track| track.length)
@@ -454,10 +493,11 @@ fn view(model: &Model) -> Node<Msg> {
             view_tabs(model),
             view_smartplaylists(model),
             div![
-                C!["col-xs", "table-responsive"],
+                C!["col-xs", "table-responsive", "clusterize-scroll"],
+                attrs!(At::Id => "scrollArea"),
                 style!(St::Overflow => "auto", St::Height => unit!(80, %)),
                 table![
-                    C!["table", "table-sm"],
+                    C!["table", "table-sm", "clusterize-content"],
                     thead![
                         style!(St::Position => "sticky"),
                         th!["TrackNumber"],
@@ -468,15 +508,20 @@ fn view(model: &Model) -> Node<Msg> {
                         th!["Year"],
                         th!["Length"],
                     ],
+                    tbody![C!["clusterize-content"], attrs!(At::Id => "contentArea")],
                     model
-                        .playlist_tabs
-                        .get(model.current_playlist_tab)
-                        .map(|t| &t.tracks)
+                        .get_current_playlist_tab_tracks()
                         .unwrap_or(&vec![])
+                        .take(
+                            model
+                                .playlist_window
+                                .current_window
+                                .unwrap_or(model.get_current_playlist_tab_tracks().length())
+                        )
                         .iter()
                         .enumerate()
                         .map(|(id, t)| tuple_to_selected_true(model, id, t))
-                        .map(|(t, is_selected, pos)| view_track(t, is_selected, pos))
+                        .map(|(t, is_selected, pos)| view_track(t, is_selected, pos)),
                 ]
             ],
             view_status(model),
@@ -486,5 +531,4 @@ fn view(model: &Model) -> Node<Msg> {
 
 fn main() {
     App::start("app", init, update, view);
-    println!("Hello, world!");
 }
