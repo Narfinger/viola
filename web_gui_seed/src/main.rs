@@ -45,8 +45,8 @@ struct PlaylistWindow {
     stream_handle: Option<StreamHandle>,
 }
 
-const WINDOW_INCREMENT: usize = 100;
-const WINDOW_INCREMENT_INTERVALL: u32 = 250;
+const WINDOW_INCREMENT: usize = 50;
+const WINDOW_INCREMENT_INTERVALL: u32 = 1000;
 
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
     orders.send_msg(Msg::InitPlaylist);
@@ -161,20 +161,21 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::InitPlaylistTabRecv((current, tabs)) => {
             model.playlist_tabs = tabs;
             model.current_playlist_tab = current;
+            orders.send_msg(Msg::PlaylistWindowIncrement);
         }
         Msg::PlaylistWindowIncrement => {
             model.playlist_window.current_window = Some(
                 model
                     .playlist_window
                     .current_window
-                    .unwrap_or(WINDOW_INCREMENT),
+                    .unwrap_or(WINDOW_INCREMENT)
+                    + WINDOW_INCREMENT,
             );
             // stop the timer
-            if model
-                .get_current_playlist_tab_tracks()
-                .map(|tracks| tracks.len())
-                .unwrap_or(0)
-                >= model.playlist_window.current_window.unwrap_or(0)
+            if (model.get_current_playlist_tab_tracks().is_some())
+                && (model.playlist_window.current_window.is_some())
+                && (model.get_current_playlist_tab_tracks().unwrap().len()
+                    <= model.playlist_window.current_window.unwrap())
             {
                 model.playlist_window.stream_handle = None;
             }
@@ -250,7 +251,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::LoadSmartPlaylist(index) => {
             orders.perform_cmd(async move {
-                let data = viola_common::LoadSmartPlaylistJson { index: index };
+                let data = viola_common::LoadSmartPlaylistJson { index };
                 let req = Request::new("/smartplaylist/load/")
                     .method(Method::Post)
                     .json(&data)
@@ -404,7 +405,7 @@ fn view_status(model: &Model) -> Node<Msg> {
     }
 
     let total_time: i32 = model
-        .get_current_playlisttab_tracks()
+        .get_current_playlist_tab_tracks()
         .unwrap_or(&vec![])
         .iter()
         .map(|track| track.length)
@@ -414,9 +415,25 @@ fn view_status(model: &Model) -> Node<Msg> {
     div![
         C!["row"],
         style!(St::Padding => unit!(10,px)),
+        div![
+            C!["col-sm"],
+            format!(
+                "pl: {} ({})",
+                model
+                    .get_current_playlist_tab_tracks()
+                    .map(|tracks| tracks.len())
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| "".to_string()),
+                model
+                    .playlist_window
+                    .current_window
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| "".to_string())
+            )
+        ],
         div![C!["col-sm"], format!("Status: {}", model.play_status)],
         div![C!["col-sm"], track_status_string],
-        div![C!["col-sm"], "Total Time: ", total_time_string],
+        div![C!["col-md"], "Total Time: ", total_time_string],
         div![C!["col-sm"], IF!(model.is_repeat_once => "Repeat")]
     ]
 }
@@ -512,13 +529,8 @@ fn view(model: &Model) -> Node<Msg> {
                     model
                         .get_current_playlist_tab_tracks()
                         .unwrap_or(&vec![])
-                        .take(
-                            model
-                                .playlist_window
-                                .current_window
-                                .unwrap_or(model.get_current_playlist_tab_tracks().length())
-                        )
                         .iter()
+                        .take(model.playlist_window.current_window.unwrap_or(100))
                         .enumerate()
                         .map(|(id, t)| tuple_to_selected_true(model, id, t))
                         .map(|(t, is_selected, pos)| view_track(t, is_selected, pos)),
