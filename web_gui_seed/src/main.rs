@@ -279,88 +279,94 @@ fn view_buttons(model: &Model) -> Node<Msg> {
             ]
         };
     div![
-        C!["row"],
+        C!["container"],
         div![
-            C!["col-sm"],
-            button![
-                C!["btn", "btn-info"],
-                attrs!(At::from("data-toggle") => "collapse", At::from("data-target") => "#sidebar", At::from("aria-expanded") => "false", At::from("aria-controls") => "sidebar"),
-                "Menu"
-            ]
-        ],
-        div![
-            C!["col-sm"],
-            button![
-                C!["btn", "btn-primary"],
-                "Prev",
-                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Previous))
-            ]
-        ],
-        div![C!["col-sm"], play_button],
-        div![
-            C!["col-sm"],
-            button![
-                C!["btn", "btn-primary"],
-                "Pause",
-                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
-            ]
-        ],
-        div![
-            C!["col-sm"],
-            button![
-                C!["btn", "btn-primary"],
-                "Next",
-                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Next))
-            ]
-        ],
-        div![
-            C!["col-sm"],
-            button![
-                C!["btn", "btn-secondary"],
-                "Again",
-                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::RepeatOnce))
-            ]
-        ],
-        div![
-            C!["col-sm"],
-            button![
-                C!["btn", "btn-danger"],
-                "Clean",
-                ev(Ev::Click, |_| Msg::Clean)
-            ]
-        ],
+            C!["row"],
+            div![
+                C!["col-sm"],
+                button![
+                    C!["btn", "btn-info"],
+                    attrs!(At::from("data-toggle") => "collapse", At::from("data-target") => "#sidebar", At::from("aria-expanded") => "false", At::from("aria-controls") => "sidebar"),
+                    "Menu"
+                ]
+            ],
+            div![
+                C!["col-sm"],
+                button![
+                    C!["btn", "btn-primary"],
+                    "Prev",
+                    ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Previous))
+                ]
+            ],
+            div![C!["col-sm"], play_button],
+            div![
+                C!["col-sm"],
+                button![
+                    C!["btn", "btn-primary"],
+                    "Pause",
+                    ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
+                ]
+            ],
+            div![
+                C!["col-sm"],
+                button![
+                    C!["btn", "btn-primary"],
+                    "Next",
+                    ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Next))
+                ]
+            ],
+            div![
+                C!["col-sm"],
+                button![
+                    C!["btn", "btn-secondary"],
+                    "Again",
+                    ev(Ev::Click, |_| Msg::Transport(GStreamerAction::RepeatOnce))
+                ]
+            ],
+            div![
+                C!["col-sm"],
+                button![
+                    C!["btn", "btn-danger"],
+                    "Clean",
+                    ev(Ev::Click, |_| Msg::Clean)
+                ]
+            ],
+        ]
     ]
 }
 
 fn view_tabs(model: &Model) -> Node<Msg> {
     div![
-        C!["row"],
+        C!["container"],
         div![
-            C!["col-sm"],
-            ul![
-                C!["nav", "nav-tabs"],
-                model.playlist_tabs.iter().enumerate().map(|(pos, tab)| {
-                    if pos == model.current_playlist_tab {
-                        li![
-                            C!["nav-item"],
-                            a![
-                                attrs! {At::Href => "#"},
-                                C!["nav-link", "active"],
-                                &tab.name,
-                                ev(Ev::Click, move |_| Msg::PlaylistTabChange(pos))
+            C!["row"],
+            div![
+                C!["col"],
+                ul![
+                    C!["nav", "nav-tabs"],
+                    model.playlist_tabs.iter().enumerate().map(|(pos, tab)| {
+                        if pos == model.current_playlist_tab {
+                            li![
+                                C!["nav-item"],
+                                a![
+                                    attrs! {At::Href => "#"},
+                                    C!["nav-link", "active"],
+                                    &tab.name,
+                                    ev(Ev::Click, move |_| Msg::PlaylistTabChange(pos))
+                                ]
                             ]
-                        ]
-                    } else {
-                        li![
-                            C!["nav-item"],
-                            a![
-                                C!["nav-link"],
-                                &tab.name,
-                                ev(Ev::Click, move |_| Msg::PlaylistTabChange(pos))
+                        } else {
+                            li![
+                                C!["nav-item"],
+                                a![
+                                    C!["nav-link"],
+                                    &tab.name,
+                                    ev(Ev::Click, move |_| Msg::PlaylistTabChange(pos))
+                                ]
                             ]
-                        ]
-                    }
-                })
+                        }
+                    })
+                ]
             ]
         ]
     ]
@@ -412,29 +418,43 @@ fn view_status(model: &Model) -> Node<Msg> {
         .sum();
     let total_time_string = format_time_string(total_time);
 
+    let tracks_number_option = model
+        .get_current_playlist_tab_tracks()
+        .map(|tracks| tracks.len());
+    let window_number_option = model.playlist_window.current_window;
+    let window_string = if tracks_number_option.is_some()
+        && window_number_option.is_some()
+        && tracks_number_option.unwrap() > window_number_option.unwrap()
+    {
+        format!(
+            "Pl: {} ({})",
+            tracks_number_option.map_or("".to_string(), |t| t.to_string()),
+            window_number_option.map_or("".to_string(), |t| t.to_string())
+        )
+    } else {
+        format!(
+            "Pl: {}",
+            tracks_number_option.map_or("".to_string(), |t| t.to_string())
+        )
+    };
+
     div![
-        C!["row"],
-        style!(St::Padding => unit!(10,px)),
+        C!["container"],
         div![
-            C!["col-sm"],
-            format!(
-                "pl: {} ({})",
-                model
-                    .get_current_playlist_tab_tracks()
-                    .map(|tracks| tracks.len())
-                    .map(|s| s.to_string())
-                    .unwrap_or_else(|| "".to_string()),
-                model
-                    .playlist_window
-                    .current_window
-                    .map(|s| s.to_string())
-                    .unwrap_or_else(|| "".to_string())
-            )
-        ],
-        div![C!["col-sm"], format!("Status: {}", model.play_status)],
-        div![C!["col-sm"], track_status_string],
-        div![C!["col-md"], "Total Time: ", total_time_string],
-        div![C!["col-sm"], IF!(model.is_repeat_once => "Repeat")]
+            C!["row"],
+            style!(St::Padding => unit!(10,px)),
+            div![
+                C!["col-md"],
+                img![
+                    attrs!(At::Src => "/currentimage/", At::Width => unit!(100,px), At::Height => unit!(100,px))
+                ]
+            ],
+            div![C!["col"], window_string],
+            div![C!["col"], format!("Status: {}", model.play_status)],
+            div![C!["col"], track_status_string],
+            div![C!["col"], "Total Time: ", total_time_string],
+            div![C!["col"], IF!(model.is_repeat_once => "Repeat")]
+        ]
     ]
 }
 
@@ -491,7 +511,7 @@ fn view(model: &Model) -> Node<Msg> {
         C!["container"],
         div![
             C!["row"],
-            style!(St::Padding => "10px"),
+            style!(St::Padding => unit!(10,px)),
             div![
                 //side bar
                 C!["collapse", "col-xs"],
@@ -510,11 +530,10 @@ fn view(model: &Model) -> Node<Msg> {
             view_tabs(model),
             view_smartplaylists(model),
             div![
-                C!["col-xs", "table-responsive", "clusterize-scroll"],
-                attrs!(At::Id => "scrollArea"),
-                style!(St::Overflow => "auto", St::Height => unit!(80, %)),
+                C!["col-xs", "table-responsive"],
+                style!(St::Overflow => "scroll", St::Height => unit!(30, %)),
                 table![
-                    C!["table", "table-sm", "clusterize-content"],
+                    C!["table", "table-sm"],
                     thead![
                         style!(St::Position => "sticky"),
                         th!["TrackNumber"],
@@ -525,15 +544,14 @@ fn view(model: &Model) -> Node<Msg> {
                         th!["Year"],
                         th!["Length"],
                     ],
-                    tbody![C!["clusterize-content"], attrs!(At::Id => "contentArea")],
-                    model
+                    tbody![model
                         .get_current_playlist_tab_tracks()
                         .unwrap_or(&vec![])
                         .iter()
                         .take(model.playlist_window.current_window.unwrap_or(100))
                         .enumerate()
                         .map(|(id, t)| tuple_to_selected_true(model, id, t))
-                        .map(|(t, is_selected, pos)| view_track(t, is_selected, pos)),
+                        .map(|(t, is_selected, pos)| view_track(t, is_selected, pos)),]
                 ]
             ],
             view_status(model),
