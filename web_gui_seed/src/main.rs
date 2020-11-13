@@ -506,61 +506,75 @@ fn view_smartplaylists(model: &Model) -> Node<Msg> {
     ]
 }
 
+/// Makes the sidebar show for SmartPlaylist, Database Access
+fn sidebar_navigation(model: &Model) -> Node<Msg> {
+    div![
+        //sidebar
+        C!["col-xs", "collapse"],
+        style!(St::Width => unit!(20,%), St::Padding => unit!(20,px)),
+        attrs![At::Id => "sidebar"],
+        ul![
+            C!["navbar-nav"],
+            li![
+                C!["nav-item"],
+                button![
+                    C!["btn", "btn-primary"],
+                    attrs![At::from("data-toggle") => "modal", At::from("data-target") => "#sm_modal"],
+                    "SmartPlaylist",
+                    ev(Ev::Click, move |_| Msg::LoadSmartPlaylistList),
+                ]
+            ],
+            li![C!["navbar-nav"], "Test2"],
+        ],
+    ]
+}
+
+/// Main view
 fn view(model: &Model) -> Node<Msg> {
     div![
         C!["container"],
-        style!(St::Width => unit!(90,%)),
-        div![
-            C!["row"],
-            style!(St::Padding => unit!(10,px)),
-            div![
-                //side bar
-                C!["collapse", "col-xs"],
-                attrs![At::Id => "sidebar"],
-                nav![
-                    C!["nav", "flex-column"],
-                    button![
-                        C!["btn", "btn-primary"],
-                        attrs![At::from("data-toggle") => "modal", At::from("data-target") => "#sm_modal"],
-                        "SmartPlaylist",
-                        ev(Ev::Click, move |_| Msg::LoadSmartPlaylistList),
-                    ]
-                ],
-            ],
-        ],
-        view_buttons(model),
-        view_tabs(model),
+        style!(St::Width => unit!(95,%)),
         view_smartplaylists(model),
         div![
             C!["row"],
-            style!(St::Height => unit!(70,%),  St::OverflowX => "scroll"),
+            style!(St::Width => unit!(95,%), St::PaddingTop => unit!(10,px)),
+            sidebar_navigation(model),
             div![
-                C!["col-xs", "table-responsive"],
-                style!(St::Overflow => "auto"),
-                table![
-                    C!["table", "table-sm"],
-                    thead![
-                        style!(St::Position => "sticky"),
-                        th!["TrackNumber"],
-                        th!["Title"],
-                        th!["Artist"],
-                        th!["Album"],
-                        th!["Genre"],
-                        th!["Year"],
-                        th!["Length"],
+                C!["col"],
+                view_buttons(model),
+                view_tabs(model),
+                div![
+                    C!["row"],
+                    style!(St::Height => unit!(65,%),  St::OverflowX => "scroll"),
+                    div![
+                        C!["col-xs", "table-responsive"],
+                        style!(St::Overflow => "auto"),
+                        table![
+                            C!["table", "table-sm"],
+                            thead![
+                                style!(St::Position => "sticky"),
+                                th!["TrackNumber"],
+                                th!["Title"],
+                                th!["Artist"],
+                                th!["Album"],
+                                th!["Genre"],
+                                th!["Year"],
+                                th!["Length"],
+                            ],
+                            tbody![model
+                                .get_current_playlist_tab_tracks()
+                                .unwrap_or(&vec![])
+                                .iter()
+                                .take(model.playlist_window.current_window.unwrap_or(100))
+                                .enumerate()
+                                .map(|(id, t)| tuple_to_selected_true(model, id, t))
+                                .map(|(t, is_selected, pos)| view_track(t, is_selected, pos)),]
+                        ]
                     ],
-                    tbody![model
-                        .get_current_playlist_tab_tracks()
-                        .unwrap_or(&vec![])
-                        .iter()
-                        .take(model.playlist_window.current_window.unwrap_or(100))
-                        .enumerate()
-                        .map(|(id, t)| tuple_to_selected_true(model, id, t))
-                        .map(|(t, is_selected, pos)| view_track(t, is_selected, pos)),]
-                ]
-            ],
-        ],
-        view_status(model),
+                ],
+                view_status(model),
+            ]
+        ]
     ]
 }
 
