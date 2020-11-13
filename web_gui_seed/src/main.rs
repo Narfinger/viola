@@ -509,6 +509,7 @@ fn view_smartplaylists(model: &Model) -> Node<Msg> {
 fn view(model: &Model) -> Node<Msg> {
     div![
         C!["container"],
+        style!(St::Width => unit!(90,%)),
         div![
             C!["row"],
             style!(St::Padding => unit!(10,px)),
@@ -532,10 +533,10 @@ fn view(model: &Model) -> Node<Msg> {
         view_smartplaylists(model),
         div![
             C!["row"],
-            style!(St::Height => unit!(40,%)),
+            style!(St::Height => unit!(70,%),  St::OverflowX => "scroll"),
             div![
                 C!["col-xs", "table-responsive"],
-                style!(St::Overflow => "scroll", St::Height => unit!(30, %)),
+                style!(St::Overflow => "auto"),
                 table![
                     C!["table", "table-sm"],
                     thead![
@@ -558,8 +559,8 @@ fn view(model: &Model) -> Node<Msg> {
                         .map(|(t, is_selected, pos)| view_track(t, is_selected, pos)),]
                 ]
             ],
-            view_status(model),
-        ]
+        ],
+        view_status(model),
     ]
 }
 
