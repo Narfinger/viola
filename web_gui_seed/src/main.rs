@@ -439,22 +439,19 @@ fn view_status(model: &Model) -> Node<Msg> {
     };
 
     div![
-        C!["container"],
+        C!["row"],
+        style!(St::Padding => unit!(0.1,em)),
         div![
-            C!["row"],
-            style!(St::Padding => unit!(10,px)),
-            div![
-                C!["col-md"],
-                img![
-                    attrs!(At::Src => "/currentimage/", At::Width => unit!(100,px), At::Height => unit!(100,px))
-                ]
-            ],
-            div![C!["col"], window_string],
-            div![C!["col"], format!("Status: {}", model.play_status)],
-            div![C!["col"], track_status_string],
-            div![C!["col"], "Total Time: ", total_time_string],
-            div![C!["col"], IF!(model.is_repeat_once => "Repeat")]
-        ]
+            C!["col-md"],
+            img![
+                attrs!(At::Src => "/currentimage/", At::Width => unit!(100,px), At::Height => unit!(100,px))
+            ]
+        ],
+        div![C!["col"], window_string],
+        div![C!["col"], format!("Status: {}", model.play_status)],
+        div![C!["col"], track_status_string],
+        div![C!["col"], "Total Time: ", total_time_string],
+        div![C!["col"], IF!(model.is_repeat_once => "Repeat")]
     ]
 }
 
@@ -511,7 +508,7 @@ fn sidebar_navigation(model: &Model) -> Node<Msg> {
     div![
         //sidebar
         C!["col-xs", "collapse"],
-        style!(St::Width => unit!(20,%), St::Padding => unit!(20,px)),
+        style!(St::Width => unit!(20,%), St::Padding => unit!(10,px)),
         attrs![At::Id => "sidebar"],
         ul![
             C!["navbar-nav"],
@@ -533,24 +530,24 @@ fn sidebar_navigation(model: &Model) -> Node<Msg> {
 fn view(model: &Model) -> Node<Msg> {
     div![
         C!["container"],
-        style!(St::Width => unit!(95,%)),
         view_smartplaylists(model),
         div![
             C!["row"],
-            style!(St::Width => unit!(95,%), St::PaddingTop => unit!(10,px)),
+            style!(St::Width => unit!(95,%), St::PaddingTop => unit!(0.1,em)),
             sidebar_navigation(model),
             div![
                 C!["col"],
+                style!(St::Height => unit!(80,vh)),
                 view_buttons(model),
                 view_tabs(model),
                 div![
                     C!["row"],
-                    style!(St::Height => unit!(65,%),  St::OverflowX => "scroll"),
+                    style!(St::Height => unit!(75,vh),  St::OverflowX => "auto"),
                     div![
                         C!["col-xs", "table-responsive"],
                         style!(St::Overflow => "auto"),
                         table![
-                            C!["table", "table-sm"],
+                            C!["table", "table-sm", "table-bordered"],
                             thead![
                                 style!(St::Position => "sticky"),
                                 th!["TrackNumber"],
