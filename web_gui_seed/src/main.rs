@@ -526,9 +526,13 @@ fn view(model: &Model) -> Node<Msg> {
                     ]
                 ],
             ],
-            view_buttons(model),
-            view_tabs(model),
-            view_smartplaylists(model),
+        ],
+        view_buttons(model),
+        view_tabs(model),
+        view_smartplaylists(model),
+        div![
+            C!["row"],
+            style!(St::Height => unit!(40,%)),
             div![
                 C!["col-xs", "table-responsive"],
                 style!(St::Overflow => "scroll", St::Height => unit!(30, %)),
