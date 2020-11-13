@@ -439,7 +439,7 @@ fn view_status(model: &Model) -> Node<Msg> {
     };
 
     div![
-        C!["row"],
+        C!["row", "border", "border-dark"],
         style!(St::Padding => unit!(0.1,em)),
         div![
             C!["col-md"],
