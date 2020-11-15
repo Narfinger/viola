@@ -494,6 +494,7 @@ fn view_smartplaylists(model: &Model) -> Node<Msg> {
                         .iter()
                         .enumerate()
                         .map(|(i, smp)| li![a![
+                            attrs!(At::from("data-dismiss") => "modal"),
                             smp,
                             ev(Ev::Click, move |_| Msg::LoadSmartPlaylist(i))
                         ]])]
@@ -516,7 +517,7 @@ fn sidebar_navigation(model: &Model) -> Node<Msg> {
                 C!["nav-item"],
                 button![
                     C!["btn", "btn-primary"],
-                    attrs![At::from("data-toggle") => "modal", At::from("data-target") => "#sm_modal"],
+                    attrs![At::from("data-toggle") => "modal", At::from("data-target") => "#sm_modal", At::from("data-dismiss") => "modal"],
                     "SmartPlaylist",
                     ev(Ev::Click, move |_| Msg::LoadSmartPlaylistList),
                 ]
