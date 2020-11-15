@@ -1,7 +1,7 @@
 pub mod websocket;
 
 use seed::{prelude::*, *};
-use viola_common::{GStreamerAction, GStreamerMessage, GeneralTreeViewJson, Smartplaylists, Track};
+use viola_common::{GStreamerAction, GStreamerMessage, Smartplaylists, Track};
 
 #[derive(Debug)]
 struct Model {
@@ -12,6 +12,7 @@ struct Model {
     web_socket: WebSocket,
     is_repeat_once: bool,
     sidebar: Sidebar,
+    treeviews: Vec<TreeView>,
 }
 
 trait ModelImpl {
@@ -29,6 +30,12 @@ impl ModelImpl for Model {
 #[derive(Debug)]
 struct Sidebar {
     smartplaylists: Vec<String>,
+}
+
+#[derive(Debug)]
+struct TreeView {
+    tree: indextree::Arena<String>,
+    root: indextree::NodeId,
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -49,7 +56,6 @@ const WINDOW_INCREMENT: usize = 50;
 const WINDOW_INCREMENT_INTERVALL: u32 = 1000;
 
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
-    orders.send_msg(Msg::InitPlaylist);
     orders.send_msg(Msg::InitPlaylistTabs);
     let sidebar = Sidebar {
         smartplaylists: vec![],
@@ -62,6 +68,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         web_socket: crate::websocket::create_websocket(orders),
         is_repeat_once: false,
         sidebar,
+        treeviews: vec![],
     }
 }
 
@@ -86,8 +93,6 @@ fn format_time_string(time_in_seconds: i32) -> String {
 
 #[derive(Debug)]
 enum Msg {
-    InitPlaylist,
-    InitPlaylistRecv(Vec<Track>),
     InitPlaylistTabs,
     InitPlaylistTabRecv((usize, Vec<PlaylistTab>)),
     PlaylistTabChange(usize),
@@ -103,24 +108,22 @@ enum Msg {
     LoadSmartPlaylistListRecv(Vec<String>),
     /// Load a smartplaylist
     LoadSmartPlaylist(usize),
+    /// Fill the treeview of `model_index`, with at position `tree_index` with `type_vec`
+    FillTreeView {
+        model_index: usize,
+        tree_index: Vec<usize>,
+        type_vec: Vec<viola_common::TreeType>,
+        search: String,
+    },
+    FillTreeViewRecv {
+        model_index: usize,
+        tree_index: Vec<usize>,
+        result: Vec<String>,
+    },
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::InitPlaylist => {
-            orders.perform_cmd(async {
-                let response = fetch("/playlist/").await.expect("HTTP request failed");
-                let tracks = response
-                    .check_status() // ensure we've got 2xx status
-                    .expect("status check failed")
-                    .json::<Vec<Track>>()
-                    .await
-                    .expect("deserialization failed");
-                Msg::InitPlaylistRecv(tracks)
-            });
-        }
-        Msg::InitPlaylistRecv(t) => {}
-
         Msg::InitPlaylistTabs => {
             orders.perform_cmd(async {
                 #[derive(serde::Deserialize)]
@@ -232,7 +235,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.perform_cmd(async {
                 let req = Request::new("/clean/").method(Method::Post);
                 fetch(req).await.expect("Could not send request");
-                Msg::InitPlaylist
+                Msg::InitPlaylistTabs
             });
         }
         Msg::LoadSmartPlaylistList => {
@@ -259,6 +262,65 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 fetch(req).await.expect("Could not send request");
                 Msg::InitPlaylistTabs
             });
+        }
+        Msg::FillTreeView {
+            model_index,
+            tree_index,
+            type_vec,
+            search,
+        } => {
+            orders.perform_cmd(async move {
+                let data = viola_common::TreeViewQuery {
+                    types: type_vec,
+                    indices: tree_index,
+                    search: search,
+                };
+                let req = Request::new("/treeview/")
+                    .method(Method::Get)
+                    .json(&data)
+                    .expect("Could not construct query");
+                let result = fetch(req)
+                    .await
+                    .expect("Could not send request")
+                    .json::<Vec<String>>()
+                    .await
+                    .expect("Could not fetch treeview");
+                Msg::FillTreeViewRecv {
+                    model_index: model_index,
+                    tree_index: tree_index,
+                    result: result,
+                }
+            });
+        }
+        Msg::FillTreeViewRecv {
+            model_index,
+            tree_index,
+            result,
+        } => {
+            if let Some(treeview) = model.treeviews.get_mut(model_index) {
+                todo!("this might not work");
+                let mut treeview_ref = &match tree_index.len() {
+                    0 => treeview.children,
+                    1 => treeview.children.get_mut(tree_index[0]).unwrap().children,
+                    2 => {
+                        treeview
+                            .children
+                            .get_mut(tree_index[1])
+                            .unwrap()
+                            .children
+                            .get_mut(tree_index[2])
+                            .unwrap()
+                            .children
+                    }
+                };
+                treeview_ref = result
+                    .into_iter()
+                    .map(|string| TreeView {
+                        name: string,
+                        children: vec![],
+                    })
+                    .collect::<Vec<TreeView>>();
+            }
         }
     }
 }
@@ -498,6 +560,44 @@ fn view_smartplaylists(model: &Model) -> Node<Msg> {
                             smp,
                             ev(Ev::Click, move |_| Msg::LoadSmartPlaylist(i))
                         ]])]
+                ]
+            ]
+        ]
+    ]
+}
+
+fn view_tree(
+    type_vec: Vec<viola_common::TreeType>,
+    model_index: usize,
+    model: &Model,
+) -> Node<Msg> {
+    div![
+        C!["modal", "fade"],
+        attrs![At::from("aria-hidden") => "true", At::Id => "treemodel"],
+        div![
+            C!["modal-dialog"],
+            div![
+                C!["modal-content"],
+                div![
+                    C!["modal-body"],
+                    ul![{
+                        let treeview = model.treeviews.get(model_index).unwrap();
+                        treeview
+                            .root
+                            .children(&treeview.tree)
+                            .enumerate()
+                            .map(|(i, tree)| {
+                                li![a![
+                                    tree,
+                                    ev(Ev::Click, move |_| Msg::FillTreeView {
+                                        model_index: model_index,
+                                        tree_index: vec![],
+                                        type_vec: vec![type_vec.get(0).unwrap()],
+                                        search: "".to_string(),
+                                    })
+                                ]]
+                            })
+                    }]
                 ]
             ]
         ]

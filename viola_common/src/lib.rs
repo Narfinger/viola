@@ -103,37 +103,24 @@ impl From<WsMessage> for String {
     }
 }
 
-/// General type to communicate with treeviews
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum TreeType {
+    Artist,
+    Album,
+    Track,
+}
+/// General type to query a treeview
 #[derive(Debug, Serialize, Deserialize)]
-pub struct GeneralTreeViewJson<T> {
-    pub value: String,
-    pub children: Vec<T>,
-    pub optional: Option<i32>,
+pub struct TreeViewQuery {
+    /// Which types we want in order
+    types: Vec<TreeType>,
+    /// which indices we want in order, having [1] means, we want the children of the second types[0]
+    indices: Vec<usize>,
+    /// Optional search string to restrict
+    search: Option<String>,
 }
 
-pub type Album = GeneralTreeViewJson<Track>;
-pub type Artist = GeneralTreeViewJson<Album>;
 pub type Smartplaylists = Vec<String>;
-
-impl From<(String, Option<i32>)> for Album {
-    fn from(s: (String, Option<i32>)) -> Self {
-        Album {
-            value: s.0,
-            children: vec![],
-            optional: s.1,
-        }
-    }
-}
-
-impl From<String> for Artist {
-    fn from(s: String) -> Self {
-        Artist {
-            value: s,
-            optional: None,
-            children: vec![],
-        }
-    }
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LoadSmartPlaylistJson {
