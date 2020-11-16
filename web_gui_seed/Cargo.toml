@@ -13,3 +13,4 @@ serde_json = "1.0"
 serde = "1.0"
 indextree = "4.3"
 viola_common = { path = "../viola_common" }
+wee_alloc = "0.4"
