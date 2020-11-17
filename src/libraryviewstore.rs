@@ -1,9 +1,5 @@
-use crate::db;
-use crate::diesel::associations::HasTable;
 use crate::diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl};
-use crate::loaded_playlist;
 use crate::types::*;
-use std::collections::HashMap;
 use std::convert::TryInto;
 use std::ops::Deref;
 use viola_common::schema::tracks::dsl::*;
@@ -11,7 +7,6 @@ use viola_common::{Track, TreeViewQuery};
 
 fn match_and_select<'a>(
     base_query: viola_common::schema::tracks::BoxedQuery<'a, diesel::sqlite::Sqlite>,
-    db: &'a DBPool,
     ttype: &'a viola_common::TreeType,
 ) -> diesel::query_builder::BoxedSelectStatement<
     'a,
@@ -45,7 +40,7 @@ fn get_filter_string(
     ttype: viola_common::TreeType,
     index: &usize,
 ) -> String {
-    let select_query = match_and_select(base_query, db, &ttype);
+    let select_query = match_and_select(base_query, &ttype);
     let loaded_query: Vec<String> = select_query
         .offset(index.clone().try_into().unwrap())
         .limit(1)
@@ -99,7 +94,7 @@ fn treeview_query<'a>(
 
 pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
     let base_query = treeview_query(db, query);
-    let final_query = match_and_select(base_query, db, query.types.last().unwrap());
+    let final_query = match_and_select(base_query, query.types.last().unwrap());
     final_query
         .load(db.lock().unwrap().deref())
         .expect("Error in query")
