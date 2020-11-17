@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use std::thread;
 use std::time::Duration;
-use viola_common::{GeneralTreeViewJson, WsMessage};
+use viola_common::WsMessage;
 
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
@@ -107,52 +107,28 @@ async fn transport(
 #[post("/libraryview/partial/")]
 async fn library_partial_tree(
     state: web::Data<WebGui>,
-    level: web::Json<libraryviewstore::PartialQueryLevel>,
+    level: web::Json<viola_common::TreeViewQuery>,
     _: HttpRequest,
 ) -> HttpResponse {
     let q = level.into_inner();
-    let items = libraryviewstore::query_partial_tree(&state.pool, &q);
-    //println!("items: {:?}", items);
+    let items = libraryviewstore::treeview_query(&state.pool, &q);
+    
     HttpResponse::Ok().json(items)
 }
 
 #[post("/libraryview/load/")]
 async fn library_load(
     state: web::Data<WebGui>,
-    level: web::Json<libraryviewstore::PartialQueryLevel>,
+    level: web::Json<viola_common::TreeViewQuery>,
     _: HttpRequest,
 ) -> HttpResponse {
-    let q = level.into_inner();
-    let pl = libraryviewstore::load_query(&state.pool, &q);
-    println!("Loading new playlist {}", pl.name);
-    state.playlist_tabs.add(pl);
-    my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
+    //let q = level.into_inner();
+    //let pl = libraryviewstore::load_query(&state.pool, &q);
+    //println!("Loading new playlist {}", pl.name);
+    //state.playlist_tabs.add(pl);
+    //my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
     HttpResponse::Ok().finish()
 }
-
-// use futures::StreamExt;
-// #[post("/libraryview/full/")]
-// async fn library_full_tree(
-//     state: web::Data<WebGui>,
-//     req: HttpRequest,
-//     //level: web::Json<libraryviewstore::PartialQueryLevel>,
-//     mut body: web::Payload,
-// ) -> HttpResponse {
-//     let mut bytes = web::BytesMut::new();
-//     while let Some(item) = body.next().await {
-//         bytes.extend_from_slice(&item.unwrap());
-//     }
-//     format!("Body {:?}!", bytes);
-//     let q = serde_json::from_slice::<libraryviewstore::PartialQueryLevel>(&bytes);
-//     println!("{:?}", q);
-
-//     //println!("{:?}", level);
-//     //let q = level.into_inner();
-//     //let items = libraryviewstore::query_tree(&state.pool, &q);
-//     //Ok(HttpResponse::Ok().json(items))
-//     let items: Vec<String> = Vec::new();
-//     HttpResponse::Ok().json(items)
-// }
 
 #[get("/smartplaylist/")]
 fn smartplaylist(_: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
