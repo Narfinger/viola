@@ -9,30 +9,32 @@ use std::ops::Deref;
 use viola_common::schema::tracks::dsl::*;
 use viola_common::{Track, TreeViewQuery};
 
-fn match_and_select(
-    base_query: viola_common::schema::tracks::BoxedQuery<diesel::sqlite::Sqlite>,
-    db: &DBPool,
-    ttype: viola_common::TreeType,
-) -> viola_common::schema::tracks::BoxedQuery<diesel::sqlite::Sqlite> {
+fn match_and_select<'a>(
+    base_query: viola_common::schema::tracks::BoxedQuery<'a, diesel::sqlite::Sqlite>,
+    db: &'a DBPool,
+    ttype: &'a viola_common::TreeType,
+) -> diesel::query_builder::BoxedSelectStatement<
+    'a,
+    diesel::sql_types::Text,
+    viola_common::schema::tracks::table,
+    diesel::sqlite::Sqlite,
+> {
     let select_query = match ttype {
-        viola_common::TreeType::Artist => tracks
+        viola_common::TreeType::Artist => base_query
             .select(artist)
             .group_by(artist)
             .distinct()
-            .order_by(artist)
-            .into_boxed(),
-        viola_common::TreeType::Album => tracks
+            .order_by(artist),
+        viola_common::TreeType::Album => base_query
             .select(album)
             .group_by(album)
             .distinct()
-            .order_by(album)
-            .into_boxed(),
-        viola_common::TreeType::Track => tracks
+            .order_by(album),
+        viola_common::TreeType::Track => base_query
             .select(title)
             .group_by(title)
             .distinct()
-            .order_by(title)
-            .into_boxed(),
+            .order_by(title),
     };
     select_query
 }
@@ -43,7 +45,7 @@ fn get_filter_string(
     ttype: viola_common::TreeType,
     index: &usize,
 ) -> String {
-    let select_query = match_and_select(base_query, db, ttype);
+    let select_query = match_and_select(base_query, db, &ttype);
     let loaded_query: Vec<String> = select_query
         .offset(index.clone().try_into().unwrap())
         .limit(1)
@@ -52,10 +54,10 @@ fn get_filter_string(
     loaded_query.first().expect("Error in stuff").to_string()
 }
 
-fn treeview_query(
-    db: &DBPool,
-    query: &TreeViewQuery,
-) -> viola_common::schema::tracks::BoxedQuery<diesel::sqlite::Sqlite> {
+fn treeview_query<'a>(
+    db: &'a DBPool,
+    query: &'a TreeViewQuery,
+) -> viola_common::schema::tracks::BoxedQuery<'a, diesel::sqlite::Sqlite> {
     let mut filter_strings = Vec::new();
     // for first one
     if let Some(i) = query.indices.get(0) {
@@ -96,7 +98,9 @@ fn treeview_query(
 }
 
 pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
-    //    match last thingy {
-
-    //    }
+    let base_query = treeview_query(db, query);
+    let final_query = match_and_select(base_query, db, query.types.last().unwrap());
+    final_query
+        .load(db.lock().unwrap().deref())
+        .expect("Error in query")
 }

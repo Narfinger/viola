@@ -111,8 +111,8 @@ async fn library_partial_tree(
     _: HttpRequest,
 ) -> HttpResponse {
     let q = level.into_inner();
-    let items = libraryviewstore::treeview_query(&state.pool, &q);
-    
+    let items = libraryviewstore::partial_query(&state.pool, &q);
+
     HttpResponse::Ok().json(items)
 }
 
