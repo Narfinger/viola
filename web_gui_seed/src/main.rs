@@ -278,8 +278,8 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.perform_cmd(async move {
                 let data = viola_common::TreeViewQuery {
                     types: type_vec,
-                    indices: tree_index,
-                    search: search,
+                    indices: tree_index.clone(),
+                    search: None,
                 };
                 let req = Request::new("/treeview/")
                     .method(Method::Get)
@@ -304,28 +304,30 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             result,
         } => {
             if let Some(treeview) = model.treeviews.get_mut(model_index) {
-                todo!("this might not work");
-                let mut treeview_ref = &match tree_index.len() {
-                    0 => treeview.children,
-                    1 => treeview.children.get_mut(tree_index[0]).unwrap().children,
-                    2 => {
-                        treeview
-                            .children
-                            .get_mut(tree_index[1])
-                            .unwrap()
-                            .children
-                            .get_mut(tree_index[2])
-                            .unwrap()
-                            .children
-                    }
+                let nodeid = &match tree_index.len() {
+                    0 => treeview.root.children(&treeview.tree).nth(tree_index[0]),
+                    1 => treeview
+                        .root
+                        .children(&treeview.tree)
+                        .nth(tree_index[0])
+                        .map(|t| t.children(&treeview.tree))
+                        .and_then(|mut t| t.nth(tree_index[1])),
+                    2 => treeview
+                        .root
+                        .children(&treeview.tree)
+                        .nth(tree_index[0])
+                        .map(|t| t.children(&treeview.tree))
+                        .and_then(|mut t| t.nth(tree_index[1]))
+                        .map(|t| t.children(&treeview.tree))
+                        .and_then(|mut t| t.nth(tree_index[2])),
+                    _ => None,
                 };
-                treeview_ref = result
-                    .into_iter()
-                    .map(|string| TreeView {
-                        name: string,
-                        children: vec![],
-                    })
-                    .collect::<Vec<TreeView>>();
+                if let Some(nodeid) = nodeid {
+                    for i in result.into_iter() {
+                        let new_node = treeview.tree.new_node(i);
+                        nodeid.append(new_node, &mut treeview.tree);
+                    }
+                }
             }
         }
     }
@@ -577,6 +579,7 @@ fn view_tree(
     model_index: usize,
     model: &Model,
 ) -> Node<Msg> {
+    let treeview = model.treeviews.get(model_index).unwrap();
     div![
         C!["modal", "fade"],
         attrs![At::from("aria-hidden") => "true", At::Id => "treemodel"],
@@ -587,18 +590,17 @@ fn view_tree(
                 div![
                     C!["modal-body"],
                     ul![{
-                        let treeview = model.treeviews.get(model_index).unwrap();
                         treeview
                             .root
                             .children(&treeview.tree)
                             .enumerate()
                             .map(|(i, tree)| {
                                 li![a![
-                                    tree,
+                                    treeview.tree.get(tree).unwrap().get(),
                                     ev(Ev::Click, move |_| Msg::FillTreeView {
-                                        model_index: model_index,
-                                        tree_index: vec![],
-                                        type_vec: vec![type_vec.get(0).unwrap()],
+                                        model_index,
+                                        tree_index: vec![i],
+                                        type_vec: vec![type_vec[0].clone()],
                                         search: "".to_string(),
                                     })
                                 ]]
