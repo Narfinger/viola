@@ -9,6 +9,12 @@ pub mod websocket;
 use seed::{prelude::*, *};
 use viola_common::{GStreamerAction, GStreamerMessage, Smartplaylists, Track};
 
+static ArtistAlbumTrack: [viola_common::TreeType; 3] = [
+    viola_common::TreeType::Artist,
+    viola_common::TreeType::Album,
+    viola_common::TreeType::Track,
+];
+
 #[derive(Debug)]
 struct Model {
     playlist_tabs: Vec<PlaylistTab>,
@@ -42,6 +48,7 @@ struct Sidebar {
 struct TreeView {
     tree: indextree::Arena<String>,
     root: indextree::NodeId,
+    type_vec: Vec<viola_common::TreeType>,
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -292,9 +299,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     .await
                     .expect("Could not fetch treeview");
                 Msg::FillTreeViewRecv {
-                    model_index: model_index,
-                    tree_index: tree_index,
-                    result: result,
+                    model_index,
+                    tree_index,
+                    result,
                 }
             });
         }
@@ -574,11 +581,26 @@ fn view_smartplaylists(model: &Model) -> Node<Msg> {
     ]
 }
 
-fn view_tree(
-    type_vec: Vec<viola_common::TreeType>,
+fn view_tree_lvl1(
     model_index: usize,
     model: &Model,
+    treeview: &TreeView,
+    index: usize,
+    tree: indextree::NodeId,
 ) -> Node<Msg> {
+    let type_vec = treeview.type_vec.clone();
+    li![a![
+        treeview.tree.get(tree).unwrap().get(),
+        ev(Ev::Click, move |_| Msg::FillTreeView {
+            model_index,
+            tree_index: vec![index],
+            type_vec: vec![type_vec[0]],
+            search: "".to_string(),
+        })
+    ]]
+}
+
+fn view_tree(model_index: usize, model: &Model) -> Node<Msg> {
     let treeview = model.treeviews.get(model_index).unwrap();
     div![
         C!["modal", "fade"],
@@ -594,17 +616,7 @@ fn view_tree(
                             .root
                             .children(&treeview.tree)
                             .enumerate()
-                            .map(|(i, tree)| {
-                                li![a![
-                                    treeview.tree.get(tree).unwrap().get(),
-                                    ev(Ev::Click, move |_| Msg::FillTreeView {
-                                        model_index,
-                                        tree_index: vec![i],
-                                        type_vec: vec![type_vec[0].clone()],
-                                        search: "".to_string(),
-                                    })
-                                ]]
-                            })
+                            .map(|(i, tree)| view_tree_lvl1(model_index, model, treeview, i, tree))
                     }]
                 ]
             ]
@@ -630,7 +642,15 @@ fn sidebar_navigation(model: &Model) -> Node<Msg> {
                     ev(Ev::Click, move |_| Msg::LoadSmartPlaylistList),
                 ]
             ],
-            li![C!["navbar-nav"], "Test2"],
+            li![
+                C!["nav-item"],
+                button![
+                    C!["btn", "btn-primary"],
+                    attrs![At::from("data-toggle") => "modal", At::from("data-target") => "#sm_modal", At::from("data-dismiss") => "modal"],
+                    "Artists",
+                    //ev(Ev::Click, move |_| Msg::LoadArtist),
+                ]
+            ],
         ],
     ]
 }
@@ -640,6 +660,7 @@ fn view(model: &Model) -> Node<Msg> {
     div![
         C!["container"],
         view_smartplaylists(model),
+        view_tree(0, model),
         div![
             C!["row"],
             style!(St::Width => unit!(95,%), St::PaddingTop => unit!(0.1,em)),

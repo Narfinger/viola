@@ -113,11 +113,11 @@ pub enum TreeType {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TreeViewQuery {
     /// Which types we want in order
-    types: Vec<TreeType>,
+    pub types: Vec<TreeType>,
     /// which indices we want in order, having [1] means, we want the children of the second types[0]
-    indices: Vec<usize>,
+    pub indices: Vec<usize>,
     /// Optional search string to restrict
-    search: Option<String>,
+    pub search: Option<String>,
 }
 
 pub type Smartplaylists = Vec<String>;
