@@ -94,7 +94,14 @@ fn treeview_query<'a>(
 
 pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
     let base_query = treeview_query(db, query);
-    let final_query = match_and_select(base_query, query.types.last().unwrap());
+    let query_type = match query.indices.len() {
+        0 => query.types.get(0),
+        1 => query.types.get(1),
+        2 => query.types.get(2),
+        _ => query.types.last(),
+    }
+    .expect("Error in index stuff");
+    let final_query = match_and_select(base_query, query_type);
     final_query
         .load(db.lock().unwrap().deref())
         .expect("Error in query")
