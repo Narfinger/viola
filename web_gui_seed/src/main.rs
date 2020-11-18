@@ -43,6 +43,8 @@ struct TreeView {
     tree: indextree::Arena<String>,
     root: indextree::NodeId,
     type_vec: Vec<viola_common::TreeType>,
+    current_window: usize,
+    stream_handle: Option<StreamHandle>,
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -85,6 +87,8 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
                 viola_common::TreeType::Album,
                 viola_common::TreeType::Track,
             ],
+            current_window: 100,
+            stream_handle: None,
         }],
     }
 }
@@ -136,6 +140,9 @@ enum Msg {
         model_index: usize,
         tree_index: Vec<usize>,
         result: Vec<String>,
+    },
+    TreeWindowIncrement {
+        tree_index: usize,
     },
 }
 
@@ -340,7 +347,20 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                         nodeid.append(new_node, &mut treeview.tree);
                     }
                 }
+                treeview.stream_handle = Some(orders.stream_with_handle(streams::interval(
+                    WINDOW_INCREMENT_INTERVALL,
+                    move || Msg::TreeWindowIncrement {
+                        tree_index: model_index,
+                    },
+                )));
             }
+        }
+        Msg::TreeWindowIncrement { tree_index } => {
+            let mut tree = model.treeviews.get_mut(tree_index).unwrap();
+            tree.current_window += WINDOW_INCREMENT;
+            if tree.current_window >= tree.tree.count() {
+                tree.stream_handle = None
+            };
         }
     }
 }
@@ -614,6 +634,7 @@ fn view_tree(model_index: usize, model: &Model) -> Node<Msg> {
                         ul![treeview
                             .root
                             .children(&treeview.tree)
+                            .take(treeview.current_window)
                             .enumerate()
                             .map(|(i, tree)| view_tree_lvl1(treeview, tree)),]
                     ]
