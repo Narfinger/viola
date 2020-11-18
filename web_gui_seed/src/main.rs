@@ -79,17 +79,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         web_socket: crate::websocket::create_websocket(orders),
         is_repeat_once: false,
         sidebar,
-        treeviews: vec![TreeView {
-            tree: arena,
-            root,
-            type_vec: vec![
-                viola_common::TreeType::Artist,
-                viola_common::TreeType::Album,
-                viola_common::TreeType::Track,
-            ],
-            current_window: 100,
-            stream_handle: None,
-        }],
+        treeviews: vec![],
     }
 }
 
@@ -293,6 +283,18 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             type_vec,
             search,
         } => {
+            if model.treeviews.get(model_index).is_none() {
+                let mut arena = indextree::Arena::new();
+                let root = arena.new_node("".to_string());
+                let view = TreeView {
+                    tree: arena,
+                    root,
+                    type_vec: type_vec.clone(),
+                    current_window: 100,
+                    stream_handle: None,
+                };
+                model.treeviews.push(view);
+            }
             orders.perform_cmd(async move {
                 let data = viola_common::TreeViewQuery {
                     types: type_vec,
@@ -342,7 +344,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 };
                 seed::log(nodeid);
                 if let Some(nodeid) = nodeid {
-                    for i in result.into_iter().take(10) {
+                    for i in result.into_iter() {
                         let new_node = treeview.tree.new_node(i);
                         nodeid.append(new_node, &mut treeview.tree);
                     }
