@@ -590,7 +590,6 @@ fn view_tree_lvl1(treeview: &TreeView, nodeid: indextree::NodeId) -> Node<Msg> {
     let type_vec = treeview.type_vec.clone();
     seed::log(treeview.tree.get(nodeid).unwrap().get());
     li![
-        C!["nav-item"],
         treeview.tree.get(nodeid).unwrap().get(),
         //ev(Ev::Click, move |_| Msg::FillTreeView {
         //    model_index,
@@ -603,21 +602,21 @@ fn view_tree_lvl1(treeview: &TreeView, nodeid: indextree::NodeId) -> Node<Msg> {
 
 fn view_tree(model_index: usize, model: &Model) -> Node<Msg> {
     if let Some(treeview) = model.treeviews.get(model_index) {
-        let view_vector = treeview
-            .root
-            .children(&treeview.tree)
-            .enumerate()
-            .map(|(i, tree)| view_tree_lvl1(treeview, tree))
-            .collect::<Vec<Node<Msg>>>();
-        seed::log(view_vector.first());
         div![
             C!["modal", "fade"],
-            attrs![At::from("aria-hidden") => "true", At::Id => "treemodel"],
+            attrs![At::from("aria-hidden") => "true", At::Id => "artisttree"],
             div![
                 C!["modal-dialog"],
                 div![
                     C!["modal-content"],
-                    div![C!["modal-body"], ul![C!["navbar-nav"], view_vector,]]
+                    div![
+                        C!["modal-body"],
+                        ul![treeview
+                            .root
+                            .children(&treeview.tree)
+                            .enumerate()
+                            .map(|(i, tree)| view_tree_lvl1(treeview, tree)),]
+                    ]
                 ]
             ]
         ]
@@ -648,7 +647,7 @@ fn sidebar_navigation(model: &Model) -> Node<Msg> {
                 C!["nav-item"],
                 button![
                     C!["btn", "btn-primary"],
-                    attrs![At::from("data-toggle") => "modal", At::from("data-target") => "#sm_modal", At::from("data-dismiss") => "modal"],
+                    attrs![At::from("data-toggle") => "modal", At::from("data-target") => "#artisttree", At::from("data-dismiss") => "modal"],
                     "Artists",
                     ev(Ev::Click, move |_| Msg::FillTreeView {
                         model_index: 0,
