@@ -601,27 +601,32 @@ fn view_tree_lvl1(
 }
 
 fn view_tree(model_index: usize, model: &Model) -> Node<Msg> {
-    let treeview = model.treeviews.get(model_index).unwrap();
-    div![
-        C!["modal", "fade"],
-        attrs![At::from("aria-hidden") => "true", At::Id => "treemodel"],
+    if let Some(treeview) = model.treeviews.get(model_index) {
         div![
-            C!["modal-dialog"],
+            C!["modal", "fade"],
+            attrs![At::from("aria-hidden") => "true", At::Id => "treemodel"],
             div![
-                C!["modal-content"],
+                C!["modal-dialog"],
                 div![
-                    C!["modal-body"],
-                    ul![{
-                        treeview
-                            .root
-                            .children(&treeview.tree)
-                            .enumerate()
-                            .map(|(i, tree)| view_tree_lvl1(model_index, model, treeview, i, tree))
-                    }]
+                    C!["modal-content"],
+                    div![
+                        C!["modal-body"],
+                        ul![{
+                            treeview
+                                .root
+                                .children(&treeview.tree)
+                                .enumerate()
+                                .map(|(i, tree)| {
+                                    view_tree_lvl1(model_index, model, treeview, i, tree)
+                                })
+                        }]
+                    ]
                 ]
             ]
         ]
-    ]
+    } else {
+        div![]
+    }
 }
 
 /// Makes the sidebar show for SmartPlaylist, Database Access
@@ -648,7 +653,16 @@ fn sidebar_navigation(model: &Model) -> Node<Msg> {
                     C!["btn", "btn-primary"],
                     attrs![At::from("data-toggle") => "modal", At::from("data-target") => "#sm_modal", At::from("data-dismiss") => "modal"],
                     "Artists",
-                    //ev(Ev::Click, move |_| Msg::LoadArtist),
+                    ev(Ev::Click, move |_| Msg::FillTreeView {
+                        model_index: 0,
+                        tree_index: vec![],
+                        search: "".to_string(),
+                        type_vec: vec![
+                            viola_common::TreeType::Artist,
+                            viola_common::TreeType::Album,
+                            viola_common::TreeType::Track
+                        ]
+                    }),
                 ]
             ],
         ],
