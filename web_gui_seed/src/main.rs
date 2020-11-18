@@ -9,12 +9,6 @@ pub mod websocket;
 use seed::{prelude::*, *};
 use viola_common::{GStreamerAction, GStreamerMessage, Smartplaylists, Track};
 
-static ArtistAlbumTrack: [viola_common::TreeType; 3] = [
-    viola_common::TreeType::Artist,
-    viola_common::TreeType::Album,
-    viola_common::TreeType::Track,
-];
-
 #[derive(Debug)]
 struct Model {
     playlist_tabs: Vec<PlaylistTab>,
@@ -73,6 +67,8 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
     let sidebar = Sidebar {
         smartplaylists: vec![],
     };
+    let mut arena = indextree::Arena::new();
+    let root = arena.new_node("".to_string());
     Model {
         playlist_tabs: vec![],
         playlist_window: PlaylistWindow::default(),
@@ -81,7 +77,15 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         web_socket: crate::websocket::create_websocket(orders),
         is_repeat_once: false,
         sidebar,
-        treeviews: vec![],
+        treeviews: vec![TreeView {
+            tree: arena,
+            root,
+            type_vec: vec![
+                viola_common::TreeType::Artist,
+                viola_common::TreeType::Album,
+                viola_common::TreeType::Track,
+            ],
+        }],
     }
 }
 
@@ -288,8 +292,8 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     indices: tree_index.clone(),
                     search: None,
                 };
-                let req = Request::new("/treeview/")
-                    .method(Method::Get)
+                let req = Request::new("/libraryview/partial/")
+                    .method(Method::Post)
                     .json(&data)
                     .expect("Could not construct query");
                 let result = fetch(req)
@@ -312,7 +316,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         } => {
             if let Some(treeview) = model.treeviews.get_mut(model_index) {
                 let nodeid = &match tree_index.len() {
-                    0 => treeview.root.children(&treeview.tree).nth(tree_index[0]),
+                    0 => Some(treeview.root),
                     1 => treeview
                         .root
                         .children(&treeview.tree)
@@ -329,8 +333,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                         .and_then(|mut t| t.nth(tree_index[2])),
                     _ => None,
                 };
+                seed::log(nodeid);
                 if let Some(nodeid) = nodeid {
-                    for i in result.into_iter() {
+                    for i in result.into_iter().take(10) {
                         let new_node = treeview.tree.new_node(i);
                         nodeid.append(new_node, &mut treeview.tree);
                     }
@@ -581,27 +586,30 @@ fn view_smartplaylists(model: &Model) -> Node<Msg> {
     ]
 }
 
-fn view_tree_lvl1(
-    model_index: usize,
-    model: &Model,
-    treeview: &TreeView,
-    index: usize,
-    tree: indextree::NodeId,
-) -> Node<Msg> {
+fn view_tree_lvl1(treeview: &TreeView, nodeid: indextree::NodeId) -> Node<Msg> {
     let type_vec = treeview.type_vec.clone();
-    li![a![
-        treeview.tree.get(tree).unwrap().get(),
-        ev(Ev::Click, move |_| Msg::FillTreeView {
-            model_index,
-            tree_index: vec![index],
-            type_vec: vec![type_vec[0]],
-            search: "".to_string(),
-        })
-    ]]
+    seed::log(treeview.tree.get(nodeid).unwrap().get());
+    li![
+        C!["nav-item"],
+        treeview.tree.get(nodeid).unwrap().get(),
+        //ev(Ev::Click, move |_| Msg::FillTreeView {
+        //    model_index,
+        //    tree_index: vec![index],
+        //    type_vec: vec![type_vec[0]],
+        //    search: "".to_string(),
+        //})
+    ]
 }
 
 fn view_tree(model_index: usize, model: &Model) -> Node<Msg> {
     if let Some(treeview) = model.treeviews.get(model_index) {
+        let view_vector = treeview
+            .root
+            .children(&treeview.tree)
+            .enumerate()
+            .map(|(i, tree)| view_tree_lvl1(treeview, tree))
+            .collect::<Vec<Node<Msg>>>();
+        seed::log(view_vector.first());
         div![
             C!["modal", "fade"],
             attrs![At::from("aria-hidden") => "true", At::Id => "treemodel"],
@@ -609,18 +617,7 @@ fn view_tree(model_index: usize, model: &Model) -> Node<Msg> {
                 C!["modal-dialog"],
                 div![
                     C!["modal-content"],
-                    div![
-                        C!["modal-body"],
-                        ul![{
-                            treeview
-                                .root
-                                .children(&treeview.tree)
-                                .enumerate()
-                                .map(|(i, tree)| {
-                                    view_tree_lvl1(model_index, model, treeview, i, tree)
-                                })
-                        }]
-                    ]
+                    div![C!["modal-body"], ul![C!["navbar-nav"], view_vector,]]
                 ]
             ]
         ]
