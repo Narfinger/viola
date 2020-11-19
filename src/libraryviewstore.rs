@@ -94,6 +94,7 @@ fn treeview_query<'a>(
 
 pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
     let base_query = treeview_query(db, query);
+    println!("Query: {:?}", query);
     let query_type = match query.indices.len() {
         0 => query.types.get(0),
         1 => query.types.get(1),

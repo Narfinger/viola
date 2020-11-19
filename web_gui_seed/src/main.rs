@@ -284,7 +284,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     tree: arena,
                     root,
                     type_vec: type_vec.clone(),
-                    current_window: 100,
+                    current_window: 2,
                     stream_handle: None,
                 };
                 model.treeviews.push(view);
@@ -319,24 +319,23 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         } => {
             if let Some(treeview) = model.treeviews.get_mut(model_index) {
                 let nodeid = &match tree_index.len() {
-                    0 => Some(treeview.root),
-                    1 => treeview
-                        .root
-                        .children(&treeview.tree)
-                        .nth(tree_index[0])
-                        .map(|t| t.children(&treeview.tree))
-                        .and_then(|mut t| t.nth(tree_index[1])),
-                    2 => treeview
-                        .root
-                        .children(&treeview.tree)
-                        .nth(tree_index[0])
-                        .map(|t| t.children(&treeview.tree))
-                        .and_then(|mut t| t.nth(tree_index[1]))
-                        .map(|t| t.children(&treeview.tree))
-                        .and_then(|mut t| t.nth(tree_index[2])),
+                    0 => {
+                        // this means we are the second message, hence we need to clear our arena (and make a new root node)
+                        let mut arena = indextree::Arena::new();
+                        let root = arena.new_node("".to_string());
+                        treeview.tree = arena;
+                        treeview.root = root;
+                        Some(treeview.root)
+                    }
+                    1 => treeview.root.children(&treeview.tree).nth(tree_index[0]),
+                    //2 => treeview
+                    //    .root
+                    //    .children(&treeview.tree)
+                    //    .nth(tree_index[0])
+                    //    .map(|t| t.children(&treeview.tree))
+                    //    .and_then(|mut t| t.nth(tree_index[1]))
                     _ => None,
                 };
-                seed::log(nodeid);
                 if let Some(nodeid) = nodeid {
                     for i in result.into_iter() {
                         let new_node = treeview.tree.new_node(i);
@@ -354,6 +353,8 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::TreeWindowIncrement { tree_index } => {
             let mut tree = model.treeviews.get_mut(tree_index).unwrap();
             tree.current_window += WINDOW_INCREMENT;
+            seed::log("Incrmeenting");
+            seed::log(tree.current_window);
             if tree.current_window >= tree.tree.count() {
                 tree.stream_handle = None
             };
@@ -600,17 +601,24 @@ fn view_smartplaylists(model: &Model) -> Node<Msg> {
     ]
 }
 
-fn view_tree_lvl1(treeview: &TreeView, nodeid: indextree::NodeId) -> Node<Msg> {
+fn view_tree_lvl1(
+    treeview: &TreeView,
+    nodeid: indextree::NodeId,
+    model_index: usize,
+    index: usize,
+) -> Node<Msg> {
     let type_vec = treeview.type_vec.clone();
-    seed::log(treeview.tree.get(nodeid).unwrap().get());
     li![
         treeview.tree.get(nodeid).unwrap().get(),
-        //ev(Ev::Click, move |_| Msg::FillTreeView {
-        //    model_index,
-        //    tree_index: vec![index],
-        //    type_vec: vec![type_vec[0]],
-        //    search: "".to_string(),
-        //})
+        ul![nodeid
+            .children(&treeview.tree)
+            .map(|el| li![treeview.tree.get(el).unwrap().get()])],
+        ev(Ev::Click, move |_| Msg::FillTreeView {
+            model_index,
+            tree_index: vec![index],
+            type_vec: type_vec,
+            search: "".to_string(),
+        })
     ]
 }
 
@@ -630,7 +638,7 @@ fn view_tree(model_index: usize, model: &Model) -> Node<Msg> {
                             .children(&treeview.tree)
                             .take(treeview.current_window)
                             .enumerate()
-                            .map(|(i, tree)| view_tree_lvl1(treeview, tree)),]
+                            .map(|(i, tree)| view_tree_lvl1(treeview, tree, model_index, i)),]
                     ]
                 ]
             ]
