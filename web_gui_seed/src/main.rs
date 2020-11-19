@@ -243,7 +243,6 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             }
         }
         Msg::Clean => {
-            model.is_repeat_once = true;
             orders.perform_cmd(async {
                 let req = Request::new("/clean/").method(Method::Post);
                 fetch(req).await.expect("Could not send request");
