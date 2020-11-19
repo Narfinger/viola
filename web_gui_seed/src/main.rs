@@ -57,7 +57,7 @@ struct PlaylistTab {
 /// Struct for having a window into our playlist and slowly fill it
 #[derive(Debug, Default)]
 struct PlaylistWindow {
-    current_window: Option<usize>,
+    current_window: usize,
     stream_handle: Option<StreamHandle>,
 }
 
@@ -172,6 +172,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 Msg::InitPlaylistTabRecv((playlisttabs.current, tabs))
                 //Msg::InitPlaylistTabRecv((playlisttabs.current, playlisttabs.iter().map(|tab_name| {PlaylistTab {name: tab_name, tracks: vec![]}}.collect()))
             });
+            orders.send_msg(Msg::RefreshPlayStatus);
         }
         Msg::InitPlaylistTabRecv((current, tabs)) => {
             model.playlist_tabs = tabs;
@@ -179,20 +180,17 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.send_msg(Msg::PlaylistWindowIncrement);
         }
         Msg::PlaylistWindowIncrement => {
-            model.playlist_window.current_window = Some(
-                model
-                    .playlist_window
-                    .current_window
-                    .unwrap_or(WINDOW_INCREMENT)
-                    + WINDOW_INCREMENT,
-            );
+            model.playlist_window.current_window += WINDOW_INCREMENT;
             // stop the timer
             if (model.get_current_playlist_tab_tracks().is_some())
-                && (model.playlist_window.current_window.is_some())
                 && (model.get_current_playlist_tab_tracks().unwrap().len()
-                    <= model.playlist_window.current_window.unwrap())
+                    <= model.playlist_window.current_window)
             {
                 model.playlist_window.stream_handle = None;
+            } else if model.playlist_window.stream_handle.is_none() {
+                model.playlist_window.stream_handle = Some(orders.stream_with_handle(
+                    streams::interval(WINDOW_INCREMENT_INTERVALL, || Msg::PlaylistWindowIncrement),
+                ));
             }
         }
         Msg::PlaylistTabChange(index) => {
@@ -208,9 +206,8 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     .expect("Error in setting stuff");
                 fetch(req).await.expect("Could not send message");
             });
-            model.playlist_window.stream_handle = Some(orders.stream_with_handle(
-                streams::interval(WINDOW_INCREMENT_INTERVALL, || Msg::PlaylistWindowIncrement),
-            ));
+            model.playlist_window.current_window = WINDOW_INCREMENT;
+            orders.send_msg(Msg::PlaylistWindowIncrement);
         }
         Msg::Transport(t) => {
             orders.perform_cmd(async move {
@@ -523,21 +520,19 @@ fn view_status(model: &Model) -> Node<Msg> {
         .get_current_playlist_tab_tracks()
         .map(|tracks| tracks.len());
     let window_number_option = model.playlist_window.current_window;
-    let window_string = if tracks_number_option.is_some()
-        && window_number_option.is_some()
-        && tracks_number_option.unwrap() > window_number_option.unwrap()
-    {
-        format!(
-            "Pl: {} ({})",
-            tracks_number_option.map_or("".to_string(), |t| t.to_string()),
-            window_number_option.map_or("".to_string(), |t| t.to_string())
-        )
-    } else {
-        format!(
-            "Pl: {}",
-            tracks_number_option.map_or("".to_string(), |t| t.to_string())
-        )
-    };
+    let window_string =
+        if tracks_number_option.is_some() && tracks_number_option.unwrap() > window_number_option {
+            format!(
+                "Pl: {} ({})",
+                tracks_number_option.map_or("".to_string(), |t| t.to_string()),
+                window_number_option
+            )
+        } else {
+            format!(
+                "Pl: {}",
+                tracks_number_option.map_or("".to_string(), |t| t.to_string())
+            )
+        };
 
     div![
         C!["row", "border", "border-dark"],
@@ -724,7 +719,7 @@ fn view(model: &Model) -> Node<Msg> {
                                 .get_current_playlist_tab_tracks()
                                 .unwrap_or(&vec![])
                                 .iter()
-                                .take(model.playlist_window.current_window.unwrap_or(100))
+                                .take(model.playlist_window.current_window)
                                 .enumerate()
                                 .map(|(id, t)| tuple_to_selected_true(model, id, t))
                                 .map(|(t, is_selected, pos)| view_track(t, is_selected, pos)),]
