@@ -69,8 +69,6 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
     let sidebar = Sidebar {
         smartplaylists: vec![],
     };
-    let mut arena = indextree::Arena::new();
-    let root = arena.new_node("".to_string());
     Model {
         playlist_tabs: vec![],
         playlist_window: PlaylistWindow::default(),
@@ -371,13 +369,13 @@ fn view_buttons(model: &Model) -> Node<Msg> {
     let play_button: seed::virtual_dom::node::Node<Msg> =
         if model.play_status == GStreamerMessage::Playing {
             button![
-                C!["btn", "btn-primary"],
+                C!["btn", "btn-success"],
                 "Pause",
                 ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
             ]
         } else {
             button![
-                C!["btn", "btn-primary"],
+                C!["btn", "btn-success"],
                 "Play",
                 ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Playing))
             ]
