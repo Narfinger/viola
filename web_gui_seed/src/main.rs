@@ -328,12 +328,12 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                         Some(treeview.root)
                     }
                     1 => treeview.root.children(&treeview.tree).nth(tree_index[0]),
-                    //2 => treeview
-                    //    .root
-                    //    .children(&treeview.tree)
-                    //    .nth(tree_index[0])
-                    //    .map(|t| t.children(&treeview.tree))
-                    //    .and_then(|mut t| t.nth(tree_index[1]))
+                    2 => treeview
+                        .root
+                        .children(&treeview.tree)
+                        .nth(tree_index[0])
+                        .map(|t| t.children(&treeview.tree))
+                        .and_then(|mut t| t.nth(tree_index[1])),
                     _ => None,
                 };
                 if let Some(nodeid) = nodeid {
@@ -607,16 +607,28 @@ fn view_tree_lvl1(
     model_index: usize,
     index: usize,
 ) -> Node<Msg> {
-    let type_vec = treeview.type_vec.clone();
+    let type_vec_clone = treeview.type_vec.clone();
     li![
         treeview.tree.get(nodeid).unwrap().get(),
         ul![nodeid
             .children(&treeview.tree)
-            .map(|el| li![treeview.tree.get(el).unwrap().get()])],
+            .enumerate()
+            .map(|(index2, el)| {
+                let type_vec_clone_2 = treeview.type_vec.clone();
+                li![
+                    treeview.tree.get(el).unwrap().get(),
+                    ev(Ev::Click, move |_| Msg::FillTreeView {
+                        model_index,
+                        tree_index: vec![index, index2],
+                        type_vec: type_vec_clone_2,
+                        search: "".to_string()
+                    })
+                ]
+            })],
         ev(Ev::Click, move |_| Msg::FillTreeView {
             model_index,
             tree_index: vec![index],
-            type_vec: type_vec,
+            type_vec: type_vec_clone,
             search: "".to_string(),
         })
     ]
