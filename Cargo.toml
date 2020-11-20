@@ -26,8 +26,8 @@ image = "0.23"
 humantime = "2.0"
 #jwalk = "0.4"    # A progress bar and cli reporting library for Rust
 taglib = "1.0"        # Rust bindings for TagLib
-gstreamer = "0.15"               # Rust bindings for GStreamer
-glib = "0.9"
+gstreamer = "0.16"               # Rust bindings for GStreamer
+glib = "0.10"
 percent-encoding = "2.1"
 preferences = "1.1"         # Read and write user-specific application data (in stable Rust)
 rayon = "1.5"               # Simple work-stealing parallelism for Rust
@@ -40,5 +40,5 @@ rusqlite = "0.23"
 toml = "0.5"
 owning_ref = "0.4"
 walkdir = "2"
-web-view = "0.6"
+web-view = "0.7"
 viola_common = {path ="viola_common", features =["backend"]}
