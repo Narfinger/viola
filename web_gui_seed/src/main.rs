@@ -231,6 +231,17 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::RefreshPlayStatusRecv(a) => {
             model.play_status = a;
+            if model.play_status == GStreamerMessage::Playing {
+                orders.perform_cmd(async {
+                    let result = fetch("/currentid/")
+                        .await
+                        .expect("Could not send req")
+                        .json::<usize>()
+                        .await
+                        .expect("Could not parse message");
+                    Msg::PlaylistIndexChange(result)
+                });
+            }
         }
         Msg::PlaylistIndexChange(index) => {
             model.is_repeat_once = false;
