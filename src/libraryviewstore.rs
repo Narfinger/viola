@@ -107,3 +107,7 @@ pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
         .load(db.lock().unwrap().deref())
         .expect("Error in query")
 }
+
+pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> Vec<Track> {
+    panic!("stuff");
+}

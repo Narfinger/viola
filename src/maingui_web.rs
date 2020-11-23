@@ -122,11 +122,11 @@ async fn library_load(
     level: web::Json<viola_common::TreeViewQuery>,
     _: HttpRequest,
 ) -> HttpResponse {
-    //let q = level.into_inner();
-    //let pl = libraryviewstore::load_query(&state.pool, &q);
-    //println!("Loading new playlist {}", pl.name);
-    //state.playlist_tabs.add(pl);
-    //my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
+    let q = level.into_inner();
+    let pl = libraryviewstore::load_query(&state.pool, &q);
+    println!("Loading new playlist {}", pl.name);
+    state.playlist_tabs.add(pl);
+    my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
     HttpResponse::Ok().finish()
 }
 
