@@ -132,6 +132,12 @@ enum Msg {
     TreeWindowIncrement {
         tree_index: usize,
     },
+    LoadFromTreeView {
+        model_index: usize,
+        tree_index: Vec<usize>,
+        type_vec: Vec<viola_common::TreeType>,
+        search: String,
+    },
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -372,6 +378,31 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             if tree.current_window >= tree.tree.count() {
                 tree.stream_handle = None
             };
+        }
+        Msg::LoadFromTreeView {
+            model_index,
+            tree_index,
+            type_vec,
+            search,
+        } => {
+            orders.perform_cmd(async move {
+                let data = viola_common::TreeViewQuery {
+                    types: type_vec,
+                    indices: tree_index,
+                    search: None,
+                };
+                let req = Request::new("/libraryview/full/")
+                    .method(Method::Post)
+                    .json(&data)
+                    .expect("Could not construct query");
+                let result = fetch(req)
+                    .await
+                    .expect("Could not send request")
+                    .json::<Vec<String>>()
+                    .await
+                    .expect("Could not fetch treeview");
+                Msg::InitPlaylistTabs
+            });
         }
     }
 }
@@ -622,6 +653,8 @@ fn view_tree_lvl1(
     index: usize,
 ) -> Node<Msg> {
     let type_vec_clone = treeview.type_vec.clone();
+    let type_vec_clone_12 = treeview.type_vec.clone();
+
     li![div![
         treeview.tree.get(nodeid).unwrap().get(),
         ul![nodeid
@@ -629,6 +662,8 @@ fn view_tree_lvl1(
             .enumerate()
             .map(|(index2, el)| {
                 let type_vec_clone_2 = treeview.type_vec.clone();
+                let type_vec_clone_22 = treeview.type_vec.clone();
+
                 li![
                     span![
                         treeview.tree.get(el).unwrap().get(),
@@ -637,18 +672,41 @@ fn view_tree_lvl1(
                             tree_index: vec![index, index2],
                             type_vec: type_vec_clone_2,
                             search: "".to_string()
-                        })
+                        }),
+                        ev(Ev::DblClick, move |_| Msg::LoadFromTreeView {
+                            model_index,
+                            tree_index: vec![index, index2],
+                            type_vec: type_vec_clone_22,
+                            search: "".to_string()
+                        }),
                     ],
                     ul![el
                         .children(&treeview.tree)
                         .enumerate()
-                        .map(|(index3, el2)| { li![treeview.tree.get(el2).unwrap().get()] }),]
+                        .map(|(index3, el2)| {
+                            let type_vec_clone_3 = treeview.type_vec.clone();
+                            li![span![
+                                treeview.tree.get(el2).unwrap().get(),
+                                ev(Ev::DblClick, move |_| Msg::LoadFromTreeView {
+                                    model_index,
+                                    tree_index: vec![index, index2, index3],
+                                    type_vec: type_vec_clone_3,
+                                    search: "".to_string(),
+                                }),
+                            ]]
+                        })]
                 ]
             })],
         ev(Ev::Click, move |_| Msg::FillTreeView {
             model_index,
             tree_index: vec![index],
             type_vec: type_vec_clone,
+            search: "".to_string(),
+        }),
+        ev(Ev::DblClick, move |_| Msg::LoadFromTreeView {
+            model_index,
+            tree_index: vec![index],
+            type_vec: type_vec_clone_12,
             search: "".to_string(),
         })
     ]]
