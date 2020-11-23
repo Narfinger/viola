@@ -347,25 +347,28 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                         .and_then(|mut t| t.nth(tree_index[1])),
                     _ => None,
                 };
+                seed::log(tree_index);
+                seed::log!(nodeid);
                 if let Some(nodeid) = nodeid {
-                    for i in result.into_iter() {
-                        let new_node = treeview.tree.new_node(i);
-                        nodeid.append(new_node, &mut treeview.tree);
+                    if nodeid.children(&treeview.tree).next().is_none() {
+                        for i in result.into_iter() {
+                            let new_node = treeview.tree.new_node(i);
+                            nodeid.append(new_node, &mut treeview.tree);
+                        }
                     }
+
+                    treeview.stream_handle = Some(orders.stream_with_handle(streams::interval(
+                        WINDOW_INCREMENT_INTERVALL,
+                        move || Msg::TreeWindowIncrement {
+                            tree_index: model_index,
+                        },
+                    )));
                 }
-                treeview.stream_handle = Some(orders.stream_with_handle(streams::interval(
-                    WINDOW_INCREMENT_INTERVALL,
-                    move || Msg::TreeWindowIncrement {
-                        tree_index: model_index,
-                    },
-                )));
             }
         }
         Msg::TreeWindowIncrement { tree_index } => {
             let mut tree = model.treeviews.get_mut(tree_index).unwrap();
             tree.current_window += WINDOW_INCREMENT;
-            seed::log("Incrmeenting");
-            seed::log(tree.current_window);
             if tree.current_window >= tree.tree.count() {
                 tree.stream_handle = None
             };
@@ -619,7 +622,7 @@ fn view_tree_lvl1(
     index: usize,
 ) -> Node<Msg> {
     let type_vec_clone = treeview.type_vec.clone();
-    li![
+    li![div![
         treeview.tree.get(nodeid).unwrap().get(),
         ul![nodeid
             .children(&treeview.tree)
@@ -627,13 +630,19 @@ fn view_tree_lvl1(
             .map(|(index2, el)| {
                 let type_vec_clone_2 = treeview.type_vec.clone();
                 li![
-                    treeview.tree.get(el).unwrap().get(),
-                    ev(Ev::Click, move |_| Msg::FillTreeView {
-                        model_index,
-                        tree_index: vec![index, index2],
-                        type_vec: type_vec_clone_2,
-                        search: "".to_string()
-                    })
+                    span![
+                        treeview.tree.get(el).unwrap().get(),
+                        ev(Ev::Click, move |_| Msg::FillTreeView {
+                            model_index,
+                            tree_index: vec![index, index2],
+                            type_vec: type_vec_clone_2,
+                            search: "".to_string()
+                        })
+                    ],
+                    ul![el
+                        .children(&treeview.tree)
+                        .enumerate()
+                        .map(|(index3, el2)| { li![treeview.tree.get(el2).unwrap().get()] }),]
                 ]
             })],
         ev(Ev::Click, move |_| Msg::FillTreeView {
@@ -642,7 +651,7 @@ fn view_tree_lvl1(
             type_vec: type_vec_clone,
             search: "".to_string(),
         })
-    ]
+    ]]
 }
 
 fn view_tree(model_index: usize, model: &Model) -> Node<Msg> {
