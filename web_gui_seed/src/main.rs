@@ -14,6 +14,7 @@ struct Model {
     playlist_tabs: Vec<PlaylistTab>,
     playlist_window: PlaylistWindow,
     current_playlist_tab: usize,
+    current_time: u64,
     play_status: GStreamerMessage,
     web_socket: WebSocket,
     is_repeat_once: bool,
@@ -73,6 +74,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         playlist_tabs: vec![],
         playlist_window: PlaylistWindow::default(),
         current_playlist_tab: 0,
+        current_time: 0,
         play_status: GStreamerMessage::Nop,
         web_socket: crate::websocket::create_websocket(orders),
         is_repeat_once: false,
@@ -81,12 +83,12 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
     }
 }
 
-fn format_time_string(time_in_seconds: i32) -> String {
+fn format_time_string(time_in_seconds: u64) -> String {
     let mut res = String::new();
-    let seconds = time_in_seconds % 60;
-    let minutes = (time_in_seconds / 60) % 60;
-    let hours = (time_in_seconds / 60 / 60) % 24;
-    let days = time_in_seconds / 60 / 60 / 24;
+    let seconds: u64 = time_in_seconds % 60;
+    let minutes: u64 = (time_in_seconds / 60) % 60;
+    let hours: u64 = (time_in_seconds / 60 / 60) % 24;
+    let days: u64 = time_in_seconds / 60 / 60 / 24;
     if days != 0 {
         res.push_str(&format!("{} Days, ", days));
     }
@@ -138,6 +140,7 @@ enum Msg {
         type_vec: Vec<viola_common::TreeType>,
         search: String,
     },
+    CurrentTimeChanged(u64),
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -404,6 +407,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 Msg::InitPlaylistTabs
             });
         }
+        Msg::CurrentTimeChanged(time) => {
+            model.current_time = time;
+        }
     }
 }
 
@@ -554,11 +560,11 @@ fn view_status(model: &Model) -> Node<Msg> {
         track_status_string = "Nothing playing".to_string();
     }
 
-    let total_time: i32 = model
+    let total_time: u64 = model
         .get_current_playlist_tab_tracks()
         .unwrap_or(&vec![])
         .iter()
-        .map(|track| track.length)
+        .map(|track| track.length as u64)
         .sum();
     let total_time_string = format_time_string(total_time);
 
@@ -593,7 +599,13 @@ fn view_status(model: &Model) -> Node<Msg> {
         div![C!["col"], format!("Status: {}", model.play_status)],
         div![C!["col"], track_status_string],
         div![C!["col"], "Total Time: ", total_time_string],
-        div![C!["col"], IF!(model.is_repeat_once => "Repeat")]
+        div![C!["col"], IF!(model.is_repeat_once => "Repeat")],
+        div![
+            C!["col"],
+            "Time: ",
+            format_time_string(model.current_time),
+            format_time_string(track_option.map(|t| t.length as u64).unwrap_or(0))
+        ]
     ]
 }
 

@@ -34,16 +34,16 @@ pub fn new(
     let element = {
         let playbin = gstreamer::ElementFactory::make("playbin", None)
             .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        let audioconvert1 = gstreamer::ElementFactory::make("audioconvert", None)
-            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        let rgvolume = gstreamer::ElementFactory::make("rgvolume", None)
-            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        let audioconvert2 = gstreamer::ElementFactory::make("audioconvert", None)
-            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        let audioresample = gstreamer::ElementFactory::make("audioresample", None)
-            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        let autoaudiosink = gstreamer::ElementFactory::make("autoaudiosink", None)
-            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+        //let audioconvert1 = gstreamer::ElementFactory::make("audioconvert", None)
+        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+        //let rgvolume = gstreamer::ElementFactory::make("rgvolume", None)
+        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+        //let audioconvert2 = gstreamer::ElementFactory::make("audioconvert", None)
+        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+        //let audioresample = gstreamer::ElementFactory::make("audioresample", None)
+        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+        //let autoaudiosink = gstreamer::ElementFactory::make("autoaudiosink", None)
+        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
 
         playbin
             .set_property("volume", &0.5)

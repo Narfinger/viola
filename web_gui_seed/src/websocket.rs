@@ -21,7 +21,9 @@ fn decode_message(message: WebSocketMessage, msg_sender: std::rc::Rc<dyn Fn(Opti
             WsMessage::PlayChanged(index) => {
                 msg_sender(Some(crate::Msg::PlaylistIndexChange(index)))
             }
-            WsMessage::CurrentTimeChanged(index) => {}
+            WsMessage::CurrentTimeChanged(time) => {
+                msg_sender(Some(crate::Msg::CurrentTimeChanged(time)))
+            }
             WsMessage::ReloadTabs => msg_sender(Some(crate::Msg::InitPlaylistTabs)),
             WsMessage::ReloadPlaylist => {}
         };

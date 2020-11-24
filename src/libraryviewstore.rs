@@ -108,6 +108,9 @@ pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
         .expect("Error in query")
 }
 
-pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> Vec<Track> {
+pub(crate) fn load_query(
+    db: &DBPool,
+    query: &TreeViewQuery,
+) -> crate::loaded_playlist::LoadedPlaylist {
     panic!("stuff");
 }
