@@ -232,7 +232,7 @@ async fn change_playlist_tab(
 #[delete("/playlisttab/")]
 async fn delete_playlist_tab(
     state: web::Data<WebGui>,
-    index: web::Json<ChangePlaylistTabJson>,
+    index: web::Json<usize>,
     _: HttpRequest,
     //mut body: web::Payload,
 ) -> HttpResponse {
@@ -245,8 +245,8 @@ async fn delete_playlist_tab(
     //let q = serde_json::from_slice::<ChangePlaylistTabJson>(&bytes);
     //println!("{:?}", q);
 
-    println!("deleting {}", index.index);
-    state.playlist_tabs.delete(&state.pool, index.index);
+    println!("deleting {}", &index);
+    state.playlist_tabs.delete(&state.pool, index.into_inner());
     my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
     my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()

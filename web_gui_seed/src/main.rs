@@ -107,6 +107,7 @@ enum Msg {
     InitPlaylistTabs,
     InitPlaylistTabRecv((usize, Vec<PlaylistTab>)),
     PlaylistTabChange(usize),
+    PlaylistTabDelete(usize),
     /// Increments the playlist window
     PlaylistWindowIncrement,
     Transport(GStreamerAction),
@@ -187,6 +188,17 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             model.playlist_tabs = tabs;
             model.current_playlist_tab = current;
             orders.send_msg(Msg::PlaylistWindowIncrement);
+        }
+        Msg::PlaylistTabDelete(index) => {
+            model.playlist_tabs.swap_remove(index);
+            model.current_playlist_tab = 0;
+            orders.perform_cmd(async move {
+                let req = Request::new("/playlisttab/")
+                    .method(Method::Delete)
+                    .json(&index)
+                    .expect("Could not build query");
+                fetch(req).await.expect("Error in sending request");
+            });
         }
         Msg::PlaylistWindowIncrement => {
             model.playlist_window.current_window += WINDOW_INCREMENT;
@@ -413,17 +425,28 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     }
 }
 
+fn icon(path: &str, size: Option<usize>) -> Node<Msg> {
+    span![
+        style!(St::PaddingRight => unit!(5,px)),
+        img![
+            attrs!(At::Src => path, At::Height => unit!(size.unwrap_or(24),px), At::Width => unit!(size.unwrap_or(24),px)),
+        ],
+    ]
+}
+
 fn view_buttons(model: &Model) -> Node<Msg> {
     let play_button: seed::virtual_dom::node::Node<Msg> =
         if model.play_status == GStreamerMessage::Playing {
             button![
                 C!["btn", "btn-success"],
+                icon("/static/pause.sv", None),
                 "Pause",
                 ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
             ]
         } else {
             button![
                 C!["btn", "btn-success"],
+                icon("/static/play.svg", None),
                 "Play",
                 ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Playing))
             ]
@@ -437,6 +460,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 button![
                     C!["btn", "btn-info"],
                     attrs!(At::from("data-toggle") => "collapse", At::from("data-target") => "#sidebar", At::from("aria-expanded") => "false", At::from("aria-controls") => "sidebar"),
+                    icon("/static/menu-button.svg", Some(20)),
                     "Menu"
                 ]
             ],
@@ -444,6 +468,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 C!["col-sm"],
                 button![
                     C!["btn", "btn-primary"],
+                    icon("/static/skip-backward.svg", None),
                     "Prev",
                     ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Previous))
                 ]
@@ -461,6 +486,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 C!["col-sm"],
                 button![
                     C!["btn", "btn-primary"],
+                    icon("/static/skip-forward.svg", None),
                     "Next",
                     ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Next))
                 ]
@@ -469,6 +495,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 C!["col-sm"],
                 button![
                     C!["btn", "btn-secondary"],
+                    icon("/static/arrow-repeat.svg", Some(20)),
                     "Again",
                     ev(Ev::Click, |_| Msg::Transport(GStreamerAction::RepeatOnce))
                 ]
@@ -477,6 +504,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 C!["col-sm"],
                 button![
                     C!["btn", "btn-danger"],
+                    icon("/static/trash.svg", Some(18)),
                     "Clean",
                     ev(Ev::Click, |_| Msg::Clean)
                 ]
@@ -495,26 +523,22 @@ fn view_tabs(model: &Model) -> Node<Msg> {
                 ul![
                     C!["nav", "nav-tabs"],
                     model.playlist_tabs.iter().enumerate().map(|(pos, tab)| {
-                        if pos == model.current_playlist_tab {
-                            li![
-                                C!["nav-item"],
-                                a![
-                                    attrs! {At::Href => "#"},
-                                    C!["nav-link", "active"],
-                                    &tab.name,
-                                    ev(Ev::Click, move |_| Msg::PlaylistTabChange(pos))
-                                ]
+                        li![
+                            C!["nav-item"],
+                            a![
+                                attrs! {At::Href => "#"},
+                                IF!(pos == model.current_playlist_tab => C!["nav-link", "active"]),
+                                IF!(pos != model.current_playlist_tab => C!["nav-link"]),
+                                &tab.name,
+                                span![
+                                    style!(St::PaddingLeft => unit!(5,px)),
+                                    img![attrs!(At::Src => "/static/x-square.svg", At::Height => unit!(8,px), At::Width => unit!(8,px)),
+                                    ev(Ev::Click, move |_| Msg::PlaylistTabDelete(pos)),
+                                    ],
+                                ],
+                                ev(Ev::Click, move |_| Msg::PlaylistTabChange(pos)),
                             ]
-                        } else {
-                            li![
-                                C!["nav-item"],
-                                a![
-                                    C!["nav-link"],
-                                    &tab.name,
-                                    ev(Ev::Click, move |_| Msg::PlaylistTabChange(pos))
-                                ]
-                            ]
-                        }
+                        ]
                     })
                 ]
             ]
