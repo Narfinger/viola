@@ -604,6 +604,7 @@ fn view_status(model: &Model) -> Node<Msg> {
             C!["col"],
             "Time: ",
             format_time_string(model.current_time),
+            "--",
             format_time_string(track_option.map(|t| t.length as u64).unwrap_or(0))
         ]
     ]
