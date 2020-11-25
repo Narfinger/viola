@@ -361,7 +361,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
     println!("Starting web gui on 127.0.0.1:8088");
     //let mut sys = actix_rt::System::new("test");
 
-    let web_gui_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/");
+    //let web_gui_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/");
     let web_gui_dist_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/");
     HttpServer::new(move || {
         App::new()
