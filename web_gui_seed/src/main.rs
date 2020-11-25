@@ -439,7 +439,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
         if model.play_status == GStreamerMessage::Playing {
             button![
                 C!["btn", "btn-success"],
-                icon("/static/pause.sv", None),
+                icon("/static/pause.svg", None),
                 "Pause",
                 ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
             ]
@@ -479,6 +479,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 button![
                     C!["btn", "btn-primary"],
                     "Pause",
+                    icon("/static/pause.svg", None),
                     ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
                 ]
             ],
@@ -551,10 +552,11 @@ fn view_track(t: &Track, is_selected: bool, pos: usize) -> Node<Msg> {
     tr![
         IF!(is_selected => style!(St::Color => "Red")),
         td![
+            IF!(is_selected => icon("/static/play.svg", Some(24))),
             &t.tracknumber,
             ev(Ev::DblClick, move |_| Msg::Transport(
                 GStreamerAction::Play(pos)
-            ))
+            )),
         ],
         td![&t.title,],
         td![&t.artist,],
