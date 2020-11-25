@@ -543,12 +543,18 @@ fn view_tabs(model: &Model) -> Node<Msg> {
     ]
 }
 
-fn view_track(t: &Track, is_selected: bool, pos: usize) -> Node<Msg> {
+fn view_track(
+    playstatus: &GStreamerMessage,
+    t: &Track,
+    is_selected: bool,
+    pos: usize,
+) -> Node<Msg> {
     let length = format!("{}:{:02}", t.length / 60, t.length % 60);
     tr![
         IF!(is_selected => style!(St::Color => "Red")),
         td![
-            IF!(is_selected => icon("/static/play.svg", Some(24))),
+            IF!(is_selected && *playstatus==GStreamerMessage::Playing => icon("/static/play.svg", Some(24))),
+            IF!(is_selected && *playstatus==GStreamerMessage::Pausing => icon("/static/pause.svg", Some(24))),
             &t.tracknumber,
             ev(Ev::DblClick, move |_| Msg::Transport(
                 GStreamerAction::Play(pos)
@@ -855,7 +861,12 @@ fn view(model: &Model) -> Node<Msg> {
                                 .take(model.playlist_window.current_window)
                                 .enumerate()
                                 .map(|(id, t)| tuple_to_selected_true(model, id, t))
-                                .map(|(t, is_selected, pos)| view_track(t, is_selected, pos)),]
+                                .map(|(t, is_selected, pos)| view_track(
+                                    &model.play_status,
+                                    t,
+                                    is_selected,
+                                    pos
+                                )),]
                         ]
                     ],
                 ],
