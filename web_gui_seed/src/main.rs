@@ -191,13 +191,13 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::PlaylistTabDelete(index) => {
             model.playlist_tabs.swap_remove(index);
-            model.current_playlist_tab = 0;
             orders.perform_cmd(async move {
                 let req = Request::new("/playlisttab/")
                     .method(Method::Delete)
                     .json(&index)
                     .expect("Could not build query");
                 fetch(req).await.expect("Error in sending request");
+                Msg::PlaylistTabChange(0)
             });
         }
         Msg::PlaylistWindowIncrement => {
@@ -217,13 +217,9 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::PlaylistTabChange(index) => {
             model.current_playlist_tab = index;
             orders.perform_cmd(async move {
-                #[derive(serde::Serialize)]
-                struct ChangePlaylistTabJson {
-                    pub index: usize,
-                }
                 let req = Request::new("/playlisttab/")
                     .method(Method::Post)
-                    .json(&ChangePlaylistTabJson { index })
+                    .json(&index)
                     .expect("Error in setting stuff");
                 fetch(req).await.expect("Could not send message");
             });

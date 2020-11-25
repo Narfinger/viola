@@ -219,12 +219,12 @@ async fn playlist_tab(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse 
 #[post("/playlisttab/")]
 async fn change_playlist_tab(
     state: web::Data<WebGui>,
-    level: web::Json<ChangePlaylistTabJson>,
+    index: web::Json<usize>,
     _: HttpRequest,
 ) -> HttpResponse {
     let max = state.playlist_tabs.read().unwrap().pls.len();
-    info!("setting to: {}, max: {}", level.index, max - 1);
-    state.playlist_tabs.write().unwrap().current_pl = std::cmp::min(max - 1, level.index);
+    info!("setting to: {}, max: {}", index, max - 1);
+    state.playlist_tabs.write().unwrap().current_pl = std::cmp::min(max - 1, index.into_inner());
     my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
