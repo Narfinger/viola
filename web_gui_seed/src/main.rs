@@ -7,6 +7,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 pub mod websocket;
 
 use seed::{prelude::*, *};
+
 use viola_common::{GStreamerAction, GStreamerMessage, Smartplaylists, Track};
 
 #[derive(Debug)]
@@ -20,6 +21,7 @@ struct Model {
     is_repeat_once: bool,
     sidebar: Sidebar,
     treeviews: Vec<TreeView>,
+    delete_range_input: Option<String>,
 }
 
 trait ModelImpl {
@@ -80,6 +82,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         is_repeat_once: false,
         sidebar,
         treeviews: vec![],
+        delete_range_input: None,
     }
 }
 
@@ -142,6 +145,8 @@ enum Msg {
         search: String,
     },
     CurrentTimeChanged(u64),
+    DeleteRangeInputChanged(String),
+    DeleteRange,
 }
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -418,6 +423,42 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::CurrentTimeChanged(time) => {
             model.current_time = time;
         }
+        Msg::DeleteRangeInputChanged(text) => {
+            model.delete_range_input = Some(text);
+        }
+        Msg::DeleteRange => {
+            let range = model.delete_range_input.as_ref().unwrap();
+            let size = model.get_current_playlist_tab_tracks().unwrap().len();
+            let strings: Vec<&str> = range.split("-").collect();
+            let start: usize = std::str::FromStr::from_str(strings.get(0).unwrap()).unwrap();
+            let end: usize = strings
+                .get(1)
+                .and_then(|t| std::str::FromStr::from_str(t).ok())
+                .unwrap_or(size - 1);
+            let range = std::ops::Range { start, end };
+            let rangec = range.clone();
+            //remove in our model
+            let new_playlist = model
+                .get_current_playlist_tab_tracks()
+                .cloned()
+                .unwrap()
+                .drain(range)
+                .collect();
+            model
+                .playlist_tabs
+                .get_mut(model.current_playlist_tab)
+                .unwrap()
+                .tracks = new_playlist;
+
+            orders.perform_cmd(async move {
+                let req = Request::new("/deletefromplaylist/")
+                    .method(Method::Delete)
+                    .json(&rangec)
+                    .expect("Could not construct request");
+                fetch(req).await.expect("Could not send request");
+                Msg::RefreshPlayStatus
+            });
+        }
     }
 }
 
@@ -504,6 +545,15 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                     icon("/static/trash.svg", Some(18)),
                     "Clean",
                     ev(Ev::Click, |_| Msg::Clean)
+                ]
+            ],
+            div![
+                C!["col-sm"],
+                button![
+                    C!["btn", "btn-danger"],
+                    attrs!(At::from("data-toggle") => "modal", At::from("data-target") => "#deleterangemodal"),
+                    icon("/static/trash.svg", Some(12)),
+                    "Delete Range",
                 ]
             ],
         ]
@@ -821,12 +871,54 @@ fn sidebar_navigation(model: &Model) -> Node<Msg> {
     ]
 }
 
+fn view_deleterangemodal(model: &Model) -> Node<Msg> {
+    div![
+        C!["modal", "fade"],
+        attrs!(At::Id => "deleterangemodal"),
+        div![
+            C!["modal-content"],
+            div![
+                C!["modal-body"],
+                form![div![
+                    C!["form-group"],
+                    label![attrs!(At::from("for") => "rangeinput"), "Range"],
+                    input![
+                        C!["form-control"],
+                        attrs!(At::Id => "rangeinput", At::from("aria-describedby") => "rangeinputhelp"),
+                        input_ev(Ev::Input, Msg::DeleteRangeInputChanged),
+                    ],
+                    small![
+                        attrs!(At::Id => "rangeinputhelp"),
+                        C!["form-text", "text-muted"],
+                        "Number-Number or Number- to have it till the ned"
+                    ],
+                ]],
+            ],
+            div![
+                C!["modal-footer"],
+                button![
+                    C!["btn" "btn-secondary"],
+                    attrs!(At::from("data-dismiss")=> "modal"),
+                    "Close"
+                ],
+                button![
+                    C!["btn" "btn-secondary"],
+                    attrs!(At::from("data-dismiss")=> "modal"),
+                    "Delete Range",
+                    ev(Ev::Click, |_| Msg::DeleteRange),
+                ]
+            ]
+        ]
+    ]
+}
+
 /// Main view
 fn view(model: &Model) -> Node<Msg> {
     div![
         C!["container"],
         view_smartplaylists(model),
         view_tree(0, model),
+        view_deleterangemodal(model),
         div![
             C!["row"],
             style!(St::Width => unit!(95,%), St::PaddingTop => unit!(0.1,em)),
