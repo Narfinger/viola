@@ -211,7 +211,8 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             // stop the timer
             if (model.get_current_playlist_tab_tracks().is_some())
                 && (model.get_current_playlist_tab_tracks().unwrap().len()
-                    <= model.playlist_window.current_window)
+                    <= model.playlist_window.current_window
+                    || model.playlist_window.current_window >= WINDOW_MAX)
             {
                 model.playlist_window.stream_handle = None;
             } else if model.playlist_window.stream_handle.is_none() {
@@ -392,7 +393,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::TreeWindowIncrement { tree_index } => {
             let mut tree = model.treeviews.get_mut(tree_index).unwrap();
             tree.current_window += WINDOW_INCREMENT;
-            if tree.current_window >= tree.tree.count() || tree.current_window >= WINDOW_MAX {
+            if tree.current_window >= tree.tree.count() {
                 tree.stream_handle = None
             };
         }
