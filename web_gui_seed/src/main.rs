@@ -476,7 +476,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
         if model.play_status == GStreamerMessage::Playing {
             button![
                 C!["btn", "btn-success"],
-                icon("/static/pause.svg", None),
+                icon("/static/pause.svg", Some(22)),
                 "Pause",
                 ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
             ]
@@ -516,7 +516,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 button![
                     C!["btn", "btn-primary"],
                     "Pause",
-                    icon("/static/pause.svg", None),
+                    icon("/static/pause.svg", Some(22)),
                     ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
                 ]
             ],
