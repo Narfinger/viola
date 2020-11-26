@@ -64,8 +64,9 @@ struct PlaylistWindow {
     stream_handle: Option<StreamHandle>,
 }
 
-const WINDOW_INCREMENT: usize = 50;
+const WINDOW_INCREMENT: usize = 100;
 const WINDOW_INCREMENT_INTERVALL: u32 = 1000;
+const WINDOW_MAX: usize = 5000;
 
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
     orders.send_msg(Msg::InitPlaylistTabs);
@@ -391,7 +392,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::TreeWindowIncrement { tree_index } => {
             let mut tree = model.treeviews.get_mut(tree_index).unwrap();
             tree.current_window += WINDOW_INCREMENT;
-            if tree.current_window >= tree.tree.count() {
+            if tree.current_window >= tree.tree.count() || tree.current_window >= WINDOW_MAX {
                 tree.stream_handle = None
             };
         }
