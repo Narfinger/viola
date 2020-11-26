@@ -66,7 +66,7 @@ struct PlaylistWindow {
 
 const WINDOW_INCREMENT: usize = 100;
 const WINDOW_INCREMENT_INTERVALL: u32 = 1000;
-const WINDOW_MAX: usize = 5000;
+const WINDOW_MAX: usize = 1000;
 
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
     orders.send_msg(Msg::InitPlaylistTabs);
