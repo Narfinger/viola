@@ -23,16 +23,21 @@ struct Model {
     treeviews: Vec<TreeView>,
     delete_range_input: Option<String>,
 }
+impl Model {
+    fn get_current_playlist_tab_tracks_mut(&mut self) -> Option<&mut Vec<Track>> {
+        self.playlist_tabs
+            .get_mut(self.current_playlist_tab)
+            .map(|tab| &mut tab.tracks)
+    }
 
-trait ModelImpl {
-    fn get_current_playlist_tab_tracks(&self) -> Option<&Vec<Track>>;
-}
-
-impl ModelImpl for Model {
     fn get_current_playlist_tab_tracks(&self) -> Option<&Vec<Track>> {
         self.playlist_tabs
             .get(self.current_playlist_tab)
             .map(|tab| &tab.tracks)
+    }
+
+    fn get_current_playlist_tab(&mut self) -> Option<&PlaylistTab> {
+        self.playlist_tabs.get(self.current_playlist_tab)
     }
 }
 
@@ -157,7 +162,6 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 #[derive(serde::Deserialize)]
                 struct PlaylistTabsJSON {
                     current: usize,
-                    current_playing_in: usize,
                     tabs: Vec<String>,
                 }
                 let response = fetch("/playlisttab/").await.expect("HTTP Request failed");
@@ -275,10 +279,15 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             }
         }
         Msg::Clean => {
+            let index = model
+                .get_current_playlist_tab()
+                .map(|tab| tab.current_index)
+                .unwrap();
+            let mut_tracks = model.get_current_playlist_tab_tracks_mut().unwrap();
+            mut_tracks.split_off(index).get(1);
             orders.perform_cmd(async {
                 let req = Request::new("/clean/").method(Method::Post);
                 fetch(req).await.expect("Could not send request");
-                Msg::InitPlaylistTabs
             });
         }
         Msg::LoadSmartPlaylistList => {
@@ -971,5 +980,6 @@ fn view(model: &Model) -> Node<Msg> {
 }
 
 fn main() {
+    todo!("We could refactor delete_range and clean to both use just a simple recieved for a playlist with index, the same holds for initplaylisttabs");
     App::start("app", init, update, view);
 }
