@@ -117,6 +117,7 @@ fn format_time_string(time_in_seconds: u64) -> String {
 
 #[derive(Debug)]
 enum Msg {
+    Nop,
     InitPlaylistTabs,
     InitPlaylistTabRecv((usize, Vec<PlaylistTab>)),
     PlaylistTabChange(usize),
@@ -161,6 +162,7 @@ enum Msg {
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
+        Msg::Nop => {}
         Msg::InitPlaylistTabs => {
             orders.perform_cmd(async {
                 #[derive(serde::Deserialize)]
@@ -242,13 +244,20 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.send_msg(Msg::PlaylistWindowIncrement);
         }
         Msg::Transport(t) => {
+            if t == GStreamerAction::RepeatOnce {
+                model.is_repeat_once = true;
+            }
             orders.perform_cmd(async move {
                 let req = Request::new("/transport/")
                     .method(Method::Post)
                     .json(&t)
                     .expect("Could not build result");
                 fetch(req).await.expect("Could not send message");
-                Msg::RefreshPlayStatus
+                if t != GStreamerAction::RepeatOnce {
+                    Msg::RefreshPlayStatus
+                } else {
+                    Msg::Nop
+                }
             });
         }
         Msg::RefreshPlayStatus => {

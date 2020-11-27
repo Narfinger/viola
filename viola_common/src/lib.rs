@@ -37,7 +37,7 @@ impl PartialEq for Track {
 }
 
 /// Actions we want to perform on gstreamer, such as playing and pausing
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub enum GStreamerAction {
     Next,
     Playing,
