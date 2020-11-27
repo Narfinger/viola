@@ -289,7 +289,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 .unwrap();
             model.get_current_playlist_tab_mut().unwrap().current_index = 0;
             let mut_tracks = model.get_current_playlist_tab_tracks_mut().unwrap();
-            mut_tracks.split_off(index).get(1);
+            *mut_tracks = mut_tracks.split_off(index);
             orders.perform_cmd(async {
                 let req = Request::new("/clean/").method(Method::Post);
                 fetch(req).await.expect("Could not send request");
