@@ -39,6 +39,10 @@ impl Model {
     fn get_current_playlist_tab(&mut self) -> Option<&PlaylistTab> {
         self.playlist_tabs.get(self.current_playlist_tab)
     }
+
+    fn get_current_playlist_tab_mut(&mut self) -> Option<&mut PlaylistTab> {
+        self.playlist_tabs.get_mut(self.current_playlist_tab)
+    }
 }
 
 #[derive(Debug)]
@@ -283,6 +287,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 .get_current_playlist_tab()
                 .map(|tab| tab.current_index)
                 .unwrap();
+            model.get_current_playlist_tab_mut().unwrap().current_index = 0;
             let mut_tracks = model.get_current_playlist_tab_tracks_mut().unwrap();
             mut_tracks.split_off(index).get(1);
             orders.perform_cmd(async {
@@ -980,6 +985,6 @@ fn view(model: &Model) -> Node<Msg> {
 }
 
 fn main() {
-    todo!("We could refactor delete_range and clean to both use just a simple recieved for a playlist with index, the same holds for initplaylisttabs");
+    seed::log("We could refactor delete_range and clean to both use just a simple recieved for a playlist with index, the same holds for initplaylisttabs");
     App::start("app", init, update, view);
 }
