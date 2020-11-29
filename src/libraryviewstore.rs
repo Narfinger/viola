@@ -6,7 +6,7 @@ use crate::{
 use std::convert::TryInto;
 use std::ops::Deref;
 use viola_common::schema::tracks::dsl::*;
-use viola_common::{Track, TreeViewQuery};
+use viola_common::TreeViewQuery;
 
 fn match_and_select<'a>(
     base_query: viola_common::schema::tracks::BoxedQuery<'a, diesel::sqlite::Sqlite>,

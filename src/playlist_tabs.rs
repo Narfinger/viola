@@ -17,7 +17,7 @@ pub struct PlaylistTabs {
 pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
     let pls = restore_playlists(pool)?;
     if pls.is_empty() {
-        use crate::smartplaylist_parser::LoadSmartPlaylist;
+        //use crate::smartplaylist_parser::LoadSmartPlaylist;
         //pls.push(crate::smartplaylist_parser::construct_smartplaylists_from_config()[0].load(pool));
     }
     let converted_pls: Vec<LoadedPlaylistPtr> = pls.into_iter().map(RwLock::new).collect();

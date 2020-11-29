@@ -6,7 +6,6 @@ use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::ops::Deref;
 use std::path::Path;
-use std::sync::{Arc, Mutex};
 use std::{thread, time};
 use viola_common::schema::tracks;
 use viola_common::Track;
@@ -76,7 +75,6 @@ pub fn create_db() {
     let mut db_file =
         get_app_root(AppDataType::UserConfig, &APP_INFO).expect("Could not get app root");
     db_file.push("music.db");
-    let db = rusqlite::Connection::open(&db_file).expect("Cannot create db, something is wrong");
     let connection =
         SqliteConnection::establish(&db_file.to_str().unwrap()).expect("Something wrong");
     embedded_migrations::run(&connection).expect("Could not run migration");

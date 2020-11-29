@@ -158,7 +158,6 @@ enum Msg {
         tree_index: usize,
     },
     LoadFromTreeView {
-        model_index: usize,
         tree_index: Vec<usize>,
         type_vec: Vec<viola_common::TreeType>,
         search: String,
@@ -352,7 +351,6 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     search,
                 }),
                 2 => Some(Msg::LoadFromTreeView {
-                    model_index,
                     tree_index,
                     type_vec,
                     search,
@@ -455,7 +453,6 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             };
         }
         Msg::LoadFromTreeView {
-            model_index,
             tree_index,
             type_vec,
             search,
@@ -470,7 +467,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     .method(Method::Post)
                     .json(&data)
                     .expect("Could not construct query");
-                let result = fetch(req)
+                fetch(req)
                     .await
                     .expect("Could not send request")
                     .json::<Vec<String>>()
@@ -803,7 +800,6 @@ fn view_tree_lvl1(
     index: usize,
 ) -> Node<Msg> {
     let type_vec_clone = treeview.type_vec.clone();
-    let type_vec_clone_12 = treeview.type_vec.clone();
 
     li![div![
         treeview.tree.get(nodeid).unwrap().get(),
@@ -812,7 +808,6 @@ fn view_tree_lvl1(
             .enumerate()
             .map(|(index2, el)| {
                 let type_vec_clone_2 = treeview.type_vec.clone();
-                let type_vec_clone_22 = treeview.type_vec.clone();
 
                 li![
                     span![
@@ -832,8 +827,7 @@ fn view_tree_lvl1(
                             let type_vec_clone_3 = treeview.type_vec.clone();
                             li![span![
                                 treeview.tree.get(el2).unwrap().get(),
-                                mouse_ev(Ev::Click, move |event| Msg::LoadFromTreeView {
-                                    model_index,
+                                mouse_ev(Ev::Click, move |_| Msg::LoadFromTreeView {
                                     tree_index: vec![index, index2, index3],
                                     type_vec: type_vec_clone_3,
                                     search: "".to_string(),
