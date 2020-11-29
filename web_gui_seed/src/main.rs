@@ -917,7 +917,7 @@ fn sidebar_navigation(model: &Model) -> Node<Msg> {
 fn view_deleterangemodal(model: &Model) -> Node<Msg> {
     div![
         C!["modal", "fade"],
-        attrs!(At::Id => "deleterangemodal"),
+        attrs!(At::Id => "deleterangemodal", At::from("aria-hidden") => "false"),
         div![
             C!["modal-content"],
             div![
@@ -941,12 +941,12 @@ fn view_deleterangemodal(model: &Model) -> Node<Msg> {
                 C!["modal-footer"],
                 button![
                     C!["btn" "btn-secondary"],
-                    attrs!(At::from("data-dismiss")=> "modal"),
+                    attrs!(At::from("data-dismiss") => "modal"),
                     "Close"
                 ],
                 button![
                     C!["btn" "btn-secondary"],
-                    attrs!(At::from("data-dismiss")=> "modal"),
+                    attrs!(At::from("data-dismiss") => "modal"),
                     "Delete Range",
                     ev(Ev::Click, |_| Msg::DeleteRange),
                 ]
