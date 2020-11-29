@@ -134,6 +134,14 @@ enum Msg {
     LoadSmartPlaylistListRecv(Vec<String>),
     /// Load a smartplaylist
     LoadSmartPlaylist(usize),
+    ///we need to check which click it is and then either do the `FillTreeView` or `LoadFromTreeView` action
+    TreeViewClickAction {
+        event: web_sys::MouseEvent,
+        model_index: usize,
+        tree_index: Vec<usize>,
+        type_vec: Vec<viola_common::TreeType>,
+        search: String,
+    },
     /// Fill the treeview of `model_index`, with at position `tree_index` with `type_vec`
     FillTreeView {
         model_index: usize,
@@ -328,6 +336,32 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 fetch(req).await.expect("Could not send request");
                 Msg::InitPlaylistTabs
             });
+        }
+        Msg::TreeViewClickAction {
+            event,
+            model_index,
+            tree_index,
+            type_vec,
+            search,
+        } => {
+            let msg = match event.button() {
+                0 => Some(Msg::FillTreeView {
+                    model_index,
+                    tree_index,
+                    type_vec,
+                    search,
+                }),
+                2 => Some(Msg::LoadFromTreeView {
+                    model_index,
+                    tree_index,
+                    type_vec,
+                    search,
+                }),
+                _ => None,
+            };
+            if let Some(msg) = msg {
+                orders.send_msg(msg);
+            }
         }
         Msg::FillTreeView {
             model_index,
@@ -783,16 +817,11 @@ fn view_tree_lvl1(
                 li![
                     span![
                         treeview.tree.get(el).unwrap().get(),
-                        ev(Ev::Click, move |_| Msg::FillTreeView {
+                        mouse_ev(Ev::Click, move |event| Msg::TreeViewClickAction {
+                            event,
                             model_index,
                             tree_index: vec![index, index2],
                             type_vec: type_vec_clone_2,
-                            search: "".to_string()
-                        }),
-                        ev(Ev::DblClick, move |_| Msg::LoadFromTreeView {
-                            model_index,
-                            tree_index: vec![index, index2],
-                            type_vec: type_vec_clone_22,
                             search: "".to_string()
                         }),
                     ],
@@ -803,7 +832,7 @@ fn view_tree_lvl1(
                             let type_vec_clone_3 = treeview.type_vec.clone();
                             li![span![
                                 treeview.tree.get(el2).unwrap().get(),
-                                ev(Ev::DblClick, move |_| Msg::LoadFromTreeView {
+                                mouse_ev(Ev::Click, move |event| Msg::LoadFromTreeView {
                                     model_index,
                                     tree_index: vec![index, index2, index3],
                                     type_vec: type_vec_clone_3,
@@ -813,18 +842,13 @@ fn view_tree_lvl1(
                         })]
                 ]
             })],
-        ev(Ev::Click, move |_| Msg::FillTreeView {
+        mouse_ev(Ev::Click, move |event| Msg::TreeViewClickAction {
+            event,
             model_index,
             tree_index: vec![index],
             type_vec: type_vec_clone,
             search: "".to_string(),
         }),
-        ev(Ev::DblClick, move |_| Msg::LoadFromTreeView {
-            model_index,
-            tree_index: vec![index],
-            type_vec: type_vec_clone_12,
-            search: "".to_string(),
-        })
     ]]
 }
 

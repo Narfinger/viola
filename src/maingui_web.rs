@@ -116,7 +116,7 @@ async fn library_partial_tree(
     HttpResponse::Ok().json(items)
 }
 
-#[post("/libraryview/load/")]
+#[post("/libraryview/full/")]
 async fn library_load(
     state: web::Data<WebGui>,
     level: web::Json<viola_common::TreeViewQuery>,

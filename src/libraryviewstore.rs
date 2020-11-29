@@ -1,5 +1,8 @@
-use crate::diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl};
 use crate::types::*;
+use crate::{
+    diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl},
+    loaded_playlist::LoadedPlaylist,
+};
 use std::convert::TryInto;
 use std::ops::Deref;
 use viola_common::schema::tracks::dsl::*;
@@ -14,7 +17,7 @@ fn match_and_select<'a>(
     viola_common::schema::tracks::table,
     diesel::sqlite::Sqlite,
 > {
-    let select_query = match ttype {
+    match ttype {
         viola_common::TreeType::Artist => base_query
             .select(artist)
             .group_by(artist)
@@ -30,8 +33,7 @@ fn match_and_select<'a>(
             .group_by(title)
             .distinct()
             .order_by(title),
-    };
-    select_query
+    }
 }
 
 fn get_filter_string(
@@ -108,9 +110,13 @@ pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
         .expect("Error in query")
 }
 
-pub(crate) fn load_query(
-    db: &DBPool,
-    query: &TreeViewQuery,
-) -> crate::loaded_playlist::LoadedPlaylist {
-    panic!("stuff");
+pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
+    let q = treeview_query(db, query);
+    let t = q.load(db.lock().unwrap().deref()).expect("Error in Query");
+    LoadedPlaylist {
+        id: -1,
+        name: "Foobar".to_string(),
+        current_position: 0,
+        items: t,
+    }
 }
