@@ -36,21 +36,6 @@ async fn playlist_for(
     HttpResponse::Ok().body(items)
 }
 
-#[delete("/playlist/")]
-async fn playlist_delete_range(
-    state: web::Data<WebGui>,
-    _: HttpRequest,
-    msg: web::Json<Range>,
-) -> HttpResponse {
-    println!("Deleting range: {:?}", &msg);
-    state.playlist_tabs.delete_range(msg.into_inner());
-    my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
-
-    let db = state.pool.lock().expect("Error from db");
-    state.playlist_tabs.save(&db).expect("Error in saving");
-    HttpResponse::Ok().finish()
-}
-
 #[post("/repeat/")]
 async fn repeat(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     state
@@ -71,7 +56,7 @@ async fn clean(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
 #[delete("/deletefromplaylist/")]
 async fn delete_from_playlist(
     state: web::Data<WebGui>,
-    deleterange: web::Json<Range>,
+    deleterange: web::Json<std::ops::Range<usize>>,
     _: HttpRequest,
 ) -> HttpResponse {
     println!("Doing delete");

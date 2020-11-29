@@ -155,7 +155,7 @@ impl PlaylistControls for PlaylistTabsPtr {
         value.set(index)
     }
 
-    fn delete_range(&self, range: crate::types::Range) {
+    fn delete_range(&self, range: std::ops::Range<usize>) {
         let i = self.read().unwrap().current_pl;
         let cur = self.read().unwrap();
         let value = cur.pls.get(i).unwrap();

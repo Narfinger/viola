@@ -144,7 +144,7 @@ pub trait PlaylistControls {
     fn get_current_uri(&self) -> Option<String>;
     fn previous(&self) -> Option<usize>;
     fn set(&self, _: usize) -> usize;
-    fn delete_range(&self, _: crate::types::Range);
+    fn delete_range(&self, _: std::ops::Range<usize>);
     fn next_or_eol(&self) -> Option<usize>;
 }
 
@@ -188,17 +188,16 @@ impl PlaylistControls for LoadedPlaylistPtr {
         s.current_position as usize
     }
 
-    fn delete_range(&self, range: crate::types::Range) {
+    fn delete_range(&self, range: std::ops::Range<usize>) {
         let mut s = self.write().unwrap();
-        println!("removing with range: {}", &range);
-        let range_to = range.to.unwrap_or(s.items.len() - 1);
+        println!("removing with range: {:?}", &range);
 
-        s.items.drain(range.from..=range_to);
+        s.items.drain(range.start..=range.end);
 
-        if s.current_position >= range.from && s.current_position <= range_to {
+        if s.current_position >= range.end && s.current_position <= range.end {
             s.current_position = 0;
-        } else if s.current_position > range_to {
-            s.current_position -= range_to - range.from;
+        } else if s.current_position > range.end {
+            s.current_position -= range.end - range.end;
         }
     }
 

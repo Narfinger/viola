@@ -45,23 +45,6 @@ impl From<GStreamerMessage> for PlayerStatus {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Range {
-    pub from: usize,
-    pub to: Option<usize>,
-}
-
-impl std::fmt::Display for Range {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "({}, {})",
-            self.from,
-            self.to.map_or(String::from("infty"), |s| s.to_string())
-        )
-    }
-}
-
 #[derive(Debug, Deserialize)]
 pub struct ChangePlaylistTabJson {
     pub index: usize,
