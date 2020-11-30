@@ -958,7 +958,8 @@ fn view_deleterangemodal(model: &Model) -> Node<Msg> {
 /// Main view
 fn view(model: &Model) -> Node<Msg> {
     div![
-        C!["container"],
+        C!["container-fluid"],
+        style!(St::PaddingLeft => unit!(5,vw), St::PaddingBottom => unit!(1,vh), St::Height => unit!(75,vh)),
         view_smartplaylists(model),
         view_tree(0, model),
         view_deleterangemodal(model),
