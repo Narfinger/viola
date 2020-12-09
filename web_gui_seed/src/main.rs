@@ -75,7 +75,7 @@ struct PlaylistWindow {
 
 const WINDOW_INCREMENT: usize = 100;
 const WINDOW_INCREMENT_INTERVALL: u32 = 1000;
-const WINDOW_MAX: usize = 1000;
+const WINDOW_MAX: usize = 500;
 
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
     orders.send_msg(Msg::InitPlaylistTabs);
@@ -343,6 +343,8 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             type_vec,
             search,
         } => {
+            seed::log(&event);
+            seed::log(&event.button());
             let msg = match event.button() {
                 0 => Some(Msg::FillTreeView {
                     model_index,
@@ -426,8 +428,6 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                         .and_then(|mut t| t.nth(tree_index[1])),
                     _ => None,
                 };
-                seed::log(tree_index);
-                seed::log!(nodeid);
                 if let Some(nodeid) = nodeid {
                     if nodeid.children(&treeview.tree).next().is_none() {
                         for i in result.into_iter() {

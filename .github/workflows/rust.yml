@@ -12,7 +12,7 @@ jobs:
       - uses: davidB/rust-cargo-make@v1
       - uses: actions/checkout@v1
       - run: sudo apt update
-      - run: sudo apt install libgstreamer1.0-dev gnome-devel libsoup2.4-dev libwebkitgtk-dev libwebkitgtk-4.0-dev libtag1-dev libtagc0-dev npm
+      - run: sudo apt install libgstreamer1.0-dev gnome-devel libsoup2.4-dev libwebkitgtk-dev libtag1-dev libtagc0-dev npm
       - name: "NPM Install"
         working-directory: "web_gui_seed"
         run: npm install
