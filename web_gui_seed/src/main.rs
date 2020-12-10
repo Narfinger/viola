@@ -883,13 +883,12 @@ fn sidebar_navigation(model: &Model) -> Node<Msg> {
     div![
         //sidebar
         C!["col-xs", "collapse"],
-        style!(St::Width => unit!(20,%), St::Padding => unit!(10,px)),
+        style!(St::Width => unit!(20,%), St::Padding => unit!(20,px)),
         attrs![At::Id => "sidebar"],
         ul![
             C!["navbar-nav"],
             li![
                 C!["nav-item"],
-                style!(St::Padding => unit!(10,px)),
                 button![
                     C!["btn", "btn-primary"],
                     attrs![At::from("data-toggle") => "modal", At::from("data-target") => "#sm_modal", At::from("data-dismiss") => "modal"],
@@ -899,7 +898,6 @@ fn sidebar_navigation(model: &Model) -> Node<Msg> {
             ],
             li![
                 C!["nav-item"],
-                style!(St::Padding => unit!(10,px)),
                 button![
                     C!["btn", "btn-primary"],
                     attrs![At::from("data-toggle") => "modal", At::from("data-target") => "#artisttree", At::from("data-dismiss") => "modal"],
