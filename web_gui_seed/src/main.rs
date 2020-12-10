@@ -387,10 +387,15 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 model.treeviews.push(view);
             }
             orders.perform_cmd(async move {
+                let search = if search.is_empty() {
+                    None
+                } else {
+                    Some(search)
+                };
                 let data = viola_common::TreeViewQuery {
                     types: type_vec,
                     indices: tree_index.clone(),
-                    search: None,
+                    search,
                 };
                 let req = Request::new("/libraryview/partial/")
                     .method(Method::Post)
@@ -463,10 +468,15 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             search,
         } => {
             orders.perform_cmd(async move {
+                let search = if search.is_empty() {
+                    None
+                } else {
+                    Some(search)
+                };
                 let data = viola_common::TreeViewQuery {
                     types: type_vec,
                     indices: tree_index,
-                    search: None,
+                    search,
                 };
                 let req = Request::new("/libraryview/full/")
                     .method(Method::Post)

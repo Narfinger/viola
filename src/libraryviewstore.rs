@@ -3,6 +3,7 @@ use crate::{
     diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl},
     loaded_playlist::LoadedPlaylist,
 };
+use diesel::TextExpressionMethods;
 use std::convert::TryInto;
 use std::ops::Deref;
 use viola_common::schema::tracks::dsl::*;
@@ -104,7 +105,15 @@ pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
         _ => query.types.last(),
     }
     .expect("Error in index stuff");
-    let final_query = match_and_select(base_query, query_type);
+    let mut final_query = match_and_select(base_query, query_type);
+
+    if let Some(ref search_string) = query.search {
+        final_query = final_query
+            .filter(artist.like(String::from("%") + &search_string + "%"))
+            .or_filter(album.like(String::from("%") + &search_string + "%"))
+            .or_filter(title.like(String::from("%") + &search_string + "%"));
+    }
+
     final_query
         .load(db.lock().unwrap().deref())
         .expect("Error in query")
