@@ -124,6 +124,7 @@ enum Msg {
     PlaylistTabDelete(usize),
     /// Increments the playlist window
     PlaylistWindowIncrement,
+    FullPlaylistWindow,
     Transport(GStreamerAction),
     RefreshPlayStatus,
     RefreshPlayStatusRecv(GStreamerMessage),
@@ -237,6 +238,10 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                     streams::interval(WINDOW_INCREMENT_INTERVALL, || Msg::PlaylistWindowIncrement),
                 ));
             }
+        }
+        Msg::FullPlaylistWindow => {
+            model.playlist_window.current_window =
+                model.get_current_playlist_tab_tracks().unwrap().len();
         }
         Msg::PlaylistTabChange(index) => {
             model.current_playlist_tab = index;
@@ -672,6 +677,7 @@ fn view_track(
         td![&t.genre,],
         td![&t.year,],
         td![&length,],
+        td![&t.playcount.unwrap_or(0)],
         ev(Ev::DblClick, move |_| Msg::Transport(
             GStreamerAction::Play(pos)
         ))
@@ -910,6 +916,14 @@ fn sidebar_navigation(model: &Model) -> Node<Msg> {
                     }),
                 ]
             ],
+            li![
+                C!["nav-item"],
+                button![
+                    C!["btn", "btn-primary"],
+                    "Show Full Playlist Window",
+                    ev(Ev::Click, |_| Msg::FullPlaylistWindow),
+                ],
+            ],
         ],
     ]
 }
@@ -989,6 +1003,7 @@ fn view(model: &Model) -> Node<Msg> {
                                 th!["Genre"],
                                 th!["Year"],
                                 th!["Length"],
+                                th!["PlyCnt"],
                             ],
                             tbody![model
                                 .get_current_playlist_tab_tracks()
