@@ -497,13 +497,16 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 .and_then(|t| std::str::FromStr::from_str(t).ok())
                 .unwrap_or(size - 1);
             let range = std::ops::Range { start, end };
-            let rangec = range.clone();
+            //let rangec = range.clone();
             //remove in our model
             let new_playlist = model
                 .get_current_playlist_tab_tracks()
-                .cloned()
                 .unwrap()
-                .drain(range)
+                .iter()
+                .enumerate()
+                .skip_while(|(index, val)| start <= *index && *index <= end)
+                .map(|(_, val)| val)
+                .cloned()
                 .collect();
             model
                 .playlist_tabs
@@ -514,7 +517,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
             orders.perform_cmd(async move {
                 let req = Request::new("/deletefromplaylist/")
                     .method(Method::Delete)
-                    .json(&rangec)
+                    .json(&range)
                     .expect("Could not construct request");
                 fetch(req).await.expect("Could not send request");
                 Msg::RefreshPlayStatus
@@ -928,10 +931,12 @@ fn sidebar_navigation(model: &Model) -> Node<Msg> {
 
 fn view_deleterangemodal(model: &Model) -> Node<Msg> {
     div![
-        C!["modal", "fade"],
-        attrs!(At::Id => "deleterangemodal", At::from("aria-hidden") => "false"),
+        C!["modal"],
+        attrs!(At::Id => "deleterangemodal", At::from("aria-hidden") => "false", At::from("role") => "dialog"),
         div![
             C!["modal-content"],
+            attrs!(At::from("role") => "document"),
+            div![C!["modal-header"],],
             div![
                 C!["modal-body"],
                 form![div![
@@ -939,7 +944,7 @@ fn view_deleterangemodal(model: &Model) -> Node<Msg> {
                     label![attrs!(At::from("for") => "rangeinput"), "Range"],
                     input![
                         C!["form-control"],
-                        attrs!(At::Id => "rangeinput", At::from("aria-describedby") => "rangeinputhelp"),
+                        attrs!(At::Id => "rangeinput"),
                         input_ev(Ev::Input, Msg::DeleteRangeInputChanged),
                     ],
                     small![
@@ -953,12 +958,12 @@ fn view_deleterangemodal(model: &Model) -> Node<Msg> {
                 C!["modal-footer"],
                 button![
                     C!["btn" "btn-secondary"],
-                    attrs!(At::from("data-dismiss") => "modal"),
+                    attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "deleterangemodal"),
                     "Close"
                 ],
                 button![
                     C!["btn" "btn-secondary"],
-                    attrs!(At::from("data-dismiss") => "modal"),
+                    attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "deleterangemodal"),
                     "Delete Range",
                     ev(Ev::Click, |_| Msg::DeleteRange),
                 ]
@@ -974,10 +979,10 @@ fn view(model: &Model) -> Node<Msg> {
         style!(St::PaddingLeft => unit!(5,vw), St::PaddingBottom => unit!(1,vh), St::Height => unit!(75,vh)),
         view_smartplaylists(model),
         view_tree(0, model),
-        view_deleterangemodal(model),
         div![
             C!["row"],
             style!(St::Width => unit!(95,%), St::PaddingTop => unit!(0.1,em)),
+            view_deleterangemodal(model),
             sidebar_navigation(model),
             div![
                 C!["col"],
