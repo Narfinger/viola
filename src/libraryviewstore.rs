@@ -42,9 +42,16 @@ fn get_filter_string(
     db: &DBPool,
     ttype: viola_common::TreeType,
     index: &usize,
+    search: &Option<String>,
 ) -> String {
     let select_query = match_and_select(base_query, &ttype);
-    let loaded_query: Vec<String> = select_query
+    let select_query =if let Some(ref search_string) = search {
+        select_query
+            .filter(artist.like(String::from("%") + &search_string + "%"))
+            .or_filter(album.like(String::from("%") + &search_string + "%"))
+            .or_filter(title.like(String::from("%") + &search_string + "%"))
+    } else {select_query};
+    let loaded_query: Vec<String> =   select_query
         .offset(index.clone().try_into().unwrap())
         .limit(1)
         .load(db.lock().unwrap().deref())
@@ -61,7 +68,7 @@ fn treeview_query<'a>(
     if let Some(i) = query.indices.get(0) {
         let base_query: viola_common::schema::tracks::BoxedQuery<diesel::sqlite::Sqlite> =
             tracks.into_boxed();
-        filter_strings.push(get_filter_string(base_query, db, query.types[0], i));
+        filter_strings.push(get_filter_string(base_query, db, query.types[0], i, &query.search));
     }
     // for second one
     if let Some(i) = query.indices.get(1) {
@@ -76,7 +83,7 @@ fn treeview_query<'a>(
                 .filter(title.eq(filter_strings[0].clone()))
                 .into_boxed(),
         };
-        filter_strings.push(get_filter_string(base_query, db, query.types[1], i));
+        filter_strings.push(get_filter_string(base_query, db, query.types[1], i, &query.search));
     }
 
     // for third one
