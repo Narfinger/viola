@@ -500,7 +500,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::DeleteRange => {
             let range = model.delete_range_input.as_ref().unwrap();
             let size = model.get_current_playlist_tab_tracks().unwrap().len();
-            let strings: Vec<&str> = range.split("-").collect();
+            let strings: Vec<&str> = range.split('-').collect();
             let start: usize = std::str::FromStr::from_str(strings.get(0).unwrap()).unwrap();
             let end: usize = strings
                 .get(1)
@@ -514,7 +514,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 .unwrap()
                 .iter()
                 .enumerate()
-                .skip_while(|(index, val)| start <= *index && *index <= end)
+                .skip_while(|(index, _)| start <= *index && *index <= end)
                 .map(|(_, val)| val)
                 .cloned()
                 .collect();
@@ -532,6 +532,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
                 fetch(req).await.expect("Could not send request");
                 Msg::RefreshPlayStatus
             });
+            orders.send_msg(Msg::PlaylistTabChange(model.current_playlist_tab));
         }
     }
 }
@@ -679,11 +680,12 @@ fn view_track(
         td![
             IF!(is_selected && *playstatus==GStreamerMessage::Playing => icon("/static/play.svg", Some(24))),
             IF!(is_selected && *playstatus==GStreamerMessage::Pausing => icon("/static/pause.svg", Some(24))),
-            &t.tracknumber,
+            &pos,
             ev(Ev::DblClick, move |_| Msg::Transport(
                 GStreamerAction::Play(pos)
             )),
         ],
+        td![&t.tracknumber],
         td![&t.title,],
         td![&t.artist,],
         td![&t.album,],
@@ -910,7 +912,7 @@ fn view_tree(model_index: usize, model: &Model) -> Node<Msg> {
 }
 
 /// Makes the sidebar show for SmartPlaylist, Database Access
-fn sidebar_navigation(model: &Model) -> Node<Msg> {
+fn sidebar_navigation(_model: &Model) -> Node<Msg> {
     div![
         //sidebar
         C!["col-xs", "collapse"],
@@ -960,7 +962,7 @@ fn sidebar_navigation(model: &Model) -> Node<Msg> {
     ]
 }
 
-fn view_deleterangemodal(model: &Model) -> Node<Msg> {
+fn view_deleterangemodal(_model: &Model) -> Node<Msg> {
     div![
         C!["modal"],
         attrs!(At::Id => "deleterangemodal", At::from("aria-hidden") => "false", At::from("role") => "dialog"),
@@ -1030,6 +1032,7 @@ fn view(model: &Model) -> Node<Msg> {
                             C!["table", "table-sm", "table-bordered"],
                             thead![
                                 style!(St::Position => "sticky"),
+                                th!["#"],
                                 th!["TrackNumber"],
                                 th!["Title"],
                                 th!["Artist"],
