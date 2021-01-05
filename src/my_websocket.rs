@@ -22,7 +22,7 @@ impl Handler<WsMessage> for MyWs {
 }
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
-    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, _: &mut Self::Context) {
         match msg {
             //Ok(ws::Message::Text(b)) => println!("we found text {}", b),
             _ => {}

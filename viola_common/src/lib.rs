@@ -1,8 +1,7 @@
 #[cfg(feature = "backend")]
-#[macro_use]
 extern crate actix_derive;
 #[cfg(feature = "backend")]
-use actix_derive::{Message, MessageResponse};
+use actix_derive::{Message, };
 
 #[cfg(feature = "backend")]
 #[macro_use]
