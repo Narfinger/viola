@@ -30,7 +30,6 @@ pub(crate) enum Msg {
     LoadSmartPlaylist(usize),
     ///we need to check which click it is and then either do the `FillTreeView` or `LoadFromTreeView` action
     TreeViewClickAction {
-        event: web_sys::MouseEvent,
         model_index: usize,
         tree_index: Vec<usize>,
         type_vec: Vec<viola_common::TreeType>,
@@ -52,8 +51,8 @@ pub(crate) enum Msg {
         tree_index: usize,
     },
     LoadFromTreeView {
+        model_index: usize,
         tree_index: Vec<usize>,
-        type_vec: Vec<viola_common::TreeType>,
     },
     CurrentTimeChanged(u64),
     DeleteRangeInputChanged(String),
@@ -234,30 +233,17 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             });
         }
         Msg::TreeViewClickAction {
-            event,
             model_index,
             tree_index,
             type_vec,
             search,
         } => {
-            seed::log(&event);
-            seed::log(&event.button());
-            let msg = match event.button() {
-                0 => Some(Msg::FillTreeView {
+            orders.send_msg(Msg::FillTreeView {
                     model_index,
                     tree_index,
                     type_vec,
                     search,
-                }),
-                2 => Some(Msg::LoadFromTreeView {
-                    tree_index,
-                    type_vec,
-                }),
-                _ => None,
-            };
-            if let Some(msg) = msg {
-                orders.send_msg(msg);
-            }
+                });
         }
         Msg::FillTreeView {
             model_index,
@@ -274,19 +260,17 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                     type_vec: type_vec.clone(),
                     current_window: 2,
                     stream_handle: None,
+                    search: search.clone(),
                 };
                 model.treeviews.push(view);
+            } else {
+                model.treeviews.get_mut(model_index).map(|s| s.search = search.clone());
             }
             orders.perform_cmd(async move {
-                let search = if search.is_empty() {
-                    None
-                } else {
-                    Some(search)
-                };
                 let data = viola_common::TreeViewQuery {
                     types: type_vec,
                     indices: tree_index.clone(),
-                    search,
+                    search: Some(search),
                 };
                 let req = Request::new("/libraryview/partial/")
                     .method(Method::Post)
@@ -354,18 +338,12 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             };
         }
         Msg::LoadFromTreeView {
+            model_index,
             tree_index,
-            type_vec,
         } => {
-            let search = "".to_string();
-            panic!("we need to implement how to get search");
+            let search = model.treeviews.get(model_index).map(|t| t.search.clone());
+            let type_vec = model.treeviews.get(model_index).unwrap().type_vec.clone();
             orders.perform_cmd(async move {
-
-                let search = if search.is_empty() {
-                    None
-                } else {
-                    Some(search)
-                };
                 let data = viola_common::TreeViewQuery {
                     types: type_vec,
                     indices: tree_index,

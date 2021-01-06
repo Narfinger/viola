@@ -49,6 +49,7 @@ pub(crate) struct TreeView {
     pub type_vec: Vec<viola_common::TreeType>,
     pub current_window: usize,
     pub stream_handle: Option<StreamHandle>,
+    pub search: String,
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]

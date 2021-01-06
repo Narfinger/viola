@@ -337,27 +337,24 @@ fn view_tree_lvl1(
     model_index: usize,
     index: usize,
 ) -> Node<Msg> {
-    let type_vec_clone = treeview.type_vec.clone();
     let type_vec_clone2 = treeview.type_vec.clone();
     li![span![
         treeview.tree.get(nodeid).unwrap().get(),
         button!["Load", ev(Ev::Click, move |_| Msg::LoadFromTreeView {
-            tree_index: vec![index], type_vec: type_vec_clone
+            tree_index: vec![index], model_index
         })],
         ul![nodeid
             .children(&treeview.tree)
             .enumerate()
             .map(|(index2, el)| {
                 let type_vec_clone_2 = treeview.type_vec.clone();
-                let type_vec_clone_22 = treeview.type_vec.clone();
                 li![
                     span![
                         treeview.tree.get(el).unwrap().get(),
                         button!["Load", ev(Ev::Click, move |_| Msg::LoadFromTreeView {
-                            tree_index: vec![index, index2], type_vec: type_vec_clone_22
+                            tree_index: vec![index, index2], model_index
                         })],
-                        mouse_ev(Ev::Click, move |event| Msg::TreeViewClickAction {
-                            event,
+                        mouse_ev(Ev::Click, move |_| Msg::TreeViewClickAction {
                             model_index,
                             tree_index: vec![index, index2],
                             type_vec: type_vec_clone_2,
@@ -368,23 +365,16 @@ fn view_tree_lvl1(
                         .children(&treeview.tree)
                         .enumerate()
                         .map(|(index3, el2)| {
-                            let type_vec_clone_3 = treeview.type_vec.clone();
-                            let type_vec_clone_32 = treeview.type_vec.clone();
                             li![span![
                                 treeview.tree.get(el2).unwrap().get(),
                                 button!["Load", ev(Ev::Click, move |_| Msg::LoadFromTreeView {
-                                    tree_index: vec![index, index2, index3], type_vec: type_vec_clone_32
+                                    tree_index: vec![index, index2, index3], model_index
                                 })],
-                                mouse_ev(Ev::Click, move |_| Msg::LoadFromTreeView {
-                                    tree_index: vec![index, index2, index3],
-                                    type_vec: type_vec_clone_3,
-                                }),
                             ]]
                         })]
                 ]
             })],
-        mouse_ev(Ev::Click, move |event| Msg::TreeViewClickAction {
-            event,
+        mouse_ev(Ev::Click, move |_| Msg::TreeViewClickAction {
             model_index,
             tree_index: vec![index],
             type_vec: type_vec_clone2,
