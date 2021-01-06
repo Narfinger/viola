@@ -341,6 +341,7 @@ fn view_tree_lvl1(
         button![
             C!["btn", "btn-outline-primary", "btn-sm"],
             style!(St::MarginLeft => unit!(25,px)),
+            attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "artisttree"),
             "Load",
             ev(Ev::Click, move |_| Msg::LoadFromTreeView {
                 tree_index: vec![index],
@@ -358,6 +359,7 @@ fn view_tree_lvl1(
                         button![
                             C!["btn", "btn-outline-primary", "btn-sm"],
                             style!(St::MarginLeft => unit!(25,px)),
+                            attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "artisttree"),
                             "Load",
                             ev(Ev::Click, move |_| Msg::LoadFromTreeView {
                                 tree_index: vec![index, index2],
@@ -380,6 +382,7 @@ fn view_tree_lvl1(
                                 button![
                                     C!["btn", "btn-outline-primary", "btn-sm"],
                                     style!(St::MarginLeft => unit!(25,px)),
+                                    attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "artisttree"),
                                     "Load",
                                     ev(Ev::Click, move |_| Msg::LoadFromTreeView {
                                         tree_index: vec![index, index2, index3],

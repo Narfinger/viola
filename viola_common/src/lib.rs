@@ -1,7 +1,7 @@
 #[cfg(feature = "backend")]
 extern crate actix_derive;
 #[cfg(feature = "backend")]
-use actix_derive::{Message, };
+use actix_derive::Message;
 
 #[cfg(feature = "backend")]
 #[macro_use]
@@ -102,7 +102,7 @@ impl From<WsMessage> for String {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TreeType {
     Artist,
     Album,
