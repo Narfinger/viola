@@ -10,9 +10,9 @@ pub mod websocket;
 
 use seed::{prelude::*, *};
 
-use viola_common::{GStreamerAction, GStreamerMessage, Track};
 use messages::*;
 use models::*;
+use viola_common::{GStreamerAction, GStreamerMessage, Track};
 
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
     orders.send_msg(Msg::InitPlaylistTabs);
@@ -51,8 +51,6 @@ fn format_time_string(time_in_seconds: u64) -> String {
     res.push_str(&format!("{:02}", seconds));
     res
 }
-
-
 
 fn icon(path: &str, size: Option<usize>) -> Node<Msg> {
     span![
@@ -340,9 +338,15 @@ fn view_tree_lvl1(
     let type_vec_clone2 = treeview.type_vec.clone();
     li![span![
         treeview.tree.get(nodeid).unwrap().get(),
-        button!["Load", ev(Ev::Click, move |_| Msg::LoadFromTreeView {
-            tree_index: vec![index], model_index
-        })],
+        button![
+            C!["btn", "btn-outline-primary", "btn-sm"],
+            style!(St::MarginLeft => unit!(25,px)),
+            "Load",
+            ev(Ev::Click, move |_| Msg::LoadFromTreeView {
+                tree_index: vec![index],
+                model_index
+            })
+        ],
         ul![nodeid
             .children(&treeview.tree)
             .enumerate()
@@ -351,9 +355,15 @@ fn view_tree_lvl1(
                 li![
                     span![
                         treeview.tree.get(el).unwrap().get(),
-                        button!["Load", ev(Ev::Click, move |_| Msg::LoadFromTreeView {
-                            tree_index: vec![index, index2], model_index
-                        })],
+                        button![
+                            C!["btn", "btn-outline-primary", "btn-sm"],
+                            style!(St::MarginLeft => unit!(25,px)),
+                            "Load",
+                            ev(Ev::Click, move |_| Msg::LoadFromTreeView {
+                                tree_index: vec![index, index2],
+                                model_index
+                            })
+                        ],
                         mouse_ev(Ev::Click, move |_| Msg::TreeViewClickAction {
                             model_index,
                             tree_index: vec![index, index2],
@@ -367,9 +377,15 @@ fn view_tree_lvl1(
                         .map(|(index3, el2)| {
                             li![span![
                                 treeview.tree.get(el2).unwrap().get(),
-                                button!["Load", ev(Ev::Click, move |_| Msg::LoadFromTreeView {
-                                    tree_index: vec![index, index2, index3], model_index
-                                })],
+                                button![
+                                    C!["btn", "btn-outline-primary", "btn-sm"],
+                                    style!(St::MarginLeft => unit!(25,px)),
+                                    "Load",
+                                    ev(Ev::Click, move |_| Msg::LoadFromTreeView {
+                                        tree_index: vec![index, index2, index3],
+                                        model_index
+                                    })
+                                ],
                             ]]
                         })]
                 ]
