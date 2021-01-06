@@ -83,7 +83,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
         div![
             C!["row"],
             div![
-                C!["col-sm"],
+                C!["col"],
                 button![
                     C!["btn", "btn-info"],
                     attrs!(At::from("data-toggle") => "collapse", At::from("data-target") => "#sidebar", At::from("aria-expanded") => "false", At::from("aria-controls") => "sidebar"),
@@ -92,7 +92,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 ]
             ],
             div![
-                C!["col-sm"],
+                C!["col"],
                 button![
                     C!["btn", "btn-primary"],
                     icon("/static/skip-backward.svg", None),
@@ -100,9 +100,9 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                     ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Previous))
                 ]
             ],
-            div![C!["col-sm"], play_button],
+            div![C!["col"], play_button],
             div![
-                C!["col-sm"],
+                C!["col"],
                 button![
                     C!["btn", "btn-primary"],
                     "Pause",
@@ -111,7 +111,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 ]
             ],
             div![
-                C!["col-sm"],
+                C!["col"],
                 button![
                     C!["btn", "btn-primary"],
                     icon("/static/skip-forward.svg", None),
@@ -120,7 +120,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 ]
             ],
             div![
-                C!["col-sm"],
+                C!["col"],
                 button![
                     C!["btn", "btn-secondary"],
                     icon("/static/arrow-repeat.svg", Some(20)),
@@ -129,7 +129,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 ]
             ],
             div![
-                C!["col-sm"],
+                C!["col"],
                 button![
                     C!["btn", "btn-danger"],
                     icon("/static/trash.svg", Some(18)),
@@ -138,7 +138,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 ]
             ],
             div![
-                C!["col-sm"],
+                C!["col-2"],
                 button![
                     C!["btn", "btn-danger"],
                     attrs!(At::from("data-toggle") => "modal", At::from("data-target") => "#deleterangemodal"),
