@@ -473,7 +473,7 @@ fn sidebar_navigation(_model: &Model, treeviews: &TreeViewsHtml) -> Node<Msg> {
                 button![
                     C!["btn", "btn-primary"],
                     attrs![At::from("data-toggle") => "modal", At::from("data-target") => t.idref],
-                    "Artists",
+                    t.label.to_owned(),
                     //    ev(Ev::Click, move |_| Msg::FillTreeView {
                     //        model_index: 0,
                     //        tree_index: vec![],
