@@ -107,6 +107,7 @@ pub enum TreeType {
     Artist,
     Album,
     Track,
+    Genre,
 }
 /// General type to query a treeview
 #[derive(Debug, Serialize, Deserialize)]

@@ -34,6 +34,11 @@ fn match_and_select<'a>(
             .group_by(title)
             .distinct()
             .order_by(title),
+        viola_common::TreeType::Genre => base_query
+            .select(genre)
+            .group_by(genre)
+            .distinct()
+            .order_by(genre),
     }
 }
 
@@ -90,6 +95,9 @@ fn treeview_query<'a>(
             viola_common::TreeType::Track => tracks
                 .filter(title.eq(filter_strings[0].clone()))
                 .into_boxed(),
+            viola_common::TreeType::Genre => tracks
+                .filter(genre.eq(filter_strings[0].clone()))
+                .into_boxed(),
         };
         filter_strings.push(get_filter_string(
             base_query,
@@ -111,6 +119,7 @@ fn treeview_query<'a>(
             viola_common::TreeType::Artist => db_query.filter(artist.eq(filter_string.clone())),
             viola_common::TreeType::Album => db_query.filter(album.eq(filter_string.clone())),
             viola_common::TreeType::Track => db_query.filter(title.eq(filter_string.clone())),
+            viola_common::TreeType::Genre => db_query.filter(genre.eq(filter_string.clone())),
         };
     }
     db_query

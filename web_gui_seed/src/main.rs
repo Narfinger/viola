@@ -402,52 +402,92 @@ fn view_tree_lvl1(
     ]]
 }
 
-fn view_tree(model_index: usize, model: &Model) -> Node<Msg> {
+#[derive(Debug, Clone)]
+struct TreeViewHtml {
+    id: String,
+    idref: String,
+    label: String,
+    type_vec: Vec<viola_common::TreeType>,
+}
+type TreeViewsHtml = Vec<TreeViewHtml>;
+
+fn view_tree(model_index: usize, model: &Model, treeviews: &TreeViewsHtml) -> Vec<Node<Msg>> {
     //if let Some(treeview) = model.treeviews.get(model_index) {
-    div![
-        C!["modal", "fade"],
-        attrs![At::from("aria-hidden") => "true", At::Id => "artisttree"],
-        div![
-            C!["modal-dialog"],
+    treeviews
+        .iter()
+        .map(|t| {
+            let tclone = t.type_vec.clone();
             div![
-                C!["modal-content"],
+                C!["modal", "fade"],
+                attrs![At::from("aria-hidden") => "true", At::Id => t.id],
                 div![
-                    C!["modal-body"],
-                    input![
-                        C!["form-control"],
-                        attrs!(At::from("placeholder") => "Search"),
-                        input_ev(Ev::Input, move |search| Msg::FillTreeView {
-                            model_index,
-                            tree_index: vec![],
-                            type_vec: vec![
-                                viola_common::TreeType::Artist,
-                                viola_common::TreeType::Album,
-                                viola_common::TreeType::Track
+                    C!["modal-dialog"],
+                    div![
+                        C!["modal-content"],
+                        div![
+                            C!["modal-body"],
+                            input![
+                                C!["form-control"],
+                                attrs!(At::from("placeholder") => "Search"),
+                                input_ev(Ev::Input, move |search| Msg::FillTreeView {
+                                    model_index,
+                                    tree_index: vec![],
+                                    type_vec: tclone,
+                                    search,
+                                },)
                             ],
-                            search
-                        },)
-                    ],
-                    if let Some(treeview) = model.treeviews.get(model_index) {
-                        ul![treeview
-                            .root
-                            .children(&treeview.tree)
-                            .take(treeview.current_window)
-                            .enumerate()
-                            .map(|(i, tree)| view_tree_lvl1(treeview, tree, model_index, i)),]
-                    } else {
-                        li![]
-                    }
+                            if let Some(treeview) = model.treeviews.get(model_index) {
+                                ul![treeview
+                                    .root
+                                    .children(&treeview.tree)
+                                    .take(treeview.current_window)
+                                    .enumerate()
+                                    .map(|(i, tree)| view_tree_lvl1(
+                                        treeview,
+                                        tree,
+                                        model_index,
+                                        i
+                                    )),]
+                            } else {
+                                li![]
+                            }
+                        ]
+                    ]
                 ]
             ]
-        ]
-    ]
+        })
+        .collect()
     //} else {
     //    div![]
     //}
 }
 
 /// Makes the sidebar show for SmartPlaylist, Database Access
-fn sidebar_navigation(_model: &Model) -> Node<Msg> {
+fn sidebar_navigation(_model: &Model, treeviews: &TreeViewsHtml) -> Node<Msg> {
+    let views: Vec<Node<Msg>> = treeviews
+        .iter()
+        .map(|t| {
+            li![
+                C!["nav-item"],
+                style!(St::Padding => unit!(5, px)),
+                button![
+                    C!["btn", "btn-primary"],
+                    attrs![At::from("data-toggle") => "modal", At::from("data-target") => t.idref],
+                    "Artists",
+                    //    ev(Ev::Click, move |_| Msg::FillTreeView {
+                    //        model_index: 0,
+                    //        tree_index: vec![],
+                    //        search: "".to_string(),
+                    //        type_vec: vec![
+                    //            viola_common::TreeType::Artist,
+                    //            viola_common::TreeType::Album,
+                    //            viola_common::TreeType::Track
+                    //        ]
+                    //    }),
+                ]
+            ]
+        })
+        .collect();
     div![
         //sidebar
         C!["col-xs", "collapse"],
@@ -465,25 +505,7 @@ fn sidebar_navigation(_model: &Model) -> Node<Msg> {
                     ev(Ev::Click, move |_| Msg::LoadSmartPlaylistList),
                 ]
             ],
-            li![
-                C!["nav-item"],
-                style!(St::Padding => unit!(5, px)),
-                button![
-                    C!["btn", "btn-primary"],
-                    attrs![At::from("data-toggle") => "modal", At::from("data-target") => "#artisttree"],
-                    "Artists",
-                    //    ev(Ev::Click, move |_| Msg::FillTreeView {
-                    //        model_index: 0,
-                    //        tree_index: vec![],
-                    //        search: "".to_string(),
-                    //        type_vec: vec![
-                    //            viola_common::TreeType::Artist,
-                    //            viola_common::TreeType::Album,
-                    //            viola_common::TreeType::Track
-                    //        ]
-                    //    }),
-                ]
-            ],
+            views,
             li![
                 C!["nav-item"],
                 style!(St::Padding => unit!(5, px)),
@@ -542,16 +564,35 @@ fn view_deleterangemodal(_model: &Model) -> Node<Msg> {
 
 /// Main view
 fn view(model: &Model) -> Node<Msg> {
+    let treeviews: Vec<TreeViewHtml> = vec![
+        TreeViewHtml {
+            id: "artisttree".to_string(),
+            idref: "#artisttree".to_string(),
+            label: "Artist".to_string(),
+            type_vec: vec![
+                viola_common::TreeType::Artist,
+                viola_common::TreeType::Album,
+                viola_common::TreeType::Track,
+            ],
+        },
+        TreeViewHtml {
+            id: "genre".to_string(),
+            idref: "#genre".to_string(),
+            label: "Genre".to_string(),
+            type_vec: vec![viola_common::TreeType::Genre],
+        },
+    ];
+
     div![
         C!["container-fluid"],
         style!(St::PaddingLeft => unit!(5,vw), St::PaddingBottom => unit!(1,vh), St::Height => unit!(75,vh)),
-        view_tree(0, model),
+        view_tree(0, model, &treeviews),
         view_smartplaylists(model),
         div![
             C!["row"],
             style!(St::Width => unit!(95,%), St::PaddingTop => unit!(0.1,em)),
             view_deleterangemodal(model),
-            sidebar_navigation(model),
+            sidebar_navigation(model, &treeviews),
             div![
                 C!["col"],
                 style!(St::Height => unit!(80,vh)),

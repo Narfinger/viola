@@ -1,9 +1,7 @@
-
-use viola_common::{GStreamerAction, GStreamerMessage, Smartplaylists, Track};
 use crate::models::*;
+use viola_common::{GStreamerAction, GStreamerMessage, Smartplaylists, Track};
 
 use seed::prelude::*;
-
 
 const WINDOW_INCREMENT: usize = 100;
 const WINDOW_INCREMENT_INTERVALL: u32 = 1000;
@@ -239,11 +237,11 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             search,
         } => {
             orders.send_msg(Msg::FillTreeView {
-                    model_index,
-                    tree_index,
-                    type_vec,
-                    search,
-                });
+                model_index,
+                tree_index,
+                type_vec,
+                search,
+            });
         }
         Msg::FillTreeView {
             model_index,
@@ -264,7 +262,10 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 };
                 model.treeviews.push(view);
             } else {
-                model.treeviews.get_mut(model_index).map(|s| s.search = search.clone());
+                model
+                    .treeviews
+                    .get_mut(model_index)
+                    .map(|s| s.search = search.clone());
             }
             orders.perform_cmd(async move {
                 let data = viola_common::TreeViewQuery {
