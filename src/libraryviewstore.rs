@@ -83,6 +83,8 @@ fn treeview_query<'a>(
             &query.search,
         ));
     }
+    println!("filter strings: {:?}", filter_strings);
+    println!("search {:?}", query.search);
     // for second one
     if let Some(i) = query.indices.get(1) {
         let base_query = match query.types[0] {

@@ -15,6 +15,44 @@ use models::*;
 use viola_common::{GStreamerAction, GStreamerMessage, Track};
 
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
+    let tv1 = {
+        let mut arena = indextree::Arena::new();
+        let root = arena.new_node("".to_string());
+        TreeView {
+            treeview_html: TreeViewHtml {
+                id: "artisttree".to_string(),
+                idref: "#artisttree".to_string(),
+                label: "Artist".to_string(),
+            },
+            tree: arena,
+            root,
+            type_vec: vec![
+                viola_common::TreeType::Artist,
+                viola_common::TreeType::Album,
+                viola_common::TreeType::Track,
+            ],
+            current_window: 0,
+            stream_handle: None,
+            search: "".to_owned(),
+        }
+    };
+    let tv2 = {
+        let mut arena = indextree::Arena::new();
+        let root = arena.new_node("".to_string());
+        TreeView {
+            treeview_html: TreeViewHtml {
+                id: "genretree".to_string(),
+                idref: "#genretree".to_string(),
+                label: "Genre".to_string(),
+            },
+            tree: arena,
+            root,
+            type_vec: vec![viola_common::TreeType::Genre],
+            current_window: 0,
+            stream_handle: None,
+            search: "".to_owned(),
+        }
+    };
     orders.send_msg(Msg::InitPlaylistTabs);
     let sidebar = Sidebar {
         smartplaylists: vec![],
@@ -28,7 +66,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         web_socket: crate::websocket::create_websocket(orders),
         is_repeat_once: false,
         sidebar,
-        treeviews: vec![],
+        treeviews: vec![tv1, tv2],
         delete_range_input: None,
     }
 }
@@ -335,7 +373,6 @@ fn view_tree_lvl1(
     model_index: usize,
     index: usize,
 ) -> Node<Msg> {
-    let type_vec_clone2 = treeview.type_vec.clone();
     li![span![
         treeview.tree.get(nodeid).unwrap().get(),
         button![
@@ -343,16 +380,16 @@ fn view_tree_lvl1(
             style!(St::MarginLeft => unit!(25,px)),
             attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "artisttree"),
             "Load",
-            ev(Ev::Click, move |_| Msg::LoadFromTreeView {
+            ev(Ev::Click, move |_| Msg::FillTreeView {
                 tree_index: vec![index],
-                model_index
+                model_index,
+                search: SearchString::UseStoredSearch,
             })
         ],
         ul![nodeid
             .children(&treeview.tree)
             .enumerate()
             .map(|(index2, el)| {
-                let type_vec_clone_2 = treeview.type_vec.clone();
                 li![
                     span![
                         treeview.tree.get(el).unwrap().get(),
@@ -366,11 +403,10 @@ fn view_tree_lvl1(
                                 model_index
                             })
                         ],
-                        mouse_ev(Ev::Click, move |_| Msg::TreeViewClickAction {
+                        mouse_ev(Ev::Click, move |_| Msg::FillTreeView {
                             model_index,
                             tree_index: vec![index, index2],
-                            type_vec: type_vec_clone_2,
-                            search: "".to_string(),
+                            search: SearchString::UseStoredSearch,
                         }),
                     ],
                     ul![el
@@ -393,34 +429,23 @@ fn view_tree_lvl1(
                         })]
                 ]
             })],
-        mouse_ev(Ev::Click, move |_| Msg::TreeViewClickAction {
+        mouse_ev(Ev::Click, move |_| Msg::FillTreeView {
             model_index,
             tree_index: vec![index],
-            type_vec: type_vec_clone2,
-            search: "".to_string(),
+            search: SearchString::UseStoredSearch,
         }),
     ]]
 }
 
-#[derive(Debug, Clone)]
-struct TreeViewHtml {
-    id: String,
-    idref: String,
-    label: String,
-    type_vec: Vec<viola_common::TreeType>,
-}
-type TreeViewsHtml = Vec<TreeViewHtml>;
-
-fn view_tree(model_index: usize, model: &Model, treeviews: &TreeViewsHtml) -> Vec<Node<Msg>> {
+fn view_tree(model: &Model, treeviews: &[TreeView]) -> Vec<Node<Msg>> {
     //if let Some(treeview) = model.treeviews.get(model_index) {
     treeviews
         .iter()
-        .map(|t| {
-            let tclone = t.type_vec.clone();
-            let tclone2 = t.type_vec.clone();
+        .enumerate()
+        .map(|(model_index, t)| {
             div![
                 C!["modal", "fade"],
-                attrs![At::from("aria-hidden") => "true", At::Id => t.id],
+                attrs![At::from("aria-hidden") => "true", At::Id => t.treeview_html.id],
                 div![
                     C!["modal-dialog"],
                     div![
@@ -437,8 +462,7 @@ fn view_tree(model_index: usize, model: &Model, treeviews: &TreeViewsHtml) -> Ve
                                         input_ev(Ev::Input, move |search| Msg::FillTreeView {
                                             model_index,
                                             tree_index: vec![],
-                                            type_vec: tclone,
-                                            search,
+                                            search: SearchString::UpdateSearch(search),
                                         },)
                                     ],
                                 ],
@@ -450,8 +474,7 @@ fn view_tree(model_index: usize, model: &Model, treeviews: &TreeViewsHtml) -> Ve
                                         ev(Ev::Click, move |_| Msg::FillTreeView {
                                             model_index,
                                             tree_index: vec![],
-                                            type_vec: tclone2,
-                                            search: "".to_string(),
+                                            search: SearchString::EmptySearch,
                                         })
                                     ]
                                 ],
@@ -483,7 +506,7 @@ fn view_tree(model_index: usize, model: &Model, treeviews: &TreeViewsHtml) -> Ve
 }
 
 /// Makes the sidebar show for SmartPlaylist, Database Access
-fn sidebar_navigation(_model: &Model, treeviews: &TreeViewsHtml) -> Node<Msg> {
+fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
     let views: Vec<Node<Msg>> = treeviews
         .iter()
         .map(|t| {
@@ -492,8 +515,8 @@ fn sidebar_navigation(_model: &Model, treeviews: &TreeViewsHtml) -> Node<Msg> {
                 style!(St::Padding => unit!(5, px)),
                 button![
                     C!["btn", "btn-primary"],
-                    attrs![At::from("data-toggle") => "modal", At::from("data-target") => t.idref],
-                    t.label.to_owned(),
+                    attrs![At::from("data-toggle") => "modal", At::from("data-target") => t.treeview_html.idref],
+                    t.treeview_html.label.to_owned(),
                     //    ev(Ev::Click, move |_| Msg::FillTreeView {
                     //        model_index: 0,
                     //        tree_index: vec![],
@@ -584,35 +607,16 @@ fn view_deleterangemodal(_model: &Model) -> Node<Msg> {
 
 /// Main view
 fn view(model: &Model) -> Node<Msg> {
-    let treeviews: Vec<TreeViewHtml> = vec![
-        TreeViewHtml {
-            id: "artisttree".to_string(),
-            idref: "#artisttree".to_string(),
-            label: "Artist".to_string(),
-            type_vec: vec![
-                viola_common::TreeType::Artist,
-                viola_common::TreeType::Album,
-                viola_common::TreeType::Track,
-            ],
-        },
-        TreeViewHtml {
-            id: "genre".to_string(),
-            idref: "#genre".to_string(),
-            label: "Genre".to_string(),
-            type_vec: vec![viola_common::TreeType::Genre],
-        },
-    ];
-
     div![
         C!["container-fluid"],
         style!(St::PaddingLeft => unit!(5,vw), St::PaddingBottom => unit!(1,vh), St::Height => unit!(75,vh)),
-        view_tree(0, model, &treeviews),
+        view_tree(model, &model.treeviews),
         view_smartplaylists(model),
         div![
             C!["row"],
             style!(St::Width => unit!(95,%), St::PaddingTop => unit!(0.1,em)),
             view_deleterangemodal(model),
-            sidebar_navigation(model, &treeviews),
+            sidebar_navigation(model, &model.treeviews),
             div![
                 C!["col"],
                 style!(St::Height => unit!(80,vh)),

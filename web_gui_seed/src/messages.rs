@@ -26,19 +26,11 @@ pub(crate) enum Msg {
     LoadSmartPlaylistListRecv(Vec<String>),
     /// Load a smartplaylist
     LoadSmartPlaylist(usize),
-    ///we need to check which click it is and then either do the `FillTreeView` or `LoadFromTreeView` action
-    TreeViewClickAction {
-        model_index: usize,
-        tree_index: Vec<usize>,
-        type_vec: Vec<viola_common::TreeType>,
-        search: String,
-    },
     /// Fill the treeview of `model_index`, with at position `tree_index` with `type_vec`
     FillTreeView {
         model_index: usize,
         tree_index: Vec<usize>,
-        type_vec: Vec<viola_common::TreeType>,
-        search: String,
+        search: SearchString,
     },
     FillTreeViewRecv {
         model_index: usize,
@@ -48,6 +40,7 @@ pub(crate) enum Msg {
     TreeWindowIncrement {
         tree_index: usize,
     },
+    /// This loads the selected treeview into a new playlist1
     LoadFromTreeView {
         model_index: usize,
         tree_index: Vec<usize>,
@@ -230,53 +223,36 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 Msg::InitPlaylistTabs
             });
         }
-        Msg::TreeViewClickAction {
-            model_index,
-            tree_index,
-            type_vec,
-            search,
-        } => {
-            orders.send_msg(Msg::FillTreeView {
-                model_index,
-                tree_index,
-                type_vec,
-                search,
-            });
-        }
         Msg::FillTreeView {
             model_index,
             tree_index,
-            type_vec,
             search,
         } => {
-            if model.treeviews.get(model_index).is_none() {
-                let mut arena = indextree::Arena::new();
-                let root = arena.new_node("".to_string());
-                let view = TreeView {
-                    tree: arena,
-                    root,
-                    type_vec: type_vec.clone(),
-                    current_window: 2,
-                    stream_handle: None,
-                    search: search.clone(),
-                };
-                model.treeviews.push(view);
-            } else {
-                model
-                    .treeviews
-                    .get_mut(model_index)
-                    .map(|s| s.search = search.clone());
-            }
-            let search = if search.is_empty() {
+            let newsearch = match search {
+                SearchString::EmptySearch => "".to_owned(),
+                SearchString::UpdateSearch(s) => s,
+                SearchString::UseStoredSearch => {
+                    model.treeviews.get(model_index).unwrap().search.to_owned()
+                }
+            };
+            let query_search = if newsearch.is_empty() {
                 None
             } else {
-                Some(search)
+                Some(model.treeviews.get(model_index).unwrap().search.to_owned())
             };
+            model.treeviews.get_mut(model_index).unwrap().search = newsearch;
+            let type_vec = model
+                .treeviews
+                .get(model_index)
+                .unwrap()
+                .type_vec
+                .to_owned();
+
             orders.perform_cmd(async move {
                 let data = viola_common::TreeViewQuery {
                     types: type_vec,
                     indices: tree_index.clone(),
-                    search: search,
+                    search: query_search,
                 };
                 let req = Request::new("/libraryview/partial/")
                     .method(Method::Post)

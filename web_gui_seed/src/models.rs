@@ -42,14 +42,29 @@ pub(crate) struct Sidebar {
     pub smartplaylists: Vec<String>,
 }
 
+#[derive(Debug, Clone)]
+pub(crate) struct TreeViewHtml {
+    pub id: String,
+    pub idref: String,
+    pub label: String,
+}
+
 #[derive(Debug)]
 pub(crate) struct TreeView {
+    pub treeview_html: TreeViewHtml,
     pub tree: indextree::Arena<String>,
     pub root: indextree::NodeId,
     pub type_vec: Vec<viola_common::TreeType>,
     pub current_window: usize,
     pub stream_handle: Option<StreamHandle>,
     pub search: String,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum SearchString {
+    UseStoredSearch,
+    UpdateSearch(String),
+    EmptySearch,
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
