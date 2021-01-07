@@ -417,6 +417,7 @@ fn view_tree(model_index: usize, model: &Model, treeviews: &TreeViewsHtml) -> Ve
         .iter()
         .map(|t| {
             let tclone = t.type_vec.clone();
+            let tclone2 = t.type_vec.clone();
             div![
                 C!["modal", "fade"],
                 attrs![At::from("aria-hidden") => "true", At::Id => t.id],
@@ -426,15 +427,34 @@ fn view_tree(model_index: usize, model: &Model, treeviews: &TreeViewsHtml) -> Ve
                         C!["modal-content"],
                         div![
                             C!["modal-body"],
-                            input![
-                                C!["form-control"],
-                                attrs!(At::from("placeholder") => "Search"),
-                                input_ev(Ev::Input, move |search| Msg::FillTreeView {
-                                    model_index,
-                                    tree_index: vec![],
-                                    type_vec: tclone,
-                                    search,
-                                },)
+                            div![
+                                C!["row"],
+                                div![
+                                    C!["col"],
+                                    input![
+                                        C!["form-control"],
+                                        attrs!(At::from("placeholder") => "Search"),
+                                        input_ev(Ev::Input, move |search| Msg::FillTreeView {
+                                            model_index,
+                                            tree_index: vec![],
+                                            type_vec: tclone,
+                                            search,
+                                        },)
+                                    ],
+                                ],
+                                div![
+                                    C!["col"],
+                                    button![
+                                        C!["btn", "btn-outline-primary", "btn-sm"],
+                                        "Load All",
+                                        ev(Ev::Click, move |_| Msg::FillTreeView {
+                                            model_index,
+                                            tree_index: vec![],
+                                            type_vec: tclone2,
+                                            search: "".to_string(),
+                                        })
+                                    ]
+                                ],
                             ],
                             if let Some(treeview) = model.treeviews.get(model_index) {
                                 ul![treeview

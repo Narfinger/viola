@@ -267,11 +267,16 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                     .get_mut(model_index)
                     .map(|s| s.search = search.clone());
             }
+            let search = if search.is_empty() {
+                None
+            } else {
+                Some(search)
+            };
             orders.perform_cmd(async move {
                 let data = viola_common::TreeViewQuery {
                     types: type_vec,
                     indices: tree_index.clone(),
-                    search: Some(search),
+                    search: search,
                 };
                 let req = Request::new("/libraryview/partial/")
                     .method(Method::Post)
