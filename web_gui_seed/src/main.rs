@@ -310,10 +310,23 @@ fn view_status(model: &Model) -> Node<Msg> {
         div![C!["col"], IF!(model.is_repeat_once => "Repeat")],
         div![
             C!["col"],
-            "Time: ",
+            "Time:",
             format_time_string(model.current_time),
             "--",
             format_time_string(track_option.map(|t| t.length as u64).unwrap_or(0))
+        ],
+        div![
+            C!["col"],
+            div![
+                C!["progress"],
+                div![
+                    C!["progress-bar"],
+                    attrs!(At::from("Role") => "progressbar", At::from("aria-valuenow") => model.current_time, At::from("aria-valuemin") => 0, At::from("aria-valuemax") => track_option.map(|t| t.length as u64).unwrap_or(0)),
+                ]
+            ] //"Time: ",
+              //format_time_string(model.current_time),
+              //"--",
+              //format_time_string(track_option.map(|t| t.length as u64).unwrap_or(0))
         ]
     ]
 }
