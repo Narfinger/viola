@@ -1,3 +1,4 @@
+#![recursion_limit = "4096"]
 #[macro_use]
 extern crate actix_web;
 extern crate app_dirs;

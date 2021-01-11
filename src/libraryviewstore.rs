@@ -6,10 +6,14 @@ use crate::{
 use diesel::TextExpressionMethods;
 use std::convert::TryInto;
 use std::ops::Deref;
-use viola_common::schema::tracks::{self, dsl::*};
 use viola_common::TreeViewQuery;
+use viola_common::{
+    schema::tracks::{self, dsl::*},
+    TreeType,
+};
 
-fn match_and_select<'a>(
+/// produces a simple query that gives for one type a query that selects on it
+fn match_and_select_simple<'a>(
     base_query: viola_common::schema::tracks::BoxedQuery<'a, diesel::sqlite::Sqlite>,
     ttype: &'a viola_common::TreeType,
 ) -> diesel::query_builder::BoxedSelectStatement<
@@ -43,6 +47,7 @@ fn match_and_select<'a>(
     }
 }
 
+/// Produces the string that we should filter on if we are deeper in the tree
 fn get_filter_string(
     base_query: viola_common::schema::tracks::BoxedQuery<diesel::sqlite::Sqlite>,
     db: &DBPool,
@@ -50,7 +55,7 @@ fn get_filter_string(
     index: &usize,
     search: &Option<String>,
 ) -> String {
-    let select_query = match_and_select(base_query, &ttype);
+    let select_query = match_and_select_simple(base_query, &ttype);
     let select_query = if let Some(ref search_string) = search {
         select_query
             .filter(artist.like(String::from("%") + &search_string + "%"))
@@ -67,6 +72,7 @@ fn get_filter_string(
     loaded_query.first().expect("Error in stuff").to_string()
 }
 
+/// Generral Query to get the tree
 fn treeview_query<'a>(
     db: &'a DBPool,
     query: &'a TreeViewQuery,
@@ -139,7 +145,9 @@ pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
         _ => query.types.last(),
     }
     .expect("Error in index stuff");
-    let mut final_query = match_and_select(base_query, query_type);
+
+    //let mut final_query = match_and_select_simple(base_query, query_type);
+    let mut final_query = base_query;
 
     if let Some(ref search_string) = query.search {
         final_query = final_query
@@ -148,16 +156,47 @@ pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
             .or_filter(title.like(String::from("%") + &search_string + "%"));
     }
 
-    let result: Vec<String> = final_query
-        .load(db.lock().unwrap().deref())
-        .expect("Error in query");
-    if query_type == &viola_common::TreeType::Artist {
-        result.into_iter().filter(|s| !s.contains("feat")).collect()
-    } else {
+    if query.indices.len() == 1
+        && query.types.get(0) == Some(&TreeType::Artist)
+        && query.types.get(1) == Some(&TreeType::Album)
+    {
+        let result = final_query
+            .select((album, year))
+            .group_by((album, year))
+            .order_by(year)
+            .load::<(String, Option<i32>)>(db.lock().unwrap().deref())
+            .expect("Error in query");
         result
+            .iter()
+            .map(|(album_t, year_t)| {
+                year_t.map_or(String::from(""), |t| t.to_string()) + "-" + album_t
+            })
+            .collect()
+    } else if query.indices.len() == 2
+        && query.types.get(0) == Some(&TreeType::Artist)
+        && query.types.get(1) == Some(&TreeType::Album)
+        && query.types.get(2) == Some(&TreeType::Track)
+    {
+        let result = final_query
+            .select((title, tracknumber))
+            .group_by((title, tracknumber))
+            .order_by(tracknumber)
+            .load::<(String, Option<i32>)>(db.lock().unwrap().deref())
+            .expect("Error in query");
+        result
+            .iter()
+            .map(|(album_t, tracknumber_t)| {
+                tracknumber_t.map_or(String::from(""), |t| t.to_string()) + "-" + album_t
+            })
+            .collect()
+    } else {
+        match_and_select_simple(final_query, query_type)
+            .load(db.lock().unwrap().deref())
+            .expect("Error on query")
     }
 }
 
+/// produces a LoadedPlaylist frrom a treeviewquery
 pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
     let mut q = treeview_query(db, query);
 
