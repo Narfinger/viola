@@ -6,7 +6,7 @@ use crate::{
 use diesel::TextExpressionMethods;
 use std::convert::TryInto;
 use std::ops::Deref;
-use viola_common::schema::tracks::dsl::*;
+use viola_common::schema::tracks::{self, dsl::*};
 use viola_common::TreeViewQuery;
 
 fn match_and_select<'a>(
@@ -21,6 +21,7 @@ fn match_and_select<'a>(
     match ttype {
         viola_common::TreeType::Artist => base_query
             .select(artist)
+            .filter(artist.not_like("%feat%"))
             .group_by(artist)
             .distinct()
             .order_by(artist),
