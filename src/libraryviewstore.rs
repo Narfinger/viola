@@ -89,7 +89,7 @@ fn treeview_query<'a>(
     if let Some(i) = query.indices.get(1) {
         let base_query = match query.types[0] {
             viola_common::TreeType::Artist => tracks
-                .filter(artist.eq(filter_strings[0].clone()))
+                .filter(artist.like(filter_strings[0].to_owned() + "%"))
                 .into_boxed(),
             viola_common::TreeType::Album => tracks
                 .filter(album.eq(filter_strings[0].clone()))
@@ -127,9 +127,10 @@ fn treeview_query<'a>(
     db_query
 }
 
+/// Produces a partial query, i.e., the Vector of Strings that we show in the treeview
 pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
     let base_query = treeview_query(db, query);
-    println!("Query: {:?}", query);
+    info!("Query: {:?}", query);
     let query_type = match query.indices.len() {
         0 => query.types.get(0),
         1 => query.types.get(1),
@@ -146,9 +147,14 @@ pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
             .or_filter(title.like(String::from("%") + &search_string + "%"));
     }
 
-    final_query
+    let result: Vec<String> = final_query
         .load(db.lock().unwrap().deref())
-        .expect("Error in query")
+        .expect("Error in query");
+    if query_type == &viola_common::TreeType::Artist {
+        result.into_iter().filter(|s| !s.contains("feat")).collect()
+    } else {
+        result
+    }
 }
 
 pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
@@ -166,7 +172,7 @@ pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
     let t = q.load(db.lock().unwrap().deref()).expect("Error in Query");
     LoadedPlaylist {
         id: -1,
-        name: "Foobar".to_string(),
+        name: query.search.to_owned().unwrap_or("Foo".to_string()),
         current_position: 0,
         items: t,
     }
