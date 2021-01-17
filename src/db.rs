@@ -1,7 +1,9 @@
 use crate::types::{DBPool, APP_INFO};
 use app_dirs::*;
 use diesel::{Connection, SqliteConnection};
+use indicatif::ParallelProgressIterator;
 use indicatif::{ProgressBar, ProgressStyle};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::ops::Deref;
@@ -212,11 +214,22 @@ fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
 
 /// Tested on 01-06-2019 with jwalk and walkdir. walkdir was faster on my machine
 pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
-    let files = walkdir::WalkDir::new(&p)
-        .into_iter()
+    info!("Building database, getting walkdir iterator");
+    let pb = ProgressBar::new_spinner();
+    pb.set_style(
+        ProgressStyle::default_spinner()
+            .template(
+                "{msg} {spinner:.green} | Elapsed: {elapsed} | Files/sec: {per_sec} | Pos: {pos}",
+            )
+            .progress_chars("#>-"),
+    );
+    pb.set_message("Collecting files");
+    let files = pb
+        .wrap_iter(walkdir::WalkDir::new(&p).into_iter())
         .filter(is_valid_file)
         .map(|i| String::from(i.unwrap().path().to_str().unwrap()))
         .collect::<HashSet<String>>();
+    pb.finish_with_message("Done Updating");
 
     let file_count = files.len();
 
@@ -240,7 +253,7 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
         /// TODO switch this to par_iter or something
         {
             let pb = ProgressBar::new(file_count as u64);
-            pb.set_message("Updating files");
+            pb.set_message("Updating files and tags");
             pb.set_style(ProgressStyle::default_bar()
                                   .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7} ({percent}%)")
                                   .progress_chars("#>-"));
