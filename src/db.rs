@@ -250,15 +250,16 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
                 .expect("Error in loading old files")
         });
 
-        /// TODO switch this to par_iter or something
         {
             let pb = ProgressBar::new(file_count as u64);
             pb.set_message("Updating files and tags");
             pb.set_style(ProgressStyle::default_bar()
                                   .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7} ({percent}%)")
                                   .progress_chars("#>-"));
-            let res = pb
-                .wrap_iter(files.iter().map(|s| insert_track_with_error_retries(s, db)))
+            let res = files
+                .par_iter()
+                .progress()
+                .map(|s| insert_track_with_error_retries(s, db))
                 .collect::<Result<(), String>>();
             pb.finish_with_message("Done Updating");
 
