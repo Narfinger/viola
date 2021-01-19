@@ -13,6 +13,12 @@ use viola_common::schema::tracks;
 use viola_common::Track;
 use walkdir::DirEntry;
 
+static PROGRESSBAR_STYLE: &str =
+    "[{elapsed_precise}] {msg} {spinner:.green} {bar:.green/blue} {pos:>7}/{len:7} ({percent}%)";
+
+static PROGRESSBAR_UNKNOWN_STYLE: &str =
+    "{msg} {spinner:.green} | Elapsed: {elapsed} | Files/sec: {per_sec} | Pos: {pos}";
+
 pub trait UpdatePlayCount {
     fn update_playcount(&mut self, _: DBPool);
 }
@@ -216,13 +222,7 @@ fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
 pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
     info!("Building database, getting walkdir iterator");
     let pb = ProgressBar::new_spinner();
-    pb.set_style(
-        ProgressStyle::default_spinner()
-            .template(
-                "{msg} {spinner:.green} | Elapsed: {elapsed} | Files/sec: {per_sec} | Pos: {pos}",
-            )
-            .progress_chars("#>-"),
-    );
+    pb.set_style(ProgressStyle::default_spinner().template(PROGRESSBAR_UNKNOWN_STYLE));
     pb.set_message("Collecting files");
     let files = pb
         .wrap_iter(walkdir::WalkDir::new(&p).into_iter())
@@ -252,16 +252,13 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
 
         {
             let pb = ProgressBar::new(file_count as u64);
-            pb.set_message("Updating files and tags");
-            pb.set_style(ProgressStyle::default_bar()
-                                  .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7} ({percent}%)")
-                                  .progress_chars("#>-"));
+            pb.set_message("Updating tags");
+            pb.set_style(ProgressStyle::default_bar().template(PROGRESSBAR_STYLE));
             let res = files
                 .par_iter()
-                .progress()
+                .progress_with(pb)
                 .map(|s| insert_track_with_error_retries(s, db))
                 .collect::<Result<(), String>>();
-            pb.finish_with_message("Done Updating");
 
             if let Err(err) = res {
                 error!("Error in updating database");
@@ -278,9 +275,11 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
             pb.finish();
 
             let pb2 = ProgressBar::new(to_delete.len() as u64);
-            pb2.set_style(ProgressStyle::default_bar()
-                                  .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7} {percent}    %)")
-                                  .progress_chars("#>-"));
+            pb2.set_style(
+                ProgressStyle::default_bar()
+                    .template(PROGRESSBAR_STYLE)
+                    .progress_chars("#>-"),
+            );
             pb2.set_message("Deleting old unused entries");
             for i in pb2.wrap_iter(to_delete.iter()) {
                 //println!("to delete: {}", i);
