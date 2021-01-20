@@ -194,10 +194,10 @@ impl PlaylistControls for LoadedPlaylistPtr {
 
         s.items.drain(range.start..=range.end);
 
-        if s.current_position >= range.end && s.current_position <= range.end {
+        if s.current_position >= range.start && s.current_position <= range.end {
             s.current_position = 0;
         } else if s.current_position > range.end {
-            s.current_position -= range.end - range.end;
+            s.current_position = s.current_position - (range.end - range.start);
         }
     }
 

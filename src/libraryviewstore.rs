@@ -7,10 +7,7 @@ use diesel::TextExpressionMethods;
 use std::convert::TryInto;
 use std::ops::Deref;
 use viola_common::TreeViewQuery;
-use viola_common::{
-    schema::tracks::{self, dsl::*},
-    TreeType,
-};
+use viola_common::{schema::tracks::dsl::*, TreeType};
 
 /// produces a simple query that gives for one type a query that selects on it
 fn match_and_select_simple<'a>(
@@ -212,7 +209,7 @@ pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
     let t = q.load(db.lock().unwrap().deref()).expect("Error in Query");
     LoadedPlaylist {
         id: -1,
-        name: query.search.to_owned().unwrap_or("Foo".to_string()),
+        name: query.search.to_owned().unwrap_or_else(|| "Foo".to_string()),
         current_position: 0,
         items: t,
     }

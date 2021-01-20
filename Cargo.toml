@@ -23,7 +23,7 @@ log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"
 env_logger = "0.8"
 indicatif = {version = "0.15", features = ["rayon"]}
 image = "0.23"
-humantime = "2.0"
+humantime = "2.1"
 #jwalk = "0.4"    # A progress bar and cli reporting library for Rust
 taglib = "1.0"        # Rust bindings for TagLib
 gstreamer = "0.16"               # Rust bindings for GStreamer

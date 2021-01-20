@@ -62,7 +62,7 @@ pub fn new(
 
     let bus = element.get_bus().unwrap();
     let res = Arc::new(GStreamer {
-        element: element,
+        element,
         //pipeline,
         current_playlist,
         sender: tx,
@@ -191,8 +191,11 @@ impl GStreamerExt for GStreamer {
                     return;
                 }
             }
-            GStreamerAction::Seek(u64) => {
-                panic!("NYI");
+            GStreamerAction::Seek(pos) => {
+                let time = gstreamer::ClockTime::from_seconds(pos);
+                self.element
+                    .seek_simple(gstreamer::SeekFlags::FLUSH, time)
+                    .expect("Error in seeking");
             }
             GStreamerAction::RepeatOnce => {
                 self.repeat_once.store(true, Ordering::SeqCst);
