@@ -481,8 +481,9 @@ fn view_tree_lvl1(
             ev(Ev::Click, move |_| Msg::LoadFromTreeView {
                 tree_index: vec![index],
                 model_index,
-            })
+            }),
         ],
+        view_tree_lvl2(treeview, model_index, index, nodeid)
     ],]
 }
 
