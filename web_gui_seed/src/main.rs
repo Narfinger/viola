@@ -14,45 +14,62 @@ use messages::*;
 use models::*;
 use viola_common::{GStreamerAction, GStreamerMessage, Track};
 
+fn init_generic_treeview(
+    id: &str,
+    idref: &str,
+    label: &str,
+    type_vec: Vec<viola_common::TreeType>,
+) -> TreeView {
+    let mut arena = indextree::Arena::new();
+    let root = arena.new_node("".to_string());
+    TreeView {
+        treeview_html: TreeViewHtml {
+            id: id.to_string(),
+            idref: idref.to_string(),
+            label: label.to_string(),
+        },
+        tree: arena,
+        root,
+        type_vec: type_vec,
+        current_window: 0,
+        stream_handle: None,
+        search: "".to_owned(),
+    }
+}
+
+fn init_treeviews() -> Vec<TreeView> {
+    let tv1 = init_generic_treeview(
+        "artisttree",
+        "#artisttree",
+        "Artist",
+        vec![
+            viola_common::TreeType::Artist,
+            viola_common::TreeType::Album,
+            viola_common::TreeType::Track,
+        ],
+    );
+    let tv2 = init_generic_treeview(
+        "genretree",
+        "#genretree",
+        "Genre",
+        vec![viola_common::TreeType::Genre],
+    );
+    let tv3 = init_generic_treeview(
+        "album",
+        "#album",
+        "Album",
+        vec![viola_common::TreeType::Album, viola_common::TreeType::Track],
+    );
+    let tv4 = init_generic_treeview(
+        "track",
+        "#track",
+        "Track",
+        vec![viola_common::TreeType::Track],
+    );
+    vec![tv1, tv2, tv3, tv4]
+}
+
 fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
-    let tv1 = {
-        let mut arena = indextree::Arena::new();
-        let root = arena.new_node("".to_string());
-        TreeView {
-            treeview_html: TreeViewHtml {
-                id: "artisttree".to_string(),
-                idref: "#artisttree".to_string(),
-                label: "Artist".to_string(),
-            },
-            tree: arena,
-            root,
-            type_vec: vec![
-                viola_common::TreeType::Artist,
-                viola_common::TreeType::Album,
-                viola_common::TreeType::Track,
-            ],
-            current_window: 0,
-            stream_handle: None,
-            search: "".to_owned(),
-        }
-    };
-    let tv2 = {
-        let mut arena = indextree::Arena::new();
-        let root = arena.new_node("".to_string());
-        TreeView {
-            treeview_html: TreeViewHtml {
-                id: "genretree".to_string(),
-                idref: "#genretree".to_string(),
-                label: "Genre".to_string(),
-            },
-            tree: arena,
-            root,
-            type_vec: vec![viola_common::TreeType::Genre],
-            current_window: 0,
-            stream_handle: None,
-            search: "".to_owned(),
-        }
-    };
     orders.send_msg(Msg::InitPlaylistTabs);
     let sidebar = Sidebar {
         smartplaylists: vec![],
@@ -66,7 +83,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         web_socket: crate::websocket::create_websocket(orders),
         is_repeat_once: false,
         sidebar,
-        treeviews: vec![tv1, tv2],
+        treeviews: init_treeviews(),
         delete_range_input: None,
     }
 }
