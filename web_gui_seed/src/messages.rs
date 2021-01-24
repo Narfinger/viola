@@ -247,6 +247,10 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 .unwrap()
                 .type_vec
                 .to_owned();
+            if type_vec.len() <= tree_index.len() {
+                //we should not query if there is nothing left to query
+                return;
+            }
 
             orders.perform_cmd(async move {
                 let data = viola_common::TreeViewQuery {

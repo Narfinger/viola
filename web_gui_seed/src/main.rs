@@ -447,29 +447,26 @@ fn view_tree_lvl1(
     model_index: usize,
     index: usize,
 ) -> Node<Msg> {
-    li![
+    li![span![
         span![
-            span![
-                treeview.tree.get(nodeid).unwrap().get(),
-                mouse_ev(Ev::Click, move |_| Msg::FillTreeView {
-                    model_index,
-                    tree_index: vec![index],
-                    search: SearchString::UseStoredSearch,
-                })
-            ],
-            button![
-                C!["btn", "btn-outline-primary", "btn-sm"],
-                style!(St::MarginLeft => unit!(25,px)),
-                attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "artisttree"),
-                "Load",
-                ev(Ev::Click, move |_| Msg::LoadFromTreeView {
-                    tree_index: vec![index],
-                    model_index,
-                })
-            ],
+            treeview.tree.get(nodeid).unwrap().get(),
+            mouse_ev(Ev::Click, move |_| Msg::FillTreeView {
+                model_index,
+                tree_index: vec![index],
+                search: SearchString::UseStoredSearch,
+            })
         ],
-        view_tree_lvl2(treeview, model_index, index, nodeid),
-    ]
+        button![
+            C!["btn", "btn-outline-primary", "btn-sm"],
+            style!(St::MarginLeft => unit!(25,px)),
+            attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "artisttree"),
+            "Load",
+            ev(Ev::Click, move |_| Msg::LoadFromTreeView {
+                tree_index: vec![index],
+                model_index,
+            })
+        ],
+    ],]
 }
 
 fn view_tree(model: &Model, treeviews: &[TreeView]) -> Vec<Node<Msg>> {
