@@ -206,10 +206,15 @@ pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
         q = q.order((year, tracknumber));
     }
 
+    let name = if query.search.is_none() || query.search.as_ref().unwrap().is_empty() {
+        "Foo".to_string()
+    } else {
+        query.search.to_owned().unwrap()
+    };
     let t = q.load(db.lock().unwrap().deref()).expect("Error in Query");
     LoadedPlaylist {
         id: -1,
-        name: query.search.to_owned().unwrap_or_else(|| "Foo".to_string()),
+        name,
         current_position: 0,
         items: t,
     }

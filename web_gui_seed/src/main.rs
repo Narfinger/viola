@@ -377,74 +377,99 @@ fn view_smartplaylists(model: &Model) -> Node<Msg> {
     ]
 }
 
+fn view_tree_lvl3(
+    treeview: &TreeView,
+    model_index: usize,
+    index: usize,
+    index2: usize,
+    el: indextree::NodeId,
+) -> Node<Msg> {
+    ul![el
+    .children(&treeview.tree)
+    .enumerate()
+    .map(|(index3, el2)| {
+        li![span![
+            treeview.tree.get(el2).unwrap().get(),
+            button![
+                C!["btn", "btn-outline-primary", "btn-sm"],
+                style!(St::MarginLeft => unit!(25,px)),
+                attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "artisttree"),
+                "Load",
+                ev(Ev::Click, move |_| Msg::LoadFromTreeView {
+                    tree_index: vec![index, index2, index3],
+                    model_index
+                })
+            ],
+        ]]
+    })]
+}
+
+fn view_tree_lvl2(
+    treeview: &TreeView,
+    model_index: usize,
+    index: usize,
+    nodeid: indextree::NodeId,
+) -> Node<Msg> {
+    ul![nodeid
+    .children(&treeview.tree)
+    .enumerate()
+    .map(|(index2, el)| {
+        li![
+            span![
+                span![
+                    treeview.tree.get(el).unwrap().get(),
+                    mouse_ev(Ev::Click, move |_| Msg::FillTreeView {
+                        model_index,
+                        tree_index: vec![index, index2],
+                        search: SearchString::UseStoredSearch,
+                    }),
+                ],
+                button![
+                    C!["btn", "btn-outline-primary", "btn-sm"],
+                    style!(St::MarginLeft => unit!(25,px)),
+                    attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "artisttree"),
+                    "Load",
+                    ev(Ev::Click, move |_| Msg::LoadFromTreeView {
+                        tree_index: vec![index, index2],
+                        model_index
+                    })
+                ],
+            ],
+                    view_tree_lvl3(treeview, model_index, index, index2, el)
+        ]
+                })
+    ]
+}
+
 fn view_tree_lvl1(
     treeview: &TreeView,
     nodeid: indextree::NodeId,
     model_index: usize,
     index: usize,
 ) -> Node<Msg> {
-    li![span![
-        treeview.tree.get(nodeid).unwrap().get(),
-        button![
-            C!["btn", "btn-outline-primary", "btn-sm"],
-            style!(St::MarginLeft => unit!(25,px)),
-            attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "artisttree"),
-            "Load",
-            ev(Ev::Click, move |_| Msg::FillTreeView {
-                tree_index: vec![index],
-                model_index,
-                search: SearchString::UseStoredSearch,
-            })
+    li![
+        span![
+            span![
+                treeview.tree.get(nodeid).unwrap().get(),
+                mouse_ev(Ev::Click, move |_| Msg::FillTreeView {
+                    model_index,
+                    tree_index: vec![index],
+                    search: SearchString::UseStoredSearch,
+                })
+            ],
+            button![
+                C!["btn", "btn-outline-primary", "btn-sm"],
+                style!(St::MarginLeft => unit!(25,px)),
+                attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "artisttree"),
+                "Load",
+                ev(Ev::Click, move |_| Msg::LoadFromTreeView {
+                    tree_index: vec![index],
+                    model_index,
+                })
+            ],
         ],
-        ul![nodeid
-            .children(&treeview.tree)
-            .enumerate()
-            .map(|(index2, el)| {
-                li![
-                    span![
-                        treeview.tree.get(el).unwrap().get(),
-                        button![
-                            C!["btn", "btn-outline-primary", "btn-sm"],
-                            style!(St::MarginLeft => unit!(25,px)),
-                            attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "artisttree"),
-                            "Load",
-                            ev(Ev::Click, move |_| Msg::LoadFromTreeView {
-                                tree_index: vec![index, index2],
-                                model_index
-                            })
-                        ],
-                        mouse_ev(Ev::Click, move |_| Msg::FillTreeView {
-                            model_index,
-                            tree_index: vec![index, index2],
-                            search: SearchString::UseStoredSearch,
-                        }),
-                    ],
-                    ul![el
-                        .children(&treeview.tree)
-                        .enumerate()
-                        .map(|(index3, el2)| {
-                            li![span![
-                                treeview.tree.get(el2).unwrap().get(),
-                                button![
-                                    C!["btn", "btn-outline-primary", "btn-sm"],
-                                    style!(St::MarginLeft => unit!(25,px)),
-                                    attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "artisttree"),
-                                    "Load",
-                                    ev(Ev::Click, move |_| Msg::LoadFromTreeView {
-                                        tree_index: vec![index, index2, index3],
-                                        model_index
-                                    })
-                                ],
-                            ]]
-                        })]
-                ]
-            })],
-        mouse_ev(Ev::Click, move |_| Msg::FillTreeView {
-            model_index,
-            tree_index: vec![index],
-            search: SearchString::UseStoredSearch,
-        }),
-    ]]
+        view_tree_lvl2(treeview, model_index, index, nodeid),
+    ]
 }
 
 fn view_tree(model: &Model, treeviews: &[TreeView]) -> Vec<Node<Msg>> {
