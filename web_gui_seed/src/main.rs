@@ -310,6 +310,14 @@ fn view_status(model: &Model) -> Node<Msg> {
                 tracks_number_option.map_or("".to_string(), |t| t.to_string())
             )
         };
+    let track_percentage_width = track_option
+        .map(|t| {
+            format!(
+                "{}%",
+                ((model.current_time as f64 / t.length as f64) * 10.0).round() as u64
+            )
+        })
+        .unwrap_or("0%".to_string());
 
     div![
         C!["row", "border", "border-dark"],
@@ -339,6 +347,7 @@ fn view_status(model: &Model) -> Node<Msg> {
                 div![
                     C!["progress-bar"],
                     attrs!(At::from("Role") => "progressbar", At::from("aria-valuenow") => model.current_time, At::from("aria-valuemin") => 0, At::from("aria-valuemax") => track_option.map(|t| t.length as u64).unwrap_or(0)),
+                    style!(St::Width => track_percentage_width),
                 ]
             ]
         ]
