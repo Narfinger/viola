@@ -3,10 +3,11 @@ use crate::{
     diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl},
     loaded_playlist::LoadedPlaylist,
 };
-use diesel::TextExpressionMethods;
-use std::convert::TryInto;
+use diesel::{query_builder::AsQuery, TextExpressionMethods};
+use itertools::{izip, Itertools};
 use std::ops::Deref;
-use viola_common::TreeViewQuery;
+use std::{any::Any, convert::TryInto};
+use viola_common::{schema::tracks, TreeViewQuery};
 use viola_common::{schema::tracks::dsl::*, TreeType};
 
 /// produces a simple query that gives for one type a query that selects on it
@@ -191,6 +192,56 @@ pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
             .load(db.lock().unwrap().deref())
             .expect("Error on query")
     }
+}
+
+fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Track> {
+    //this function is currently to difficult to implement in diesel as we cannot clone boxed ty pes and otherwise we can cyclic type errors
+
+    let current_tracks = tracks
+        .load::<viola_common::Track>(db.lock().unwrap().deref())
+        .unwrap();
+    let mut current_tracks_iterator = current_tracks.iter();
+    for (index, current_ttype, old_ttype) in
+        izip!(query.indices.iter(), query.types.iter(), query.types.iter(),)
+    {
+        let filter_value = current_tracks_iterator
+            .clone()
+            .map(|t| match old_ttype {
+                TreeType::Artist => &t.artist,
+                TreeType::Album => &t.album,
+                TreeType::Track => &t.title,
+                TreeType::Genre => &t.genre,
+            })
+            .unique()
+            .nth(*index)
+            .unwrap();
+
+        match current_ttype {
+            TreeType::Artist => {
+                current_tracks_iterator
+                    .by_ref()
+                    .filter(|t| t.artist == *filter_value);
+            }
+            TreeType::Album => {
+                current_tracks_iterator
+                    .by_ref()
+                    .filter(|t| t.album == *filter_value);
+            }
+            TreeType::Track => {
+                current_tracks_iterator
+                    .by_ref()
+                    .filter(|t| t.title == *filter_value);
+            }
+            TreeType::Genre => {
+                current_tracks_iterator
+                    .by_ref()
+                    .filter(|t| t.title == *filter_value);
+            }
+        }
+    }
+
+    panic!("The third query type is wrong and needs to be done differently");
+    current_tracks_iterator.cloned().collect()
 }
 
 /// produces a LoadedPlaylist frrom a treeviewquery
