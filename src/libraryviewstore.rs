@@ -200,7 +200,8 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
     let current_tracks = tracks
         .load::<viola_common::Track>(db.lock().unwrap().deref())
         .unwrap();
-    let mut current_tracks_iterator = current_tracks.iter();
+    let mut current_tracks_iterator: Box<dyn Iterator<Item = &viola_common::Track>> =
+        Box::new(current_tracks.iter());
     for (index, current_ttype, old_ttype) in
         izip!(query.indices.iter(), query.types.iter(), query.types.iter(),)
     {
@@ -216,32 +217,24 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
             .nth(*index)
             .unwrap();
 
-        match current_ttype {
-            TreeType::Artist => {
-                current_tracks_iterator
-                    .by_ref()
-                    .filter(|t| t.artist == *filter_value);
-            }
-            TreeType::Album => {
-                current_tracks_iterator
-                    .by_ref()
-                    .filter(|t| t.album == *filter_value);
-            }
-            TreeType::Track => {
-                current_tracks_iterator
-                    .by_ref()
-                    .filter(|t| t.title == *filter_value);
-            }
-            TreeType::Genre => {
-                current_tracks_iterator
-                    .by_ref()
-                    .filter(|t| t.title == *filter_value);
-            }
-        }
+        current_tracks_iterator = Box::new(match current_ttype {
+            TreeType::Artist => current_tracks_iterator
+                .deref()
+                .filter(|t| t.artist == *filter_value),
+            TreeType::Album => current_tracks_iterator
+                .deref()
+                .filter(|t| t.album == *filter_value),
+            TreeType::Track => current_tracks_iterator
+                .deref()
+                .filter(|t| t.title == *filter_value),
+            TreeType::Genre => current_tracks_iterator
+                .deref()
+                .filter(|t| t.title == *filter_value),
+        });
     }
 
     panic!("The third query type is wrong and needs to be done differently");
-    current_tracks_iterator.cloned().collect()
+    //current_tracks_iterator.cloned().collect()
 }
 
 /// produces a LoadedPlaylist frrom a treeviewquery
