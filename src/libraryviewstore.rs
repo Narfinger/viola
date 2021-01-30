@@ -196,9 +196,36 @@ pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
 }
 */
 
+fn get_filter_string2(
+    new_bunch: &Vec<&viola_common::Track>,
+    old_ttype: &TreeType,
+    index: &usize,
+) -> String {
+    let mut new: Vec<viola_common::Track> = new_bunch.iter().map(|t| (*t).clone()).collect();
+    let query = TreeViewQuery {
+        types: vec![old_ttype.clone()],
+        indices: vec![],
+        search: None,
+    };
+    sort_tracks(&query, new.as_mut_slice());
+
+    let full_unique: Vec<&String> = new
+        .iter()
+        .map(|t| match old_ttype {
+            TreeType::Artist => &t.artist,
+            TreeType::Album => &t.album,
+            TreeType::Track => &t.title,
+            TreeType::Genre => &t.genre,
+        })
+        .unique()
+        .collect();
+    println!("full unique {:?}", &full_unique);
+    let st = full_unique.get(*index).unwrap().clone().clone();
+    st
+}
+
 fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Track> {
     //this function is currently to difficult to implement in diesel as we cannot clone boxed ty pes and otherwise we can cyclic type errors
-
     let current_tracks = if let Some(ref search_string) = query.search {
         tracks
             .filter(artist.like(String::from("%") + &search_string + "%"))
@@ -208,11 +235,12 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
             .unwrap()
     } else {
         tracks
+            .filter(artist.ne(""))
             .load::<viola_common::Track>(db.lock().unwrap().deref())
             .unwrap()
     };
     let mut current_tracks_iterator: Box<dyn Iterator<Item = &viola_common::Track>> =
-        Box::new(current_tracks.iter());
+        Box::new(current_tracks.iter().filter(|t| !t.artist.is_empty()));
 
     let previous_types = {
         let mut t = query.types.clone();
@@ -231,20 +259,8 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
             "current type: {:?}, old_type: {:?}",
             current_ttype, old_ttype
         );
-        panic!("This does not sort yet correctly");
-        let filter_value: String = new_bunch
-            .iter()
-            .map(|t| match old_ttype {
-                TreeType::Artist => &t.artist,
-                TreeType::Album => &t.album,
-                TreeType::Track => &t.title,
-                TreeType::Genre => &t.genre,
-            })
-            .unique()
-            .nth(*index)
-            .unwrap()
-            .clone();
-
+        let filter_value = get_filter_string2(&new_bunch, old_ttype, index);
+        println!("filter value {}", filter_value);
         current_tracks_iterator = match current_ttype {
             TreeType::Artist => Box::new(
                 new_bunch
@@ -276,10 +292,8 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
 }
 
 fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
-    if query.indices.len() == 0 {
-        if query.types.get(0) == Some(&TreeType::Artist) {
-            t.sort_unstable_by_key(|t| t.artist.to_owned());
-        }
+    if query.indices.len() == 0 && query.types.get(0) == Some(&TreeType::Artist) {
+        t.sort_unstable_by_key(|t| t.artist.to_owned());
     } else if query.indices.len() == 1
         && query.types.get(0) == Some(&TreeType::Artist)
         && query.types.get(1) == Some(&TreeType::Album)
