@@ -11,6 +11,8 @@ use viola_common::{schema::tracks, TreeViewQuery};
 use viola_common::{schema::tracks::dsl::*, TreeType};
 
 /// produces a simple query that gives for one type a query that selects on it
+
+/*
 fn match_and_select_simple<'a>(
     base_query: viola_common::schema::tracks::BoxedQuery<'a, diesel::sqlite::Sqlite>,
     ttype: &'a viola_common::TreeType,
@@ -133,7 +135,6 @@ fn treeview_query<'a>(
 }
 
 /// Produces a partial query, i.e., the Vector of Strings that we show in the treeview
-/*
 pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
     let base_query = treeview_query(db, query);
     info!("Query: {:?}", query);
