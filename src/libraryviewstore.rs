@@ -227,6 +227,11 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
     ) {
         let new_bunch: Vec<&viola_common::Track> = current_tracks_iterator.collect();
 
+        println!(
+            "current type: {:?}, old_type: {:?}",
+            current_ttype, old_ttype
+        );
+        panic!("This does not sort yet correctly");
         let filter_value: String = new_bunch
             .iter()
             .map(|t| match old_ttype {
@@ -263,19 +268,46 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
             ),
         };
     }
-    current_tracks_iterator.cloned().collect()
+    let mut t = current_tracks_iterator
+        .cloned()
+        .collect::<Vec<viola_common::Track>>();
+    sort_tracks(query, &mut t);
+    t
+}
+
+fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
+    if query.indices.len() == 0 {
+        if query.types.get(0) == Some(&TreeType::Artist) {
+            t.sort_unstable_by_key(|t| t.artist.to_owned());
+        }
+    } else if query.indices.len() == 1
+        && query.types.get(0) == Some(&TreeType::Artist)
+        && query.types.get(1) == Some(&TreeType::Album)
+    {
+        t.sort_unstable_by_key(|t| t.year);
+    } else if query.indices.len() == 2
+        && query.types.get(0) == Some(&viola_common::TreeType::Artist)
+        && query.types.get(1) == Some(&viola_common::TreeType::Album)
+        && query.types.get(2) == Some(&viola_common::TreeType::Track)
+    {
+        t.sort_unstable_by_key(|t| t.tracknumber);
+    }
 }
 
 pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
     let t = basic_get_tracks(db, query);
-    t.into_iter()
-        .map(|t| match query.types.last().unwrap() {
+    let last_type = query.types.get(query.indices.len()).unwrap();
+    let strings = t
+        .into_iter()
+        .map(|t| match last_type {
             TreeType::Artist => t.artist,
             TreeType::Album => t.album,
             TreeType::Track => t.title,
             TreeType::Genre => t.genre,
         })
-        .collect()
+        .unique()
+        .collect();
+    strings
 }
 
 /// produces a LoadedPlaylist frrom a treeviewquery
