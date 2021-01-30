@@ -133,6 +133,7 @@ fn treeview_query<'a>(
 }
 
 /// Produces a partial query, i.e., the Vector of Strings that we show in the treeview
+/*
 pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
     let base_query = treeview_query(db, query);
     info!("Query: {:?}", query);
@@ -193,20 +194,41 @@ pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
             .expect("Error on query")
     }
 }
+*/
 
 fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Track> {
     //this function is currently to difficult to implement in diesel as we cannot clone boxed ty pes and otherwise we can cyclic type errors
 
-    let current_tracks = tracks
-        .load::<viola_common::Track>(db.lock().unwrap().deref())
-        .unwrap();
+    let current_tracks = if let Some(ref search_string) = query.search {
+        tracks
+            .filter(artist.like(String::from("%") + &search_string + "%"))
+            .or_filter(album.like(String::from("%") + &search_string + "%"))
+            .or_filter(title.like(String::from("%") + &search_string + "%"))
+            .load::<viola_common::Track>(db.lock().unwrap().deref())
+            .unwrap()
+    } else {
+        tracks
+            .load::<viola_common::Track>(db.lock().unwrap().deref())
+            .unwrap()
+    };
     let mut current_tracks_iterator: Box<dyn Iterator<Item = &viola_common::Track>> =
         Box::new(current_tracks.iter());
-    for (index, current_ttype, old_ttype) in
-        izip!(query.indices.iter(), query.types.iter(), query.types.iter(),)
-    {
-        let filter_value = current_tracks_iterator
-            .clone()
+
+    let previous_types = {
+        let mut t = query.types.clone();
+        t.insert(0, query.types.first().unwrap().clone());
+        t
+    };
+
+    for (index, current_ttype, old_ttype) in izip!(
+        query.indices.iter(),
+        query.types.iter(),
+        previous_types.iter(),
+    ) {
+        let new_bunch: Vec<&viola_common::Track> = current_tracks_iterator.collect();
+
+        let filter_value: String = new_bunch
+            .iter()
             .map(|t| match old_ttype {
                 TreeType::Artist => &t.artist,
                 TreeType::Album => &t.album,
@@ -215,30 +237,58 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
             })
             .unique()
             .nth(*index)
-            .unwrap();
+            .unwrap()
+            .clone();
 
-        current_tracks_iterator = Box::new(match current_ttype {
-            TreeType::Artist => current_tracks_iterator
-                .deref()
-                .filter(|t| t.artist == *filter_value),
-            TreeType::Album => current_tracks_iterator
-                .deref()
-                .filter(|t| t.album == *filter_value),
-            TreeType::Track => current_tracks_iterator
-                .deref()
-                .filter(|t| t.title == *filter_value),
-            TreeType::Genre => current_tracks_iterator
-                .deref()
-                .filter(|t| t.title == *filter_value),
-        });
+        current_tracks_iterator = match current_ttype {
+            TreeType::Artist => Box::new(
+                new_bunch
+                    .into_iter()
+                    .filter(move |t| t.artist == *filter_value),
+            ),
+            TreeType::Album => Box::new(
+                new_bunch
+                    .into_iter()
+                    .filter(move |t| t.album == filter_value),
+            ),
+            TreeType::Track => Box::new(
+                new_bunch
+                    .into_iter()
+                    .filter(move |t| t.title == filter_value),
+            ),
+            TreeType::Genre => Box::new(
+                new_bunch
+                    .into_iter()
+                    .filter(move |t| t.title == filter_value),
+            ),
+        };
     }
+    current_tracks_iterator.cloned().collect()
+}
 
-    panic!("The third query type is wrong and needs to be done differently");
-    //current_tracks_iterator.cloned().collect()
+pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
+    let t = basic_get_tracks(db, query);
+    t.into_iter()
+        .map(|t| match query.types.last().unwrap() {
+            TreeType::Artist => t.artist,
+            TreeType::Album => t.album,
+            TreeType::Track => t.title,
+            TreeType::Genre => t.genre,
+        })
+        .collect()
 }
 
 /// produces a LoadedPlaylist frrom a treeviewquery
 pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
+    let t = basic_get_tracks(db, query);
+    LoadedPlaylist {
+        id: -1,
+        name: "Foo".to_string(),
+        current_position: 0,
+        items: t,
+    }
+
+    /*
     let mut q = treeview_query(db, query);
 
     info!("query types: {:?}", query.types);
@@ -262,4 +312,5 @@ pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
         current_position: 0,
         items: t,
     }
+    */
 }
