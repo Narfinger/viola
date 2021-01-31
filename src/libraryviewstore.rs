@@ -206,7 +206,7 @@ fn get_filter_string(
     type_vec: Vec<TreeType>,
 ) -> String {
     let mut new: Vec<viola_common::Track> = new_bunch.iter().map(|t| (*t).clone()).collect();
-    let new_indices = (1..type_vec.len()).collect();
+    let new_indices = (0..type_vec.len()).collect();
     //println!("we sorted to {:?}", &type_vec);
     let query = TreeViewQuery {
         types: type_vec,
@@ -216,6 +216,9 @@ fn get_filter_string(
     sort_tracks(&query, &mut new);
     //println!("sorted {:?}", new.iter().map(|t| t.album.clone()));
 
+    panic!(
+        "there is something wrong with this because the empty string is vanishing somewhere here"
+    );
     let full_unique: Vec<&String> = new
         .iter()
         .map(|t| match current_ttype {
@@ -232,7 +235,7 @@ fn get_filter_string(
 }
 
 fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Track> {
-    //this function is currently to difficult to implement in diesel as we cannot clone boxed ty pes and otherwise we can cyclic type errors
+    //this function is currently to difficult to implement in diesel as we cannot clone boxed ty pes and otherwise we can cyclic type error
     let mut current_tracks = if let Some(ref search_string) = query.search {
         tracks
             .filter(artist.like(String::from("%") + &search_string + "%"))
@@ -242,7 +245,7 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
             .unwrap()
     } else {
         tracks
-            //.filter(artist.ne(""))
+            .filter(artist.ne(""))
             .load::<viola_common::Track>(db.lock().unwrap().deref())
             .unwrap()
     };
@@ -290,7 +293,7 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
     }
     sort_tracks(query, &mut current_tracks);
 
-    println!("final tracks {:?}", current_tracks);
+    //println!("final tracks {:?}", current_tracks);
     current_tracks
 }
 

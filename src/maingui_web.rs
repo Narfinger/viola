@@ -95,7 +95,10 @@ async fn library_partial_tree(
     level: web::Json<viola_common::TreeViewQuery>,
     _: HttpRequest,
 ) -> HttpResponse {
-    let q = level.into_inner();
+    let mut q = level.into_inner();
+    if q.search.is_some() && q.search.as_ref().unwrap().is_empty() {
+        q.search = None;
+    }
     let items = libraryviewstore::partial_query(&state.pool, &q);
 
     HttpResponse::Ok().json(items)
@@ -107,7 +110,10 @@ async fn library_load(
     level: web::Json<viola_common::TreeViewQuery>,
     _: HttpRequest,
 ) -> HttpResponse {
-    let q = level.into_inner();
+    let mut q = level.into_inner();
+    if q.search.is_some() && !q.search.as_ref().unwrap().is_empty() {
+        q.search = None;
+    }
     let pl = libraryviewstore::load_query(&state.pool, &q);
     println!("Loading new playlist {}", pl.name);
     state.playlist_tabs.add(pl);
