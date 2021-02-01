@@ -229,7 +229,7 @@ fn get_filter_string(
         })
         .unique()
         .collect();
-    //println!("full unique {:?}", &full_unique);
+    println!("full unique {:?}", &full_unique);
     let st = full_unique.get(*index).unwrap().clone().clone();
     st
 }

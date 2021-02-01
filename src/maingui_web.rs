@@ -316,6 +316,11 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
     let (gst, rx) =
         gstreamer_wrapper::new(plt.clone(), pool.clone()).expect("Error Initializing gstreamer");
 
+    {
+        println!("Starting dbus");
+        crate::dbus_interface::new(gst.clone())
+    }
+
     println!("Setting up gui");
     let state = WebGui {
         pool: pool.clone(),

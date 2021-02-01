@@ -5,6 +5,8 @@ extern crate app_dirs;
 extern crate base64;
 #[macro_use]
 extern crate clap;
+extern crate dbus;
+extern crate dbus_crossroads;
 #[macro_use]
 extern crate diesel;
 #[macro_use]
@@ -32,6 +34,7 @@ extern crate walkdir;
 
 pub mod albumviewstore;
 pub mod db;
+pub mod dbus_interface;
 pub mod gstreamer_wrapper;
 pub mod libraryviewstore;
 pub mod loaded_playlist;
