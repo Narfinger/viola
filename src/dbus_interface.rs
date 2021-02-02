@@ -34,12 +34,12 @@ fn main(gstreamer: Arc<GStreamer>) -> Result<(), Box<dyn Error>> {
     );
 
     let mediaplayer2player = cr.register(
-        "org.mpris.MediaPlayer2",
+        "org.mpris.MediaPlayer2.Player",
         |b: &mut IfaceBuilder<DbusStruct>| {},
     );
 
     cr.insert(
-        "/org.mpris.MediaPlayer2",
+        "/org/mpris/MediaPlayer2",
         &[mediaplayer2, mediaplayer2player],
         DbusStruct { gstreamer },
     );
