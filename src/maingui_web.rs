@@ -318,7 +318,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
 
     {
         println!("Starting dbus");
-        crate::dbus_interface::new(gst.clone())
+        crate::dbus_interface::new(gst.clone(), plt.clone())
     }
 
     println!("Setting up gui");

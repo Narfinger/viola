@@ -1,13 +1,19 @@
-use crate::{gstreamer_wrapper::GStreamer, types::*};
+use crate::{
+    gstreamer_wrapper::{GStreamer, GStreamerExt},
+    loaded_playlist::LoadedPlaylistExt,
+    playlist_tabs::PlaylistTabsExt,
+    types::*,
+};
 use dbus::blocking::Connection;
 use dbus_crossroads::{Context, Crossroads, IfaceBuilder};
-use std::{error::Error, sync::Arc, thread};
+use std::{collections::HashMap, error::Error, sync::Arc, thread};
 
 struct DbusStruct {
     gstreamer: Arc<GStreamer>,
+    playlisttabs: PlaylistTabsPtr,
 }
 
-fn main(gstreamer: Arc<GStreamer>) -> Result<(), Box<dyn Error>> {
+fn main(gstreamer: Arc<GStreamer>, playlisttabs: PlaylistTabsPtr) -> Result<(), Box<dyn Error>> {
     // Let's start by starting up a connection to the session bus and request a name.
     let c = Connection::new_session()?;
     c.request_name("org.mpris.MediaPlayer2.viola", false, true, false)?;
@@ -35,19 +41,41 @@ fn main(gstreamer: Arc<GStreamer>) -> Result<(), Box<dyn Error>> {
 
     let mediaplayer2player = cr.register(
         "org.mpris.MediaPlayer2.Player",
-        |b: &mut IfaceBuilder<DbusStruct>| {},
+        |b: &mut IfaceBuilder<DbusStruct>| {
+            b.property("PlaybackStatus")
+                .get(|_, b| Ok(b.gstreamer.get_state().to_string()));
+            b.property("Metadata").get(|_, data| {
+                let mut m = HashMap::new();
+                m.insert(
+                    "xesam:album".to_string(),
+                    data.playlisttabs.get_current_track().album,
+                );
+                m.insert(
+                    "xesam:artist".to_string(),
+                    data.playlisttabs.get_current_track().artist,
+                );
+                m.insert(
+                    "xesam:title".to_string(),
+                    data.playlisttabs.get_current_track().title,
+                );
+                Ok(m)
+            });
+        },
     );
 
     cr.insert(
         "/org/mpris/MediaPlayer2",
         &[mediaplayer2, mediaplayer2player],
-        DbusStruct { gstreamer },
+        DbusStruct {
+            gstreamer,
+            playlisttabs,
+        },
     );
     // Serve clients forever.
     cr.serve(&c)?;
     Ok(())
 }
 
-pub(crate) fn new(gstreamer: Arc<GStreamer>) {
-    thread::spawn(|| main(gstreamer).expect("Error in starting dbus"));
+pub(crate) fn new(gstreamer: Arc<GStreamer>, playlisttabs: PlaylistTabsPtr) {
+    thread::spawn(|| main(gstreamer, playlisttabs).expect("Error in starting dbus"));
 }
