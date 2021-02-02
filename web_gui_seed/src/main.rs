@@ -314,7 +314,7 @@ fn view_status(model: &Model) -> Node<Msg> {
         .map(|t| {
             format!(
                 "{}%",
-                ((model.current_time as f64 / t.length as f64) * 10.0).round() as u64
+                ((model.current_time as f64 / t.length as f64) * 100.0).round() as u64
             )
         })
         .unwrap_or("0%".to_string());
