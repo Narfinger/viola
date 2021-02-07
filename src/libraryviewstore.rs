@@ -249,13 +249,6 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
     for (recursion_depth, (index, current_ttype)) in
         izip!(query.indices.iter(), query.types.iter(),).enumerate()
     {
-        let filter_query_types: Vec<TreeType> = query
-            .types
-            .iter()
-            .take(recursion_depth + 1)
-            .cloned()
-            .collect();
-
         let filter_value = get_filter_string(
             &current_tracks,
             &current_ttype,
@@ -285,8 +278,6 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
     }
     sort_tracks(query, &mut current_tracks);
 
-    println!("query {:?}", query);
-    //println!("final tracks {:?}", current_tracks);
     current_tracks
 }
 
@@ -354,7 +345,6 @@ fn track_to_partial_string(query: &TreeViewQuery, t: viola_common::Track) -> Str
 
 pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
     let t = basic_get_tracks(db, query);
-    println!("query: {:?}", &query);
     let strings = t
         .into_iter()
         .map(|t| track_to_partial_string(query, t))
@@ -372,30 +362,4 @@ pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
         current_position: 0,
         items: t,
     }
-
-    /*
-    let mut q = treeview_query(db, query);
-
-    info!("query types: {:?}", query.types);
-    //custom sorting
-    if query.types.get(0) == Some(&viola_common::TreeType::Artist)
-        && query.types.get(1) == Some(&viola_common::TreeType::Album)
-        && query.types.get(2) == Some(&viola_common::TreeType::Track)
-    {
-        q = q.order((year, tracknumber));
-    }
-
-    let name = if query.search.is_none() || query.search.as_ref().unwrap().is_empty() {
-        "Foo".to_string()
-    } else {
-        query.search.to_owned().unwrap()
-    };
-    let t = q.load(db.lock().unwrap().deref()).expect("Error in Query");
-    LoadedPlaylist {
-        id: -1,
-        name,
-        current_position: 0,
-        items: t,
-    }
-    */
 }
