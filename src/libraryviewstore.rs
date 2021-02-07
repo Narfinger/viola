@@ -203,22 +203,18 @@ fn get_filter_string(
     new_bunch: &Vec<viola_common::Track>,
     current_ttype: &TreeType,
     index: &usize,
+    recursion_depth: usize,
     type_vec: Vec<TreeType>,
 ) -> String {
     let mut new: Vec<viola_common::Track> = new_bunch.iter().map(|t| (*t).clone()).collect();
-    let new_indices = (0..type_vec.len()).collect();
-    //println!("we sorted to {:?}", &type_vec);
+    let new_indices = (0..recursion_depth).collect();
     let query = TreeViewQuery {
         types: type_vec,
         indices: new_indices,
         search: None,
     };
     sort_tracks(&query, &mut new);
-    //println!("sorted {:?}", new.iter().map(|t| t.album.clone()));
 
-    panic!(
-        "there is something wrong with this because the empty string is vanishing somewhere here"
-    );
     let full_unique: Vec<&String> = new
         .iter()
         .map(|t| match current_ttype {
@@ -229,7 +225,7 @@ fn get_filter_string(
         })
         .unique()
         .collect();
-    println!("full unique {:?}", &full_unique);
+    //println!("full unique {:?}", &full_unique);
     let st = full_unique.get(*index).unwrap().clone().clone();
     st
 }
@@ -259,18 +255,14 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
             .take(recursion_depth + 1)
             .cloned()
             .collect();
-        //println!(
-        //    "recdepth {}, filter_query_types {:?}",
-        //    recursion_depth, &filter_query_types
-        //);
 
-        let filter_value =
-            get_filter_string(&current_tracks, &current_ttype, index, filter_query_types);
-        //println!("current iter {:?}", &current_tracks);
-        //println!(
-        //    "filter value {}, filter_by {:?}",
-        //    filter_value, current_ttype
-        //);
+        let filter_value = get_filter_string(
+            &current_tracks,
+            &current_ttype,
+            index,
+            recursion_depth,
+            query.types.clone(),
+        );
 
         current_tracks = match current_ttype {
             TreeType::Artist => current_tracks
@@ -293,6 +285,7 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
     }
     sort_tracks(query, &mut current_tracks);
 
+    println!("query {:?}", query);
     //println!("final tracks {:?}", current_tracks);
     current_tracks
 }
