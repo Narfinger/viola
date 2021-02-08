@@ -161,7 +161,7 @@ async fn main() -> io::Result<()> {
     //});
     } else {
         std::thread::spawn(|| {
-            let mut sys = actix_rt::System::new();
+            let mut sys = actix_rt::System::new("test");
             println!("Starting web service");
             let srv = maingui_web::run(pool);
             sys.block_on(srv)
