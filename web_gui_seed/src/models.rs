@@ -14,6 +14,7 @@ pub(crate) struct Model {
     pub sidebar: Sidebar,
     pub treeviews: Vec<TreeView>,
     pub delete_range_input: Option<String>,
+    pub play_index_input: Option<String>,
 }
 impl Model {
     pub fn get_current_playlist_tab_tracks_mut(&mut self) -> Option<&mut Vec<Track>> {

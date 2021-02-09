@@ -85,6 +85,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         sidebar,
         treeviews: init_treeviews(),
         delete_range_input: None,
+        play_index_input: None,
     }
 }
 
@@ -613,11 +614,59 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
                 style!(St::Padding => unit!(5, px)),
                 button![
                     C!["btn", "btn-primary"],
+                    attrs![At::from("data-toggle") => "modal", At::from("data-dismiss") => "#sidebar"],
                     "Show Full Playlist Window",
                     ev(Ev::Click, |_| Msg::FullPlaylistWindow),
                 ],
             ],
+            li![
+                C!["nav-item"],
+                style!(St::Padding => unit!(5,px)),
+                button![
+                    C!["btn", "btn-primary"],
+                    attrs![At::from("data-toggle") => "modal", At::from("data-target") => "#playindex_modal", At::from("data-dismiss") => "#sidebar"],
+                    "Play Index",
+                ]
+            ],
         ],
+    ]
+}
+
+fn view_playindex_modal(_model: &Model) -> Node<Msg> {
+    div![
+        C!["modal"],
+        attrs!(At::Id => "playindex_modal", At::from("aria-hidden") => false, At::from("role") => "dialog"),
+        div![
+            C!["modal-content"],
+            attrs!(At::from("role") => "document"),
+            div![C!["modal-header"]],
+            div![
+                C!["modal-body"],
+                form![div![
+                    C!["form-group"],
+                    label![attrs!(At::from("index") => "indexinput"), "Index"],
+                    input![
+                        C!["form-control"],
+                        attrs!(At::Id => "indexinput"),
+                        input_ev(Ev::Input, Msg::PlayIndexInputChanged),
+                    ]
+                ]]
+            ],
+            div![
+                C!["modal-footer"],
+                button![
+                    C!["btn" "btn-secondary"],
+                    attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "playindex_modal"),
+                    "Close"
+                ],
+                button![
+                    C!["btn" "btn-secondary"],
+                    attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "playindex_modal"),
+                    "Play Index",
+                    ev(Ev::Click, |_| Msg::PlayIndex),
+                ]
+            ]
+        ]
     ]
 }
 
@@ -675,6 +724,7 @@ fn view(model: &Model) -> Node<Msg> {
             C!["row"],
             style!(St::Width => unit!(95,%), St::PaddingTop => unit!(0.1,em)),
             view_deleterangemodal(model),
+            view_playindex_modal(model),
             sidebar_navigation(model, &model.treeviews),
             div![
                 C!["col"],

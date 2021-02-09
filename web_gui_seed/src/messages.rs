@@ -48,6 +48,8 @@ pub(crate) enum Msg {
     CurrentTimeChanged(u64),
     DeleteRangeInputChanged(String),
     DeleteRange,
+    PlayIndexInputChanged(String),
+    PlayIndex,
 }
 
 pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -390,6 +392,18 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 Msg::RefreshPlayStatus
             });
             orders.send_msg(Msg::PlaylistTabChange(model.current_playlist_tab));
+        }
+        Msg::PlayIndexInputChanged(text) => {
+            model.play_index_input = Some(text);
+        }
+        Msg::PlayIndex => {
+            if let Some(ref index) = model
+                .play_index_input
+                .as_ref()
+                .and_then(|t| t.parse::<usize>().ok())
+            {
+                orders.send_msg(Msg::Transport(GStreamerAction::Play(index.to_owned())));
+            }
         }
     }
 }
