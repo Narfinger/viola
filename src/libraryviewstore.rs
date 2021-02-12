@@ -1,13 +1,12 @@
 use crate::types::*;
 use crate::{
-    diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl},
+    diesel::{ExpressionMethods, QueryDsl, RunQueryDsl},
     loaded_playlist::LoadedPlaylist,
 };
-use diesel::{query_builder::AsQuery, TextExpressionMethods};
+use diesel::TextExpressionMethods;
 use itertools::{izip, Itertools};
 use std::ops::Deref;
-use std::{any::Any, convert::TryInto};
-use viola_common::{schema::tracks, TreeViewQuery};
+use viola_common::TreeViewQuery;
 use viola_common::{schema::tracks::dsl::*, TreeType};
 
 /// produces a simple query that gives for one type a query that selects on it
@@ -226,7 +225,10 @@ fn get_filter_string(
         .unique()
         .collect();
     //println!("full unique {:?}", &full_unique);
-    let st = full_unique.get(*index).unwrap().clone().clone();
+
+    let st = (*full_unique.get(*index).unwrap()).to_owned();
+    //let st = full_unique.get(*index).unwrap().clone().clone();
+
     st
 }
 
@@ -283,7 +285,7 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
 
 /// sorts the tracks according to the treeviewquery we have
 fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
-    if query.indices.len() == 0 {
+    if query.indices.is_empty() {
         match query.types.get(0) {
             Some(&TreeType::Artist) => t.sort_by_cached_key(|t| t.artist.to_owned()),
             Some(&TreeType::Album) => t.sort_by_cached_key(|t| t.album.to_owned()),
@@ -307,7 +309,7 @@ fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
 
 /// custom strings that appear in the partial query view
 fn track_to_partial_string(query: &TreeViewQuery, t: viola_common::Track) -> String {
-    if query.indices.len() == 0 {
+    if query.indices.is_empty() {
         match query.types.get(0) {
             Some(TreeType::Artist) => t.artist,
             Some(TreeType::Album) => t.album,
@@ -334,23 +336,21 @@ fn track_to_partial_string(query: &TreeViewQuery, t: viola_common::Track) -> Str
             .last()
             .unwrap()
             .1;
-        match last {
-            &TreeType::Artist => t.artist,
-            &TreeType::Album => t.album,
-            &TreeType::Track => t.title,
-            &TreeType::Genre => t.genre,
+        match *last {
+            TreeType::Artist => t.artist,
+            TreeType::Album => t.album,
+            TreeType::Track => t.title,
+            TreeType::Genre => t.genre,
         }
     }
 }
 
 pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
     let t = basic_get_tracks(db, query);
-    let strings = t
-        .into_iter()
+    t.into_iter()
         .map(|t| track_to_partial_string(query, t))
         .unique()
-        .collect();
-    strings
+        .collect()
 }
 
 /// produces a LoadedPlaylist frrom a treeviewquery

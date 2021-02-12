@@ -126,7 +126,7 @@ fn convert_to_i32_option(u: Option<u32>) -> Option<i32> {
     }
 }
 
-fn construct_track_from_path(s: &str) -> Result<NewTrack, String> {
+fn construct_track_from_path(s: &str) -> NewTrack {
     let taglibfile = taglib::File::new(&s);
     if let Ok(ataglib) = taglibfile {
         let tags = ataglib
@@ -137,7 +137,7 @@ fn construct_track_from_path(s: &str) -> Result<NewTrack, String> {
             .unwrap_or_else(|_| panic!(format!("Could not find audio properties for: {}", s)));
         let album = get_album_file(&s);
         //tracknumber and year return 0 if none set
-        Ok(NewTrack {
+        NewTrack {
             title: tags.title().unwrap_or_default(),
             artist: tags.artist().unwrap_or_default(),
             album: tags.album().unwrap_or_default(),
@@ -147,7 +147,7 @@ fn construct_track_from_path(s: &str) -> Result<NewTrack, String> {
             path: s.to_string(),
             length: properties.length() as i32,
             albumpath: album,
-        })
+        }
     } else {
         panic!(format!("Taglib could not open file: {}", s));
     }
@@ -186,7 +186,7 @@ fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
     use viola_common::schema::tracks::dsl::*;
 
-    let new_track = construct_track_from_path(s)?;
+    let new_track = construct_track_from_path(s);
     let old_track_perhaps = tracks
         .filter(path.eq(&new_track.path))
         .get_result::<Track>(db.lock().expect("DB Error").deref());

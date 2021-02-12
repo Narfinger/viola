@@ -197,7 +197,7 @@ impl PlaylistControls for LoadedPlaylistPtr {
         if s.current_position >= range.start && s.current_position <= range.end {
             s.current_position = 0;
         } else if s.current_position > range.end {
-            s.current_position = s.current_position - (range.end - range.start);
+            s.current_position -= range.end - range.start;
         }
     }
 
