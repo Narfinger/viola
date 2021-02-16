@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use std::thread;
 use std::time::Duration;
-use viola_common::WsMessage;
+use viola_common::*;
 
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
@@ -179,27 +179,23 @@ async fn current_image(state: web::Data<WebGui>, req: HttpRequest) -> HttpRespon
         .unwrap_or_else(|| HttpResponse::Ok().finish())
 }
 
-#[derive(Debug, Serialize)]
-struct PlaylistTabsJSON {
-    current: usize,
-    current_playing_in: usize,
-    tabs: Vec<String>,
-}
-
 #[get("/playlisttab/")]
 async fn playlist_tab(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
-    let strings = state
+    let tabs = state
         .playlist_tabs
         .read()
         .unwrap()
         .pls
         .iter()
-        .map(|pl| pl.read().unwrap().name.to_owned())
-        .collect::<Vec<String>>();
+        .map(|pl|
+            PlaylistTabJSON {
+                name: pl.read().unwrap().name.to_owned(),
+                current_position: pl.read().unwrap().current_position,
+            })
+        .collect::<Vec<PlaylistTabJSON>>();
     let resp = PlaylistTabsJSON {
         current: state.playlist_tabs.current_tab(),
-        current_playing_in: state.playlist_tabs.current_playing_in(),
-        tabs: strings,
+        tabs: tabs,
     };
 
     //state.save();

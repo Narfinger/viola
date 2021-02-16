@@ -126,3 +126,15 @@ pub type Smartplaylists = Vec<String>;
 pub struct LoadSmartPlaylistJson {
     pub index: usize,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PlaylistTabJSON {
+    pub name: String,
+    pub current_position: usize,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PlaylistTabsJSON {
+    pub current: usize,
+    pub tabs: Vec<PlaylistTabJSON>,
+}

@@ -1,5 +1,5 @@
 use crate::models::*;
-use viola_common::{GStreamerAction, GStreamerMessage, Smartplaylists, Track};
+use viola_common::{GStreamerAction, GStreamerMessage, Smartplaylists, Track, PlaylistTabJSON, PlaylistTabsJSON};
 
 use seed::prelude::*;
 
@@ -57,11 +57,6 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
         Msg::Nop => {}
         Msg::InitPlaylistTabs => {
             orders.perform_cmd(async {
-                #[derive(serde::Deserialize)]
-                struct PlaylistTabsJSON {
-                    current: usize,
-                    tabs: Vec<String>,
-                }
                 let response = fetch("/playlisttab/").await.expect("HTTP Request failed");
                 let playlisttabs: PlaylistTabsJSON = response
                     .check_status()
@@ -81,9 +76,9 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                         .await
                         .expect("Deserilization failed");
                     let new_tab = PlaylistTab {
-                        name: val,
+                        name: val.name,
                         tracks: items,
-                        current_index: 0,
+                        current_index: val.current_position,
                     };
                     tabs.push(new_tab);
                 }
@@ -168,17 +163,17 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
         }
         Msg::RefreshPlayStatusRecv(a) => {
             model.play_status = a;
-            if model.play_status == GStreamerMessage::Playing {
-                orders.perform_cmd(async {
-                    let result = fetch("/currentid/")
-                        .await
-                        .expect("Could not send req")
-                        .json::<usize>()
-                        .await
-                        .expect("Could not parse message");
-                    Msg::PlaylistIndexChange(result)
-                });
-            }
+            //if model.play_status == GStreamerMessage::Playing {
+            //    orders.perform_cmd(async {
+            //        let result = fetch("/currentid/")
+            //            .await
+            //            .expect("Could not send req")
+            //            .json::<usize>()
+            //            .await
+            //            .expect("Could not parse message");
+            //        Msg::PlaylistIndexChange(result)
+            //    });
+            //}
         }
         Msg::PlaylistIndexChange(index) => {
             model.is_repeat_once = false;
