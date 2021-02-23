@@ -43,5 +43,4 @@ walkdir = "2"
 web-view = "0.7"
 viola_common = {path ="viola_common", features =["backend"]}
 itertools = "0.10"
-dbus-crossroads = "0.3.0"
-dbus = "0.9.1"
+zbus = "1.8.0"

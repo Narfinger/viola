@@ -5,8 +5,7 @@ extern crate app_dirs;
 extern crate base64;
 #[macro_use]
 extern crate clap;
-extern crate dbus;
-extern crate dbus_crossroads;
+extern crate zbus;
 #[macro_use]
 extern crate diesel;
 #[macro_use]
