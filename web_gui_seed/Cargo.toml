@@ -14,3 +14,4 @@ serde = "1.0"
 indextree = "4.3"
 viola_common = { path = "../viola_common" }
 wee_alloc = "0.4"
+console_error_panic_hook = "0.1.6"
