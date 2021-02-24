@@ -85,6 +85,7 @@ impl PlayerInterface {
         map.insert("xesam:artist", track.artist.into());
         map.insert("xesam:album", track.album.into());
         map.insert("xesam:title", track.title.into());
+        map.insert("mpris:length", track.length.into());
         map
     }
 
@@ -95,17 +96,17 @@ impl PlayerInterface {
 
     #[dbus_interface(property)]
     fn position(&self) -> i32 {
-        50
+        self.gstreamer.get_elapsed().unwrap_or(0) as i32
     }
 
     #[dbus_interface(property)]
     fn minimum_rate(&self) -> i32 {
-        50
+        1
     }
 
     #[dbus_interface(property)]
     fn maximum_rate(&self) -> i32 {
-        50
+        1
     }
 
     #[dbus_interface(property)]
@@ -137,6 +138,9 @@ impl PlayerInterface {
     fn can_control(&self) -> bool {
         false
     }
+
+    #[dbus_interface(signal)]
+    fn properties_changed(&self) -> zbus::Result<()>;
 }
 
 fn main(gstreamer: Arc<GStreamer>, playlisttabs: PlaylistTabsPtr) -> Result<(), Box<dyn Error>> {
