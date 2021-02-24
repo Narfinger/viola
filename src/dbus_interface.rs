@@ -6,6 +6,7 @@ use crate::{
     playlist_tabs::PlaylistTabsExt,
     types::*,
 };
+use viola_common::{GStreamerAction, GStreamerMessage};
 use zbus::{dbus_interface, export::zvariant, fdo};
 
 struct BaseInterface {
@@ -53,6 +54,15 @@ impl BaseInterface {
     #[dbus_interface(property)]
     fn supported_mime_types(&self) -> Vec<String> {
         vec![]
+    }
+
+    //methods
+    fn raise(&self) -> zbus::fdo::Result<()> {
+        Ok(())
+    }
+
+    fn quit(&self) -> zbus::fdo::Result<()> {
+        Ok(())
     }
 }
 
@@ -111,22 +121,22 @@ impl PlayerInterface {
 
     #[dbus_interface(property)]
     fn can_go_next(&self) -> bool {
-        false
+        true
     }
 
     #[dbus_interface(property)]
     fn can_go_previous(&self) -> bool {
-        false
+        true
     }
 
     #[dbus_interface(property)]
     fn can_play(&self) -> bool {
-        false
+        true
     }
 
     #[dbus_interface(property)]
     fn can_pause(&self) -> bool {
-        false
+        true
     }
 
     #[dbus_interface(property)]
@@ -136,11 +146,54 @@ impl PlayerInterface {
 
     #[dbus_interface(property)]
     fn can_control(&self) -> bool {
-        false
+        true
     }
 
     #[dbus_interface(signal)]
     fn properties_changed(&self) -> zbus::Result<()>;
+
+    //methods
+    fn next(&self) -> zbus::fdo::Result<()> {
+        self.gstreamer.do_gstreamer_action(GStreamerAction::Next);
+        Ok(())
+    }
+
+    fn previous(&self) -> zbus::fdo::Result<()> {
+        self.gstreamer
+            .do_gstreamer_action(GStreamerAction::Previous);
+        Ok(())
+    }
+
+    fn pause(&self) -> zbus::fdo::Result<()> {
+        self.gstreamer.do_gstreamer_action(GStreamerAction::Pausing);
+        Ok(())
+    }
+
+    fn play_pause(&self) -> zbus::fdo::Result<()> {
+        if self.gstreamer.get_state() == GStreamerMessage::Pausing {
+            self.gstreamer.do_gstreamer_action(GStreamerAction::Playing);
+        } else {
+            self.gstreamer.do_gstreamer_action(GStreamerAction::Pausing);
+        }
+        Ok(())
+    }
+
+    fn stop(&self) -> zbus::fdo::Result<()> {
+        self.gstreamer.do_gstreamer_action(GStreamerAction::Pausing);
+        Ok(())
+    }
+
+    fn seek(&self, position: i32) -> zbus::fdo::Result<()> {
+        todo!("todo")
+    }
+
+    fn set_position(&self, track_id: String, position: i32) -> zbus::fdo::Result<()> {
+        todo!("todo")
+    }
+
+    fn open_uri(&self, s: String) -> zbus::fdo::Result<()> {
+        todo!("todo")
+    }
 }
 
 fn main(gstreamer: Arc<GStreamer>, playlisttabs: PlaylistTabsPtr) -> Result<(), Box<dyn Error>> {
