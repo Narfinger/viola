@@ -187,11 +187,10 @@ async fn playlist_tab(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse 
         .unwrap()
         .pls
         .iter()
-        .map(|pl|
-            PlaylistTabJSON {
-                name: pl.read().unwrap().name.to_owned(),
-                current_position: pl.read().unwrap().current_position,
-            })
+        .map(|pl| PlaylistTabJSON {
+            name: pl.read().unwrap().name.to_owned(),
+            current_position: pl.read().unwrap().current_position,
+        })
         .collect::<Vec<PlaylistTabJSON>>();
     let resp = PlaylistTabsJSON {
         current: state.playlist_tabs.current_tab(),
@@ -276,7 +275,7 @@ async fn ws_start(
 
 fn handle_gstreamer_messages(
     state: web::Data<WebGui>,
-    rx: Receiver<viola_common::GStreamerMessage>,
+    rx: bus::BusReader<viola_common::GStreamerMessage>,
 ) {
     loop {
         //println!("loop is working");
@@ -309,12 +308,15 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
     let plt = crate::playlist_tabs::load(&pool).expect("Failure to load old playlists");
 
     println!("Starting gstreamer");
-    let (gst, rx) =
-        gstreamer_wrapper::new(plt.clone(), pool.clone()).expect("Error Initializing gstreamer");
+    let mut bus = bus::Bus::new(10);
+    let websocket_recv = bus.add_rx();
+    let dbus_recv = bus.add_rx();
+    let gst = gstreamer_wrapper::new(plt.clone(), pool.clone(), bus)
+        .expect("Error Initializing gstreamer");
 
     {
         println!("Starting dbus");
-        crate::dbus_interface::new(gst.clone(), plt.clone())
+        crate::dbus_interface::new(gst.clone(), plt.clone(), dbus_recv)
     }
 
     println!("Setting up gui");
@@ -330,7 +332,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
 
     {
         let datac = data.clone();
-        thread::spawn(move || handle_gstreamer_messages(datac, rx));
+        thread::spawn(move || handle_gstreamer_messages(datac, websocket_recv));
     }
     {
         let datac = data.clone();

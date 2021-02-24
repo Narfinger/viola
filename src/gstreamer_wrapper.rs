@@ -13,7 +13,7 @@ pub struct GStreamer {
     element: gstreamer::Element,
     current_playlist: PlaylistTabsPtr,
     /// Handles gstreamer changes to the gui
-    sender: SyncSender<GStreamerMessage>,
+    sender: bus::Bus<GStreamerMessage>,
     pool: DBPool,
     repeat_once: AtomicBool,
 }
@@ -29,7 +29,8 @@ impl Drop for GStreamer {
 pub fn new(
     current_playlist: PlaylistTabsPtr,
     pool: DBPool,
-) -> Result<(Arc<GStreamer>, Receiver<GStreamerMessage>), String> {
+    msg_bus: bus::Bus<GStreamerMessage>,
+) -> Result<Arc<GStreamer>, String> {
     gstreamer::init().unwrap();
     let element = {
         let playbin = gstreamer::ElementFactory::make("playbin", None)
@@ -58,14 +59,12 @@ pub fn new(
         //    .expect("elements could not be linked");
         playbin
     };
-    let (tx, rx) = sync_channel::<GStreamerMessage>(1);
-
     let bus = element.get_bus().unwrap();
     let res = Arc::new(GStreamer {
         element,
         //pipeline,
         current_playlist,
-        sender: tx,
+        sender: msg_bus,
         pool,
         repeat_once: AtomicBool::new(false),
     });
@@ -95,11 +94,11 @@ pub fn new(
 
     //let resc = res.clone();
     //glin::timeout_add(250, move || resc.gstreamer_update_gui());
-    Ok((res, rx))
+    Ok(res)
 }
 
 pub trait GStreamerExt {
-    fn do_gstreamer_action(&self, _: GStreamerAction);
+    fn do_gstreamer_action(&mut self, _: GStreamerAction);
     fn gstreamer_update_gui(&self) -> glib::Continue;
     fn gstreamer_handle_eos(&self);
     fn get_state(&self) -> GStreamerMessage;
@@ -107,7 +106,7 @@ pub trait GStreamerExt {
 }
 
 impl GStreamerExt for GStreamer {
-    fn do_gstreamer_action(&self, action: GStreamerAction) {
+    fn do_gstreamer_action(&mut self, action: GStreamerAction) {
         info!("Gstreamer action {:?}", action);
 
         //everytime we call return, we do not want to send the message we got to the gui, as it will be done in a subcall we have done
@@ -201,7 +200,7 @@ impl GStreamerExt for GStreamer {
                 self.repeat_once.store(true, Ordering::SeqCst);
             }
         }
-        self.sender.send(action.into()).expect("Error in sending");
+        self.sender.broadcast(action.into());
     }
 
     /// poll the message bus and on eos start new

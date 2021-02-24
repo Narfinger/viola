@@ -50,7 +50,7 @@ pub enum GStreamerAction {
 }
 
 /// Messages that gstreamer sends such as the state it is going into
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub enum GStreamerMessage {
     Pausing,
     Stopped,

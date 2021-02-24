@@ -3,6 +3,7 @@
 extern crate actix_web;
 extern crate app_dirs;
 extern crate base64;
+extern crate bus;
 #[macro_use]
 extern crate clap;
 extern crate zbus;

@@ -44,3 +44,4 @@ web-view = "0.7"
 viola_common = {path ="viola_common", features =["backend"]}
 itertools = "0.10"
 zbus = "1.8.0"
+bus = "2.2.3"

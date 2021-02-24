@@ -196,7 +196,11 @@ impl PlayerInterface {
     }
 }
 
-fn main(gstreamer: Arc<GStreamer>, playlisttabs: PlaylistTabsPtr) -> Result<(), Box<dyn Error>> {
+fn main(
+    gstreamer: Arc<GStreamer>,
+    playlisttabs: PlaylistTabsPtr,
+    bus: bus::BusReader<viola_common::GStreamerMessage>,
+) -> Result<(), Box<dyn Error>> {
     let connection = zbus::Connection::new_session()?;
     fdo::DBusProxy::new(&connection)?.request_name(
         "org.mpris.MediaPlayer2.Viola",
@@ -213,14 +217,25 @@ fn main(gstreamer: Arc<GStreamer>, playlisttabs: PlaylistTabsPtr) -> Result<(), 
         playlisttabs: playlisttabs.clone(),
     };
     object_server.at(&"/org/mpris/MediaPlayer2".try_into()?, handler2)?;
+    let mut bus = bus;
     loop {
         if let Err(err) = object_server.try_handle_next() {
             eprintln!("{}", err);
+        }
+        if let Ok(_) = bus.recv() {
+            object_server.with(
+                &"/org/mpris/MediaPlayer2".try_into()?,
+                |iface: &PlayerInterface| iface.properties_changed(),
+            )?;
         }
     }
     Ok(())
 }
 
-pub(crate) fn new(gstreamer: Arc<GStreamer>, playlisttabs: PlaylistTabsPtr) {
-    thread::spawn(|| main(gstreamer, playlisttabs).expect("Error in starting dbus"));
+pub(crate) fn new(
+    gstreamer: Arc<GStreamer>,
+    playlisttabs: PlaylistTabsPtr,
+    bus: bus::BusReader<viola_common::GStreamerMessage>,
+) {
+    thread::spawn(|| main(gstreamer, playlisttabs, bus).expect("Error in starting dbus"));
 }
