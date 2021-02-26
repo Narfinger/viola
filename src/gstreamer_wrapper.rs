@@ -1,8 +1,11 @@
 use crate::glib::ObjectExt;
 use gstreamer::{ElementExt, ElementExtManual, GstObjectExt};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::Arc;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    RwLock,
+};
 
 use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls};
 //use crate::playlist_tabs::PlaylistControlsImmutable;
@@ -30,7 +33,7 @@ pub fn new(
     current_playlist: PlaylistTabsPtr,
     pool: DBPool,
     msg_bus: bus::Bus<GStreamerMessage>,
-) -> Result<Arc<GStreamer>, String> {
+) -> Result<Arc<RwLock<GStreamer>>, String> {
     gstreamer::init().unwrap();
     let element = {
         let playbin = gstreamer::ElementFactory::make("playbin", None)
@@ -60,14 +63,14 @@ pub fn new(
         playbin
     };
     let bus = element.get_bus().unwrap();
-    let res = Arc::new(GStreamer {
+    let res = Arc::new(RwLock::new(GStreamer {
         element,
         //pipeline,
         current_playlist,
         sender: msg_bus,
         pool,
         repeat_once: AtomicBool::new(false),
-    });
+    }));
 
     let resc = res.clone();
     std::thread::spawn(move || {
@@ -76,7 +79,7 @@ pub fn new(
             match msg.view() {
                 MessageView::Eos(..) => {
                     warn!("We found an eos on the bus!");
-                    resc.gstreamer_handle_eos()
+                    resc.write().unwrap().gstreamer_handle_eos()
                 }
                 MessageView::Error(err) => println!(
                     "Error from {:?}: {} ({:?})",
@@ -100,7 +103,7 @@ pub fn new(
 pub trait GStreamerExt {
     fn do_gstreamer_action(&mut self, _: GStreamerAction);
     fn gstreamer_update_gui(&self) -> glib::Continue;
-    fn gstreamer_handle_eos(&self);
+    fn gstreamer_handle_eos(&mut self);
     fn get_state(&self) -> GStreamerMessage;
     fn get_elapsed(&self) -> Option<u64>;
 }
@@ -208,7 +211,7 @@ impl GStreamerExt for GStreamer {
         glib::Continue(true)
     }
 
-    fn gstreamer_handle_eos(&self) {
+    fn gstreamer_handle_eos(&mut self) {
         use crate::db::UpdatePlayCount;
         info!("Handling EOS");
 

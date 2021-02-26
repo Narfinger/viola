@@ -1,4 +1,10 @@
-use std::{collections::HashMap, convert::TryInto, error::Error, sync::Arc, thread};
+use std::{
+    collections::HashMap,
+    convert::TryInto,
+    error::Error,
+    sync::{Arc, RwLock},
+    thread,
+};
 
 use crate::{
     gstreamer_wrapper::{GStreamer, GStreamerExt},
@@ -10,7 +16,7 @@ use viola_common::{GStreamerAction, GStreamerMessage};
 use zbus::{dbus_interface, export::zvariant, fdo};
 
 struct BaseInterface {
-    gstreamer: Arc<GStreamer>,
+    gstreamer: Arc<RwLock<GStreamer>>,
     playlisttabs: PlaylistTabsPtr,
 }
 
@@ -67,7 +73,7 @@ impl BaseInterface {
 }
 
 struct PlayerInterface {
-    gstreamer: Arc<GStreamer>,
+    gstreamer: Arc<RwLock<GStreamer>>,
     playlisttabs: PlaylistTabsPtr,
 }
 
@@ -75,7 +81,7 @@ struct PlayerInterface {
 impl PlayerInterface {
     #[dbus_interface(property)]
     fn playback_status(&self) -> String {
-        self.gstreamer.get_state().to_string()
+        self.gstreamer.read().unwrap().get_state().to_string()
     }
 
     #[dbus_interface(property)]
@@ -106,7 +112,7 @@ impl PlayerInterface {
 
     #[dbus_interface(property)]
     fn position(&self) -> i32 {
-        self.gstreamer.get_elapsed().unwrap_or(0) as i32
+        self.gstreamer.read().unwrap().get_elapsed().unwrap_or(0) as i32
     }
 
     #[dbus_interface(property)]
@@ -154,32 +160,49 @@ impl PlayerInterface {
 
     //methods
     fn next(&self) -> zbus::fdo::Result<()> {
-        self.gstreamer.do_gstreamer_action(GStreamerAction::Next);
+        self.gstreamer
+            .write()
+            .unwrap()
+            .do_gstreamer_action(GStreamerAction::Next);
         Ok(())
     }
 
     fn previous(&self) -> zbus::fdo::Result<()> {
         self.gstreamer
+            .write()
+            .unwrap()
             .do_gstreamer_action(GStreamerAction::Previous);
         Ok(())
     }
 
     fn pause(&self) -> zbus::fdo::Result<()> {
-        self.gstreamer.do_gstreamer_action(GStreamerAction::Pausing);
+        self.gstreamer
+            .write()
+            .unwrap()
+            .do_gstreamer_action(GStreamerAction::Pausing);
         Ok(())
     }
 
     fn play_pause(&self) -> zbus::fdo::Result<()> {
-        if self.gstreamer.get_state() == GStreamerMessage::Pausing {
-            self.gstreamer.do_gstreamer_action(GStreamerAction::Playing);
+        if self.gstreamer.read().unwrap().get_state() == GStreamerMessage::Pausing {
+            self.gstreamer
+                .write()
+                .unwrap()
+                .do_gstreamer_action(GStreamerAction::Playing);
         } else {
-            self.gstreamer.do_gstreamer_action(GStreamerAction::Pausing);
+            self.gstreamer
+                .write()
+                .unwrap()
+                .do_gstreamer_action(GStreamerAction::Pausing);
         }
         Ok(())
     }
 
     fn stop(&self) -> zbus::fdo::Result<()> {
-        self.gstreamer.do_gstreamer_action(GStreamerAction::Pausing);
+        self.gstreamer
+            .write()
+            .unwrap()
+            .do_gstreamer_action(GStreamerAction::Pausing);
         Ok(())
     }
 
@@ -197,7 +220,7 @@ impl PlayerInterface {
 }
 
 fn main(
-    gstreamer: Arc<GStreamer>,
+    gstreamer: Arc<RwLock<GStreamer>>,
     playlisttabs: PlaylistTabsPtr,
     bus: bus::BusReader<viola_common::GStreamerMessage>,
 ) -> Result<(), Box<dyn Error>> {
@@ -233,7 +256,7 @@ fn main(
 }
 
 pub(crate) fn new(
-    gstreamer: Arc<GStreamer>,
+    gstreamer: Arc<RwLock<GStreamer>>,
     playlisttabs: PlaylistTabsPtr,
     bus: bus::BusReader<viola_common::GStreamerMessage>,
 ) {

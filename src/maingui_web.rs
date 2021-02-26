@@ -40,6 +40,8 @@ async fn playlist_for(
 async fn repeat(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     state
         .gstreamer
+        .write()
+        .unwrap()
         .do_gstreamer_action(viola_common::GStreamerAction::RepeatOnce);
     HttpResponse::Ok().finish()
 }
@@ -75,7 +77,7 @@ async fn save(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
 
 #[get("/transport/")]
 async fn get_transport(state: web::Data<WebGui>) -> HttpResponse {
-    HttpResponse::Ok().json(state.gstreamer.get_state())
+    HttpResponse::Ok().json(state.gstreamer.read().unwrap().get_state())
 }
 
 #[post("/transport/")]
@@ -84,7 +86,11 @@ async fn transport(
     msg: web::Json<viola_common::GStreamerAction>,
 ) -> HttpResponse {
     println!("stuff: {:?}", &msg);
-    state.gstreamer.do_gstreamer_action(msg.into_inner());
+    state
+        .gstreamer
+        .write()
+        .unwrap()
+        .do_gstreamer_action(msg.into_inner());
 
     HttpResponse::Ok().finish()
 }
@@ -240,7 +246,7 @@ async fn delete_playlist_tab(
 
 struct WebGui {
     pool: DBPool,
-    gstreamer: Arc<gstreamer_wrapper::GStreamer>,
+    gstreamer: Arc<RwLock<gstreamer_wrapper::GStreamer>>,
     playlist_tabs: PlaylistTabsPtr,
     ws: RwLock<Option<my_websocket::MyWs>>,
 }
@@ -275,7 +281,7 @@ async fn ws_start(
 
 fn handle_gstreamer_messages(
     state: web::Data<WebGui>,
-    rx: bus::BusReader<viola_common::GStreamerMessage>,
+    rx: &mut bus::BusReader<viola_common::GStreamerMessage>,
 ) {
     loop {
         //println!("loop is working");
@@ -309,7 +315,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
 
     println!("Starting gstreamer");
     let mut bus = bus::Bus::new(10);
-    let websocket_recv = bus.add_rx();
+    let mut websocket_recv = bus.add_rx();
     let dbus_recv = bus.add_rx();
     let gst = gstreamer_wrapper::new(plt.clone(), pool.clone(), bus)
         .expect("Error Initializing gstreamer");
@@ -332,7 +338,7 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
 
     {
         let datac = data.clone();
-        thread::spawn(move || handle_gstreamer_messages(datac, websocket_recv));
+        thread::spawn(move || handle_gstreamer_messages(datac, &mut websocket_recv));
     }
     {
         let datac = data.clone();
@@ -345,8 +351,10 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
         let datac = data.clone();
         thread::spawn(move || loop {
             thread::sleep(Duration::new(1, 0));
-            if datac.gstreamer.get_state() == viola_common::GStreamerMessage::Playing {
-                let data = datac.gstreamer.get_elapsed().unwrap_or(0);
+            if datac.gstreamer.read().unwrap().get_state()
+                == viola_common::GStreamerMessage::Playing
+            {
+                let data = datac.gstreamer.read().unwrap().get_elapsed().unwrap_or(0);
                 my_websocket::send_my_message(&datac.ws, WsMessage::CurrentTimeChanged(data));
             }
         });
