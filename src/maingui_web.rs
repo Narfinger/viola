@@ -117,7 +117,7 @@ async fn library_load(
     _: HttpRequest,
 ) -> HttpResponse {
     let mut q = level.into_inner();
-    if q.search.is_some() && !q.search.as_ref().unwrap().is_empty() {
+    if q.search.is_some() && q.search.as_ref().unwrap().is_empty() {
         q.search = None;
     }
     let pl = libraryviewstore::load_query(&state.pool, &q);
