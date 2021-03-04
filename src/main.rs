@@ -50,7 +50,7 @@ pub mod utils;
 
 use clap::{App, Arg};
 use preferences::{prefs_base_dir, AppInfo, Preferences, PreferencesMap};
-use std::sync::{Arc, Mutex};
+use std::sync::{mpsc, Arc, Mutex};
 use std::{env, io};
 
 const APP_INFO: AppInfo = AppInfo {
@@ -116,6 +116,7 @@ async fn main() -> io::Result<()> {
         return Ok(());
     }
     let pool = Arc::new(Mutex::new(tmp_pool.unwrap()));
+    let (tx, rx) = mpsc::channel::<actix_web::dev::Server>();
     if matches.is_present("update") {
         info!("Updating Database");
         if let Ok(preferences) = PreferencesMap::<String>::load(&APP_INFO, PREFS_KEY) {
@@ -157,14 +158,13 @@ async fn main() -> io::Result<()> {
         //println!("Trying main");
         //std::thread::spawn(|| {
         //println!("Starting web service");
-        maingui_web::run(pool).await.expect("Error running server");
+        maingui_web::run(pool, tx);
     //});
     } else {
         std::thread::spawn(|| {
-            let mut sys = actix_rt::System::new("test");
+            let mut sys = actix_web::rt::System::new("test");
             println!("Starting web service");
-            let srv = maingui_web::run(pool);
-            sys.block_on(srv)
+            let srv = maingui_web::run(pool, tx);
         });
         std::thread::sleep(std::time::Duration::from_secs(1));
 

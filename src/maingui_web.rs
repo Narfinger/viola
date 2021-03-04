@@ -307,7 +307,10 @@ fn handle_gstreamer_messages(
     }
 }
 
-pub async fn run(pool: DBPool) -> io::Result<()> {
+pub async fn run(
+    pool: DBPool,
+    tx: std::sync::mpsc::Sender<actix_web::dev::Server>,
+) -> io::Result<()> {
     println!("Loading playlist");
     let plt = crate::playlist_tabs::load(&pool).expect("Failure to load old playlists");
 
@@ -363,7 +366,9 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
 
     //let web_gui_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/");
     let web_gui_dist_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/");
-    HttpServer::new(move || {
+    let mut sys = actix_web::rt::System::new("test");
+
+    let srv = HttpServer::new(move || {
         App::new()
             .app_data(data.clone())
             .service(playlist)
@@ -392,13 +397,10 @@ pub async fn run(pool: DBPool) -> io::Result<()> {
     })
     .bind("127.0.0.1:8088")
     .expect("Cannot bind address")
-    .run()
-    .await
-    .expect("Running server");
+    .run();
 
-    println!("I can probably remove the arc and rwlock for playlists and just use");
+    tx.send(srv.clone());
 
-    //sys.block_on(server);
-
+    sys.block_on(srv);
     Ok(())
 }
