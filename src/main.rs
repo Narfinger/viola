@@ -155,14 +155,15 @@ async fn main() -> io::Result<()> {
         path.extend(&["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else if matches.is_present("no-webview") {
+        let sys = actix_web::rt::System::new("test");
         //println!("Trying main");
         //std::thread::spawn(|| {
         //println!("Starting web service");
-        maingui_web::run(pool, tx);
+        maingui_web::run(pool, tx).await.expect("Error in waiting");
     //});
     } else {
         std::thread::spawn(|| {
-            let mut sys = actix_web::rt::System::new("test");
+            let sys = actix_web::rt::System::new("test");
             println!("Starting web service");
             let srv = maingui_web::run(pool, tx);
         });

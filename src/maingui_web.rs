@@ -399,8 +399,8 @@ pub async fn run(
     .expect("Cannot bind address")
     .run();
 
-    tx.send(srv.clone());
+    tx.send(srv.clone()).expect("Error in send");
 
-    sys.block_on(srv);
+    sys.block_on(srv).expect("Error in block on");
     Ok(())
 }

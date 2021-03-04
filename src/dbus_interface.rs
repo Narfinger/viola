@@ -90,8 +90,8 @@ impl PlayerInterface {
     }
 
     #[dbus_interface(property)]
-    fn rate(&self) -> i32 {
-        44100
+    fn rate(&self) -> f64 {
+        44100.0
     }
 
     #[dbus_interface(property)]
@@ -106,23 +106,23 @@ impl PlayerInterface {
     }
 
     #[dbus_interface(property)]
-    fn volume(&self) -> i32 {
-        50
+    fn volume(&self) -> f64 {
+        1.0
     }
 
     #[dbus_interface(property)]
-    fn position(&self) -> i32 {
-        self.gstreamer.read().unwrap().get_elapsed().unwrap_or(0) as i32
+    fn position(&self) -> i64 {
+        self.gstreamer.read().unwrap().get_elapsed().unwrap_or(0) as i64
     }
 
     #[dbus_interface(property)]
-    fn minimum_rate(&self) -> i32 {
-        1
+    fn minimum_rate(&self) -> f64 {
+        1.0
     }
 
     #[dbus_interface(property)]
-    fn maximum_rate(&self) -> i32 {
-        1
+    fn maximum_rate(&self) -> f64 {
+        1.0
     }
 
     #[dbus_interface(property)]
@@ -180,6 +180,14 @@ impl PlayerInterface {
             .write()
             .unwrap()
             .do_gstreamer_action(GStreamerAction::Pausing);
+        Ok(())
+    }
+
+    fn play(&self) -> zbus::fdo::Result<()> {
+        self.gstreamer
+            .write()
+            .unwrap()
+            .do_gstreamer_action(GStreamerAction::Playing);
         Ok(())
     }
 
@@ -243,9 +251,10 @@ fn main(
     let mut bus = bus;
     loop {
         if let Err(err) = object_server.try_handle_next() {
+            println!("working message");
             eprintln!("{}", err);
         }
-        if let Ok(_) = bus.recv() {
+        if let Ok(_) = bus.try_recv() {
             object_server.with(
                 &"/org/mpris/MediaPlayer2".try_into()?,
                 |iface: &PlayerInterface| iface.properties_changed(),
