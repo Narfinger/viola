@@ -1,37 +1,23 @@
-use crate::schema::tracks;
 use crate::types::{DBPool, APP_INFO};
 use app_dirs::*;
 use diesel::{Connection, SqliteConnection};
-use diesel_migrations;
+use indicatif::ParallelProgressIterator;
 use indicatif::{ProgressBar, ProgressStyle};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::ops::Deref;
 use std::path::Path;
-use std::sync::{Arc, Mutex};
 use std::{thread, time};
+use viola_common::schema::tracks;
+use viola_common::Track;
 use walkdir::DirEntry;
 
-#[derive(AsChangeset, Clone, Debug, Identifiable, Queryable, Serialize, Deserialize)]
-pub struct Track {
-    pub id: i32,
-    pub title: String,
-    pub artist: String,
-    pub album: String,
-    pub genre: String,
-    pub tracknumber: Option<i32>,
-    pub year: Option<i32>,
-    pub path: String,
-    pub length: i32,
-    pub albumpath: Option<String>,
-    pub playcount: Option<i32>,
-}
+static PROGRESSBAR_STYLE: &str =
+    "[{elapsed_precise}] {msg} {spinner:.green} {bar:.green/blue} {pos:>7}/{len:7} ({percent}%)";
 
-impl PartialEq for Track {
-    fn eq(&self, other: &Self) -> bool {
-        self.path == other.path
-    }
-}
+static PROGRESSBAR_UNKNOWN_STYLE: &str =
+    "{msg} {spinner:.green} | Elapsed: {elapsed} | Files/sec: {per_sec} | Pos: {pos}";
 
 pub trait UpdatePlayCount {
     fn update_playcount(&mut self, _: DBPool);
@@ -40,8 +26,8 @@ pub trait UpdatePlayCount {
 impl UpdatePlayCount for Track {
     fn update_playcount(&mut self, pool: DBPool) {
         use crate::rand::RngCore;
-        use crate::schema::tracks::dsl::*;
         use diesel::{QueryDsl, RunQueryDsl, SaveChangesDsl};
+        use viola_common::schema::tracks::dsl::*;
 
         //wait a random time
         let mut rng = rand::thread_rng();
@@ -76,25 +62,29 @@ pub struct NewTrack {
 
 embed_migrations!("migrations/");
 pub fn setup_db_connection() -> Result<diesel::SqliteConnection, String> {
-    let mut db_file =
-        get_app_root(AppDataType::UserConfig, &APP_INFO).map_err(|_| String::from("Could not get app root"))?;
+    let mut db_file = get_app_root(AppDataType::UserConfig, &APP_INFO)
+        .map_err(|_| String::from("Could not get app root"))?;
     if !db_file.exists() {
         return Err(String::from("Dir does not exists"));
     }
     db_file.push("music.db");
-    SqliteConnection::establish(&db_file.to_str().unwrap()).map_err(|_| String::from("DB Connection error"))
+    SqliteConnection::establish(&db_file.to_str().unwrap())
+        .map_err(|_| String::from("DB Connection error"))
 }
 
 pub fn create_db() {
-    let db_dir  = get_app_root(AppDataType::UserConfig, &APP_INFO).map_err(|_| String::from("Could not get app root")).expect("Error getting app dir");
+    let db_dir = get_app_root(AppDataType::UserConfig, &APP_INFO)
+        .map_err(|_| String::from("Could not get app root"))
+        .expect("Error getting app dir");
     if !db_dir.exists() {
-        std::fs::create_dir(get_app_root(AppDataType::UserConfig, &APP_INFO).unwrap()).expect("We could not create app dir");
+        std::fs::create_dir(get_app_root(AppDataType::UserConfig, &APP_INFO).unwrap())
+            .expect("We could not create app dir");
     }
     let mut db_file =
         get_app_root(AppDataType::UserConfig, &APP_INFO).expect("Could not get app root");
     db_file.push("music.db");
-    let db = rusqlite::Connection::open(&db_file).expect("Cannot create db, something is wrong");
-    let connection = SqliteConnection::establish(&db_file.to_str().unwrap()).expect("Something wrong");
+    let connection =
+        SqliteConnection::establish(&db_file.to_str().unwrap()).expect("Something wrong");
     embedded_migrations::run(&connection).expect("Could not run migration");
 }
 
@@ -136,7 +126,7 @@ fn convert_to_i32_option(u: Option<u32>) -> Option<i32> {
     }
 }
 
-fn construct_track_from_path(s: &str) -> Result<NewTrack, String> {
+fn construct_track_from_path(s: &str) -> NewTrack {
     let taglibfile = taglib::File::new(&s);
     if let Ok(ataglib) = taglibfile {
         let tags = ataglib
@@ -147,7 +137,7 @@ fn construct_track_from_path(s: &str) -> Result<NewTrack, String> {
             .unwrap_or_else(|_| panic!(format!("Could not find audio properties for: {}", s)));
         let album = get_album_file(&s);
         //tracknumber and year return 0 if none set
-        Ok(NewTrack {
+        NewTrack {
             title: tags.title().unwrap_or_default(),
             artist: tags.artist().unwrap_or_default(),
             album: tags.album().unwrap_or_default(),
@@ -157,7 +147,7 @@ fn construct_track_from_path(s: &str) -> Result<NewTrack, String> {
             path: s.to_string(),
             length: properties.length() as i32,
             albumpath: album,
-        })
+        }
     } else {
         panic!(format!("Taglib could not open file: {}", s));
     }
@@ -193,10 +183,10 @@ fn insert_track_with_error_retries(s: &str, db: &DBPool) -> Result<(), String> {
 }
 
 fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
-    use crate::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
+    use viola_common::schema::tracks::dsl::*;
 
-    let new_track = construct_track_from_path(s)?;
+    let new_track = construct_track_from_path(s);
     let old_track_perhaps = tracks
         .filter(path.eq(&new_track.path))
         .get_result::<Track>(db.lock().expect("DB Error").deref());
@@ -230,17 +220,22 @@ fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
 
 /// Tested on 01-06-2019 with jwalk and walkdir. walkdir was faster on my machine
 pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
-    let files = walkdir::WalkDir::new(&p)
-        .into_iter()
+    info!("Building database, getting walkdir iterator");
+    let pb = ProgressBar::new_spinner();
+    pb.set_style(ProgressStyle::default_spinner().template(PROGRESSBAR_UNKNOWN_STYLE));
+    pb.set_message("Collecting files");
+    let files = pb
+        .wrap_iter(walkdir::WalkDir::new(&p).into_iter())
         .filter(is_valid_file)
         .map(|i| String::from(i.unwrap().path().to_str().unwrap()))
         .collect::<HashSet<String>>();
+    pb.finish_with_message("Done Updating");
 
     let file_count = files.len();
 
     {
-        use crate::schema::tracks::dsl::*;
         use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, TextExpressionMethods};
+        use viola_common::schema::tracks::dsl::*;
         let old_files: HashSet<String> = HashSet::from_iter(if fast_delete {
             tracks
                 .select(path)
@@ -255,17 +250,15 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
                 .expect("Error in loading old files")
         });
 
-        /// TODO switch this to par_iter or something
         {
             let pb = ProgressBar::new(file_count as u64);
-            pb.set_message("Updating files");
-            pb.set_style(ProgressStyle::default_bar()
-                                  .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7} ({percent}%)")
-                                  .progress_chars("#>-"));
-            let res = pb
-                .wrap_iter(files.iter().map(|s| insert_track_with_error_retries(s, db)))
+            pb.set_message("Updating tags");
+            pb.set_style(ProgressStyle::default_bar().template(PROGRESSBAR_STYLE));
+            let res = files
+                .par_iter()
+                .progress_with(pb)
+                .map(|s| insert_track_with_error_retries(s, db))
                 .collect::<Result<(), String>>();
-            pb.finish_with_message("Done Updating");
 
             if let Err(err) = res {
                 error!("Error in updating database");
@@ -282,9 +275,11 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
             pb.finish();
 
             let pb2 = ProgressBar::new(to_delete.len() as u64);
-            pb2.set_style(ProgressStyle::default_bar()
-                                  .template("[{elapsed_precise}] {msg} {spinner:.green} {bar:100.green/blue} {pos:>7}/{len:7} {percent}    %)")
-                                  .progress_chars("#>-"));
+            pb2.set_style(
+                ProgressStyle::default_bar()
+                    .template(PROGRESSBAR_STYLE)
+                    .progress_chars("#>-"),
+            );
             pb2.set_message("Deleting old unused entries");
             for i in pb2.wrap_iter(to_delete.iter()) {
                 //println!("to delete: {}", i);
@@ -304,11 +299,11 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
 
 // returns an id for a newly created playlist. Returns 0 if no playlists yet in db
 pub fn get_new_playlist_id(db: &DBPool) -> i32 {
-    use crate::schema::playlists::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+    use viola_common::schema::playlists::dsl::*;
     playlists
-        .select(crate::schema::playlists::id)
-        .order(crate::schema::playlists::id.desc())
+        .select(viola_common::schema::playlists::id)
+        .order(viola_common::schema::playlists::id.desc())
         .load(db.lock().expect("DB Error").deref())
         .ok()
         .and_then(|v: Vec<i32>| v.first().cloned())

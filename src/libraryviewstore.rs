@@ -1,780 +1,365 @@
-/*
-
-use crate::db::Track;
-use crate::loaded_playlist::LoadedPlaylist;
-use gdk;
-use gtk;
-use gtk::prelude::*;
-use serde_json;
-use std::cell::{Cell, RefCell};
-use std::ops::Deref;
-use std::rc::Rc;
-use std::string::String;
-
-//use crate::maingui::{MainGuiExt, MainGuiPtrExt};
 use crate::types::*;
+use crate::{
+    diesel::{ExpressionMethods, QueryDsl, RunQueryDsl},
+    loaded_playlist::LoadedPlaylist,
+};
+use diesel::TextExpressionMethods;
+use itertools::{izip, Itertools};
+use std::ops::Deref;
+use viola_common::TreeViewQuery;
+use viola_common::{schema::tracks::dsl::*, TreeType};
 
-pub struct LibraryView {}
+/// produces a simple query that gives for one type a query that selects on it
 
-const ARTIST_TYPE: i32 = 1;
-const ALBUM_TYPE: i32 = 2;
-const TRACK_TYPE: i32 = 3;
-
-enum LibraryLoadType {
-    Artist,
-    Album,
-    Track,
-    Invalid,
-}
-
-impl From<i32> for LibraryLoadType {
-    fn from(i: i32) -> Self {
-        match i {
-            1 => LibraryLoadType::Artist,
-            2 => LibraryLoadType::Album,
-            3 => LibraryLoadType::Track,
-            _ => LibraryLoadType::Invalid,
-        }
+/*
+fn match_and_select_simple<'a>(
+    base_query: viola_common::schema::tracks::BoxedQuery<'a, diesel::sqlite::Sqlite>,
+    ttype: &'a viola_common::TreeType,
+) -> diesel::query_builder::BoxedSelectStatement<
+    'a,
+    diesel::sql_types::Text,
+    viola_common::schema::tracks::table,
+    diesel::sqlite::Sqlite,
+> {
+    match ttype {
+        viola_common::TreeType::Artist => base_query
+            .select(artist)
+            .filter(artist.not_like("%feat%"))
+            .group_by(artist)
+            .distinct()
+            .order_by(artist),
+        viola_common::TreeType::Album => base_query
+            .select(album)
+            .group_by(album)
+            .distinct()
+            .order_by(album),
+        viola_common::TreeType::Track => base_query
+            .select(title)
+            .group_by(title)
+            .distinct()
+            .order_by(title),
+        viola_common::TreeType::Genre => base_query
+            .select(genre)
+            .group_by(genre)
+            .distinct()
+            .order_by(genre),
     }
 }
 
-fn idle_fill<I>(db: &DBPool, ats: &Rc<RefCell<I>>, model: &gtk::TreeStore) -> gtk::Continue
-where
-    I: Iterator<Item = String>,
-{
-    use crate::schema::tracks::dsl::*;
-    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
-
-    ///TODO replace this with const fn
-    let DEFAULT_VISIBILITY: &gtk::Value = &true.to_value();
-
-    //panic!("does not work yet, iterator gets not changes");
-    if let Some(a) = ats.borrow_mut().next() {
-        let st: String = a.chars().take(20).collect::<String>() + "..";
-        {
-            let albums: Vec<(String, Option<i32>)> = tracks
-                .select((album, year))
-                .order(year)
-                .filter(artist.like(String::from("%") + &a + "%"))
-                .group_by(album)
-                .load(db.lock().expect("DB Error").deref())
-                .expect("Error in db connection");
-            let artist_node = model.insert_with_values(
-                None,
-                None,
-                &[0, 1, 2, 3],
-                &[&st, &a, &ARTIST_TYPE, DEFAULT_VISIBILITY],
-            );
-
-            for (ab, y) in albums {
-                //add the year if it exists to the string we insert
-                let abstring = if let Some(yp) = y {
-                    yp.to_string() + " - " + &ab
-                } else {
-                    ab.to_string()
-                };
-
-                let album_node = model.insert_with_values(
-                    Some(&artist_node),
-                    None,
-                    &[0, 1, 2, 3],
-                    &[&abstring, &ab, &ALBUM_TYPE, DEFAULT_VISIBILITY],
-                );
-                {
-                    let ts: Vec<String> = tracks
-                        .select(title)
-                        .order(tracknumber)
-                        .filter(artist.like(String::from("%") + &a + "%"))
-                        .filter(album.eq(ab))
-                        .load(db.lock().expect("DB Error").deref())
-                        .expect("Error in db connection");
-                    for t in ts {
-                        model.insert_with_values(
-                            Some(&album_node),
-                            None,
-                            &[0, 1, 2, 3],
-                            &[&t, &t, &TRACK_TYPE, DEFAULT_VISIBILITY],
-                        );
-                    }
-                }
-            }
-        }
-        gtk::Continue(true)
+/// Produces the string that we should filter on if we are deeper in the tree
+fn get_filter_string(
+    base_query: viola_common::schema::tracks::BoxedQuery<diesel::sqlite::Sqlite>,
+    db: &DBPool,
+    ttype: viola_common::TreeType,
+    index: &usize,
+    search: &Option<String>,
+) -> String {
+    let select_query = match_and_select_simple(base_query, &ttype);
+    let select_query = if let Some(ref search_string) = search {
+        select_query
+            .filter(artist.like(String::from("%") + &search_string + "%"))
+            .or_filter(album.like(String::from("%") + &search_string + "%"))
+            .or_filter(title.like(String::from("%") + &search_string + "%"))
     } else {
-        info!("Done");
-        gtk::Continue(false)
-    }
+        select_query
+    };
+    let loaded_query: Vec<String> = select_query
+        .offset(index.clone().try_into().unwrap())
+        .limit(1)
+        .load(db.lock().unwrap().deref())
+        .expect("Error in query");
+    loaded_query.first().expect("Error in stuff").to_string()
 }
 
-pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
-    use crate::schema::tracks::dsl::*;
-    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
-
-    let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
-    // setup drag drop
-    {
-        let dbc = db.clone();
-        let targets = vec![gtk::TargetEntry::new(
-            "text/plain",
-            gtk::TargetFlags::SAME_APP,
-            0,
-        )];
-        libview.drag_source_set(
-            gdk::ModifierType::MODIFIER_MASK,
-            &targets,
-            gdk::DragAction::COPY,
-        );
-        libview.connect_drag_data_get(move |w, _, s, _, _| {
-            let (_, t) = get_tracks_for_selection(&dbc, &w).expect("Could not get tracks");
-            let data = serde_json::to_string(&t).expect("Error in formating drop data");
-            s.set_text(&data);
-        });
+/// Generral Query to get the tree
+fn treeview_query<'a>(
+    db: &'a DBPool,
+    query: &'a TreeViewQuery,
+) -> viola_common::schema::tracks::BoxedQuery<'a, diesel::sqlite::Sqlite> {
+    let mut filter_strings = Vec::new();
+    // for first one
+    if let Some(i) = query.indices.get(0) {
+        let base_query: viola_common::schema::tracks::BoxedQuery<diesel::sqlite::Sqlite> =
+            tracks.into_boxed();
+        filter_strings.push(get_filter_string(
+            base_query,
+            db,
+            query.types[0],
+            i,
+            &query.search,
+        ));
+    }
+    println!("filter strings: {:?}", filter_strings);
+    println!("search {:?}", query.search);
+    // for second one
+    if let Some(i) = query.indices.get(1) {
+        let base_query = match query.types[0] {
+            viola_common::TreeType::Artist => tracks
+                .filter(artist.like(filter_strings[0].to_owned() + "%"))
+                .into_boxed(),
+            viola_common::TreeType::Album => tracks
+                .filter(album.eq(filter_strings[0].clone()))
+                .into_boxed(),
+            viola_common::TreeType::Track => tracks
+                .filter(title.eq(filter_strings[0].clone()))
+                .into_boxed(),
+            viola_common::TreeType::Genre => tracks
+                .filter(genre.eq(filter_strings[0].clone()))
+                .into_boxed(),
+        };
+        filter_strings.push(get_filter_string(
+            base_query,
+            db,
+            query.types[1],
+            i,
+            &query.search,
+        ));
     }
 
-    //the model contains first a abbreviated string and in second column the whole string to construct the playlist
-    let model = gtk::TreeStore::new(&[
-        String::static_type(),
-        String::static_type(),
-        i32::static_type(),
-        bool::static_type(),
-    ]);
-    let fmodel = gtk::TreeModelFilter::new(&model, None);
-    fmodel.set_visible_column(3);
-
-    let searchfield: gtk::SearchEntry = builder
-        .read()
-        .unwrap()
-        .get_object("collectionsearch")
-        .unwrap();
-    {
-        let bc = builder.clone();
-        searchfield.connect_search_changed(move |s| search_changed(s, &bc));
-    }
-    let column = gtk::TreeViewColumn::new();
-    let cell = gtk::CellRendererText::new();
-
-    column.pack_start(&cell, true);
-    column.add_attribute(&cell, "text", 0);
-    libview.append_column(&column);
-
-    libview.set_model(Some(&fmodel));
-
-    let artists: Vec<String> = tracks
-        .select(artist)
-        .order(artist)
-        .group_by(artist)
-        .filter(artist.not_like(String::from("%") + "feat" + "%"))
-        .filter(artist.ne(""))
-        .load(db.lock().expect("DB Error").deref())
-        .expect("Error in db connection");
-
-    {
-        let dbc = db.clone();
-        let guic = gui.clone();
-        libview.connect_event_after(move |s, e| signalhandler(&dbc, &guic, s, e));
-    }
-    let refcell = Rc::new(RefCell::new(artists.into_iter()));
-    {
-        let dbc = db.clone();
-        gtk::idle_add(move || idle_fill(&dbc, &refcell, &model));
-    }
-}
-
-fn idle_make_parents_visible_from_search(
-    s: &Rc<String>,
-    field: &Rc<gtk::SearchEntry>,
-    treeiter: &Rc<gtk::TreeIter>,
-    model: &Rc<gtk::TreeStore>,
-) -> gtk::Continue {
-    let visible: &gtk::Value = &true.to_value();
-    //let invisible: &gtk::Value = &false.to_value();
-
-    // abort if another thread is running
-    if s.deref() != &field.get_text().unwrap().to_lowercase() {
-        return gtk::Continue(false);
-    }
-    let mut parent = model.iter_parent(&treeiter); //make a new iterator because we will modify it
-    while let Some(p) = parent {
-        model.set_value(&p, 3, visible);
-        parent = model.iter_parent(&p);
-    }
-    gtk::Continue(false)
-}
-
-fn idle_make_children_visible_from_search(
-    s: &Rc<String>,
-    field: &Rc<gtk::SearchEntry>,
-    treeiter: &Rc<gtk::TreeIter>,
-    model: &Rc<gtk::TreeStore>,
-) -> gtk::Continue {
-    let visible: &gtk::Value = &true.to_value();
-    //let invisible: &gtk::Value = &false.to_value();
-
-    // abort if another thread is running
-    if s.deref() != &field.get_text().unwrap().to_lowercase() {
-        return gtk::Continue(false);
+    // for third one
+    if let Some(i) = query.indices.get(2) {
+        panic!("Not yet implemented");
     }
 
-    let current_tree = (*treeiter.deref()).clone(); //make a new iterator because we will modify it
-    let mut child_iterator = model.iter_children(Some(&current_tree));
-    while let Some(child) = child_iterator {
-        model.set_value(&child, 3, visible);
-
-        //recursively
-        {
-            let childcopy = Rc::new(child.clone());
-            let sc = s.clone();
-            let fc = field.clone();
-            let mc = model.clone();
-            gtk::idle_add(move || {
-                idle_make_children_visible_from_search(&sc, &fc, &childcopy, &mc)
-            });
-        }
-        child_iterator = if model.iter_next(&child) {
-            Some(child)
-        } else {
-            None
+    let mut db_query = tracks.into_boxed::<diesel::sqlite::Sqlite>();
+    for (layer, filter_string) in filter_strings.iter().enumerate() {
+        db_query = match query.types[layer] {
+            viola_common::TreeType::Artist => db_query.filter(artist.eq(filter_string.clone())),
+            viola_common::TreeType::Album => db_query.filter(album.eq(filter_string.clone())),
+            viola_common::TreeType::Track => db_query.filter(title.eq(filter_string.clone())),
+            viola_common::TreeType::Genre => db_query.filter(genre.eq(filter_string.clone())),
         };
     }
-    gtk::Continue(false)
+    db_query
 }
 
-/// This function will be called on idle if the search changed.
-/// Because there could be multiple functions added, we need to have the following safeguard
-/// s is the string the search started with
-/// field is the current field, if both are not the same, we abort this thread as somebody else should be running
-fn idle_search_changed(
-    s: Rc<String>,
-    field: Rc<gtk::SearchEntry>,
-    treeiter: Rc<gtk::TreeIter>,
-    fmodel: Rc<gtk::TreeModelFilter>,
-    model: Rc<gtk::TreeStore>,
-) -> gtk::Continue {
-    let visible: &gtk::Value = &true.to_value();
-    let invisible: &gtk::Value = &false.to_value();
+/// Produces a partial query, i.e., the Vector of Strings that we show in the treeview
+pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
+    let base_query = treeview_query(db, query);
+    info!("Query: {:?}", query);
+    let query_type = match query.indices.len() {
+        0 => query.types.get(0),
+        1 => query.types.get(1),
+        2 => query.types.get(2),
+        _ => query.types.last(),
+    }
+    .expect("Error in index stuff");
 
-    // abort if another thread is running
-    if *s != field.get_text().unwrap().to_lowercase() {
-        //println!(
-        //    "Killing this search thread because {:?}, {:?}",
-        //    *s,
-        //    field.get_text().unwrap()
-        //);
-        return gtk::Continue(false);
+    //let mut final_query = match_and_select_simple(base_query, query_type);
+    let mut final_query = base_query;
+
+    if let Some(ref search_string) = query.search {
+        final_query = final_query
+            .filter(artist.like(String::from("%") + &search_string + "%"))
+            .or_filter(album.like(String::from("%") + &search_string + "%"))
+            .or_filter(title.like(String::from("%") + &search_string + "%"));
     }
 
-    if !s.is_empty() {
-        let val = model
-            .get_value(&treeiter, 1)
-            .get::<String>()
-            .map(|v| v.to_lowercase().contains(&*s));
-
-        if val == Some(true) {
-            model.set_value(&treeiter, 3, visible);
-            {
-                //parents visible
-                let sc = s.clone();
-                let fc = field.clone();
-                let mc = model.clone();
-                let tc = Rc::new((*treeiter).clone());
-                gtk::idle_add(move || {
-                    idle_make_parents_visible_from_search(
-                        &sc.clone(),
-                        &fc.clone(),
-                        &tc.clone(),
-                        &mc.clone(),
-                    )
-                });
-            }
-            {
-                //childrens visible
-                let sc = s.clone();
-                let fc = field.clone();
-                let mc = model.clone();
-                let tc = Rc::new((*treeiter).clone());
-                gtk::idle_add(move || idle_make_children_visible_from_search(&sc, &fc, &tc, &mc));
-            }
-        } else {
-            //if we are not matched now, we might match a child, so go into children
-            model.set_value(&treeiter, 3, invisible);
-            let itt = (*treeiter).clone();
-            if let Some(c) = model.iter_children(Some(&itt)) {
-                let cc = Rc::new(c);
-                let sc = s.clone();
-                let fc = field.clone();
-                let fmc = fmodel.clone();
-                let mc = model.clone();
-                gtk::idle_add(move || {
-                    idle_search_changed(sc.clone(), fc.clone(), cc.clone(), fmc.clone(), mc.clone())
-                });
-            }
-        }
+    if query.indices.len() == 1
+        && query.types.get(0) == Some(&TreeType::Artist)
+        && query.types.get(1) == Some(&TreeType::Album)
+    {
+        let result = final_query
+            .select((album, year))
+            .group_by((album, year))
+            .order_by(year)
+            .load::<(String, Option<i32>)>(db.lock().unwrap().deref())
+            .expect("Error in query");
+        result
+            .iter()
+            .map(|(album_t, year_t)| {
+                year_t.map_or(String::from(""), |t| t.to_string()) + "-" + album_t
+            })
+            .collect()
+    } else if query.indices.len() == 2
+        && query.types.get(0) == Some(&TreeType::Artist)
+        && query.types.get(1) == Some(&TreeType::Album)
+        && query.types.get(2) == Some(&TreeType::Track)
+    {
+        let result = final_query
+            .select((title, tracknumber))
+            .group_by((title, tracknumber))
+            .order_by(tracknumber)
+            .load::<(String, Option<i32>)>(db.lock().unwrap().deref())
+            .expect("Error in query");
+        result
+            .iter()
+            .map(|(album_t, tracknumber_t)| {
+                tracknumber_t.map_or(String::from(""), |t| t.to_string()) + "-" + album_t
+            })
+            .collect()
     } else {
-        model.set_value(&treeiter, 3, visible);
-
-        //set everything to visible
-        let it = Rc::new((*treeiter).clone());
-        let sc = s.clone();
-        let fc = field.clone();
-        let mc = model.clone();
-        gtk::idle_add(move || idle_make_children_visible_from_search(&sc, &fc, &it, &mc));
-    }
-
-    // model.iter_next can return false, if that we do not spawn a new thread
-    let val = model.iter_next(&treeiter);
-
-    if val {
-        gtk::idle_add(move || {
-            idle_search_changed(
-                s.clone(),
-                field.clone(),
-                treeiter.clone(),
-                fmodel.clone(),
-                model.clone(),
-            )
-        });
-    } else {
-        //fmodel.refilter();
-    }
-    gtk::Continue(false)
-}
-
-fn search_changed(s: &gtk::SearchEntry, builder: &BuilderPtr) {
-    let libview: gtk::TreeView = builder.read().unwrap().get_object("libraryview").unwrap();
-
-    let fmodel = Rc::new(
-        libview
-            .get_model()
-            .unwrap()
-            .downcast::<gtk::TreeModelFilter>()
-            .unwrap(),
-    );
-    let model = Rc::new(
-        fmodel
-            .get_model()
-            .unwrap()
-            .downcast::<gtk::TreeStore>()
-            .unwrap(),
-    );
-
-    let text = Rc::new(s.get_text().unwrap().to_lowercase());
-    let sc = Rc::new(s.clone());
-
-    gtk::idle_add(move || {
-        idle_search_changed(
-            text.clone(),
-            sc.clone(),
-            Rc::new(model.get_iter_first().unwrap()),
-            fmodel.clone(),
-            model.clone(),
-        )
-    });
-}
-
-fn get_model_and_iter_for_selection(tv: &gtk::TreeView) -> (gtk::TreeStore, gtk::TreeIter) {
-    let (model, iter) = tv.get_selection().get_selected().unwrap();
-    let filtermodel = model
-        .downcast::<gtk::TreeModelFilter>()
-        .expect("Error in TreeModelFilter downcast");
-    let m = filtermodel
-        .get_model()
-        .expect("No base model for TreeModelFilter")
-        .downcast::<gtk::TreeStore>()
-        .expect("Error in TreeStore downcast");
-    let realiter = filtermodel.convert_iter_to_child_iter(&iter);
-
-    (m, realiter)
-}
-
-fn get_tracks_for_selection(
-    db: &DBPool,
-    tv: &gtk::TreeView,
-) -> Result<(String, Vec<Track>), String> {
-    use crate::schema::tracks::dsl::*;
-    use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, TextExpressionMethods};
-
-    let (m, iter) = get_model_and_iter_for_selection(tv);
-
-    info!("Iter depth: {}", m.iter_depth(&iter));
-
-    let query = tracks.order(path).into_boxed();
-    if m.iter_depth(&iter) == 0 {
-        let artist_name = m.get_value(&iter, 1).get::<String>().unwrap();
-        info!("artist: {}", artist_name);
-        Ok((
-            artist_name.clone(),
-            query
-                .filter(artist.like(String::from("%") + &artist_name + "%"))
-                .load(db.lock().expect("DB Error").deref())
-                .expect("Error in query"),
-        ))
-    } else if m.iter_depth(&iter) == 1 {
-        let parent_artist = m
-            .iter_parent(&iter)
-            .expect("We do not have a parent, this is strange");
-        let artist_name = m.get_value(&parent_artist, 1).get::<String>().unwrap();
-        let album_name = m.get_value(&iter, 1).get::<String>().unwrap();
-        info!(
-            "doing with artist {}, album \"{}\"",
-            artist_name, album_name
-        );
-        Ok((
-            album_name.clone(),
-            query
-                .filter(artist.like(String::from("%") + &artist_name + "%"))
-                .filter(album.eq(album_name))
-                .load(db.lock().expect("DB Error").deref())
-                .expect("Error in query"),
-        ))
-    } else if m.iter_depth(&iter) == 2 {
-        let parent_album = m
-            .iter_parent(&iter)
-            .expect("We do not have a parent, this is strange");
-        let parent_artist = m
-            .iter_parent(&parent_album)
-            .expect("We do not have a parent, this is strange");
-
-        let artist_name = m.get_value(&parent_artist, 1).get::<String>().unwrap();
-        let album_name = m.get_value(&parent_album, 1).get::<String>().unwrap();
-        let track_name = m.get_value(&iter, 1).get::<String>().unwrap();
-        Ok((
-            track_name.clone(),
-            query
-                .filter(artist.like(String::from("%") + &artist_name + "%"))
-                .filter(album.eq(album_name))
-                .filter(title.eq(track_name))
-                .load(db.lock().expect("DB Error").deref())
-                .expect("Error in query"),
-        ))
-    } else {
-        Err(format!("Found iter depth: {}", m.iter_depth(&iter)))
-    }
-}
-
-fn do_new(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
-    /*
-    let (name, res) = get_tracks_for_selection(pool, tv).expect("Error in getting tracks");
-    let pl = LoadedPlaylist {
-        id: Cell::new(None),
-        name,
-        items: res,
-        current_position: 0,
-    };
-    gui.add_page(pl);
-    */
-}
-
-fn do_append(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
-    let (_, res) = get_tracks_for_selection(pool, tv).expect("Error in getting tracks");
-    gui.append_to_playlist(res);
-}
-
-fn do_replace(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView) {
-    let (_, res) = get_tracks_for_selection(pool, tv).expect("Error in getting tracks");
-    gui.replace_playlist(res);
-}
-
-fn signalhandler(pool: &DBPool, gui: &MainGuiPtr, tv: &gtk::TreeView, event: &gdk::Event) {
-    if event.get_event_type() == gdk::EventType::ButtonPress {
-        info!("button press");
-        if let Ok(b) = event.clone().downcast::<gdk::EventButton>() {
-            info!("the button: {}", b.get_button());
-            if b.get_button() == 3 {
-                let menu = gtk::Menu::new();
-                {
-                    let menuitem = gtk::MenuItem::new_with_label("New");
-                    let pc = pool.clone();
-                    let gc = gui.clone();
-                    let tvc = tv.clone();
-                    menuitem.connect_activate(move |_| do_new(&pc, &gc, &tvc));
-                    menu.append(&menuitem);
-                }
-                {
-                    let menuitem = gtk::MenuItem::new_with_label("Replace");
-                    let pc = pool.clone();
-                    let gc = gui.clone();
-                    let tvc = tv.clone();
-                    menuitem.connect_activate(move |_| do_replace(&pc, &gc, &tvc));
-                    menu.append(&menuitem);
-                }
-                {
-                    let menuitem = gtk::MenuItem::new_with_label("Append");
-                    let pc = pool.clone();
-                    let gc = gui.clone();
-                    let tvc = tv.clone();
-                    menuitem.connect_activate(move |_| do_append(&pc, &gc, &tvc));
-                    menu.append(&menuitem);
-                }
-                menu.show_all();
-                gtk::GtkMenuExt::popup_at_pointer(&menu, Some(event));
-            }
-        }
+        match_and_select_simple(final_query, query_type)
+            .load(db.lock().unwrap().deref())
+            .expect("Error on query")
     }
 }
 */
 
-use crate::db;
-use crate::loaded_playlist;
-use crate::types::*;
-use std::collections::HashMap;
-use std::ops::Deref;
+/// produces the filter string, for sorting reasons we need the type_vec to be the first n of the types in the original query
+/// where n is the current iteration depth
+fn get_filter_string(
+    new_bunch: &Vec<viola_common::Track>,
+    current_ttype: &TreeType,
+    index: &usize,
+    recursion_depth: usize,
+    type_vec: Vec<TreeType>,
+) -> String {
+    let mut new: Vec<viola_common::Track> = new_bunch.iter().map(|t| (*t).clone()).collect();
+    let new_indices = (0..recursion_depth).collect();
+    let query = TreeViewQuery {
+        types: type_vec,
+        indices: new_indices,
+        search: None,
+    };
+    sort_tracks(&query, &mut new);
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Track {
-    pub value: String,
-    pub optional: Option<i32>,
-}
-
-pub type Album = GeneralTreeViewJson<Track>;
-pub type Artist = GeneralTreeViewJson<Album>;
-
-impl From<(String, Option<i32>)> for Album {
-    fn from(s: (String, Option<i32>)) -> Self {
-        Album {
-            value: s.0,
-            children: vec![],
-            optional: s.1,
-        }
-    }
-}
-
-impl From<String> for Artist {
-    fn from(s: String) -> Self {
-        Artist {
-            value: s,
-            optional: None,
-            children: vec![],
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PartialQueryLevel {
-    pub lvl: PartialQueryLevelEnum,
-    pub search: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "type", content = "content")]
-pub enum PartialQueryLevelEnum {
-    /// We want to get all the possible artists
-    Artist(Vec<String>),
-    /// We want to get all the possible albums. If Some(x), only albums of artist x
-    Album(Vec<String>),
-    /// We want to get all the possible tracks. If Some((x,y)), only tracks in album y or artist x
-    Track(Vec<String>),
-}
-
-/// basic query function to model tracks with the apropiate values selected
-fn basic_tree_query(
-    pql: &PartialQueryLevel,
-) -> crate::schema::tracks::BoxedQuery<diesel::sqlite::Sqlite> {
-    use crate::schema::tracks::dsl::*;
-    use diesel::{ExpressionMethods, QueryDsl, TextExpressionMethods};
-
-    let level = &pql.lvl;
-
-    let mut query = tracks
-        .filter(artist.is_not_null())
-        .filter(artist.ne(""))
-        .into_boxed();
-    if !pql.search.is_empty() {
-        let s = String::from("%") + &pql.search + "%";
-        query = query
-            .filter(artist.like(s.clone()))
-            .or_filter(album.like(s.clone()))
-            .or_filter(title.like(s));
-    }
-
-    match level {
-        PartialQueryLevelEnum::Artist(_) => query.order_by(artist).distinct(),
-        PartialQueryLevelEnum::Album(artist_value) => {
-            if let [a] = artist_value.as_slice() {
-                query.order_by(path).filter(artist.eq(a)).distinct()
-            } else {
-                query.order_by(album)
-            }
-        }
-        PartialQueryLevelEnum::Track(artist_and_album) => {
-            if let [artist_value, album_value] = artist_and_album.as_slice() {
-                query
-                    .order_by(path)
-                    .filter(artist.eq(artist_value))
-                    .filter(album.eq(album_value))
-            } else if let [artist_value, album_value, title_value] = artist_and_album.as_slice() {
-                query
-                    .order_by(path)
-                    .filter(artist.eq(artist_value))
-                    .filter(album.eq(album_value))
-                    .filter(title.eq(title_value))
-            } else {
-                query.order_by(title)
-            }
-        }
-    }
-}
-
-pub fn load_query(pool: &DBPool, pql: &PartialQueryLevel) -> loaded_playlist::LoadedPlaylist {
-    use diesel::RunQueryDsl;
-    let p = pool.lock().expect("Error in lock");
-    let items = basic_tree_query(pql)
-        .load(p.deref())
-        .expect("Error in loading");
-    let name = match &pql.lvl {
-        PartialQueryLevelEnum::Artist(x) => x.first(),
-        PartialQueryLevelEnum::Album(x) => x.first(),
-        PartialQueryLevelEnum::Track(x) => x.first(),
-    }
-    .cloned()
-    .unwrap_or_else(|| "Default".to_string());
-
-    loaded_playlist::LoadedPlaylist {
-        id: -1,
-        name,
-        items,
-        current_position: 0,
-    }
-}
-
-/// Queries the tree but only returns not filled in results, i.e., children might be unpopulated
-pub fn query_partial_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist> {
-    use crate::schema::tracks::dsl::*;
-    use diesel::{QueryDsl, RunQueryDsl};
-    let p = pool.lock().expect("Error in lock");
-    let level = &pql.lvl;
-    let query = basic_tree_query(pql);
-
-    let sql = diesel::debug_query(&query).to_string();
-    info!("query: {}", sql);
-
-    match level {
-        PartialQueryLevelEnum::Artist(_) => {
-            let res = query
-                .select(artist)
-                .order_by(artist)
-                .load(p.deref())
-                .expect("Error in loading");
-            res.into_iter()
-                .map(|s: String| s.into())
-                .collect::<Vec<Artist>>()
-        }
-        PartialQueryLevelEnum::Album(x) => {
-            let res = query
-                .select((album, year))
-                .order_by(year)
-                .distinct()
-                .load(p.deref())
-                .expect("Error in loading album");
-            vec![Artist {
-                value: "Default".to_string(),
-                optional: None,
-                children: res
-                    .into_iter()
-                    .map(|s: (String, Option<i32>)| s.into())
-                    .collect::<Vec<Album>>(),
-            }]
-        }
-        PartialQueryLevelEnum::Track(x) => {
-            let res: Vec<(Option<i32>, String)> = query
-                .select((tracknumber, title))
-                .order_by(tracknumber)
-                .distinct()
-                .load(p.deref())
-                .expect("Error in loading album");
-
-            vec![Artist {
-                value: "Default".to_string(),
-                optional: None,
-                children: vec![Album {
-                    value: "Default".to_string(),
-                    optional: None,
-                    children: res
-                        .into_iter()
-                        .map(|(number, t)| Track {
-                            value: t,
-                            optional: number,
-                        })
-                        .collect::<Vec<Track>>(),
-                }],
-            }]
-        }
-    }
-}
-
-/// Queries the tree with the matching parameters, does not give us partials
-pub fn query_tree(pool: &DBPool, pql: &PartialQueryLevel) -> Vec<Artist> {
-    use diesel::RunQueryDsl;
-    let p = pool.lock().expect("Error in lock");
-    let query = basic_tree_query(pql);
-
-    let mut q_tracks: Vec<db::Track> = query.load(p.deref()).expect("Error in DB");
-
-    //Artist, Album, Track
-    let mut hashmap: HashMap<String, HashMap<String, Vec<db::Track>>> = HashMap::new();
-    for t in q_tracks.drain(0..) {
-        if let Some(ref mut artist_hash) = hashmap.get_mut(&t.artist) {
-            if let Some(ref mut album_vec) = artist_hash.get_mut(&t.album) {
-                album_vec.push(t);
-            } else {
-                let k = t.artist.clone();
-                let v = vec![t];
-                artist_hash.insert(k, v);
-            }
-        } else {
-            let mut v = HashMap::new();
-            let kb = t.album.clone();
-            let ka = t.artist.clone();
-            let v2 = vec![t];
-            v.insert(kb, v2);
-            hashmap.insert(ka, v);
-        }
-    }
-
-    hashmap
-        .drain()
-        .map(|(k, mut m): (String, HashMap<String, Vec<db::Track>>)| {
-            let children = m
-                .drain()
-                .map(|(k2, v): (String, Vec<db::Track>)| Album {
-                    value: k2,
-                    optional: None,
-                    children: v
-                        .into_iter()
-                        .map(|v| Track {
-                            value: v.title,
-                            optional: v.tracknumber,
-                        })
-                        .collect(),
-                })
-                .collect();
-            Artist {
-                value: k,
-                optional: None,
-                children,
-            }
+    let full_unique: Vec<&String> = new
+        .iter()
+        .map(|t| match current_ttype {
+            TreeType::Artist => &t.artist,
+            TreeType::Album => &t.album,
+            TreeType::Track => &t.title,
+            TreeType::Genre => &t.genre,
         })
-        .collect::<Vec<Artist>>()
+        .unique()
+        .collect();
+    //println!("full unique {:?}", &full_unique);
+
+    let st = (*full_unique.get(*index).unwrap()).to_owned();
+    //let st = full_unique.get(*index).unwrap().clone().clone();
+
+    st
 }
 
-// TODO This could be much more general by having the fill_fn in general
-// TODO Try to make this iterator stuff, at the moment it doesn't need json
-// TODO we need to not have the empty strings for stuff around
-/*
-pub fn get_artist_trees(pool: &DBPool) -> Vec<Artist> {
-    use crate::schema::tracks::dsl::*;
-    use diesel::{ExpressionMethods, GroupByDsl, QueryDsl, RunQueryDsl, TextExpressionMethods};
-    let p = pool.lock().expect("Error in lock");
-    tracks
-        .select(artist)
-        .filter(artist.is_not_null())
-        .filter(artist.ne(""))
-        .distinct()
-        .order_by(artist)
-        .load(p.deref())
-        .expect("Error in DB")
-        .into_iter()
-        .map(move |t| track_to_artist(t, p.deref()))
-        .take(10)
+fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Track> {
+    //this function is currently to difficult to implement in diesel as we cannot clone boxed ty pes and otherwise we can cyclic type error
+    let mut current_tracks = if let Some(ref search_string) = query.search {
+        tracks
+            .filter(artist.like(String::from("%") + &search_string + "%"))
+            .or_filter(album.like(String::from("%") + &search_string + "%"))
+            .or_filter(title.like(String::from("%") + &search_string + "%"))
+            .load::<viola_common::Track>(db.lock().unwrap().deref())
+            .unwrap()
+    } else {
+        tracks
+            .filter(artist.ne(""))
+            .load::<viola_common::Track>(db.lock().unwrap().deref())
+            .unwrap()
+    };
+
+    for (recursion_depth, (index, current_ttype)) in
+        izip!(query.indices.iter(), query.types.iter(),).enumerate()
+    {
+        let filter_value = get_filter_string(
+            &current_tracks,
+            &current_ttype,
+            index,
+            recursion_depth,
+            query.types.clone(),
+        );
+
+        current_tracks = match current_ttype {
+            TreeType::Artist => current_tracks
+                .into_iter()
+                .filter(|t| t.artist == filter_value)
+                .collect(),
+            TreeType::Album => current_tracks
+                .into_iter()
+                .filter(|t| t.album == filter_value)
+                .collect(),
+            TreeType::Track => current_tracks
+                .into_iter()
+                .filter(|t| t.title == filter_value)
+                .collect(),
+            TreeType::Genre => current_tracks
+                .into_iter()
+                .filter(|t| t.genre == filter_value)
+                .collect(),
+        };
+    }
+    sort_tracks(query, &mut current_tracks);
+
+    current_tracks
+}
+
+/// sorts the tracks according to the treeviewquery we have
+fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
+    if query.indices.is_empty() {
+        match query.types.get(0) {
+            Some(&TreeType::Artist) => t.sort_by_cached_key(|t| t.artist.to_owned()),
+            Some(&TreeType::Album) => t.sort_by_cached_key(|t| t.album.to_owned()),
+            Some(&TreeType::Genre) => t.sort_by_cached_key(|t| t.genre.to_owned()),
+            Some(&TreeType::Track) => t.sort_by_cached_key(|t| t.title.to_owned()),
+            None => t.sort_by_cached_key(|t| t.artist.to_owned()),
+        }
+    } else if query.indices.len() == 1
+        && query.types.get(0) == Some(&TreeType::Artist)
+        && query.types.get(1) == Some(&TreeType::Album)
+    {
+        t.sort_unstable_by_key(|t| t.year);
+    } else if query.indices.len() == 2
+        && query.types.get(0) == Some(&viola_common::TreeType::Artist)
+        && query.types.get(1) == Some(&viola_common::TreeType::Album)
+        && query.types.get(2) == Some(&viola_common::TreeType::Track)
+    {
+        t.sort_unstable_by_key(|t| t.tracknumber);
+    }
+}
+
+/// custom strings that appear in the partial query view
+fn track_to_partial_string(query: &TreeViewQuery, t: viola_common::Track) -> String {
+    if query.indices.is_empty() {
+        match query.types.get(0) {
+            Some(TreeType::Artist) => t.artist,
+            Some(TreeType::Album) => t.album,
+            Some(TreeType::Track) => t.title,
+            Some(TreeType::Genre) => t.genre,
+            None => "None".to_string(),
+        }
+    } else if query.indices.len() == 1
+        && query.types.get(0) == Some(&viola_common::TreeType::Artist)
+        && query.types.get(1) == Some(&viola_common::TreeType::Album)
+    {
+        format!("{}-{}", t.year.unwrap_or(0), t.album)
+    } else if query.indices.len() == 2
+        && query.types.get(0) == Some(&viola_common::TreeType::Artist)
+        && query.types.get(1) == Some(&viola_common::TreeType::Album)
+        && query.types.get(2) == Some(&viola_common::TreeType::Track)
+    {
+        format!("{}-{}", t.tracknumber.unwrap_or(0), t.title)
+    } else {
+        let last = query
+            .indices
+            .iter()
+            .zip(query.types.iter())
+            .last()
+            .unwrap()
+            .1;
+        match *last {
+            TreeType::Artist => t.artist,
+            TreeType::Album => t.album,
+            TreeType::Track => t.title,
+            TreeType::Genre => t.genre,
+        }
+    }
+}
+
+pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
+    let t = basic_get_tracks(db, query);
+    t.into_iter()
+        .map(|t| track_to_partial_string(query, t))
+        .unique()
         .collect()
 }
-*/
+
+/// produces a LoadedPlaylist frrom a treeviewquery
+pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
+    let t = basic_get_tracks(db, query);
+    LoadedPlaylist {
+        id: -1,
+        name: "Foo".to_string(),
+        current_position: 0,
+        items: t,
+    }
+}

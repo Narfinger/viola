@@ -1,15 +1,15 @@
-use crate::schema::tracks::dsl::*;
 use diesel::sqlite::Sqlite;
 use diesel::{QueryDsl, RunQueryDsl};
 use preferences::prefs_base_dir;
 use rand::prelude::*;
 use std::fs;
 use std::ops::Deref;
+use viola_common::schema::tracks::dsl::*;
 
 use crate::db;
-use crate::db::Track;
 use crate::loaded_playlist::LoadedPlaylist;
 use crate::types::*;
+use viola_common::Track;
 
 #[derive(Debug)]
 pub struct SmartPlaylist {

@@ -2,25 +2,20 @@ name: CI
 on: [push]
 jobs:
   build_rust:
-    name: Rust project
-    runs-on: ubuntu-latest
+    name: "Rust Project"
+    runs-on: "ubuntu-20.04"
     steps:
-      - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+          override: true
+      - uses: davidB/rust-cargo-make@v1
+      - uses: actions/checkout@v1
       - run: sudo apt update
-      - run: sudo apt install libgstreamer1.0-dev gnome-devel libsoup2.4-dev libwebkit2gtk-4.0-dev libtag1-dev libtagc0-dev
-      - run: cargo build --release --all-features
-  build_web:
-    name: Build NPM
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '12.x'
-      - run: npm install
-        working-directory: "web_gui"
-      - run: npm run build
-        working-directory: "web_gui"
+      - run: sudo apt install libgstreamer1.0-dev gnome-devel libsoup2.4-dev libtag1-dev libtagc0-dev npm libwebkit2gtk-4.0-dev
+      - name: "NPM Install"
+        working-directory: "web_gui_seed"
+        run: npm install
+      - run: rustup target add wasm32-unknown-unknown
+      - run: cargo install wasm-bindgen-cli
+      - run: cargo make ci-flow

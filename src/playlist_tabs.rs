@@ -15,9 +15,9 @@ pub struct PlaylistTabs {
 }
 
 pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
-    let mut pls = restore_playlists(pool)?;
+    let pls = restore_playlists(pool);
     if pls.is_empty() {
-        use crate::smartplaylist_parser::LoadSmartPlaylist;
+        //use crate::smartplaylist_parser::LoadSmartPlaylist;
         //pls.push(crate::smartplaylist_parser::construct_smartplaylists_from_config()[0].load(pool));
     }
     let converted_pls: Vec<LoadedPlaylistPtr> = pls.into_iter().map(RwLock::new).collect();
@@ -33,6 +33,7 @@ pub trait PlaylistTabsExt {
     fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T;
     fn delete(&self, _: &DBPool, _: usize);
     fn items(&self) -> String;
+    fn items_for(&self, index: usize) -> String;
     fn current_tab(&self) -> usize;
     fn current_playing_in(&self) -> usize;
     fn update_current_playing_in(&self);
@@ -62,9 +63,9 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
             }
 
             // delete in database
-            use crate::schema::playlists::dsl::*;
             use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
             use std::ops::Deref;
+            use viola_common::schema::playlists::dsl::*;
             let db = pool.lock().expect("DB Error");
 
             diesel::delete(playlists.filter(id.eq(lp.read().unwrap().id)))
@@ -78,6 +79,14 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
         let i = self.read().unwrap().current_pl;
         let cur = self.read().unwrap();
         let pl = cur.pls.get(i).unwrap();
+        let items = items(&pl);
+        serde_json::to_string(&*items).unwrap()
+    }
+
+    fn items_for(&self, index: usize) -> String {
+        use crate::loaded_playlist::items;
+        let cur = self.read().unwrap();
+        let pl = cur.pls.get(index).unwrap();
         let items = items(&pl);
         serde_json::to_string(&*items).unwrap()
     }
@@ -97,7 +106,7 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
 }
 
 impl LoadedPlaylistExt for PlaylistTabsPtr {
-    fn get_current_track(&self) -> crate::db::Track {
+    fn get_current_track(&self) -> viola_common::Track {
         self.current(LoadedPlaylistExt::get_current_track)
         //value.get_current_track()
     }
@@ -146,7 +155,7 @@ impl PlaylistControls for PlaylistTabsPtr {
         value.set(index)
     }
 
-    fn delete_range(&self, range: crate::types::Range) {
+    fn delete_range(&self, range: std::ops::Range<usize>) {
         let i = self.read().unwrap().current_pl;
         let cur = self.read().unwrap();
         let value = cur.pls.get(i).unwrap();

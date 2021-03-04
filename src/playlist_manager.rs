@@ -65,8 +65,8 @@ fn signalhandler(
 }
 
 fn add_playlist(db: &DBPool, sm: &[SmartPlaylist], index: i32) -> LoadedPlaylist {
-    use crate::schema::playlists::dsl::*;
-    use crate::schema::tracks::dsl::*;
+    use viola_common::schema::playlists::dsl::*;
+    use viola_common::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
     info!("You selected index: {}", index);

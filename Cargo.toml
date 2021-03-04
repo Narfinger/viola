@@ -7,10 +7,10 @@ edition = "2018"
 
 [dependencies]
 actix = "0.10"
-actix-rt = "1.1"
-actix-web = "3.1"
+actix-rt = "2.1"
+actix-web = "3.3"
 actix-web-actors="3.0"
-actix-files = "0.4"         # Static files support for actix web.
+actix-files = "0.5"         # Static files support for actix web.
 app_dirs = "1.2"         # Put your app's data in the right place on every platform
 base64 = "0.13"
 clap = "2.33"                    # A simple to use, efficient, and full featured  Command Line Argument Parser
@@ -21,13 +21,13 @@ error-chain = "0.12"
 futures = "0.3"
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 env_logger = "0.8"
-indicatif = "0.15"
+indicatif = {version = "0.15", features = ["rayon"]}
 image = "0.23"
-humantime = "2.0"
+humantime = "2.1"
 #jwalk = "0.4"    # A progress bar and cli reporting library for Rust
 taglib = "1.0"        # Rust bindings for TagLib
-gstreamer = "0.15"               # Rust bindings for GStreamer
-glib = "0.9"
+gstreamer = "0.16"               # Rust bindings for GStreamer
+glib = "0.10"
 percent-encoding = "2.1"
 preferences = "1.1"         # Read and write user-specific application data (in stable Rust)
 rayon = "1.5"               # Simple work-stealing parallelism for Rust
@@ -35,9 +35,13 @@ serde_derive = "1.0"                   # Macros 1.1 implementation of #[derive(S
 serde_json = "1.0"
 serde = "1.0"                      # A generic serialization/deserialization framework
 open = "1.4"
-rand = "0.7"
+rand = "0.8"
 rusqlite = "0.23"
 toml = "0.5"
 owning_ref = "0.4"
 walkdir = "2"
-web-view = "0.6"
+web-view = "0.7"
+viola_common = {path ="viola_common", features =["backend"]}
+itertools = "0.10"
+zbus = "1.8.0"
+bus = "2.2.3"

@@ -1,18 +1,22 @@
 use crate::glib::ObjectExt;
-use gstreamer::{ElementExt, ElementExtManual, GstBinExtManual, GstObjectExt};
-use std::sync::atomic::{AtomicBool, Ordering};
+use gstreamer::{ElementExt, ElementExtManual, GstObjectExt};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::Arc;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    RwLock,
+};
 
 use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls};
 //use crate::playlist_tabs::PlaylistControlsImmutable;
 use crate::types::*;
+use viola_common::{GStreamerAction, GStreamerMessage};
 
 pub struct GStreamer {
     element: gstreamer::Element,
     current_playlist: PlaylistTabsPtr,
     /// Handles gstreamer changes to the gui
-    sender: SyncSender<GStreamerMessage>,
+    sender: bus::Bus<GStreamerMessage>,
     pool: DBPool,
     repeat_once: AtomicBool,
 }
@@ -25,75 +29,25 @@ impl Drop for GStreamer {
     }
 }
 
-#[derive(Debug, Serialize, Eq, PartialEq)]
-pub enum GStreamerMessage {
-    Pausing,
-    Stopped,
-    Playing,
-    Nop,
-    ChangedDuration((u64, u64)), //in seconds
-}
-
-/// Tells the GuiPtr and the gstreamer what action is performed. Splits the GuiPtr and the backend a tiny bit
-#[derive(Debug, Eq, Serialize, Deserialize, PartialEq)]
-#[serde(tag = "t", content = "c")]
-pub enum GStreamerAction {
-    Next,
-    Playing,
-    Pausing,
-    Previous,
-    Stop,
-    /// This means we selected one specific track
-    Play(usize),
-    Seek(u64),
-    RepeatOnce, // Repeat the current playing track after it finishes
-}
-
-impl From<GStreamerAction> for GStreamerMessage {
-    fn from(action: GStreamerAction) -> Self {
-        match action {
-            GStreamerAction::Pausing => GStreamerMessage::Pausing,
-            GStreamerAction::Stop => GStreamerMessage::Stopped,
-            GStreamerAction::Seek(_) | GStreamerAction::RepeatOnce => GStreamerMessage::Nop,
-            GStreamerAction::Next
-            | GStreamerAction::Previous
-            | GStreamerAction::Play(_)
-            | GStreamerAction::Playing => GStreamerMessage::Playing,
-        }
-    }
-}
-
-impl From<gstreamer::State> for GStreamerMessage {
-    fn from(state: gstreamer::State) -> GStreamerMessage {
-        match state {
-            gstreamer::State::VoidPending => GStreamerMessage::Stopped,
-            gstreamer::State::Null => GStreamerMessage::Stopped,
-            gstreamer::State::Ready => GStreamerMessage::Stopped,
-            gstreamer::State::Paused => GStreamerMessage::Pausing,
-            gstreamer::State::Playing => GStreamerMessage::Playing,
-            _ => GStreamerMessage::Stopped,
-        }
-    }
-}
-
 pub fn new(
     current_playlist: PlaylistTabsPtr,
     pool: DBPool,
-) -> Result<(Arc<GStreamer>, Receiver<GStreamerMessage>), String> {
+    msg_bus: bus::Bus<GStreamerMessage>,
+) -> Result<Arc<RwLock<GStreamer>>, String> {
     gstreamer::init().unwrap();
     let element = {
         let playbin = gstreamer::ElementFactory::make("playbin", None)
             .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        let audioconvert1 = gstreamer::ElementFactory::make("audioconvert", None)
-            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        let rgvolume = gstreamer::ElementFactory::make("rgvolume", None)
-            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        let audioconvert2 = gstreamer::ElementFactory::make("audioconvert", None)
-            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        let audioresample = gstreamer::ElementFactory::make("audioresample", None)
-            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        let autoaudiosink = gstreamer::ElementFactory::make("autoaudiosink", None)
-            .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+        //let audioconvert1 = gstreamer::ElementFactory::make("audioconvert", None)
+        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+        //let rgvolume = gstreamer::ElementFactory::make("rgvolume", None)
+        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+        //let audioconvert2 = gstreamer::ElementFactory::make("audioconvert", None)
+        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+        //let audioresample = gstreamer::ElementFactory::make("audioresample", None)
+        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
+        //let autoaudiosink = gstreamer::ElementFactory::make("autoaudiosink", None)
+        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
 
         playbin
             .set_property("volume", &0.5)
@@ -108,17 +62,15 @@ pub fn new(
         //    .expect("elements could not be linked");
         playbin
     };
-    let (tx, rx) = sync_channel::<GStreamerMessage>(1);
-
     let bus = element.get_bus().unwrap();
-    let res = Arc::new(GStreamer {
-        element: element,
+    let res = Arc::new(RwLock::new(GStreamer {
+        element,
         //pipeline,
         current_playlist,
-        sender: tx,
+        sender: msg_bus,
         pool,
         repeat_once: AtomicBool::new(false),
-    });
+    }));
 
     let resc = res.clone();
     std::thread::spawn(move || {
@@ -127,7 +79,7 @@ pub fn new(
             match msg.view() {
                 MessageView::Eos(..) => {
                     warn!("We found an eos on the bus!");
-                    resc.gstreamer_handle_eos()
+                    resc.write().unwrap().gstreamer_handle_eos()
                 }
                 MessageView::Error(err) => println!(
                     "Error from {:?}: {} ({:?})",
@@ -145,19 +97,19 @@ pub fn new(
 
     //let resc = res.clone();
     //glin::timeout_add(250, move || resc.gstreamer_update_gui());
-    Ok((res, rx))
+    Ok(res)
 }
 
 pub trait GStreamerExt {
-    fn do_gstreamer_action(&self, _: GStreamerAction);
+    fn do_gstreamer_action(&mut self, _: GStreamerAction);
     fn gstreamer_update_gui(&self) -> glib::Continue;
-    fn gstreamer_handle_eos(&self);
+    fn gstreamer_handle_eos(&mut self);
     fn get_state(&self) -> GStreamerMessage;
     fn get_elapsed(&self) -> Option<u64>;
 }
 
 impl GStreamerExt for GStreamer {
-    fn do_gstreamer_action(&self, action: GStreamerAction) {
+    fn do_gstreamer_action(&mut self, action: GStreamerAction) {
         info!("Gstreamer action {:?}", action);
 
         //everytime we call return, we do not want to send the message we got to the gui, as it will be done in a subcall we have done
@@ -241,14 +193,17 @@ impl GStreamerExt for GStreamer {
                     return;
                 }
             }
-            GStreamerAction::Seek(u64) => {
-                panic!("NYI");
+            GStreamerAction::Seek(pos) => {
+                let time = gstreamer::ClockTime::from_seconds(pos);
+                self.element
+                    .seek_simple(gstreamer::SeekFlags::FLUSH, time)
+                    .expect("Error in seeking");
             }
             GStreamerAction::RepeatOnce => {
                 self.repeat_once.store(true, Ordering::SeqCst);
             }
         }
-        self.sender.send(action.into()).expect("Error in sending");
+        self.sender.broadcast(action.into());
     }
 
     /// poll the message bus and on eos start new
@@ -256,7 +211,7 @@ impl GStreamerExt for GStreamer {
         glib::Continue(true)
     }
 
-    fn gstreamer_handle_eos(&self) {
+    fn gstreamer_handle_eos(&mut self) {
         use crate::db::UpdatePlayCount;
         info!("Handling EOS");
 
@@ -280,11 +235,15 @@ impl GStreamerExt for GStreamer {
         }
     }
 
-    fn get_state(&self) -> GStreamerMessage {
-        self.element
-            .get_state(gstreamer::ClockTime(Some(5)))
-            .1
-            .into()
+    fn get_state(&self) -> viola_common::GStreamerMessage {
+        match self.element.get_state(gstreamer::ClockTime(Some(5))).1 {
+            gstreamer::State::VoidPending => GStreamerMessage::Stopped,
+            gstreamer::State::Null => GStreamerMessage::Stopped,
+            gstreamer::State::Ready => GStreamerMessage::Stopped,
+            gstreamer::State::Paused => GStreamerMessage::Pausing,
+            gstreamer::State::Playing => GStreamerMessage::Playing,
+            _ => GStreamerMessage::Stopped,
+        }
     }
 
     fn get_elapsed(&self) -> Option<u64> {

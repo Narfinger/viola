@@ -1,5 +1,5 @@
 /*
-use crate::db::Track;
+use viola_common::Track;
 use crate::loaded_playlist::LoadedPlaylist;
 use gdk;
 use gtk;
@@ -13,7 +13,7 @@ use std::string::String;
 use crate::types::*;
 
 pub fn new(db: &DBPool, builder: &BuilderPtr, gui: &MainGuiPtr) {
-    use crate::schema::tracks::dsl::*;
+    use viola_common::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
     let albumview: gtk::TreeView = builder.read().unwrap().get_object("albumview").unwrap();
@@ -174,7 +174,7 @@ fn get_tracks_for_selection(
     db: &DBPool,
     tv: &gtk::TreeView,
 ) -> Result<(String, Vec<Track>), String> {
-    use crate::schema::tracks::dsl::*;
+    use viola_common::schema::tracks::dsl::*;
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
     let (m, iter) = get_model_and_iter_for_selection(tv);

@@ -1,0 +1,17 @@
+[package]
+name = "web_gui_seed"
+version = "0.1.0"
+authors = ["Narfinger <narfinger@noreply.github.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+seed = "0.8.0"
+serde_derive = "1.0"                   # Macros 1.1 implementation of #[derive(Serialize, Deserialize)]
+serde_json = "1.0"
+serde = "1.0"
+indextree = "4.3"
+viola_common = { path = "../viola_common" }
+wee_alloc = "0.4"
+console_error_panic_hook = "0.1.6"

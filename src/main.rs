@@ -1,12 +1,16 @@
+#![recursion_limit = "4096"]
 #[macro_use]
 extern crate actix_web;
 extern crate app_dirs;
 extern crate base64;
+extern crate bus;
 #[macro_use]
 extern crate clap;
+extern crate zbus;
 #[macro_use]
 extern crate diesel;
-#[macro_use] extern crate diesel_migrations;
+#[macro_use]
+extern crate diesel_migrations;
 extern crate env_logger;
 #[macro_use]
 extern crate log;
@@ -22,14 +26,15 @@ extern crate rayon;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
 extern crate rusqlite;
+extern crate serde_json;
 extern crate toml;
 extern crate walkdir;
 //extern crate jwalk;
 
 pub mod albumviewstore;
 pub mod db;
+pub mod dbus_interface;
 pub mod gstreamer_wrapper;
 pub mod libraryviewstore;
 pub mod loaded_playlist;
@@ -39,15 +44,14 @@ pub mod my_websocket;
 pub mod playlist;
 pub mod playlist_manager;
 pub mod playlist_tabs;
-pub mod schema;
 pub mod smartplaylist_parser;
 pub mod types;
 pub mod utils;
 
 use clap::{App, Arg};
 use preferences::{prefs_base_dir, AppInfo, Preferences, PreferencesMap};
+use std::sync::{mpsc, Arc, Mutex};
 use std::{env, io};
-use std::sync::{Arc, Mutex};
 
 const APP_INFO: AppInfo = AppInfo {
     name: "viola",
@@ -112,6 +116,7 @@ async fn main() -> io::Result<()> {
         return Ok(());
     }
     let pool = Arc::new(Mutex::new(tmp_pool.unwrap()));
+    let (tx, rx) = mpsc::channel::<actix_web::dev::Server>();
     if matches.is_present("update") {
         info!("Updating Database");
         if let Ok(preferences) = PreferencesMap::<String>::load(&APP_INFO, PREFS_KEY) {
@@ -150,17 +155,17 @@ async fn main() -> io::Result<()> {
         path.extend(&["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else if matches.is_present("no-webview") {
+        let sys = actix_web::rt::System::new("test");
         //println!("Trying main");
         //std::thread::spawn(|| {
         //println!("Starting web service");
-        maingui_web::run(pool).await.expect("Error running server");
+        maingui_web::run(pool, tx).await.expect("Error in waiting");
     //});
     } else {
         std::thread::spawn(|| {
-            let mut sys = actix_rt::System::new("test");
+            let sys = actix_web::rt::System::new("test");
             println!("Starting web service");
-            let srv = maingui_web::run(pool);
-            sys.block_on(srv)
+            let srv = maingui_web::run(pool, tx);
         });
         std::thread::sleep(std::time::Duration::from_secs(1));
 

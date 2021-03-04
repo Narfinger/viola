@@ -2,8 +2,8 @@ use app_dirs::*;
 use gstreamer::Element;
 use std::sync::{Arc, Mutex, RwLock};
 
-use crate::gstreamer_wrapper::GStreamerMessage;
 use crate::loaded_playlist::LoadedPlaylist;
+use viola_common::GStreamerMessage;
 //use crate::maingui::MainGui;
 use crate::playlist_tabs::PlaylistTabs;
 
@@ -26,14 +26,6 @@ pub type DBPool = Arc<Mutex<diesel::SqliteConnection>>;
 pub type PlaylistTabsPtr = Arc<RwLock<PlaylistTabs>>;
 pub type LoadedPlaylistPtr = RwLock<LoadedPlaylist>;
 
-/// General type to communicate with treeviews
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GeneralTreeViewJson<T> {
-    pub value: String,
-    pub children: Vec<T>,
-    pub optional: Option<i32>,
-}
-
 pub enum PlayerStatus {
     Playing,
     Paused,
@@ -53,29 +45,7 @@ impl From<GStreamerMessage> for PlayerStatus {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Range {
-    pub from: usize,
-    pub to: Option<usize>,
-}
-
-impl std::fmt::Display for Range {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "({}, {})",
-            self.from,
-            self.to.map_or(String::from("infty"), |s| s.to_string())
-        )
-    }
-}
-
 #[derive(Debug, Deserialize)]
 pub struct ChangePlaylistTabJson {
-    pub index: usize,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct LoadSmartPlaylistJson {
     pub index: usize,
 }
