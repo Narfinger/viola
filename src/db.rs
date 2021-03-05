@@ -4,11 +4,17 @@ use diesel::{Connection, SqliteConnection};
 use indicatif::ParallelProgressIterator;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use std::collections::HashSet;
-use std::iter::FromIterator;
 use std::ops::Deref;
 use std::path::Path;
+use std::{collections::HashMap, iter::FromIterator};
+use std::{collections::HashSet, fs::File};
 use std::{thread, time};
+use symphonia::core::{io::MediaSourceStreamOptions, meta::StandardTagKey};
+use symphonia_core::{
+    formats::FormatOptions,
+    io::{MediaSourceStream, MediaSourceStreamOptions},
+    meta::{MetadataOptions, MetadataReader},
+};
 use viola_common::schema::tracks;
 use viola_common::Track;
 use walkdir::DirEntry;
@@ -127,29 +133,50 @@ fn convert_to_i32_option(u: Option<u32>) -> Option<i32> {
 }
 
 fn construct_track_from_path(s: &str) -> NewTrack {
-    let taglibfile = taglib::File::new(&s);
-    if let Ok(ataglib) = taglibfile {
-        let tags = ataglib
-            .tag()
-            .unwrap_or_else(|e| panic!(format!("Could not read tags for: {}. {:?}", s, e)));
-        let properties = ataglib
-            .audioproperties()
-            .unwrap_or_else(|_| panic!(format!("Could not find audio properties for: {}", s)));
-        let album = get_album_file(&s);
-        //tracknumber and year return 0 if none set
-        NewTrack {
-            title: tags.title().unwrap_or_default(),
-            artist: tags.artist().unwrap_or_default(),
-            album: tags.album().unwrap_or_default(),
-            genre: tags.genre().unwrap_or_default(),
-            tracknumber: convert_to_i32_option(tags.track()),
-            year: convert_to_i32_option(tags.year()),
-            path: s.to_string(),
-            length: properties.length() as i32,
-            albumpath: album,
-        }
-    } else {
-        panic!(format!("Taglib could not open file: {}", s));
+    use symphonia;
+    use symphonia::core::codecs::DecoderOptions;
+    use symphonia::core::errors::{Error, Result};
+    use symphonia::core::formats::{Cue, FormatOptions, FormatReader, SeekTo, Stream};
+    use symphonia::core::io::{MediaSource, MediaSourceStream, ReadOnlySource};
+    use symphonia::core::meta::{ColorMode, MetadataOptions, Tag, Value, Visual};
+    use symphonia::core::probe::{Hint, ProbeResult};
+    use symphonia::core::units::{Duration, Time};
+    let file = File::open(&s).expect("error opening file");
+    let mut source = MediaSourceStream::new(Box::new(file), MediaSourceStreamOptions::default());
+    let format_opts: FormatOptions = Default::default();
+    let metadata_opts: MetadataOptions = Default::default();
+
+    let mut hint = Hint::new();
+    let mut probed = symphonia::default::get_probe()
+        .format(&hint, source, &format_opts, &metadata_opts)
+        .expect("Error in probing");
+
+    let tags = probed
+        .format
+        .metadata()
+        .current()
+        .expect("No metadata")
+        .tags();
+    let hashset: HashMap<StandardTagKey, symphonia::core::meta::Value> = tags
+        .iter()
+        .filter(|tag| tag.std_key.is_some())
+        .map(|tag| (tag.std_key.unwrap(), tag.value))
+        .collect();
+
+    let album = get_album_file(&s);
+    NewTrack {
+        title: hashset
+            .get(StandardTagKey::TrackTitle)
+            .unwrap_or_default()
+            .into(),
+        artist: hashset.get(StandardTagKey::Artist).unwrap_or_default(),
+        album: hashset.get(StandardTagKey::Album).unwrap_or_default(),
+        genre: hashset.get(StandardTagKey::Genre).unwrap_or_default(),
+        tracknumber: hashset.get(StandardTagKey::TrackNumber).unwrap_or_default(),
+        year: hashset.get(StandardTagKey::Date).unwrap_or_default(),
+        path: s.to_string(),
+        length: 0,
+        albumpath: album,
     }
 }
 
