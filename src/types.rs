@@ -12,6 +12,8 @@ pub const APP_INFO: AppInfo = AppInfo {
     author: "Narfinger",
 };
 
+pub const PREFS_KEY: &str = "viola_prefs";
+
 pub const LENGTH_COLUMN: i32 = 4;
 pub const YEAR_COLUMN: i32 = 5;
 pub const PLAYCOUNT_COLUMN: i32 = 7;

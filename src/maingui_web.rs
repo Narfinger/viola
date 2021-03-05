@@ -212,9 +212,7 @@ async fn change_playlist_tab(
     index: web::Json<usize>,
     _: HttpRequest,
 ) -> HttpResponse {
-    let max = state.playlist_tabs.read().unwrap().pls.len();
-    info!("setting to: {}, max: {}", index, max - 1);
-    state.playlist_tabs.write().unwrap().current_pl = std::cmp::min(max - 1, index.into_inner());
+    state.playlist_tabs.set_tab(index.into_inner());
     my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
@@ -284,7 +282,7 @@ fn handle_gstreamer_messages(
     loop {
         //println!("loop is working");
         if let Ok(msg) = rx.try_recv() {
-            println!("received message: {:?}", msg);
+            println!("received gstreamer message on own bus: {:?}", msg);
             match msg {
                 viola_common::GStreamerMessage::Playing => {
                     let pos = state.playlist_tabs.current_position();

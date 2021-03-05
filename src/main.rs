@@ -32,7 +32,6 @@ extern crate toml;
 extern crate walkdir;
 //extern crate jwalk;
 
-pub mod albumviewstore;
 pub mod db;
 pub mod dbus_interface;
 pub mod gstreamer_wrapper;
@@ -42,7 +41,6 @@ pub mod maingui;
 pub mod maingui_web;
 pub mod my_websocket;
 pub mod playlist;
-pub mod playlist_manager;
 pub mod playlist_tabs;
 pub mod smartplaylist_parser;
 pub mod types;
@@ -52,12 +50,6 @@ use clap::{App, Arg};
 use preferences::{prefs_base_dir, AppInfo, Preferences, PreferencesMap};
 use std::sync::{mpsc, Arc, Mutex};
 use std::{env, io};
-
-const APP_INFO: AppInfo = AppInfo {
-    name: "viola",
-    author: "narfinger",
-};
-const PREFS_KEY: &str = "viola_prefs";
 
 #[actix_rt::main]
 async fn main() -> io::Result<()> {
@@ -119,7 +111,9 @@ async fn main() -> io::Result<()> {
     let (tx, rx) = mpsc::channel::<actix_web::dev::Server>();
     if matches.is_present("update") {
         info!("Updating Database");
-        if let Ok(preferences) = PreferencesMap::<String>::load(&APP_INFO, PREFS_KEY) {
+        if let Ok(preferences) =
+            PreferencesMap::<String>::load(&crate::types::APP_INFO, crate::types::PREFS_KEY)
+        {
             if let Some(music_dir) = preferences.get("music_dir") {
                 db::build_db(music_dir, &pool, true).unwrap();
             } else {
@@ -138,7 +132,7 @@ async fn main() -> io::Result<()> {
         let mut prefs = PreferencesMap::<String>::new();
         prefs.insert(String::from("music_dir"), String::from(new_music_dir));
         prefs
-            .save(&APP_INFO, PREFS_KEY)
+            .save(&crate::types::APP_INFO, crate::types::PREFS_KEY)
             .expect("Error in saving preferences");
         info!("saved music directory");
     } else if matches.is_present("configpath") {

@@ -5,11 +5,13 @@ use crate::loaded_playlist::{
     LoadedPlaylist, LoadedPlaylistExt, PlaylistControls, SavePlaylistExt,
 };
 use crate::playlist::restore_playlists;
+use crate::preferences::Preferences;
 use crate::types::*;
+use preferences::PreferencesMap;
 
 #[derive(Debug, Serialize)]
 pub struct PlaylistTabs {
-    pub current_pl: usize,
+    current_pl: usize,
     pub current_playing_in: usize,
     pub pls: Vec<LoadedPlaylistPtr>,
 }
@@ -21,11 +23,13 @@ pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
         //pls.push(crate::smartplaylist_parser::construct_smartplaylists_from_config()[0].load(pool));
     }
     let converted_pls: Vec<LoadedPlaylistPtr> = pls.into_iter().map(RwLock::new).collect();
-    Ok(Arc::new(RwLock::new(PlaylistTabs {
+    let pls_struct = Arc::new(RwLock::new(PlaylistTabs {
         current_pl: 0,
         current_playing_in: 0,
         pls: converted_pls,
-    })))
+    }));
+    pls_struct.restore_tab_position();
+    Ok(pls_struct)
 }
 
 pub trait PlaylistTabsExt {
@@ -37,6 +41,9 @@ pub trait PlaylistTabsExt {
     fn current_tab(&self) -> usize;
     fn current_playing_in(&self) -> usize;
     fn update_current_playing_in(&self);
+    fn set_tab(&self, index: usize);
+    fn restore_tab_position(&self);
+    fn save_tab_position(&self);
 }
 
 impl PlaylistTabsExt for PlaylistTabsPtr {
@@ -102,6 +109,35 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
     fn update_current_playing_in(&self) {
         let cur = self.read().unwrap().current_pl;
         self.write().unwrap().current_playing_in = cur;
+    }
+
+    fn set_tab(&self, index: usize) {
+        let max = self.read().unwrap().pls.len();
+        self.write().unwrap().current_pl = std::cmp::min(max - 1, index);
+        self.save_tab_position();
+    }
+
+    fn restore_tab_position(&self) {
+        self.write().unwrap().current_pl =
+            PreferencesMap::<String>::load(&crate::types::APP_INFO, crate::types::PREFS_KEY)
+                .ok()
+                .and_then(|m| m.get("tab").cloned())
+                .and_then(|t| t.parse::<usize>().ok())
+                .unwrap_or(0);
+    }
+
+    fn save_tab_position(&self) {
+        if let Ok(mut prefs) =
+            PreferencesMap::<String>::load(&crate::types::APP_INFO, crate::types::PREFS_KEY)
+        {
+            prefs.insert(
+                String::from("tab"),
+                self.read().unwrap().current_pl.to_string(),
+            );
+            prefs
+                .save(&crate::types::APP_INFO, crate::types::PREFS_KEY)
+                .expect("Error in writing prefs");
+        }
     }
 }
 

@@ -251,7 +251,7 @@ fn main(
     let mut bus = bus;
     loop {
         if let Err(err) = object_server.try_handle_next() {
-            println!("working message");
+            println!("working on dbus message");
             eprintln!("{}", err);
         }
         if let Ok(_) = bus.try_recv() {
