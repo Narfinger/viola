@@ -3,7 +3,6 @@ use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 use diesel::Connection;
 use std::io;
-use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::thread;

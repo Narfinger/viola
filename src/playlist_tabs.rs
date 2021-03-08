@@ -1,5 +1,5 @@
 use std::sync::{Arc, RwLock};
-use std::{cmp::max, path::PathBuf};
+use std::{cmp::min, path::PathBuf};
 
 use crate::loaded_playlist::{
     LoadedPlaylist, LoadedPlaylistExt, PlaylistControls, SavePlaylistExt,
@@ -118,7 +118,8 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
     }
 
     fn restore_tab_position(&self) {
-        self.write().unwrap().current_pl = max(
+        //we need to split this because of how the allocation of the locks work
+        let val = min(
             PreferencesMap::<String>::load(&crate::types::APP_INFO, crate::types::PREFS_KEY)
                 .ok()
                 .and_then(|m| m.get("tab").cloned())
@@ -126,6 +127,8 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
                 .unwrap_or(0),
             self.read().unwrap().pls.len() - 1,
         );
+        println!("restored position {}", val);
+        self.write().unwrap().current_pl = val;
     }
 
     fn save_tab_position(&self) {

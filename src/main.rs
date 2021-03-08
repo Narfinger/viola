@@ -37,7 +37,6 @@ pub mod dbus_interface;
 pub mod gstreamer_wrapper;
 pub mod libraryviewstore;
 pub mod loaded_playlist;
-pub mod maingui;
 pub mod maingui_web;
 pub mod my_websocket;
 pub mod playlist;
