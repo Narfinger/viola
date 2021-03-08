@@ -176,6 +176,7 @@ impl PlayerInterface {
     }
 
     fn pause(&self) -> zbus::fdo::Result<()> {
+        println!("dbus send pause");
         self.gstreamer
             .write()
             .unwrap()
@@ -184,6 +185,7 @@ impl PlayerInterface {
     }
 
     fn play(&self) -> zbus::fdo::Result<()> {
+        println!("dbus send play");
         self.gstreamer
             .write()
             .unwrap()
@@ -192,6 +194,7 @@ impl PlayerInterface {
     }
 
     fn play_pause(&self) -> zbus::fdo::Result<()> {
+        println!("dbus send playpause");
         if self.gstreamer.read().unwrap().get_state() == GStreamerMessage::Pausing {
             self.gstreamer
                 .write()
@@ -207,6 +210,7 @@ impl PlayerInterface {
     }
 
     fn stop(&self) -> zbus::fdo::Result<()> {
+        println!("dbus send pause");
         self.gstreamer
             .write()
             .unwrap()

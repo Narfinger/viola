@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
+use std::{cmp::max, path::PathBuf};
 
 use crate::loaded_playlist::{
     LoadedPlaylist, LoadedPlaylistExt, PlaylistControls, SavePlaylistExt,
@@ -118,12 +118,14 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
     }
 
     fn restore_tab_position(&self) {
-        self.write().unwrap().current_pl =
+        self.write().unwrap().current_pl = max(
             PreferencesMap::<String>::load(&crate::types::APP_INFO, crate::types::PREFS_KEY)
                 .ok()
                 .and_then(|m| m.get("tab").cloned())
                 .and_then(|t| t.parse::<usize>().ok())
-                .unwrap_or(0);
+                .unwrap_or(0),
+            self.read().unwrap().pls.len() - 1,
+        );
     }
 
     fn save_tab_position(&self) {

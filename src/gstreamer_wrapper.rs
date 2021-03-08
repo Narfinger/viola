@@ -136,17 +136,17 @@ impl GStreamerExt for GStreamer {
                 }
             }
             GStreamerAction::Pausing => {
-                let is_playing = GStreamerMessage::Playing == self.get_state();
-                if is_playing {
-                    self.element
-                        .set_state(gstreamer::State::Paused)
-                        .expect("Error setting gstreamer state");
-                } else {
-                    self.do_gstreamer_action(GStreamerAction::Play(
-                        self.current_playlist.current_position(),
-                    ));
-                    return;
-                }
+                //let is_playing = GStreamerMessage::Playing == self.get_state();
+                //if is_playing {
+                self.element
+                    .set_state(gstreamer::State::Paused)
+                    .expect("Error setting gstreamer state");
+                //} else {
+                //    self.do_gstreamer_action(GStreamerAction::Play(
+                //        self.current_playlist.current_position(),
+                //    ));
+                //    return;
+                //}
             }
             GStreamerAction::Previous => {
                 self.repeat_once.store(false, Ordering::SeqCst);
