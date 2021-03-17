@@ -84,14 +84,14 @@ async fn transport(
     state: web::Data<WebGui>,
     msg: web::Json<viola_common::GStreamerAction>,
 ) -> HttpResponse {
-    println!("stuff: {:?}", &msg);
-    state
-        .gstreamer
-        .write()
-        .unwrap()
-        .do_gstreamer_action(msg.into_inner());
-
-    HttpResponse::Ok().finish()
+    info!("state json data: {:?}", &msg);
+    if let Ok(mut l) = state.gstreamer.try_write() {
+        l.do_gstreamer_action(msg.into_inner());
+        HttpResponse::Ok().finish()
+    } else {
+        info!("Could not lock for writing");
+        HttpResponse::InternalServerError().finish()
+    }
 }
 
 #[post("/libraryview/partial/")]

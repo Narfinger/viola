@@ -90,6 +90,7 @@ pub fn new(
                 MessageView::StateChanged(state_changed) => {
                     warn!("Message bus has state change: {:?}", state_changed)
                 }
+                MessageView::Tag(t) => {warn!("Found tag msg")},
                 m => (warn!("Found message {:?}", m)),
             }
         }
@@ -173,7 +174,7 @@ impl GStreamerExt for GStreamer {
                     {
                         panic!("The file we want to play does not exist");
                     }
-                    println!(
+                    info!(
                         "Playing uri: {:?}",
                         self.current_playlist.get_current_path()
                     );
@@ -186,7 +187,7 @@ impl GStreamerExt for GStreamer {
                     self.element
                         .set_state(gstreamer::State::Playing)
                         .expect("Error setting gstreamer state");
-                    println!("gstreamer state: {:?}", self.get_state());
+                    info!("gstreamer state: {:?}", self.get_state());
                 } else {
                     self.current_playlist.set(0);
                     self.do_gstreamer_action(GStreamerAction::Stop);

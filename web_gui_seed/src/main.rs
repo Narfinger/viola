@@ -286,13 +286,28 @@ fn view_status(model: &Model) -> Node<Msg> {
         track_status_string = "Nothing playing".to_string();
     }
 
-    let total_time: u64 = model
-        .get_current_playlist_tab_tracks()
-        .unwrap_or(&vec![])
-        .iter()
-        .map(|track| track.length as u64)
-        .sum();
-    let total_time_string = format_time_string(total_time);
+    let total_time_string = format_time_string(
+        model
+            .get_current_playlist_tab_tracks()
+            .unwrap_or(&vec![])
+            .iter()
+            .map(|track| track.length as u64)
+            .sum(),
+    );
+    let current_track_index = model
+        .playlist_tabs
+        .get(model.current_playlist_tab)
+        .map(|tab| tab.current_index)
+        .unwrap_or(0);
+    let partial_time_string = format_time_string(
+        model
+            .get_current_playlist_tab_tracks()
+            .unwrap_or(&vec![])
+            .iter()
+            .skip(current_track_index)
+            .map(|track| track.length as u64)
+            .sum(),
+    );
 
     let tracks_number_option = model
         .get_current_playlist_tab_tracks()
@@ -332,7 +347,14 @@ fn view_status(model: &Model) -> Node<Msg> {
         div![C!["col"], window_string],
         div![C!["col"], format!("Status: {}", model.play_status)],
         div![C!["col"], track_status_string],
-        div![C!["col"], "Total Time: ", total_time_string],
+        div![
+            C!["col"],
+            "Total Time: ",
+            total_time_string,
+            " (",
+            partial_time_string,
+            ")"
+        ],
         div![C!["col"], IF!(model.is_repeat_once => "Repeat")],
         div![
             C!["col"],
