@@ -33,6 +33,12 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
 }
 
 pub fn send_my_message(ws: &RwLock<Option<MyWs>>, msg: WsMessage) {
-    let addr = ws.read().unwrap().as_ref().unwrap().addr.clone();
-    addr.unwrap().do_send(msg);
+    let addr = ws
+        .read()
+        .ok()
+        .and_then(|t| t.as_ref().map(|ws| ws.addr.to_owned()))
+        .flatten();
+    if let Some(addr) = addr {
+        addr.do_send(msg);
+    }
 }
