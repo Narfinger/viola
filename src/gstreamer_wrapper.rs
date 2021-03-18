@@ -188,6 +188,10 @@ impl GStreamerExt for GStreamer {
                         .set_state(gstreamer::State::Playing)
                         .expect("Error setting gstreamer state");
                     info!("gstreamer state: {:?}", self.get_state());
+                    info!(
+                        "gstreamer real state: {:?}",
+                        self.element.get_state(gstreamer::ClockTime(Some(5)))
+                    );
                 } else {
                     self.current_playlist.set(0);
                     self.do_gstreamer_action(GStreamerAction::Stop);

@@ -85,17 +85,18 @@ impl PlayerInterface {
 
     #[dbus_interface(property)]
     fn rate(&self) -> f64 {
-        44100.0
+        1.0
     }
 
     #[dbus_interface(property)]
     fn metadata(&self) -> HashMap<&str, zvariant::Value> {
         let mut map = HashMap::new();
         let track = self.playlisttabs.get_current_track();
+        let length = 1000000 * track.length;
         map.insert("xesam:artist", track.artist.into());
         map.insert("xesam:album", track.album.into());
         map.insert("xesam:title", track.title.into());
-        map.insert("mpris:length", track.length.into());
+        map.insert("mpris:length", length.into());
         map
     }
 
@@ -106,7 +107,7 @@ impl PlayerInterface {
 
     #[dbus_interface(property)]
     fn position(&self) -> i64 {
-        self.gstreamer.read().get_elapsed().unwrap_or(0) as i64
+        1000000 * self.gstreamer.read().get_elapsed().unwrap_or(0) as i64
     }
 
     #[dbus_interface(property)]
