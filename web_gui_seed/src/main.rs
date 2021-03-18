@@ -725,7 +725,7 @@ fn view_deleterangemodal(_model: &Model) -> Node<Msg> {
                     "Close"
                 ],
                 button![
-                    C!["btn" "btn-secondary"],
+                    C!["btn" "btn-danger"],
                     attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "deleterangemodal"),
                     "Delete Range",
                     ev(Ev::Click, |_| Msg::DeleteRange),
