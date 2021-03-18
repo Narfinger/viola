@@ -1,15 +1,9 @@
-use std::{
-    collections::HashMap,
-    convert::TryInto,
-    error::Error,
-    sync::{Arc, RwLock},
-    thread,
-};
+use parking_lot::RwLock;
+use std::{collections::HashMap, convert::TryInto, error::Error, sync::Arc, thread};
 
 use crate::{
     gstreamer_wrapper::{GStreamer, GStreamerExt},
     loaded_playlist::LoadedPlaylistExt,
-    playlist_tabs::PlaylistTabsExt,
     types::*,
 };
 use viola_common::{GStreamerAction, GStreamerMessage};
@@ -81,7 +75,7 @@ struct PlayerInterface {
 impl PlayerInterface {
     #[dbus_interface(property)]
     fn playback_status(&self) -> String {
-        self.gstreamer.read().unwrap().get_state().to_string()
+        self.gstreamer.read().get_state().to_string()
     }
 
     #[dbus_interface(property)]
@@ -112,7 +106,7 @@ impl PlayerInterface {
 
     #[dbus_interface(property)]
     fn position(&self) -> i64 {
-        self.gstreamer.read().unwrap().get_elapsed().unwrap_or(0) as i64
+        self.gstreamer.read().get_elapsed().unwrap_or(0) as i64
     }
 
     #[dbus_interface(property)]
@@ -162,7 +156,6 @@ impl PlayerInterface {
     fn next(&self) -> zbus::fdo::Result<()> {
         self.gstreamer
             .write()
-            .unwrap()
             .do_gstreamer_action(GStreamerAction::Next);
         Ok(())
     }
@@ -170,7 +163,6 @@ impl PlayerInterface {
     fn previous(&self) -> zbus::fdo::Result<()> {
         self.gstreamer
             .write()
-            .unwrap()
             .do_gstreamer_action(GStreamerAction::Previous);
         Ok(())
     }
@@ -179,7 +171,6 @@ impl PlayerInterface {
         println!("dbus send pause");
         self.gstreamer
             .write()
-            .unwrap()
             .do_gstreamer_action(GStreamerAction::Pausing);
         Ok(())
     }
@@ -188,22 +179,19 @@ impl PlayerInterface {
         println!("dbus send play");
         self.gstreamer
             .write()
-            .unwrap()
             .do_gstreamer_action(GStreamerAction::Playing);
         Ok(())
     }
 
     fn play_pause(&self) -> zbus::fdo::Result<()> {
         println!("dbus send playpause");
-        if self.gstreamer.read().unwrap().get_state() == GStreamerMessage::Pausing {
+        if self.gstreamer.read().get_state() == GStreamerMessage::Pausing {
             self.gstreamer
                 .write()
-                .unwrap()
                 .do_gstreamer_action(GStreamerAction::Playing);
         } else {
             self.gstreamer
                 .write()
-                .unwrap()
                 .do_gstreamer_action(GStreamerAction::Pausing);
         }
         Ok(())
@@ -213,7 +201,6 @@ impl PlayerInterface {
         println!("dbus send pause");
         self.gstreamer
             .write()
-            .unwrap()
             .do_gstreamer_action(GStreamerAction::Pausing);
         Ok(())
     }

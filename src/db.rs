@@ -32,7 +32,7 @@ impl UpdatePlayCount for Track {
         //wait a random time
         let mut rng = rand::thread_rng();
         std::thread::sleep(std::time::Duration::new(0, rng.next_u32()));
-        let db = pool.lock().expect("Error in locking db");
+        let db = pool.lock();
 
         let db_track: Result<Track, diesel::result::Error> = tracks.find(self.id).first(db.deref());
         if let Ok(mut track) = db_track {
@@ -189,7 +189,7 @@ fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
     let new_track = construct_track_from_path(s);
     let old_track_perhaps = tracks
         .filter(path.eq(&new_track.path))
-        .get_result::<Track>(db.lock().expect("DB Error").deref());
+        .get_result::<Track>(db.lock().deref());
 
     if let Ok(mut old_track) = old_track_perhaps {
         if tags_equal(&new_track, &old_track) {
@@ -205,14 +205,14 @@ fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
             old_track.albumpath = new_track.albumpath;
 
             old_track
-                .save_changes::<Track>(db.lock().expect("DB Error").deref())
+                .save_changes::<Track>(db.lock().deref())
                 .map(|_| ())
                 .map_err(|err| format!("Error in updateing for track {}, See full: {:?}", s, err))
         }
     } else {
         diesel::insert_into(tracks)
             .values(&new_track)
-            .execute(db.lock().expect("DB Error").deref())
+            .execute(db.lock().deref())
             .map(|_| ())
             .map_err(|err| format!("Insertion Error for track {}, See full: {:?}", s, err))
     }
@@ -239,14 +239,14 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
         let old_files: HashSet<String> = HashSet::from_iter(if fast_delete {
             tracks
                 .select(path)
-                .load(db.lock().expect("DB Error").deref())
+                .load(db.lock().deref())
                 .expect("Error in loading old files")
         } else {
             tracks
                 .select(path)
                 //ignore files that are not in the path
                 .filter(path.like(String::from("%") + p + "%"))
-                .load(db.lock().expect("DB Error").deref())
+                .load(db.lock().deref())
                 .expect("Error in loading old files")
         });
 
@@ -285,7 +285,7 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
                 //println!("to delete: {}", i);
                 diesel::delete(tracks)
                     .filter(path.eq(i))
-                    .execute(db.lock().expect("DB Error").deref())
+                    .execute(db.lock().deref())
                     .unwrap_or_else(|_| {
                         panic!("Error in deleting outdated database entries: {}", &i)
                     });
@@ -304,7 +304,7 @@ pub fn get_new_playlist_id(db: &DBPool) -> i32 {
     playlists
         .select(viola_common::schema::playlists::id)
         .order(viola_common::schema::playlists::id.desc())
-        .load(db.lock().expect("DB Error").deref())
+        .load(db.lock().deref())
         .ok()
         .and_then(|v: Vec<i32>| v.first().cloned())
         .map_or(0, |i| i + 1)

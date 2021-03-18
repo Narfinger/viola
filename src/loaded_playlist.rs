@@ -1,4 +1,3 @@
-use owning_ref::RwLockReadGuardRef;
 use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
 use serde::Serialize;
 use std::path::PathBuf;
@@ -31,23 +30,28 @@ pub trait SavePlaylistExt {
     fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error>;
 }
 
-pub fn items(pl: &LoadedPlaylistPtr) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>> {
-    RwLockReadGuardRef::new(pl.read().unwrap()).map(|s| &s.items)
+pub fn items(
+    pl: &LoadedPlaylistPtr,
+) -> parking_lot::lock_api::MappedRwLockReadGuard<parking_lot::RawRwLock, Vec<Track>> {
+    parking_lot::lock_api::RwLockReadGuard::<'_, parking_lot::RawRwLock, LoadedPlaylist>::map(
+        pl.read(),
+        |s| &s.items,
+    )
 }
 
 impl LoadedPlaylistExt for LoadedPlaylistPtr {
     fn get_current_track(&self) -> Track {
-        let s = self.read().unwrap();
+        let s = self.read();
         s.items[s.current_position].clone()
     }
 
     fn get_playlist_full_time(&self) -> i64 {
-        let s = self.read().unwrap();
+        let s = self.read();
         s.items.iter().map(|t| t.length as i64).sum()
     }
 
     fn current_position(&self) -> usize {
-        self.read().unwrap().current_position
+        self.read().current_position
     }
 
     //fn get_items_reader(&self) -> std::rc::Rc<dyn erased_serde::Serialize> {
@@ -59,7 +63,6 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
     fn get_remaining_length(&self) -> u64 {
         let current_position = self.current_position();
         self.read()
-            .unwrap()
             .items
             .iter()
             .skip(current_position)
@@ -69,7 +72,7 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
 
     fn clean(&self) {
         let index = self.current_position();
-        let mut s = self.write().unwrap();
+        let mut s = self.write();
         s.items.drain(0..index);
         s.current_position = 0;
     }
@@ -81,7 +84,7 @@ impl SavePlaylistExt for LoadedPlaylistPtr {
         use viola_common::schema::playlists::dsl::*;
         use viola_common::schema::playlisttracks::dsl::*;
 
-        let pl = self.read().expect("Could not read lock to save playlist");
+        let pl = self.read();
 
         info!("playlist id {:?}", pl.id);
 
@@ -151,7 +154,7 @@ pub trait PlaylistControls {
 impl PlaylistControls for LoadedPlaylistPtr {
     fn get_current_path(&self) -> Option<PathBuf> {
         let mut pb = PathBuf::new();
-        let s = self.read().unwrap();
+        let s = self.read();
         if let Some(t) = s.items.get(s.current_position) {
             pb.push(t.path.clone());
             Some(pb)
@@ -161,7 +164,7 @@ impl PlaylistControls for LoadedPlaylistPtr {
     }
 
     fn get_current_uri(&self) -> Option<String> {
-        let s = self.read().unwrap();
+        let s = self.read();
         info!("loading from playlist with name: {}", s.name);
         s.items.get(s.current_position).as_ref().map(|p| {
             format!(
@@ -172,7 +175,7 @@ impl PlaylistControls for LoadedPlaylistPtr {
     }
 
     fn previous(&self) -> Option<usize> {
-        let mut s = self.write().unwrap();
+        let mut s = self.write();
         let checked_res = s.current_position.checked_sub(1);
         if let Some(i) = checked_res {
             s.current_position = i;
@@ -183,13 +186,13 @@ impl PlaylistControls for LoadedPlaylistPtr {
     }
 
     fn set(&self, i: usize) -> usize {
-        let mut s = self.write().unwrap();
+        let mut s = self.write();
         s.current_position = i as usize;
         s.current_position as usize
     }
 
     fn delete_range(&self, range: std::ops::Range<usize>) {
-        let mut s = self.write().unwrap();
+        let mut s = self.write();
         println!("removing with range: {:?}", &range);
 
         s.items.drain(range.start..=range.end);
@@ -203,7 +206,7 @@ impl PlaylistControls for LoadedPlaylistPtr {
 
     fn next_or_eol(&self) -> Option<usize> {
         let next_pos = {
-            let mut s = self.write().unwrap();
+            let mut s = self.write();
             s.current_position += 1 % (s.items.len() - 1);
             s.current_position
         };

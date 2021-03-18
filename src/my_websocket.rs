@@ -1,7 +1,8 @@
 use actix::prelude::*;
 use actix::{Actor, StreamHandler};
 use actix_web_actors::ws;
-use std::sync::RwLock;
+use parking_lot::RwLock;
+use std::ops::Deref;
 use viola_common::WsMessage;
 
 #[derive(Clone)]
@@ -33,11 +34,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
 }
 
 pub fn send_my_message(ws: &RwLock<Option<MyWs>>, msg: WsMessage) {
-    let addr = ws
-        .read()
-        .ok()
-        .and_then(|t| t.as_ref().map(|ws| ws.addr.to_owned()))
-        .flatten();
+    let addr = ws.read().as_ref().and_then(|t| t.addr.to_owned());
     if let Some(addr) = addr {
         addr.do_send(msg);
     }

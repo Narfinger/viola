@@ -1,8 +1,8 @@
+use crate::loaded_playlist::LoadedPlaylist;
 use app_dirs::*;
 use gstreamer::Element;
-use std::sync::{Arc, Mutex, RwLock};
-
-use crate::loaded_playlist::LoadedPlaylist;
+use parking_lot::{Mutex, RwLock};
+use std::sync::Arc;
 use viola_common::GStreamerMessage;
 //use crate::maingui::MainGui;
 use crate::playlist_tabs::PlaylistTabs;

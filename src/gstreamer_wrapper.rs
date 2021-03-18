@@ -1,11 +1,9 @@
 use crate::glib::ObjectExt;
 use gstreamer::{ElementExt, ElementExtManual, GstObjectExt};
+use parking_lot::RwLock;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::Arc;
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    RwLock,
-};
 
 use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls};
 //use crate::playlist_tabs::PlaylistControlsImmutable;
@@ -79,7 +77,7 @@ pub fn new(
             match msg.view() {
                 MessageView::Eos(..) => {
                     warn!("We found an eos on the bus!");
-                    resc.write().unwrap().gstreamer_handle_eos()
+                    resc.write().gstreamer_handle_eos()
                 }
                 MessageView::Error(err) => println!(
                     "Error from {:?}: {} ({:?})",
@@ -90,7 +88,9 @@ pub fn new(
                 MessageView::StateChanged(state_changed) => {
                     warn!("Message bus has state change: {:?}", state_changed)
                 }
-                MessageView::Tag(t) => {warn!("Found tag msg")},
+                MessageView::Tag(t) => {
+                    warn!("Found tag msg")
+                }
                 m => (warn!("Found message {:?}", m)),
             }
         }

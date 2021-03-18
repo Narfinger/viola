@@ -4,7 +4,6 @@ use actix_web_actors::ws;
 use diesel::Connection;
 use std::io;
 use std::sync::Arc;
-use std::sync::RwLock;
 use std::thread;
 use std::time::Duration;
 use viola_common::*;
@@ -40,7 +39,6 @@ async fn repeat(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     state
         .gstreamer
         .write()
-        .unwrap()
         .do_gstreamer_action(viola_common::GStreamerAction::RepeatOnce);
     HttpResponse::Ok().finish()
 }
@@ -69,14 +67,14 @@ async fn delete_from_playlist(
 #[post("/save/")]
 async fn save(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
     println!("Saving");
-    let db = state.pool.lock().expect("Error for db");
+    let db = state.pool.lock();
     state.playlist_tabs.save(&db).expect("Error in saving");
     HttpResponse::Ok().finish()
 }
 
 #[get("/transport/")]
 async fn get_transport(state: web::Data<WebGui>) -> HttpResponse {
-    HttpResponse::Ok().json(state.gstreamer.read().unwrap().get_state())
+    HttpResponse::Ok().json(state.gstreamer.read().get_state())
 }
 
 #[post("/transport/")]
@@ -85,13 +83,11 @@ async fn transport(
     msg: web::Json<viola_common::GStreamerAction>,
 ) -> HttpResponse {
     info!("state json data: {:?}", &msg);
-    if let Ok(mut l) = state.gstreamer.try_write() {
-        l.do_gstreamer_action(msg.into_inner());
-        HttpResponse::Ok().finish()
-    } else {
-        info!("Could not lock for writing");
-        HttpResponse::InternalServerError().finish()
-    }
+    state
+        .gstreamer
+        .write()
+        .do_gstreamer_action(msg.into_inner());
+    HttpResponse::Ok().finish()
 }
 
 #[post("/libraryview/partial/")]
@@ -187,12 +183,11 @@ async fn playlist_tab(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse 
     let tabs = state
         .playlist_tabs
         .read()
-        .unwrap()
         .pls
         .iter()
         .map(|pl| PlaylistTabJSON {
-            name: pl.read().unwrap().name.to_owned(),
-            current_position: pl.read().unwrap().current_position,
+            name: pl.read().name.to_owned(),
+            current_position: pl.read().current_position,
         })
         .collect::<Vec<PlaylistTabJSON>>();
     let resp = PlaylistTabsJSON {
@@ -241,9 +236,9 @@ async fn delete_playlist_tab(
 
 struct WebGui {
     pool: DBPool,
-    gstreamer: Arc<RwLock<gstreamer_wrapper::GStreamer>>,
+    gstreamer: Arc<parking_lot::RwLock<gstreamer_wrapper::GStreamer>>,
     playlist_tabs: PlaylistTabsPtr,
-    ws: RwLock<Option<my_websocket::MyWs>>,
+    ws: parking_lot::RwLock<Option<my_websocket::MyWs>>,
 }
 
 trait Web {
@@ -252,7 +247,7 @@ trait Web {
 
 impl Web for WebGui {
     fn save(&self) {
-        let db = self.pool.lock().expect("DB Error");
+        let db = self.pool.lock();
         db.transaction::<_, diesel::result::Error, _>(|| {
             self.playlist_tabs.save(&*db)?;
             Ok(())
@@ -270,7 +265,7 @@ async fn ws_start(
     let (addr, resp) = ws::start_with_addr(ws.clone(), &req, stream)?;
     //println!("websocket {:?}", resp);
     ws.addr = Some(addr);
-    *state.ws.write().unwrap() = Some(ws);
+    *state.ws.write() = Some(ws);
     Ok(resp)
 }
 
@@ -328,7 +323,7 @@ pub async fn run(
         pool: pool.clone(),
         gstreamer: gst,
         playlist_tabs: plt,
-        ws: RwLock::new(None),
+        ws: parking_lot::RwLock::new(None),
     };
 
     println!("Doing data");
@@ -349,10 +344,8 @@ pub async fn run(
         let datac = data.clone();
         thread::spawn(move || loop {
             thread::sleep(Duration::new(1, 0));
-            if datac.gstreamer.read().unwrap().get_state()
-                == viola_common::GStreamerMessage::Playing
-            {
-                let data = datac.gstreamer.read().unwrap().get_elapsed().unwrap_or(0);
+            if datac.gstreamer.read().get_state() == viola_common::GStreamerMessage::Playing {
+                let data = datac.gstreamer.read().get_elapsed().unwrap_or(0);
                 my_websocket::send_my_message(&datac.ws, WsMessage::CurrentTimeChanged(data));
             }
         });

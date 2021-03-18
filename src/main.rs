@@ -26,6 +26,7 @@ extern crate rayon;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+extern crate parking_lot;
 extern crate rusqlite;
 extern crate serde_json;
 extern crate toml;
@@ -46,8 +47,9 @@ pub mod types;
 pub mod utils;
 
 use clap::{App, Arg};
+use parking_lot::Mutex;
 use preferences::{prefs_base_dir, AppInfo, Preferences, PreferencesMap};
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{mpsc, Arc};
 use std::{env, io};
 
 #[actix_rt::main]

@@ -1,4 +1,5 @@
-use std::sync::{Arc, RwLock};
+use parking_lot::RwLock;
+use std::sync::Arc;
 use std::{cmp::min, path::PathBuf};
 
 use crate::loaded_playlist::{
@@ -23,7 +24,7 @@ pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
         //pls.push(crate::smartplaylist_parser::construct_smartplaylists_from_config()[0].load(pool));
     }
     let converted_pls: Vec<LoadedPlaylistPtr> = pls.into_iter().map(RwLock::new).collect();
-    let pls_struct = Arc::new(RwLock::new(PlaylistTabs {
+    let pls_struct = Arc::new(parking_lot::RwLock::new(PlaylistTabs {
         current_pl: 0,
         current_playing_in: 0,
         pls: converted_pls,
@@ -48,34 +49,34 @@ pub trait PlaylistTabsExt {
 
 impl PlaylistTabsExt for PlaylistTabsPtr {
     fn add(&self, lp: LoadedPlaylist) {
-        self.write().unwrap().pls.push(RwLock::new(lp));
+        self.write().pls.push(RwLock::new(lp));
     }
 
     fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T {
-        let i = self.read().as_ref().unwrap().current_pl;
-        f(self.as_ref().read().unwrap().pls.get(i).as_ref().unwrap())
+        let i = self.read().current_pl;
+        f(self.as_ref().read().pls.get(i).as_ref().unwrap())
     }
 
     fn delete(&self, pool: &DBPool, index: usize) {
-        let length = self.read().unwrap().pls.len();
-        let current_pl = self.read().unwrap().current_pl;
+        let length = self.read().pls.len();
+        let current_pl = self.read().current_pl;
         println!(
             "index {} | current {} | length {}",
             index, current_pl, length
         );
         if index < length {
-            let lp = self.write().unwrap().pls.swap_remove(index);
+            let lp = self.write().pls.swap_remove(index);
             if current_pl >= index {
-                self.write().unwrap().current_pl = 0;
+                self.write().current_pl = 0;
             }
 
             // delete in database
             use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
             use std::ops::Deref;
             use viola_common::schema::playlists::dsl::*;
-            let db = pool.lock().expect("DB Error");
+            let db = pool.lock();
 
-            diesel::delete(playlists.filter(id.eq(lp.read().unwrap().id)))
+            diesel::delete(playlists.filter(id.eq(lp.read().id)))
                 .execute(db.deref())
                 .expect("Error deleting");
         }
@@ -83,8 +84,8 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
 
     fn items(&self) -> String {
         use crate::loaded_playlist::items;
-        let i = self.read().unwrap().current_pl;
-        let cur = self.read().unwrap();
+        let i = self.read().current_pl;
+        let cur = self.read();
         let pl = cur.pls.get(i).unwrap();
         let items = items(&pl);
         serde_json::to_string(&*items).unwrap()
@@ -92,28 +93,28 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
 
     fn items_for(&self, index: usize) -> String {
         use crate::loaded_playlist::items;
-        let cur = self.read().unwrap();
+        let cur = self.read();
         let pl = cur.pls.get(index).unwrap();
         let items = items(&pl);
         serde_json::to_string(&*items).unwrap()
     }
 
     fn current_tab(&self) -> usize {
-        self.read().unwrap().current_pl
+        self.read().current_pl
     }
 
     fn current_playing_in(&self) -> usize {
-        self.read().unwrap().current_playing_in
+        self.read().current_playing_in
     }
 
     fn update_current_playing_in(&self) {
-        let cur = self.read().unwrap().current_pl;
-        self.write().unwrap().current_playing_in = cur;
+        let cur = self.read().current_pl;
+        self.write().current_playing_in = cur;
     }
 
     fn set_tab(&self, index: usize) {
-        let max = self.read().unwrap().pls.len();
-        self.write().unwrap().current_pl = std::cmp::min(max - 1, index);
+        let max = self.read().pls.len();
+        self.write().current_pl = std::cmp::min(max - 1, index);
         self.save_tab_position();
     }
 
@@ -125,20 +126,17 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
                 .and_then(|m| m.get("tab").cloned())
                 .and_then(|t| t.parse::<usize>().ok())
                 .unwrap_or(0),
-            self.read().unwrap().pls.len() - 1,
+            self.read().pls.len() - 1,
         );
         println!("restored position {}", val);
-        self.write().unwrap().current_pl = val;
+        self.write().current_pl = val;
     }
 
     fn save_tab_position(&self) {
         if let Ok(mut prefs) =
             PreferencesMap::<String>::load(&crate::types::APP_INFO, crate::types::PREFS_KEY)
         {
-            prefs.insert(
-                String::from("tab"),
-                self.read().unwrap().current_pl.to_string(),
-            );
+            prefs.insert(String::from("tab"), self.read().current_pl.to_string());
             prefs
                 .save(&crate::types::APP_INFO, crate::types::PREFS_KEY)
                 .expect("Error in writing prefs");
@@ -190,15 +188,15 @@ impl PlaylistControls for PlaylistTabsPtr {
     fn set(&self, index: usize) -> usize {
         self.update_current_playing_in();
 
-        let i = self.read().unwrap().current_pl;
-        let cur = self.read().unwrap();
+        let i = self.read().current_pl;
+        let cur = self.read();
         let value = cur.pls.get(i).unwrap();
         value.set(index)
     }
 
     fn delete_range(&self, range: std::ops::Range<usize>) {
-        let i = self.read().unwrap().current_pl;
-        let cur = self.read().unwrap();
+        let i = self.read().current_pl;
+        let cur = self.read();
         let value = cur.pls.get(i).unwrap();
         value.delete_range(range);
     }
@@ -211,7 +209,7 @@ impl PlaylistControls for PlaylistTabsPtr {
 
 impl SavePlaylistExt for PlaylistTabsPtr {
     fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error> {
-        for i in self.read().unwrap().pls.iter() {
+        for i in self.read().pls.iter() {
             i.save(db)?;
         }
         Ok(())
