@@ -7,7 +7,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1be241f88f3b1e7e9a3fbe3b5a8a0f6915b5a1d7ee0d9a248d3376d01068cc60"
 dependencies = [
  "actix-rt 1.1.1",
- "actix_derive",
+ "actix_derive 0.5.0",
  "bitflags",
  "bytes 0.5.6",
  "crossbeam-channel 0.4.4",
@@ -20,9 +20,33 @@ dependencies = [
  "pin-project 0.4.27",
  "smallvec",
  "tokio 0.2.25",
- "tokio-util",
+ "tokio-util 0.3.1",
  "trust-dns-proto",
  "trust-dns-resolver",
+]
+
+[[package]]
+name = "actix"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5f61e6ef2dadbe1bd50f1cf2ab52d63b951686c25bc4de274c5e1f57cd2589f1"
+dependencies = [
+ "actix-rt 2.1.0",
+ "actix_derive 0.6.0",
+ "bitflags",
+ "bytes 1.0.1",
+ "crossbeam-channel 0.5.0",
+ "futures-core",
+ "futures-sink",
+ "futures-task",
+ "futures-util",
+ "log",
+ "once_cell",
+ "parking_lot",
+ "pin-project-lite 0.2.6",
+ "smallvec",
+ "tokio 1.3.0",
+ "tokio-util 0.6.5",
 ]
 
 [[package]]
@@ -38,7 +62,7 @@ dependencies = [
  "log",
  "pin-project 0.4.27",
  "tokio 0.2.25",
- "tokio-util",
+ "tokio-util 0.3.1",
 ]
 
 [[package]]
@@ -322,7 +346,7 @@ version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f6edf3c2693e2a8c422800c87ee89a6a4eac7dd01109bc172a1093ce1f4f001"
 dependencies = [
- "actix",
+ "actix 0.10.0",
  "actix-codec",
  "actix-http",
  "actix-web",
@@ -348,6 +372,17 @@ name = "actix_derive"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b95aceadaf327f18f0df5962fedc1bde2f870566a0b9f65c89508a3b1f79334c"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "actix_derive"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d44b8fee1ced9671ba043476deddef739dd0959bf77030b26b738cc591737a7"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1389,7 +1424,7 @@ dependencies = [
  "indexmap",
  "slab",
  "tokio 0.2.25",
- "tokio-util",
+ "tokio-util 0.3.1",
  "tracing",
  "tracing-futures",
 ]
@@ -2928,7 +2963,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d56477f6ed99e10225f38f9f75f872f29b8b8bd8c0b946f63345bb144e9eeda"
 dependencies = [
  "autocfg",
+ "bytes 1.0.1",
  "libc",
+ "memchr",
  "mio 0.7.9",
  "once_cell",
  "parking_lot",
@@ -2950,6 +2987,20 @@ dependencies = [
  "log",
  "pin-project-lite 0.1.12",
  "tokio 0.2.25",
+]
+
+[[package]]
+name = "tokio-util"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5143d049e85af7fbc36f5454d990e62c2df705b3589f123b71f441b6b59f443f"
+dependencies = [
+ "bytes 1.0.1",
+ "futures-core",
+ "futures-sink",
+ "log",
+ "pin-project-lite 0.2.6",
+ "tokio 1.3.0",
 ]
 
 [[package]]
@@ -3172,7 +3223,7 @@ checksum = "b5a972e5669d67ba988ce3dc826706fb0a8b01471c088cb0b6110b805cc36aed"
 name = "viola"
 version = "0.2.1"
 dependencies = [
- "actix",
+ "actix 0.11.0",
  "actix-files",
  "actix-rt 2.1.0",
  "actix-web",
@@ -3217,8 +3268,8 @@ dependencies = [
 name = "viola_common"
 version = "0.1.0"
 dependencies = [
- "actix",
- "actix_derive",
+ "actix 0.10.0",
+ "actix_derive 0.5.0",
  "diesel",
  "serde 1.0.124",
  "serde_json 1.0.64",
