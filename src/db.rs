@@ -4,10 +4,10 @@ use diesel::{Connection, SqliteConnection};
 use indicatif::ParallelProgressIterator;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::ops::Deref;
 use std::path::Path;
+use std::{collections::HashSet, path::PathBuf};
 use std::{thread, time};
 use viola_common::schema::tracks;
 use viola_common::Track;
@@ -104,18 +104,26 @@ fn is_valid_file(s: &Result<DirEntry, walkdir::Error>) -> bool {
     }
 }
 
+const ALBUM_NAMES: [&'static str; 2] = ["cover.jpg", "cover.png"];
+/// for a given path, tries to find cover.jpg, cover.png and also check the parent directory for it.
+/// Returns Option of the string it found
 fn get_album_file(s: &str) -> Option<String> {
-    let p = Path::new(s);
-    let jpg = p.with_file_name("cover.jpg");
-    let png = p.with_file_name("cover.png");
-    if jpg.exists() {
-        Some(jpg)
-    } else if png.exists() {
-        Some(png)
-    } else {
-        None
-    }
-    .and_then(|s| s.to_str().map(String::from))
+    let cur_path = Path::new(s);
+    let mut covers = ALBUM_NAMES
+        .iter()
+        .map(|v| cur_path.with_file_name(v))
+        .filter(|p| p.exists());
+    let mut covers_parent = ALBUM_NAMES
+        .iter()
+        .map(|v| cur_path.parent().map(|p| p.with_file_name(v)))
+        .into_iter()
+        .flatten()
+        .filter(|p| p.exists());
+
+    covers
+        .next()
+        .or_else(|| covers_parent.next())
+        .and_then(|p: PathBuf| p.to_str().map(String::from))
 }
 
 fn convert_to_i32_option(u: Option<u32>) -> Option<i32> {
