@@ -48,7 +48,7 @@ pub mod utils;
 
 use clap::{App, Arg};
 use parking_lot::Mutex;
-use preferences::{prefs_base_dir, AppInfo, Preferences, PreferencesMap};
+use preferences::{prefs_base_dir, Preferences, PreferencesMap};
 use std::sync::{mpsc, Arc};
 use std::{env, io};
 
@@ -150,7 +150,7 @@ async fn main() -> io::Result<()> {
         path.extend(&["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else if matches.is_present("no-webview") {
-        let sys = actix_web::rt::System::new("test");
+        let _ = actix_web::rt::System::new("test");
         //println!("Trying main");
         //std::thread::spawn(|| {
         //println!("Starting web service");
@@ -158,9 +158,9 @@ async fn main() -> io::Result<()> {
     //});
     } else {
         std::thread::spawn(|| {
-            let sys = actix_web::rt::System::new("test");
+            let _ = actix_web::rt::System::new("test");
             println!("Starting web service");
-            let srv = maingui_web::run(pool, tx);
+            let _ = maingui_web::run(pool, tx);
         });
         std::thread::sleep(std::time::Duration::from_secs(1));
 

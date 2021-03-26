@@ -65,7 +65,7 @@ fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
         } else {
             None
         }
-    };
+    }
 
     /// Inserts `vec` into `pushto` with the tag `value`
     macro_rules! vec_option_insert {

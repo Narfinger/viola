@@ -30,7 +30,7 @@ fn init_generic_treeview(
         },
         tree: arena,
         root,
-        type_vec: type_vec,
+        type_vec,
         current_window: 0,
         stream_handle: None,
         search: "".to_owned(),
@@ -333,7 +333,7 @@ fn view_status(model: &Model) -> Node<Msg> {
                 ((model.current_time as f64 / t.length as f64) * 100.0).round() as u64
             )
         })
-        .unwrap_or("0%".to_string());
+        .unwrap_or_else(|| "0%".to_string());
 
     div![
         C!["row", "border", "border-dark"],

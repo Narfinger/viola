@@ -139,10 +139,10 @@ fn construct_track_from_path(s: &str) -> NewTrack {
     if let Ok(ataglib) = taglibfile {
         let tags = ataglib
             .tag()
-            .unwrap_or_else(|e| panic!(format!("Could not read tags for: {}. {:?}", s, e)));
+            .unwrap_or_else(|e| panic!("Could not read tags for: {}. {:?}", s, e));
         let properties = ataglib
             .audioproperties()
-            .unwrap_or_else(|_| panic!(format!("Could not find audio properties for: {}", s)));
+            .unwrap_or_else(|_| panic!("Could not find audio properties for: {}", s));
         let album = get_album_file(&s);
         //tracknumber and year return 0 if none set
         NewTrack {
@@ -157,7 +157,7 @@ fn construct_track_from_path(s: &str) -> NewTrack {
             albumpath: album,
         }
     } else {
-        panic!(format!("Taglib could not open file: {}", s));
+        panic!("Taglib could not open file: {}", s);
     }
 }
 

@@ -2,7 +2,6 @@ use actix::prelude::*;
 use actix::{Actor, StreamHandler};
 use actix_web_actors::ws;
 use parking_lot::RwLock;
-use std::ops::Deref;
 use viola_common::WsMessage;
 
 #[derive(Clone)]

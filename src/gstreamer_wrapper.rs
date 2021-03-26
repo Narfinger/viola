@@ -2,7 +2,6 @@ use crate::glib::ObjectExt;
 use gstreamer::{ElementExt, ElementExtManual, GstObjectExt};
 use parking_lot::RwLock;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::sync::Arc;
 
 use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls};
@@ -88,7 +87,7 @@ pub fn new(
                 MessageView::StateChanged(state_changed) => {
                     warn!("Message bus has state change: {:?}", state_changed)
                 }
-                MessageView::Tag(t) => {
+                MessageView::Tag(_) => {
                     warn!("Found tag msg")
                 }
                 m => (warn!("Found message {:?}", m)),

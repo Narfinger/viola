@@ -1,4 +1,3 @@
-use preferences::PreferencesMap;
 use std::ops::Deref;
 use viola_common::schema::{playlists, playlisttracks};
 
