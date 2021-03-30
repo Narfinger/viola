@@ -75,8 +75,9 @@ pub fn new(
         for msg in bus.iter_timed(gstreamer::CLOCK_TIME_NONE) {
             match msg.view() {
                 MessageView::Eos(..) => {
-                    warn!("We found an eos on the bus!");
-                    resc.write().gstreamer_handle_eos()
+                    info!("We found an eos on the bus!");
+                    resc.write().gstreamer_handle_eos();
+                    info!("returned from eos handling");
                 }
                 MessageView::Error(err) => println!(
                     "Error from {:?}: {} ({:?})",
@@ -189,9 +190,10 @@ impl GStreamerExt for GStreamer {
                     info!("gstreamer state: {:?}", self.get_state());
                     info!(
                         "gstreamer real state: {:?}",
-                        self.element.get_state(gstreamer::ClockTime(Some(5)))
+                        self.element.get_state(gstreamer::ClockTime(Some(500)))
                     );
                 } else {
+                    info!("Stopping gstreamer because we did not find next track");
                     self.current_playlist.set(0);
                     self.do_gstreamer_action(GStreamerAction::Stop);
                     return;
@@ -207,7 +209,7 @@ impl GStreamerExt for GStreamer {
                 self.repeat_once.store(true, Ordering::SeqCst);
             }
         }
-        self.sender.broadcast(action.into());
+        self.sender.try_broadcast(action.into());
     }
 
     /// poll the message bus and on eos start new
@@ -240,7 +242,7 @@ impl GStreamerExt for GStreamer {
     }
 
     fn get_state(&self) -> viola_common::GStreamerMessage {
-        match self.element.get_state(gstreamer::ClockTime(Some(5))).1 {
+        match self.element.get_state(gstreamer::ClockTime(Some(500))).1 {
             gstreamer::State::VoidPending => GStreamerMessage::Stopped,
             gstreamer::State::Null => GStreamerMessage::Stopped,
             gstreamer::State::Ready => GStreamerMessage::Stopped,

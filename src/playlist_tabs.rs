@@ -212,6 +212,7 @@ impl SavePlaylistExt for PlaylistTabsPtr {
         for i in self.read().pls.iter() {
             i.save(db)?;
         }
+        info!("Saved all playlists");
         Ok(())
     }
 }

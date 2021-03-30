@@ -247,6 +247,7 @@ fn main(
             eprintln!("{}", err);
         }
         if let Ok(_) = bus.try_recv() {
+            info!("Got Message on bus");
             object_server.with(
                 &"/org/mpris/MediaPlayer2".try_into()?,
                 |iface: &PlayerInterface| iface.properties_changed(),

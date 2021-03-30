@@ -269,33 +269,20 @@ async fn ws_start(
     Ok(resp)
 }
 
+/// blocking function that handles messages on the GStreamer Bus
 fn handle_gstreamer_messages(
     state: web::Data<WebGui>,
     rx: &mut bus::BusReader<viola_common::GStreamerMessage>,
 ) {
-    loop {
-        //println!("loop is working");
-        if let Ok(msg) = rx.try_recv() {
-            println!("received gstreamer message on own bus: {:?}", msg);
-            match msg {
-                viola_common::GStreamerMessage::Playing => {
-                    let pos = state.playlist_tabs.current_position();
-                    my_websocket::send_my_message(&state.ws, WsMessage::PlayChanged(pos));
-                }
-                _ => (),
+    for msg in rx.iter() {
+        println!("received gstreamer message on own bus: {:?}", msg);
+        match msg {
+            viola_common::GStreamerMessage::Playing => {
+                let pos = state.playlist_tabs.current_position();
+                my_websocket::send_my_message(&state.ws, WsMessage::PlayChanged(pos));
             }
+            _ => (),
         }
-
-        /*
-        if let Some(a) = state.ws.read().unwrap().as_ref() {
-            if let Some(a) = a.addr.clone() {
-                println!("Sending ping");
-                a.do_send(WsMessage::Ping);
-            }
-        }
-        */
-        let secs = Duration::from_secs(1);
-        thread::sleep(secs);
     }
 }
 
@@ -307,7 +294,7 @@ pub async fn run(
     let plt = crate::playlist_tabs::load(&pool).expect("Failure to load old playlists");
 
     println!("Starting gstreamer");
-    let mut bus = bus::Bus::new(10);
+    let mut bus = bus::Bus::new(50);
     let mut websocket_recv = bus.add_rx();
     let dbus_recv = bus.add_rx();
     let gst = gstreamer_wrapper::new(plt.clone(), pool.clone(), bus)
