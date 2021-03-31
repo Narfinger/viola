@@ -178,9 +178,18 @@ impl GStreamerExt for GStreamer {
                         "Playing uri: {:?}",
                         self.current_playlist.get_current_path()
                     );
+
+                    //looking at gstreamer state transition diagram
+                    //https://gstreamer.freedesktop.org/documentation/additional/design/states.html?gi-language=c
+                    if self.get_state() == GStreamerMessage::Playing {
+                        self.element
+                            .set_state(gstreamer::State::Paused)
+                            .expect("Error setting gstreamer state");
+                    }
                     self.element
                         .set_state(gstreamer::State::Ready)
-                        .expect("Error in setting gstreamer state");
+                        .expect("Errorr in setting gstreamer state");
+
                     self.element
                         .set_property("uri", &uri)
                         .expect("Error setting new gstreamer url");
