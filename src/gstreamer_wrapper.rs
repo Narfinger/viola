@@ -218,7 +218,9 @@ impl GStreamerExt for GStreamer {
                 self.repeat_once.store(true, Ordering::SeqCst);
             }
         }
-        self.sender.try_broadcast(action.into());
+        if let Err(e) = self.sender.try_broadcast(action.into()) {
+            warn!("Could not broadcast, ignoring: {}", e);
+        }
     }
 
     /// poll the message bus and on eos start new

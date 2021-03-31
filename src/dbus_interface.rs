@@ -9,10 +9,7 @@ use crate::{
 use viola_common::{GStreamerAction, GStreamerMessage};
 use zbus::{dbus_interface, export::zvariant, fdo};
 
-struct BaseInterface {
-    gstreamer: Arc<RwLock<GStreamer>>,
-    playlisttabs: PlaylistTabsPtr,
-}
+struct BaseInterface {}
 
 #[dbus_interface(name = "org.mpris.MediaPlayer2")]
 impl BaseInterface {
@@ -206,16 +203,18 @@ impl PlayerInterface {
         Ok(())
     }
 
-    fn seek(&self, position: i32) -> zbus::fdo::Result<()> {
-        todo!("todo")
+    fn seek(&self, _position: i32) -> zbus::fdo::Result<()> {
+        //Not Implemented
+        Ok(())
     }
 
-    fn set_position(&self, track_id: String, position: i32) -> zbus::fdo::Result<()> {
-        todo!("todo")
+    fn set_position(&self, _track_id: String, _position: i32) -> zbus::fdo::Result<()> {
+        //Not Implemented
+        Ok(())
     }
 
-    fn open_uri(&self, s: String) -> zbus::fdo::Result<()> {
-        todo!("todo")
+    fn open_uri(&self, _s: String) -> zbus::fdo::Result<()> {
+        Ok(())
     }
 }
 
@@ -230,10 +229,7 @@ fn main(
         fdo::RequestNameFlags::ReplaceExisting.into(),
     )?;
     let mut object_server = zbus::ObjectServer::new(&connection);
-    let handler = BaseInterface {
-        gstreamer: gstreamer.clone(),
-        playlisttabs: playlisttabs.clone(),
-    };
+    let handler = BaseInterface {};
     object_server.at(&"/org/mpris/MediaPlayer2".try_into()?, handler)?;
     let handler2 = PlayerInterface {
         gstreamer: gstreamer.clone(),
@@ -254,7 +250,6 @@ fn main(
             )?;
         }
     }
-    Ok(())
 }
 
 pub(crate) fn new(
