@@ -1,14 +1,14 @@
-use actix::prelude::*;
-use actix::{Actor, StreamHandler};
-use actix_web_actors::ws;
+//use actix::prelude::*;
+//use actix::{Actor, StreamHandler};
+//use actix_web_actors::ws;
 use parking_lot::RwLock;
 use viola_common::WsMessage;
 
 #[derive(Clone)]
 pub struct MyWs {
-    pub addr: Option<Addr<Self>>,
+    //    pub addr: Option<Addr<Self>>,
 }
-
+/*
 impl Actor for MyWs {
     type Context = ws::WebsocketContext<Self>;
 }
@@ -38,3 +38,4 @@ pub fn send_my_message(ws: &RwLock<Option<MyWs>>, msg: WsMessage) {
         addr.do_send(msg);
     }
 }
+*/

@@ -1,9 +1,4 @@
 #[cfg(feature = "backend")]
-extern crate actix_derive;
-#[cfg(feature = "backend")]
-use actix_derive::Message;
-
-#[cfg(feature = "backend")]
 #[macro_use]
 extern crate diesel;
 #[cfg(feature = "backend")]
@@ -86,8 +81,6 @@ impl From<GStreamerAction> for GStreamerMessage {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "backend", derive(Message))]
-#[cfg_attr(feature = "backend", rtype(result = "()"))]
 pub enum WsMessage {
     PlayChanged(usize),
     CurrentTimeChanged(u64),

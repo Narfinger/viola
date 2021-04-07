@@ -1,9 +1,10 @@
 #![recursion_limit = "4096"]
 #[macro_use]
-extern crate actix_web;
+extern crate warp;
 extern crate app_dirs;
 extern crate base64;
 extern crate bus;
+extern crate tokio;
 #[macro_use]
 extern crate clap;
 extern crate zbus;
@@ -52,8 +53,7 @@ use preferences::{prefs_base_dir, Preferences, PreferencesMap};
 use std::sync::{mpsc, Arc};
 use std::{env, io};
 
-#[actix_rt::main]
-async fn main() -> io::Result<()> {
+fn main() -> io::Result<()> {
     let matches = App::new("Viola")
         .about("Music Player")
         .version(crate_version!())
@@ -109,7 +109,6 @@ async fn main() -> io::Result<()> {
         return Ok(());
     }
     let pool = Arc::new(Mutex::new(tmp_pool.unwrap()));
-    let (tx, rx) = mpsc::channel::<actix_web::dev::Server>();
     if matches.is_present("update") {
         info!("Updating Database");
         if let Ok(preferences) =
@@ -150,17 +149,19 @@ async fn main() -> io::Result<()> {
         path.extend(&["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else if matches.is_present("no-webview") {
-        let _ = actix_web::rt::System::new("test");
-        //println!("Trying main");
-        //std::thread::spawn(|| {
-        //println!("Starting web service");
-        maingui_web::run(pool, tx).await.expect("Error in waiting");
+        tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap()
+            .block_on(maingui_web::run(pool));
     //});
     } else {
         std::thread::spawn(|| {
-            let _ = actix_web::rt::System::new("test");
-            println!("Starting web service");
-            let _ = maingui_web::run(pool, tx);
+            tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap()
+                .block_on(maingui_web::run(pool));
         });
         std::thread::sleep(std::time::Duration::from_secs(1));
 

@@ -1,12 +1,11 @@
-use actix_files as fs;
-use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
-use actix_web_actors::ws;
 use diesel::Connection;
+use parking_lot::RwLock;
 use std::io;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 use viola_common::*;
+use warp::{body::json, reply::Json, Filter, Reply};
 
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
@@ -18,43 +17,36 @@ use crate::playlist_tabs::PlaylistTabsExt;
 use crate::smartplaylist_parser;
 use crate::types::*;
 
-#[get("/playlist/")]
-async fn playlist(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
-    let items = state.playlist_tabs.items();
-    HttpResponse::Ok().body(items)
+async fn playlist(state: WebGuiData) -> Json {
+    let items = state.read().playlist_tabs.items();
+    warp::reply::json(&items)
 }
 
-#[get("/playlist/{index}/")]
-async fn playlist_for(
-    state: web::Data<WebGui>,
-    web::Path(index): web::Path<usize>,
-    _: HttpRequest,
-) -> HttpResponse {
-    let items = state.playlist_tabs.items_for(index);
-    HttpResponse::Ok().body(items)
+async fn playlist_for(state: WebGuiData, index: usize) -> Json {
+    let items = state.read().playlist_tabs.items_for(index);
+    warp::reply::json(&items)
 }
 
-#[post("/repeat/")]
-async fn repeat(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
+async fn repeat(state: WebGuiData) -> impl Reply {
     state
+        .read()
         .gstreamer
         .write()
         .do_gstreamer_action(viola_common::GStreamerAction::RepeatOnce);
-    HttpResponse::Ok().finish()
+    warp::reply()
 }
 
-// removes all already played data
-#[post("/clean/")]
-async fn clean(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
+/// removes all already played data
+async fn clean(state: WebGuiData) -> impl Reply {
     println!("doing cleaning");
-    state.playlist_tabs.clean();
-    my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
-    HttpResponse::Ok().finish()
+    state.write().playlist_tabs.clean();
+    //my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
+    warp::reply()
 }
 
-#[delete("/deletefromplaylist/")]
+/*#[delete("/deletefromplaylist/")]
 async fn delete_from_playlist(
-    state: web::Data<WebGui>,
+    state: WebGuiData,
     deleterange: web::Json<std::ops::Range<usize>>,
     _: HttpRequest,
 ) -> HttpResponse {
@@ -63,36 +55,29 @@ async fn delete_from_playlist(
     my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
+*/
 
-#[post("/save/")]
-async fn save(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
+async fn save(state: WebGuiData) -> impl Reply {
     println!("Saving");
-    let db = state.pool.lock();
-    state.playlist_tabs.save(&db).expect("Error in saving");
-    HttpResponse::Ok().finish()
+    let read_lock = state.read();
+    let db = read_lock.pool.lock();
+    read_lock.playlist_tabs.save(&db).expect("Error in saving");
+    warp::reply()
 }
 
-#[get("/transport/")]
-async fn get_transport(state: web::Data<WebGui>) -> HttpResponse {
-    HttpResponse::Ok().json(state.gstreamer.read().get_state())
+async fn get_transport(state: WebGuiData) -> Json {
+    warp::reply::json(&state.read().gstreamer.read().get_state())
 }
 
-#[post("/transport/")]
-async fn transport(
-    state: web::Data<WebGui>,
-    msg: web::Json<viola_common::GStreamerAction>,
-) -> HttpResponse {
+async fn transport(state: WebGuiData, msg: viola_common::GStreamerAction) -> impl Reply {
     info!("state json data: {:?}", &msg);
-    state
-        .gstreamer
-        .write()
-        .do_gstreamer_action(msg.into_inner());
-    HttpResponse::Ok().finish()
+    state.read().gstreamer.write().do_gstreamer_action(msg);
+    warp::reply()
 }
-
+/*
 #[post("/libraryview/partial/")]
 async fn library_partial_tree(
-    state: web::Data<WebGui>,
+    state: WebGuiData,
     level: web::Json<viola_common::TreeViewQuery>,
     _: HttpRequest,
 ) -> HttpResponse {
@@ -107,7 +92,7 @@ async fn library_partial_tree(
 
 #[post("/libraryview/full/")]
 async fn library_load(
-    state: web::Data<WebGui>,
+    state: WebGuiData,
     level: web::Json<viola_common::TreeViewQuery>,
     _: HttpRequest,
 ) -> HttpResponse {
@@ -121,7 +106,7 @@ async fn library_load(
 }
 
 #[get("/smartplaylist/")]
-fn smartplaylist(_: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
+fn smartplaylist(_: WebGuiData, _: HttpRequest) -> HttpResponse {
     let spl = smartplaylist_parser::construct_smartplaylists_from_config()
         .into_iter()
         .map(|pl| pl.name)
@@ -131,7 +116,7 @@ fn smartplaylist(_: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
 
 #[post("/smartplaylist/load/")]
 async fn smartplaylist_load(
-    state: web::Data<WebGui>,
+    state: WebGuiData,
     index: web::Json<viola_common::LoadSmartPlaylistJson>,
     _: HttpRequest,
 ) -> HttpResponse {
@@ -147,20 +132,15 @@ async fn smartplaylist_load(
 
     HttpResponse::Ok().finish()
 }
+*/
 
-/*fn library_tracks(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
-    let items = libraryviewstore::get_tracks(&state.pool);
-    //println!("{:?}", items);
-    HttpResponse::Ok().json(items)
-}*/
-
-#[get("/currentid/")]
-async fn current_id(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
-    HttpResponse::Ok().json(state.playlist_tabs.current_position())
+async fn current_id(state: WebGuiData) -> Json {
+    warp::reply::json(&state.read().playlist_tabs.current_position())
 }
 
+/*
 #[get("/pltime/")]
-async fn pltime(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
+async fn pltime(state: WebGuiData, _: HttpRequest) -> HttpResponse {
     let total_length = state.playlist_tabs.get_remaining_length();
     let dur = Duration::new(total_length, 0);
     let time = humantime::format_duration(dur).to_string();
@@ -168,7 +148,7 @@ async fn pltime(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
 }
 
 #[get("/currentimage/")]
-async fn current_image(state: web::Data<WebGui>, req: HttpRequest) -> HttpResponse {
+async fn current_image(state: WebGuiData, req: HttpRequest) -> HttpResponse {
     state
         .playlist_tabs
         .get_current_track()
@@ -177,10 +157,11 @@ async fn current_image(state: web::Data<WebGui>, req: HttpRequest) -> HttpRespon
         .and_then(|f: actix_files::NamedFile| f.into_response(&req).ok())
         .unwrap_or_else(|| HttpResponse::Ok().finish())
 }
+*/
 
-#[get("/playlisttab/")]
-async fn playlist_tab(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse {
+async fn playlist_tab(state: WebGuiData) -> Json {
     let tabs = state
+        .read()
         .playlist_tabs
         .read()
         .pls
@@ -191,18 +172,16 @@ async fn playlist_tab(state: web::Data<WebGui>, _: HttpRequest) -> HttpResponse 
         })
         .collect::<Vec<PlaylistTabJSON>>();
     let resp = PlaylistTabsJSON {
-        current: state.playlist_tabs.current_tab(),
+        current: state.read().playlist_tabs.current_tab(),
         tabs: tabs,
     };
-
-    //state.save();
-
-    HttpResponse::Ok().json(resp)
+    warp::reply::json(&resp)
 }
 
+/*
 #[post("/playlisttab/")]
 async fn change_playlist_tab(
-    state: web::Data<WebGui>,
+    state: WebGuiData,
     index: web::Json<usize>,
     _: HttpRequest,
 ) -> HttpResponse {
@@ -213,7 +192,7 @@ async fn change_playlist_tab(
 
 #[delete("/playlisttab/")]
 async fn delete_playlist_tab(
-    state: web::Data<WebGui>,
+    state: WebGuiData,
     index: web::Json<usize>,
     _: HttpRequest,
     //mut body: web::Payload,
@@ -233,6 +212,7 @@ async fn delete_playlist_tab(
     my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
     HttpResponse::Ok().finish()
 }
+*/
 
 struct WebGui {
     pool: DBPool,
@@ -241,11 +221,7 @@ struct WebGui {
     ws: parking_lot::RwLock<Option<my_websocket::MyWs>>,
 }
 
-trait Web {
-    fn save(&self);
-}
-
-impl Web for WebGui {
+impl WebGui {
     fn save(&self) {
         let db = self.pool.lock();
         db.transaction::<_, diesel::result::Error, _>(|| {
@@ -256,8 +232,11 @@ impl Web for WebGui {
     }
 }
 
+type WebGuiData = Arc<RwLock<WebGui>>;
+
+/*
 async fn ws_start(
-    state: web::Data<WebGui>,
+    state: WebGuiData,
     req: HttpRequest,
     stream: web::Payload,
 ) -> Result<HttpResponse, Error> {
@@ -268,28 +247,26 @@ async fn ws_start(
     *state.ws.write() = Some(ws);
     Ok(resp)
 }
+*/
 
 /// blocking function that handles messages on the GStreamer Bus
 fn handle_gstreamer_messages(
-    state: web::Data<WebGui>,
+    state: WebGuiData,
     rx: &mut bus::BusReader<viola_common::GStreamerMessage>,
 ) {
     for msg in rx.iter() {
         println!("received gstreamer message on own bus: {:?}", msg);
         match msg {
             viola_common::GStreamerMessage::Playing => {
-                let pos = state.playlist_tabs.current_position();
-                my_websocket::send_my_message(&state.ws, WsMessage::PlayChanged(pos));
+                let pos = state.read().playlist_tabs.current_position();
+                //my_websocket::send_my_message(&state.ws, WsMessage::PlayChanged(pos));
             }
             _ => (),
         }
     }
 }
 
-pub async fn run(
-    pool: DBPool,
-    tx: std::sync::mpsc::Sender<actix_web::dev::Server>,
-) -> io::Result<()> {
+pub async fn run(pool: DBPool) {
     println!("Loading playlist");
     let plt = crate::playlist_tabs::load(&pool).expect("Failure to load old playlists");
 
@@ -314,7 +291,7 @@ pub async fn run(
     };
 
     println!("Doing data");
-    let data = web::Data::new(state);
+    let data = Arc::new(RwLock::new(state));
 
     {
         let datac = data.clone();
@@ -324,16 +301,17 @@ pub async fn run(
         let datac = data.clone();
         thread::spawn(move || loop {
             thread::sleep(Duration::new(10 * 60, 0));
-            datac.save();
+            datac.read().save();
         });
     }
     {
         let datac = data.clone();
         thread::spawn(move || loop {
             thread::sleep(Duration::new(1, 0));
-            if datac.gstreamer.read().get_state() == viola_common::GStreamerMessage::Playing {
-                let data = datac.gstreamer.read().get_elapsed().unwrap_or(0);
-                my_websocket::send_my_message(&datac.ws, WsMessage::CurrentTimeChanged(data));
+            if datac.read().gstreamer.read().get_state() == viola_common::GStreamerMessage::Playing
+            {
+                let data = datac.read().gstreamer.read().get_elapsed().unwrap_or(0);
+                //my_websocket::send_my_message(&datac.ws, WsMessage::CurrentTimeChanged(data));
             }
         });
     }
@@ -343,41 +321,28 @@ pub async fn run(
 
     //let web_gui_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/");
     let web_gui_dist_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/");
-    let mut sys = actix_web::rt::System::new("test");
 
-    let srv = HttpServer::new(move || {
-        App::new()
-            .app_data(data.clone())
-            .service(playlist)
-            .service(playlist_for)
-            .service(repeat)
-            .service(clean)
-            .service(delete_from_playlist)
-            .service(save)
-            .service(transport)
-            .service(get_transport)
-            //.service(web::resource("/libraryview/albums/").route(web::get().to(library_albums)))
-            //.service(web::resource("/libraryview/tracks/").route(web::get().to(library_tracks)))
-            .service(library_partial_tree)
-            .service(library_load)
-            .service(smartplaylist)
-            .service(smartplaylist_load)
-            .service(pltime)
-            .service(current_id)
-            .service(current_image)
-            .service(playlist_tab)
-            .service(change_playlist_tab)
-            .service(delete_playlist_tab)
-            .service(web::resource("/ws/").route(web::get().to(ws_start)))
-            .service(fs::Files::new("/static/", web_gui_dist_path).show_files_listing())
-            .service(fs::Files::new("/", web_gui_dist_path).index_file("index.html"))
-    })
-    .bind("127.0.0.1:8088")
-    .expect("Cannot bind address")
-    .run();
+    let gets = {
+        let pl = warp::path!("/playlist/" / usize).map(|t| playlist_for(data, t));
+        let tr = warp::path!("/transport/").map(|| get_transport(data));
+        let curid = warp::path!("/currentid/").map(|| current_id(data));
+        let pltab = warp::path!("/playlisttab/").map(|| playlist_tab(data));
+        warp::get().and(pl.or(tr).or(curid).or(pltab))
+    };
 
-    tx.send(srv.clone()).expect("Error in send");
+    let posts = {
+        let rep = warp::path!("/repeat/").map(|| repeat(data));
+        let clean = warp::path!("/clean/").map(|| clean(data));
+        let save = warp::path!("/save/").map(|| save(data));
+        let transp = warp::path!("/transport/")
+            .and(warp::body::json())
+            .map(|msg| transport(data, msg));
+        warp::post().and(rep.or(clean).or(save).or(transp))
+    };
 
-    sys.block_on(srv).expect("Error in block on");
-    Ok(())
+    let static_files = warp::path("/static/").and(warp::fs::dir("/static/"));
+    let index = warp::path("/").and(warp::fs::file("index.html"));
+
+    let all = gets.or(posts).or(static_files).or(index);
+    warp::serve(all).run(([127, 0, 0, 1], 8088)).await;
 }

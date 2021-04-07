@@ -6,11 +6,6 @@ authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-actix = "0.10"
-actix-rt = "2.1"
-actix-web = "3.3"
-actix-web-actors="3.0"
-actix-files = "0.5"         # Static files support for actix web.
 app_dirs = "1.2"         # Put your app's data in the right place on every platform
 base64 = "0.13"
 clap = "2.33"                    # A simple to use, efficient, and full featured  Command Line Argument Parser
@@ -46,3 +41,5 @@ itertools = "0.10"
 zbus = "1.8.0"
 bus = "2.2.3"
 parking_lot = {version = "0.11.1", features = ["serde", "deadlock_detection"]}
+warp = "0.3"
+tokio = "1.4.0"
