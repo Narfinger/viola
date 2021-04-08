@@ -1,9 +1,9 @@
 use diesel::Connection;
 use parking_lot::RwLock;
-use std::io;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
+use std::{convert::Infallible, io};
 use viola_common::*;
 use warp::{body::json, reply::Json, Filter, Reply};
 
@@ -17,17 +17,17 @@ use crate::playlist_tabs::PlaylistTabsExt;
 use crate::smartplaylist_parser;
 use crate::types::*;
 
-fn playlist(state: WebGuiData) -> Json {
+fn playlist(state: &WebGuiData) -> Json {
     let items = state.read().playlist_tabs.items();
     warp::reply::json(&items)
 }
 
-fn playlist_for(state: WebGuiData, index: usize) -> Json {
+fn playlist_for(state: &WebGuiData, index: usize) -> Json {
     let items = state.read().playlist_tabs.items_for(index);
     warp::reply::json(&items)
 }
 
-fn repeat(state: WebGuiData) -> impl Reply {
+fn repeat(state: &WebGuiData) -> impl Reply {
     state
         .read()
         .gstreamer
@@ -37,7 +37,7 @@ fn repeat(state: WebGuiData) -> impl Reply {
 }
 
 /// removes all already played data
-fn clean(state: WebGuiData) -> impl Reply {
+fn clean(state: &WebGuiData) -> impl Reply {
     println!("doing cleaning");
     state.write().playlist_tabs.clean();
     //my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
@@ -57,7 +57,7 @@ async fn delete_from_playlist(
 }
 */
 
-fn save(state: WebGuiData) -> impl Reply {
+fn save(state: &WebGuiData) -> impl Reply {
     println!("Saving");
     let read_lock = state.read();
     let db = read_lock.pool.lock();
@@ -65,11 +65,11 @@ fn save(state: WebGuiData) -> impl Reply {
     warp::reply()
 }
 
-fn get_transport(state: WebGuiData) -> Json {
+fn get_transport(state: &WebGuiData) -> Json {
     warp::reply::json(&state.read().gstreamer.read().get_state())
 }
 
-fn transport(state: WebGuiData, msg: viola_common::GStreamerAction) -> impl Reply {
+fn transport(state: &WebGuiData, msg: viola_common::GStreamerAction) -> impl Reply {
     info!("state json data: {:?}", &msg);
     state.read().gstreamer.write().do_gstreamer_action(msg);
     warp::reply()
@@ -134,7 +134,7 @@ async fn smartplaylist_load(
 }
 */
 
-fn current_id(state: WebGuiData) -> Json {
+fn current_id(state: &WebGuiData) -> Json {
     warp::reply::json(&state.read().playlist_tabs.current_position())
 }
 
@@ -159,7 +159,7 @@ async fn current_image(state: WebGuiData, req: HttpRequest) -> HttpResponse {
 }
 */
 
-fn playlist_tab(state: WebGuiData) -> Json {
+fn playlist_tab(state: &WebGuiData) -> Json {
     let tabs = state
         .read()
         .playlist_tabs
@@ -266,6 +266,10 @@ fn handle_gstreamer_messages(
     }
 }
 
+fn with_state(data: WebGuiData) -> impl Filter<Extract = (WebGuiData,), Error = Infallible> {
+    warp::any().map(move || data.clone())
+}
+
 pub async fn run(pool: DBPool) {
     println!("Loading playlist");
     let plt = crate::playlist_tabs::load(&pool).expect("Failure to load old playlists");
@@ -323,20 +327,28 @@ pub async fn run(pool: DBPool) {
     let web_gui_dist_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/");
 
     let gets = {
-        let pl = warp::path!("/playlist/" / usize).map(|t| playlist_for(data, t));
-        let tr = warp::path!("/transport/").map(|| get_transport(data));
-        let curid = warp::path!("/currentid/").map(|| current_id(data));
-        let pltab = warp::path!("/playlisttab/").map(|| playlist_tab(data));
+        let datac = data.clone();
+        let pl = warp::path!("/playlist/" / usize).map(move |t| playlist_for(&datac, t));
+        let datac = data.clone();
+        let tr = warp::path!("/transport/").map(move || get_transport(&datac));
+        let datac = data.clone();
+        let curid = warp::path!("/currentid/").map(move || current_id(&datac));
+        let datac = data.clone();
+        let pltab = warp::path!("/playlisttab/").map(move || playlist_tab(&datac));
         warp::get().and(pl.or(tr).or(curid).or(pltab))
     };
 
     let posts = {
-        let rep = warp::path!("/repeat/").map(|| repeat(data));
-        let clean = warp::path!("/clean/").map(|| clean(data));
-        let save = warp::path!("/save/").map(|| save(data));
+        let datac = data.clone();
+        let rep = warp::path!("/repeat/").map(move || repeat(&datac));
+        let datac = data.clone();
+        let clean = warp::path!("/clean/").map(move || clean(&datac));
+        let datac = data.clone();
+        let save = warp::path!("/save/").map(move || save(&datac));
+        let datac = data.clone();
         let transp = warp::path!("/transport/")
             .and(warp::body::json())
-            .map(|msg| transport(data, msg));
+            .map(move |msg| transport(&datac, msg));
         warp::post().and(rep.or(clean).or(save).or(transp))
     };
 
