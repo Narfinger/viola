@@ -280,6 +280,13 @@ async fn handle_gstreamer_messages(
     }
 }
 
+async fn auto_save(state: WebGuiData) {
+    loop {
+        tokio::time::sleep(Duration::new(10 * 60, 0));
+        state.read().await.save();
+    }
+}
+
 pub async fn run(pool: DBPool) {
     println!("Loading playlist");
     let plt = crate::playlist_tabs::load(&pool).expect("Failure to load old playlists");
@@ -309,30 +316,29 @@ pub async fn run(pool: DBPool) {
 
     {
         let datac = data.clone();
-        //thread::spawn(move || handle_gstreamer_messages(datac, &mut websocket_recv));
+        tokio::spawn(handle_gstreamer_messages(datac, &mut websocket_recv));
     }
     {
         let datac = data.clone();
-        thread::spawn(move || loop {
-            thread::sleep(Duration::new(10 * 60, 0));
-            if let Ok(lock) = datac.try_read() {
-                lock.save();
-            } else {
-                info!("Saving was blocked");
-            }
-        });
+        tokio::spawn(async move { auto_save(datac) });
     }
     {
         let datac = data.clone();
-        thread::spawn(move || loop {
-            thread::sleep(Duration::new(1, 0));
-            if let Ok(lock) = datac.try_read() {
-                if lock.gstreamer.read().get_state() == viola_common::GStreamerMessage::Playing {
-                    let data = lock.gstreamer.read().get_elapsed().unwrap_or(0);
+        tokio::spawn(async move {
+            loop {
+                tokio::time::sleep(Duration::new(1, 0));
+                if datac.read().await.gstreamer.read().get_state()
+                    == viola_common::GStreamerMessage::Playing
+                {
+                    let data = datac
+                        .read()
+                        .await
+                        .gstreamer
+                        .read()
+                        .get_elapsed()
+                        .unwrap_or(0);
                     //my_websocket::send_my_message(&datac.ws, WsMessage::CurrentTimeChanged(data));
                 }
-            } else {
-                info!("Socket send failed because of lock");
             }
         });
     }
