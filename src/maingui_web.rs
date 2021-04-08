@@ -45,18 +45,15 @@ async fn clean(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     Ok(warp::reply())
 }
 
-/*#[delete("/deletefromplaylist/")]
 async fn delete_from_playlist(
+    deleterange: std::ops::Range<usize>,
     state: WebGuiData,
-    deleterange: web::Json<std::ops::Range<usize>>,
-    _: HttpRequest,
-) -> HttpResponse {
+) -> Result<impl warp::Reply, Infallible> {
     println!("Doing delete");
-    state.playlist_tabs.delete_range(deleterange.into_inner());
-    my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
-    HttpResponse::Ok().finish()
+    state.read().await.playlist_tabs.delete_range(deleterange);
+    //my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
+    Ok(warp::reply())
 }
-*/
 
 async fn save(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     println!("Saving");
@@ -192,41 +189,26 @@ async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible>
     Ok(warp::reply::json(&resp))
 }
 
-/*
-#[post("/playlisttab/")]
 async fn change_playlist_tab(
+    index: usize,
     state: WebGuiData,
-    index: web::Json<usize>,
-    _: HttpRequest,
-) -> HttpResponse {
-    state.playlist_tabs.set_tab(index.into_inner());
-    my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
-    HttpResponse::Ok().finish()
+) -> Result<impl warp::Reply, Infallible> {
+    state.read().await.playlist_tabs.set_tab(index);
+    //my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
+    Ok(warp::reply())
 }
 
-#[delete("/playlisttab/")]
 async fn delete_playlist_tab(
+    index: usize,
     state: WebGuiData,
-    index: web::Json<usize>,
-    _: HttpRequest,
-    //mut body: web::Payload,
-) -> HttpResponse {
-    //use futures::StreamExt;
-    //let mut bytes = web::BytesMut::new();
-    //while let Some(item) = body.next().await {
-    //    bytes.extend_from_slice(&item.unwrap());
-    //}
-    //println!("Body {:?}!", bytes);
-    //let q = serde_json::from_slice::<ChangePlaylistTabJson>(&bytes);
-    //println!("{:?}", q);
-
+) -> Result<impl warp::Reply, Infallible> {
     println!("deleting {}", &index);
-    state.playlist_tabs.delete(&state.pool, index.into_inner());
-    my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
-    my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
-    HttpResponse::Ok().finish()
+    let statelock = state.read().await;
+    statelock.playlist_tabs.delete(&statelock.pool, index);
+    //my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
+    //my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
+    Ok(warp::reply())
 }
-*/
 
 struct WebGui {
     pool: DBPool,
@@ -316,7 +298,7 @@ pub async fn run(pool: DBPool) {
 
     {
         let datac = data.clone();
-        tokio::spawn(handle_gstreamer_messages(datac, &mut websocket_recv));
+        //tokio::spawn(handle_gstreamer_messages(datac, &mut websocket_recv));
     }
     {
         let datac = data.clone();
@@ -375,12 +357,27 @@ pub async fn run(pool: DBPool) {
             .and(warp::body::json())
             .and(data.clone())
             .and_then(transport);
-        warp::post().and(rep.or(clean).or(save).or(transp))
+        let playlist_tab = warp::path!("/playlisttab/")
+            .and(warp::body::json())
+            .and(data.clone())
+            .and_then(change_playlist_tab);
+        warp::post().and(rep.or(clean).or(save).or(transp).or(playlist_tab))
+    };
+
+    let deletes = {
+        let deletepl = warp::path!("/deletefromplaylist/")
+            .and(warp::body::json())
+            .and(data.clone())
+            .and_then(delete_from_playlist);
+        let deletetab = warp::path!("/playlisttab/" / usize)
+            .and(data.clone())
+            .and_then(delete_playlist_tab);
+        warp::delete().and(deletepl.or(deletetab))
     };
 
     let static_files = warp::path("/static/").and(warp::fs::dir("/static/"));
     let index = warp::path("/").and(warp::fs::file("index.html"));
 
-    let all = gets.or(posts).or(static_files).or(index);
+    let all = gets.or(posts).or(deletes).or(static_files).or(index);
     warp::serve(all).run(([127, 0, 0, 1], 8088)).await;
 }
