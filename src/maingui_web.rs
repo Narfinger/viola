@@ -17,17 +17,17 @@ use crate::playlist_tabs::PlaylistTabsExt;
 use crate::smartplaylist_parser;
 use crate::types::*;
 
-async fn playlist(state: WebGuiData) -> Json {
+fn playlist(state: WebGuiData) -> Json {
     let items = state.read().playlist_tabs.items();
     warp::reply::json(&items)
 }
 
-async fn playlist_for(state: WebGuiData, index: usize) -> Json {
+fn playlist_for(state: WebGuiData, index: usize) -> Json {
     let items = state.read().playlist_tabs.items_for(index);
     warp::reply::json(&items)
 }
 
-async fn repeat(state: WebGuiData) -> impl Reply {
+fn repeat(state: WebGuiData) -> impl Reply {
     state
         .read()
         .gstreamer
@@ -37,7 +37,7 @@ async fn repeat(state: WebGuiData) -> impl Reply {
 }
 
 /// removes all already played data
-async fn clean(state: WebGuiData) -> impl Reply {
+fn clean(state: WebGuiData) -> impl Reply {
     println!("doing cleaning");
     state.write().playlist_tabs.clean();
     //my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
@@ -57,7 +57,7 @@ async fn delete_from_playlist(
 }
 */
 
-async fn save(state: WebGuiData) -> impl Reply {
+fn save(state: WebGuiData) -> impl Reply {
     println!("Saving");
     let read_lock = state.read();
     let db = read_lock.pool.lock();
@@ -65,11 +65,11 @@ async fn save(state: WebGuiData) -> impl Reply {
     warp::reply()
 }
 
-async fn get_transport(state: WebGuiData) -> Json {
+fn get_transport(state: WebGuiData) -> Json {
     warp::reply::json(&state.read().gstreamer.read().get_state())
 }
 
-async fn transport(state: WebGuiData, msg: viola_common::GStreamerAction) -> impl Reply {
+fn transport(state: WebGuiData, msg: viola_common::GStreamerAction) -> impl Reply {
     info!("state json data: {:?}", &msg);
     state.read().gstreamer.write().do_gstreamer_action(msg);
     warp::reply()
@@ -134,7 +134,7 @@ async fn smartplaylist_load(
 }
 */
 
-async fn current_id(state: WebGuiData) -> Json {
+fn current_id(state: WebGuiData) -> Json {
     warp::reply::json(&state.read().playlist_tabs.current_position())
 }
 
@@ -159,7 +159,7 @@ async fn current_image(state: WebGuiData, req: HttpRequest) -> HttpResponse {
 }
 */
 
-async fn playlist_tab(state: WebGuiData) -> Json {
+fn playlist_tab(state: WebGuiData) -> Json {
     let tabs = state
         .read()
         .playlist_tabs
