@@ -1,4 +1,5 @@
 use diesel::Connection;
+use futures::{FutureExt, StreamExt};
 use std::thread;
 use std::time::Duration;
 use std::{convert::Infallible, io};
@@ -93,7 +94,7 @@ async fn library_partial_tree(
     }
     let items = libraryviewstore::partial_query(&state.read().await.pool, &q);
 
-    Ok(warp::reply())
+    Ok(warp::reply::json(&items))
 }
 
 async fn library_load(
@@ -114,7 +115,7 @@ async fn smartplaylist(_: WebGuiData) -> Result<impl warp::Reply, Infallible> {
         .into_iter()
         .map(|pl| pl.name)
         .collect::<Vec<String>>();
-    Ok(warp::reply())
+    Ok(warp::reply::json(&spl))
 }
 
 async fn smartplaylist_load(
@@ -159,13 +160,14 @@ async fn current_image(state: WebGuiData) -> Result<impl warp::Reply, warp::Reje
         .albumpath
         .ok_or(warp::reject::not_found())
     {
-        let f = std::fs::File::open(p).map_err(|_| Err(warp::reject::not_found()))?;
+        let mut f = std::fs::File::open(p).map_err(|_| warp::reject::not_found())?;
         let mut str = String::new();
-        f.read_to_string(&mut str);
+        f.read_to_string(&mut str)
+            .map_err(|_| warp::reject::not_found())?;
         let res = warp::hyper::Response::builder()
             .status(StatusCode::OK)
             .body(str)
-            .map_err(|_| Err(warp::reject::not_found()))?;
+            .map_err(|_| warp::reject::not_found())?;
         Ok(res)
     } else {
         Err(warp::reject::not_found())
@@ -251,8 +253,9 @@ async fn ws_start(
 /// blocking function that handles messages on the GStreamer Bus
 async fn handle_gstreamer_messages(
     state: WebGuiData,
-    rx: &mut bus::BusReader<viola_common::GStreamerMessage>,
+    rx: bus::BusReader<viola_common::GStreamerMessage>,
 ) {
+    let mut rx = rx;
     for msg in rx.iter() {
         println!("received gstreamer message on own bus: {:?}", msg);
         match msg {
@@ -267,7 +270,7 @@ async fn handle_gstreamer_messages(
 
 async fn auto_save(state: WebGuiData) {
     loop {
-        tokio::time::sleep(Duration::new(10 * 60, 0));
+        tokio::time::sleep(Duration::new(10 * 60, 0)).await;
         state.read().await.save();
     }
 }
@@ -278,8 +281,8 @@ pub async fn run(pool: DBPool) {
 
     println!("Starting gstreamer");
     let mut bus = bus::Bus::new(50);
-    let mut websocket_recv = bus.add_rx();
     let dbus_recv = bus.add_rx();
+    let websocket_recv = bus.add_rx();
     let gst = gstreamer_wrapper::new(plt.clone(), pool.clone(), bus)
         .expect("Error Initializing gstreamer");
 
@@ -301,7 +304,7 @@ pub async fn run(pool: DBPool) {
 
     {
         let datac = data.clone();
-        //tokio::spawn(handle_gstreamer_messages(datac, &mut websocket_recv));
+        tokio::spawn(async move { handle_gstreamer_messages(datac, websocket_recv) });
     }
     {
         let datac = data.clone();
@@ -311,7 +314,7 @@ pub async fn run(pool: DBPool) {
         let datac = data.clone();
         tokio::spawn(async move {
             loop {
-                tokio::time::sleep(Duration::new(1, 0));
+                tokio::time::sleep(Duration::new(1, 0)).await;
                 if datac.read().await.gstreamer.read().get_state()
                     == viola_common::GStreamerMessage::Playing
                 {
@@ -329,7 +332,6 @@ pub async fn run(pool: DBPool) {
     }
 
     println!("Starting web gui on 127.0.0.1:8088");
-    //let mut sys = actix_rt::System::new("test");
 
     //let web_gui_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/");
     let web_gui_dist_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/");
@@ -337,7 +339,10 @@ pub async fn run(pool: DBPool) {
     let data = warp::any().map(move || Arc::clone(&data));
 
     let gets = {
-        let pl = warp::path!("/playlist/" / usize)
+        let pl = warp::path!("/playlist/")
+            .and(data.clone())
+            .and_then(playlist);
+        let pl_for = warp::path!("/playlist/" / usize)
             .and(data.clone())
             .and_then(playlist_for);
         let tr = warp::path!("/transport/")
@@ -355,7 +360,14 @@ pub async fn run(pool: DBPool) {
         let smartpl = warp::path!("/smartplaylist/")
             .and(data.clone())
             .and_then(smartplaylist);
-        warp::get().and(pl.or(tr).or(curid).or(pltab).or(cover).or(smartpl))
+        warp::get().and(
+            pl.or(pl_for)
+                .or(tr)
+                .or(curid)
+                .or(pltab)
+                .or(cover)
+                .or(smartpl),
+        )
     };
 
     let posts = {
@@ -405,6 +417,12 @@ pub async fn run(pool: DBPool) {
         warp::delete().and(deletepl.or(deletetab))
     };
 
+    let websocket = warp::path("/ws/").and(warp::ws()).map(|ws: warp::ws::Ws| {
+        ws.on_upgrade(|websocket| {
+            let (tx, rx) = websocket.split();
+            my_websocket::handle_websocket(tx).await
+        })
+    });
     let static_files = warp::path("/static/").and(warp::fs::dir("/static/"));
     let index = warp::path("/").and(warp::fs::file("index.html"));
 

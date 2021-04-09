@@ -8,6 +8,9 @@ use viola_common::WsMessage;
 pub struct MyWs {
     //    pub addr: Option<Addr<Self>>,
 }
+
+pub async fn handle_websocket() {}
+
 /*
 impl Actor for MyWs {
     type Context = ws::WebsocketContext<Self>;
