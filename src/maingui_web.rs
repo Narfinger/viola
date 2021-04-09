@@ -1,19 +1,17 @@
 use diesel::Connection;
-use futures::{FutureExt, StreamExt};
-use std::thread;
+use futures::StreamExt;
+use std::convert::Infallible;
 use std::time::Duration;
-use std::{convert::Infallible, io};
 use std::{io::Read, sync::Arc};
 use tokio::sync::RwLock;
 use viola_common::*;
-use warp::{body::json, hyper::StatusCode, reply::Json, Filter, Reply};
+use warp::{hyper::StatusCode, Filter};
 
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
 use crate::libraryviewstore;
 use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls, SavePlaylistExt};
 use crate::my_websocket;
-use crate::my_websocket::*;
 use crate::playlist_tabs::PlaylistTabsExt;
 use crate::smartplaylist_parser;
 use crate::types::*;
@@ -42,7 +40,9 @@ async fn repeat(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
 async fn clean(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     println!("doing cleaning");
     state.write().await.playlist_tabs.clean();
-    //my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
+    tokio::spawn(async move {
+        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadPlaylist).await;
+    });
     Ok(warp::reply())
 }
 
@@ -52,7 +52,9 @@ async fn delete_from_playlist(
 ) -> Result<impl warp::Reply, Infallible> {
     println!("Doing delete");
     state.read().await.playlist_tabs.delete_range(deleterange);
-    //my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
+    tokio::spawn(async move {
+        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadPlaylist).await;
+    });
     Ok(warp::reply())
 }
 
@@ -106,7 +108,9 @@ async fn library_load(
     let pl = libraryviewstore::load_query(&state.read().await.pool, &q);
     println!("Loading new playlist {}", pl.name);
     state.write().await.playlist_tabs.add(pl);
-    //my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
+    tokio::spawn(async move {
+        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
+    });
     Ok(warp::reply())
 }
 
@@ -129,7 +133,9 @@ async fn smartplaylist_load(
     if let Some(p) = pl {
         let rp = { p.load(&state.read().await.pool) };
         state.write().await.playlist_tabs.add(rp);
-        //my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
+        tokio::spawn(async move {
+            my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
+        });
     }
 
     Ok(warp::reply())
@@ -199,7 +205,9 @@ async fn change_playlist_tab(
     state: WebGuiData,
 ) -> Result<impl warp::Reply, Infallible> {
     state.read().await.playlist_tabs.set_tab(index);
-    //my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
+    tokio::spawn(async move {
+        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadPlaylist).await;
+    });
     Ok(warp::reply())
 }
 
@@ -210,8 +218,11 @@ async fn delete_playlist_tab(
     println!("deleting {}", &index);
     let statelock = state.read().await;
     statelock.playlist_tabs.delete(&statelock.pool, index);
-    //my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
-    //my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist);
+    let state = state.clone();
+    tokio::spawn(async move {
+        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
+        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadPlaylist).await;
+    });
     Ok(warp::reply())
 }
 
@@ -219,7 +230,7 @@ struct WebGui {
     pool: DBPool,
     gstreamer: Arc<parking_lot::RwLock<gstreamer_wrapper::GStreamer>>,
     playlist_tabs: PlaylistTabsPtr,
-    ws: parking_lot::RwLock<Option<my_websocket::MyWs>>,
+    ws: my_websocket::MyWs,
 }
 
 impl WebGui {
@@ -261,7 +272,14 @@ async fn handle_gstreamer_messages(
         match msg {
             viola_common::GStreamerMessage::Playing => {
                 let pos = state.read().await.playlist_tabs.current_position();
-                //my_websocket::send_my_message(&state.ws, WsMessage::PlayChanged(pos));
+                let state = state.clone();
+                tokio::spawn(async move {
+                    my_websocket::send_my_message(
+                        &state.read().await.ws,
+                        WsMessage::PlayChanged(pos),
+                    )
+                    .await;
+                });
             }
             _ => (),
         }
@@ -296,22 +314,22 @@ pub async fn run(pool: DBPool) {
         pool: pool.clone(),
         gstreamer: gst,
         playlist_tabs: plt,
-        ws: parking_lot::RwLock::new(None),
+        ws: Arc::new(RwLock::new(None)),
     };
 
     println!("Doing data");
-    let data = Arc::new(RwLock::new(state));
+    let state = Arc::new(RwLock::new(state));
 
     {
-        let datac = data.clone();
+        let datac = state.clone();
         tokio::spawn(async move { handle_gstreamer_messages(datac, websocket_recv) });
     }
     {
-        let datac = data.clone();
+        let datac = state.clone();
         tokio::spawn(async move { auto_save(datac) });
     }
     {
-        let datac = data.clone();
+        let datac = state.clone();
         tokio::spawn(async move {
             loop {
                 tokio::time::sleep(Duration::new(1, 0)).await;
@@ -325,7 +343,11 @@ pub async fn run(pool: DBPool) {
                         .read()
                         .get_elapsed()
                         .unwrap_or(0);
-                    //my_websocket::send_my_message(&datac.ws, WsMessage::CurrentTimeChanged(data));
+                    my_websocket::send_my_message(
+                        &datac.read().await.ws,
+                        WsMessage::CurrentTimeChanged(data),
+                    )
+                    .await;
                 }
             }
         });
@@ -336,7 +358,8 @@ pub async fn run(pool: DBPool) {
     //let web_gui_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/");
     let web_gui_dist_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/");
 
-    let data = warp::any().map(move || Arc::clone(&data));
+    let statec = state.clone();
+    let data = warp::any().map(move || Arc::clone(&state));
 
     let gets = {
         let pl = warp::path!("/playlist/")
@@ -417,15 +440,23 @@ pub async fn run(pool: DBPool) {
         warp::delete().and(deletepl.or(deletetab))
     };
 
-    let websocket = warp::path("/ws/").and(warp::ws()).map(|ws: warp::ws::Ws| {
-        ws.on_upgrade(|websocket| {
-            let (tx, rx) = websocket.split();
-            my_websocket::handle_websocket(tx).await
-        })
-    });
+    let websocket = warp::path("/ws/")
+        .and(warp::ws())
+        .map(move |ws: warp::ws::Ws| {
+            let statec = statec.clone();
+            ws.on_upgrade(|websocket| async move {
+                let (tx, _) = websocket.split();
+                statec.write().await.ws = Arc::new(RwLock::new(Some(tx)));
+            })
+        });
     let static_files = warp::path("/static/").and(warp::fs::dir("/static/"));
     let index = warp::path("/").and(warp::fs::file("index.html"));
 
-    let all = gets.or(posts).or(deletes).or(static_files).or(index);
+    let all = gets
+        .or(posts)
+        .or(deletes)
+        .or(static_files)
+        .or(websocket)
+        .or(index);
     warp::serve(all).run(([127, 0, 0, 1], 8088)).await;
 }
