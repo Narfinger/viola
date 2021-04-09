@@ -1,11 +1,11 @@
 use diesel::Connection;
-use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 use std::{convert::Infallible, io};
+use std::{io::Read, sync::Arc};
 use tokio::sync::RwLock;
 use viola_common::*;
-use warp::{body::json, reply::Json, Filter, Reply};
+use warp::{body::json, hyper::StatusCode, reply::Json, Filter, Reply};
 
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
@@ -82,65 +82,57 @@ async fn transport(
         .do_gstreamer_action(msg);
     Ok(warp::reply())
 }
-/*
-#[post("/libraryview/partial/")]
+
 async fn library_partial_tree(
+    level: viola_common::TreeViewQuery,
     state: WebGuiData,
-    level: web::Json<viola_common::TreeViewQuery>,
-    _: HttpRequest,
-) -> HttpResponse {
-    let mut q = level.into_inner();
+) -> Result<impl warp::Reply, Infallible> {
+    let mut q = level;
     if q.search.is_some() && q.search.as_ref().unwrap().is_empty() {
         q.search = None;
     }
-    let items = libraryviewstore::partial_query(&state.pool, &q);
+    let items = libraryviewstore::partial_query(&state.read().await.pool, &q);
 
-    HttpResponse::Ok().json(items)
+    Ok(warp::reply())
 }
 
-#[post("/libraryview/full/")]
 async fn library_load(
+    level: viola_common::TreeViewQuery,
     state: WebGuiData,
-    level: web::Json<viola_common::TreeViewQuery>,
-    _: HttpRequest,
-) -> HttpResponse {
-    let mut q = level.into_inner();
+) -> Result<impl warp::Reply, Infallible> {
+    let mut q = level;
     q.search = q.search.filter(|t| !t.is_empty());
-    let pl = libraryviewstore::load_query(&state.pool, &q);
+    let pl = libraryviewstore::load_query(&state.read().await.pool, &q);
     println!("Loading new playlist {}", pl.name);
-    state.playlist_tabs.add(pl);
-    my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
-    HttpResponse::Ok().finish()
+    state.write().await.playlist_tabs.add(pl);
+    //my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
+    Ok(warp::reply())
 }
 
-#[get("/smartplaylist/")]
-fn smartplaylist(_: WebGuiData, _: HttpRequest) -> HttpResponse {
+async fn smartplaylist(_: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     let spl = smartplaylist_parser::construct_smartplaylists_from_config()
         .into_iter()
         .map(|pl| pl.name)
         .collect::<Vec<String>>();
-    HttpResponse::Ok().json(spl)
+    Ok(warp::reply())
 }
 
-#[post("/smartplaylist/load/")]
 async fn smartplaylist_load(
+    index: viola_common::LoadSmartPlaylistJson,
     state: WebGuiData,
-    index: web::Json<viola_common::LoadSmartPlaylistJson>,
-    _: HttpRequest,
-) -> HttpResponse {
+) -> Result<impl warp::Reply, Infallible> {
     use crate::smartplaylist_parser::LoadSmartPlaylist;
     let spl = smartplaylist_parser::construct_smartplaylists_from_config();
     let pl = spl.get(index.index);
 
     if let Some(p) = pl {
-        let rp = p.load(&state.pool);
-        state.playlist_tabs.add(rp);
-        my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
+        let rp = { p.load(&state.read().await.pool) };
+        state.write().await.playlist_tabs.add(rp);
+        //my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs);
     }
 
-    HttpResponse::Ok().finish()
+    Ok(warp::reply())
 }
-*/
 
 async fn current_id(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     Ok(warp::reply::json(
@@ -156,18 +148,29 @@ async fn pltime(state: WebGuiData, _: HttpRequest) -> HttpResponse {
     let time = humantime::format_duration(dur).to_string();
     HttpResponse::Ok().json(time)
 }
+*/
 
-#[get("/currentimage/")]
-async fn current_image(state: WebGuiData, req: HttpRequest) -> HttpResponse {
-    state
+async fn current_image(state: WebGuiData) -> Result<impl warp::Reply, warp::Rejection> {
+    if let Ok(p) = state
+        .read()
+        .await
         .playlist_tabs
         .get_current_track()
         .albumpath
-        .and_then(|p| actix_files::NamedFile::open(p).ok())
-        .and_then(|f: actix_files::NamedFile| f.into_response(&req).ok())
-        .unwrap_or_else(|| HttpResponse::Ok().finish())
+        .ok_or(warp::reject::not_found())
+    {
+        let f = std::fs::File::open(p).map_err(|_| Err(warp::reject::not_found()))?;
+        let mut str = String::new();
+        f.read_to_string(&mut str);
+        let res = warp::hyper::Response::builder()
+            .status(StatusCode::OK)
+            .body(str)
+            .map_err(|_| Err(warp::reject::not_found()))?;
+        Ok(res)
+    } else {
+        Err(warp::reject::not_found())
+    }
 }
-*/
 
 async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     let tabs = state
@@ -346,7 +349,13 @@ pub async fn run(pool: DBPool) {
         let pltab = warp::path!("/playlisttab/")
             .and(data.clone())
             .and_then(playlist_tab);
-        warp::get().and(pl.or(tr).or(curid).or(pltab))
+        let cover = warp::path!("/currentimage/")
+            .and(data.clone())
+            .and_then(current_image);
+        let smartpl = warp::path!("/smartplaylist/")
+            .and(data.clone())
+            .and_then(smartplaylist);
+        warp::get().and(pl.or(tr).or(curid).or(pltab).or(cover).or(smartpl))
     };
 
     let posts = {
@@ -361,7 +370,28 @@ pub async fn run(pool: DBPool) {
             .and(warp::body::json())
             .and(data.clone())
             .and_then(change_playlist_tab);
-        warp::post().and(rep.or(clean).or(save).or(transp).or(playlist_tab))
+        let sm_load = warp::path!("/smartplaylist/load/")
+            .and(warp::body::json())
+            .and(data.clone())
+            .and_then(smartplaylist_load);
+        let lib_load = warp::path!("/libraryview/full/")
+            .and(warp::body::json())
+            .and(data.clone())
+            .and_then(library_load);
+
+        let lib_part = warp::path!("/libraryview/partial/")
+            .and(warp::body::json())
+            .and(data.clone())
+            .and_then(library_partial_tree);
+        warp::post().and(
+            rep.or(clean)
+                .or(save)
+                .or(transp)
+                .or(playlist_tab)
+                .or(sm_load)
+                .or(lib_load)
+                .or(lib_part),
+        )
     };
 
     let deletes = {
