@@ -444,9 +444,12 @@ pub async fn run(pool: DBPool) {
                 statec.write().await.ws = Arc::new(RwLock::new(Some(tx)));
             })
         });
-    let web_gui_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/index.html");
+    //let web_gui_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/index.html");
     let web_gui_dist_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/");
     //let static_files = warp::get().and(warp::path("static").and(warp::fs::dir(web_gui_dist_path)));
+    //let statics = warp::get()
+    //    .and(warp::path("static"))
+    //    .and(warp::fs::dir(web_gui_dist_path));
     let index = warp::get().and(warp::fs::dir(web_gui_dist_path));
 
     let all = gets
@@ -455,5 +458,5 @@ pub async fn run(pool: DBPool) {
         //.or(static_files)
         .or(websocket)
         .or(index);
-    warp::serve(all).run(([127, 0, 0, 1], 8088)).await;
+    warp::serve(all).run(([127, 0, 0, 1], 8080)).await;
 }
