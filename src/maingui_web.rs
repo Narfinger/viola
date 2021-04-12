@@ -355,32 +355,27 @@ pub async fn run(pool: DBPool) {
 
     println!("Starting web gui on 127.0.0.1:8088");
 
-    //let web_gui_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/");
-    let web_gui_dist_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/");
-
     let statec = state.clone();
     let data = warp::any().map(move || Arc::clone(&state));
 
     let gets = {
-        let pl = warp::path!("/playlist/")
-            .and(data.clone())
-            .and_then(playlist);
-        let pl_for = warp::path!("/playlist/" / usize)
+        let pl = warp::path!("playlist").and(data.clone()).and_then(playlist);
+        let pl_for = warp::path!("playlist" / usize)
             .and(data.clone())
             .and_then(playlist_for);
-        let tr = warp::path!("/transport/")
+        let tr = warp::path!("transport")
             .and(data.clone())
             .and_then(get_transport);
-        let curid = warp::path!("/currentid/")
+        let curid = warp::path!("currentid")
             .and(data.clone())
             .and_then(current_id);
-        let pltab = warp::path!("/playlisttab/")
+        let pltab = warp::path!("playlisttab")
             .and(data.clone())
             .and_then(playlist_tab);
-        let cover = warp::path!("/currentimage/")
+        let cover = warp::path!("currentimage")
             .and(data.clone())
             .and_then(current_image);
-        let smartpl = warp::path!("/smartplaylist/")
+        let smartpl = warp::path!("smartplaylist")
             .and(data.clone())
             .and_then(smartplaylist);
         warp::get().and(
@@ -394,27 +389,27 @@ pub async fn run(pool: DBPool) {
     };
 
     let posts = {
-        let rep = warp::path!("/repeat/").and(data.clone()).and_then(repeat);
-        let clean = warp::path!("/clean/").and(data.clone()).and_then(clean);
-        let save = warp::path!("/save/").and(data.clone()).and_then(save);
-        let transp = warp::path!("/transport/")
+        let rep = warp::path!("repeat").and(data.clone()).and_then(repeat);
+        let clean = warp::path!("clean").and(data.clone()).and_then(clean);
+        let save = warp::path!("save").and(data.clone()).and_then(save);
+        let transp = warp::path!("transport")
             .and(warp::body::json())
             .and(data.clone())
             .and_then(transport);
-        let playlist_tab = warp::path!("/playlisttab/")
+        let playlist_tab = warp::path!("playlisttab")
             .and(warp::body::json())
             .and(data.clone())
             .and_then(change_playlist_tab);
-        let sm_load = warp::path!("/smartplaylist/load/")
+        let sm_load = warp::path!("smartplaylist" / "load")
             .and(warp::body::json())
             .and(data.clone())
             .and_then(smartplaylist_load);
-        let lib_load = warp::path!("/libraryview/full/")
+        let lib_load = warp::path!("libraryview" / "full")
             .and(warp::body::json())
             .and(data.clone())
             .and_then(library_load);
 
-        let lib_part = warp::path!("/libraryview/partial/")
+        let lib_part = warp::path!("libraryview" / "partial")
             .and(warp::body::json())
             .and(data.clone())
             .and_then(library_partial_tree);
@@ -430,17 +425,17 @@ pub async fn run(pool: DBPool) {
     };
 
     let deletes = {
-        let deletepl = warp::path!("/deletefromplaylist/")
+        let deletepl = warp::path!("deletefromplaylist")
             .and(warp::body::json())
             .and(data.clone())
             .and_then(delete_from_playlist);
-        let deletetab = warp::path!("/playlisttab/" / usize)
+        let deletetab = warp::path!("playlisttab" / usize)
             .and(data.clone())
             .and_then(delete_playlist_tab);
         warp::delete().and(deletepl.or(deletetab))
     };
 
-    let websocket = warp::path("/ws/")
+    let websocket = warp::path("ws")
         .and(warp::ws())
         .map(move |ws: warp::ws::Ws| {
             let statec = statec.clone();
@@ -449,13 +444,15 @@ pub async fn run(pool: DBPool) {
                 statec.write().await.ws = Arc::new(RwLock::new(Some(tx)));
             })
         });
-    let static_files = warp::path("/static/").and(warp::fs::dir("/static/"));
-    let index = warp::path("/").and(warp::fs::file("index.html"));
+    let web_gui_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/index.html");
+    let web_gui_dist_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/");
+    //let static_files = warp::get().and(warp::path("static").and(warp::fs::dir(web_gui_dist_path)));
+    let index = warp::get().and(warp::fs::dir(web_gui_dist_path));
 
     let all = gets
         .or(posts)
         .or(deletes)
-        .or(static_files)
+        //.or(static_files)
         .or(websocket)
         .or(index);
     warp::serve(all).run(([127, 0, 0, 1], 8088)).await;

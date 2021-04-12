@@ -18,5 +18,4 @@ jobs:
         run: npm install
       - run: rustup target add wasm32-unknown-unknown
       - run: cargo install wasm-bindgen-cli
-      - run: cargo update -p wasm-bindgen
       - run: cargo make ci-flow

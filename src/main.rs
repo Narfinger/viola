@@ -1,10 +1,9 @@
 #![recursion_limit = "4096"]
-#[macro_use]
-extern crate warp;
 extern crate app_dirs;
 extern crate base64;
 extern crate bus;
 extern crate tokio;
+extern crate warp;
 #[macro_use]
 extern crate clap;
 extern crate zbus;
@@ -50,7 +49,7 @@ pub mod utils;
 use clap::{App, Arg};
 use parking_lot::Mutex;
 use preferences::{prefs_base_dir, Preferences, PreferencesMap};
-use std::sync::{mpsc, Arc};
+use std::sync::Arc;
 use std::{env, io};
 
 fn main() -> io::Result<()> {
