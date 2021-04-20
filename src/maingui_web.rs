@@ -17,13 +17,15 @@ use crate::smartplaylist_parser;
 use crate::types::*;
 
 async fn playlist(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
-    let items = state.read().await.playlist_tabs.items();
-    Ok(warp::reply::json(&items))
+    let state = state.read().await;
+    let items_json = state.playlist_tabs.items_json();
+    Ok(items_json)
 }
 
 async fn playlist_for(index: usize, state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
-    let items = state.read().await.playlist_tabs.items_for(index);
-    Ok(warp::reply::json(&items))
+    let state = state.read().await;
+    let items_json = state.playlist_tabs.items_for_json(index);
+    Ok(items_json)
 }
 
 async fn repeat(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
