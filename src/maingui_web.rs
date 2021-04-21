@@ -277,8 +277,8 @@ async fn handle_gstreamer_messages(
 ) {
     let mut rx = rx;
     while rx.changed().await.is_ok() {
-        println!("received gstreamer message on own bus: {:?}", *rx.borrow());
-        match *rx.borrow() {
+        let val = *rx.borrow();
+        match val {
             viola_common::GStreamerMessage::Playing => {
                 let pos = state.read().await.playlist_tabs.current_position();
                 let state = state.clone();
@@ -333,7 +333,7 @@ pub async fn run(pool: DBPool) {
     {
         let datac = state.clone();
         let tx = tx.clone();
-        tokio::spawn(async move { handle_gstreamer_messages(datac, tx) });
+        tokio::spawn(async move { handle_gstreamer_messages(datac, tx).await });
     }
     {
         let datac = state.clone();

@@ -221,7 +221,7 @@ impl PlayerInterface {
 fn main(
     gstreamer: Arc<RwLock<GStreamer>>,
     playlisttabs: PlaylistTabsPtr,
-    bus: bus::BusReader<viola_common::GStreamerMessage>,
+    bus: tokio::sync::watch::Receiver<GStreamerMessage>,
 ) -> Result<(), Box<dyn Error>> {
     let connection = zbus::Connection::new_session()?;
     fdo::DBusProxy::new(&connection)?.request_name(
@@ -242,20 +242,20 @@ fn main(
             println!("working on dbus message");
             eprintln!("{}", err);
         }
-        if let Ok(_) = bus.try_recv() {
-            info!("Got Message on bus");
-            object_server.with(
-                &"/org/mpris/MediaPlayer2".try_into()?,
-                |iface: &PlayerInterface| iface.properties_changed(),
-            )?;
-        }
+        //if bus.changed().is_ok() {
+        //    info!("Got Message on bus");
+        //    object_server.with(
+        //        &"/org/mpris/MediaPlayer2".try_into()?,
+        //        |iface: &PlayerInterface| iface.properties_changed(),
+        //    )?;
+        //}
     }
 }
 
 pub(crate) fn new(
     gstreamer: Arc<RwLock<GStreamer>>,
     playlisttabs: PlaylistTabsPtr,
-    bus: bus::BusReader<viola_common::GStreamerMessage>,
+    bus: tokio::sync::watch::Receiver<GStreamerMessage>,
 ) {
     thread::spawn(|| main(gstreamer, playlisttabs, bus).expect("Error in starting dbus"));
 }
