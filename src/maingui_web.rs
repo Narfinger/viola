@@ -159,7 +159,10 @@ async fn pltime(state: WebGuiData, _: HttpRequest) -> HttpResponse {
 }
 */
 
-async fn current_image(state: WebGuiData) -> Result<impl warp::Reply, warp::Rejection> {
+async fn current_image(
+    state: WebGuiData,
+    _query: String,
+) -> Result<impl warp::Reply, warp::Rejection> {
     if let Ok(p) = state
         .read()
         .await
@@ -376,6 +379,7 @@ pub async fn run(pool: DBPool) {
             .and_then(playlist_tab);
         let cover = warp::path!("currentimage")
             .and(data.clone())
+            .and(warp::query())
             .and_then(current_image);
         let smartpl = warp::path!("smartplaylist")
             .and(data.clone())
