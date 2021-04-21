@@ -31,7 +31,7 @@ impl PartialEq for Track {
 }
 
 /// Actions we want to perform on gstreamer, such as playing and pausing
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq)]
 pub enum GStreamerAction {
     Next,
     Playing,
@@ -45,7 +45,7 @@ pub enum GStreamerAction {
 }
 
 /// Messages that gstreamer sends such as the state it is going into
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub enum GStreamerMessage {
     Pausing,
     Stopped,
@@ -80,13 +80,14 @@ impl From<GStreamerAction> for GStreamerMessage {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum WsMessage {
     PlayChanged(usize),
     CurrentTimeChanged(u64),
     ReloadTabs,
     ReloadPlaylist,
     Ping,
+    //GStreamerAction(GStreamerAction),
 }
 
 impl From<WsMessage> for String {

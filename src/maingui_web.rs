@@ -85,6 +85,10 @@ async fn transport(
         .gstreamer
         .write()
         .do_gstreamer_action(msg);
+    //tokio::spawn(async move {
+    //    my_websocket::send_my_message(&state.read().await.ws, WsMessage::GStreamerAction(msg))
+    //        .await;
+    //});
     Ok(warp::reply())
 }
 
@@ -269,12 +273,12 @@ async fn ws_start(
 /// blocking function that handles messages on the GStreamer Bus
 async fn handle_gstreamer_messages(
     state: WebGuiData,
-    rx: bus::BusReader<viola_common::GStreamerMessage>,
+    rx: tokio::sync::watch::Receiver<viola_common::GStreamerMessage>,
 ) {
     let mut rx = rx;
-    for msg in rx.iter() {
-        println!("received gstreamer message on own bus: {:?}", msg);
-        match msg {
+    while rx.changed().await.is_ok() {
+        println!("received gstreamer message on own bus: {:?}", *rx.borrow());
+        match *rx.borrow() {
             viola_common::GStreamerMessage::Playing => {
                 let pos = state.read().await.playlist_tabs.current_position();
                 let state = state.clone();
@@ -303,10 +307,11 @@ pub async fn run(pool: DBPool) {
     let plt = crate::playlist_tabs::load(&pool).expect("Failure to load old playlists");
 
     println!("Starting gstreamer");
-    let mut bus = bus::Bus::new(50);
-    let dbus_recv = bus.add_rx();
-    let websocket_recv = bus.add_rx();
-    let gst = gstreamer_wrapper::new(plt.clone(), pool.clone(), bus)
+    let (rx, mut tx) = tokio::sync::watch::channel(GStreamerMessage::Nop);
+    //let mut bus = bus::Bus::new(50);
+    let mut dbus_recv = tx.clone();
+    let mut websocket_recv = tx.clone();
+    let gst = gstreamer_wrapper::new(plt.clone(), pool.clone(), rx)
         .expect("Error Initializing gstreamer");
 
     {
@@ -327,7 +332,8 @@ pub async fn run(pool: DBPool) {
 
     {
         let datac = state.clone();
-        tokio::spawn(async move { handle_gstreamer_messages(datac, websocket_recv) });
+        let tx = tx.clone();
+        tokio::spawn(async move { handle_gstreamer_messages(datac, tx) });
     }
     {
         let datac = state.clone();
