@@ -1,5 +1,8 @@
+use glib::object;
 use parking_lot::RwLock;
-use std::{collections::HashMap, convert::TryInto, error::Error, sync::Arc, thread};
+use std::{
+    collections::HashMap, convert::TryInto, error::Error, sync::Arc, thread, time::Duration,
+};
 
 use crate::{
     gstreamer_wrapper::{GStreamer, GStreamerExt},
@@ -236,18 +239,27 @@ fn main(
         playlisttabs: playlisttabs.clone(),
     };
     object_server.at(&"/org/mpris/MediaPlayer2".try_into()?, handler2)?;
+    //tokio::spawn(async {
+    //    if bus.changed().await.is_ok() {
+    //        object_server.with(
+    //            &"/org/mpris/MediaPlayer2".try_into().expect("Error"),
+    //            |iface: &PlayerInterface| iface.properties_changed(),
+    //        );
+    //    }
+    //});
+
     loop {
         if let Err(err) = object_server.try_handle_next() {
             println!("working on dbus message");
             eprintln!("{}", err);
         }
-        //if bus.changed().is_ok() {
-        //    info!("Got Message on bus");
+        //if bus.changed().into_future().poll() {
         //    object_server.with(
-        //        &"/org/mpris/MediaPlayer2".try_into()?,
+        //        &"/org/mpris/MediaPlayer2".try_into().expect("Error"),
         //        |iface: &PlayerInterface| iface.properties_changed(),
-        //    )?;
+        //    );
         //}
+        thread::sleep(Duration::new(1, 0));
     }
 }
 
