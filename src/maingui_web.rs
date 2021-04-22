@@ -204,7 +204,7 @@ async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible>
         .collect::<Vec<PlaylistTabJSON>>();
     let resp = PlaylistTabsJSON {
         current: state.read().await.playlist_tabs.current_tab(),
-        tabs: tabs,
+        tabs,
     };
     Ok(warp::reply::json(&resp))
 }
@@ -307,10 +307,10 @@ pub async fn run(pool: DBPool) {
     let plt = crate::playlist_tabs::load(&pool).expect("Failure to load old playlists");
 
     println!("Starting gstreamer");
-    let (rx, mut tx) = tokio::sync::watch::channel(GStreamerMessage::Nop);
+    let (rx, tx) = tokio::sync::watch::channel(GStreamerMessage::Nop);
     //let mut bus = bus::Bus::new(50);
-    let mut dbus_recv = tx.clone();
-    let mut websocket_recv = tx.clone();
+    let dbus_recv = tx.clone();
+    let websocket_recv = tx.clone();
     let gst = gstreamer_wrapper::new(plt.clone(), pool.clone(), rx)
         .expect("Error Initializing gstreamer");
 
@@ -332,12 +332,11 @@ pub async fn run(pool: DBPool) {
 
     {
         let datac = state.clone();
-        let tx = tx.clone();
-        tokio::spawn(async move { handle_gstreamer_messages(datac, tx).await });
+        tokio::spawn(async move { handle_gstreamer_messages(datac, websocket_recv).await });
     }
     {
         let datac = state.clone();
-        tokio::spawn(async move { auto_save(datac) });
+        tokio::spawn(async move { auto_save(datac).await });
     }
     {
         let datac = state.clone();

@@ -236,7 +236,6 @@ fn main(
         playlisttabs: playlisttabs.clone(),
     };
     object_server.at(&"/org/mpris/MediaPlayer2".try_into()?, handler2)?;
-    let mut bus = bus;
     loop {
         if let Err(err) = object_server.try_handle_next() {
             println!("working on dbus message");
