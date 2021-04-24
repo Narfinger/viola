@@ -165,7 +165,7 @@ async fn pltime(state: WebGuiData, _: HttpRequest) -> HttpResponse {
 
 async fn current_image(
     state: WebGuiData,
-    _query: String,
+    _query: ImageQuery,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     if let Ok(p) = state
         .read()
@@ -185,6 +185,7 @@ async fn current_image(
             .map_err(|_| warp::reject::not_found())?;
         Ok(res)
     } else {
+        info!("Nothng playing so we don't have a query");
         Err(warp::reject::not_found())
     }
 }
@@ -382,9 +383,9 @@ pub async fn run(pool: DBPool) {
         let pltab = warp::path!("playlisttab")
             .and(data.clone())
             .and_then(playlist_tab);
-        let cover = warp::path!("currentimage")
+        let cover = warp::path("currentimage")
             .and(data.clone())
-            .and(warp::query())
+            .and(warp::query::<ImageQuery>())
             .and_then(current_image);
         let smartpl = warp::path!("smartplaylist")
             .and(data.clone())

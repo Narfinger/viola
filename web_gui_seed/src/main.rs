@@ -341,7 +341,7 @@ fn view_status(model: &Model) -> Node<Msg> {
         div![
             C!["col-md"],
             img![
-                attrs!(At::Src => format!("/currentimage/?{}", &track_option.map(|t| &t.title).unwrap_or(&String::from(""))), At::Width => unit!(100,px), At::Height => unit!(100,px))
+                attrs!(At::Src => format!("/currentimage?nonce={}", &track_option.map(|t| &t.title).unwrap_or(&String::from(""))), At::Width => unit!(100,px), At::Height => unit!(100,px))
             ]
         ],
         div![C!["col"], window_string],

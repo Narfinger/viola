@@ -132,3 +132,8 @@ pub struct PlaylistTabsJSON {
     pub current: usize,
     pub tabs: Vec<PlaylistTabJSON>,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ImageQuery {
+    pub nonce: String,
+}
