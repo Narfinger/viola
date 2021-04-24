@@ -26,6 +26,7 @@ fn decode_message(message: WebSocketMessage, msg_sender: std::rc::Rc<dyn Fn(Opti
             }
             WsMessage::ReloadTabs => msg_sender(Some(crate::Msg::InitPlaylistTabs)),
             WsMessage::ReloadPlaylist => msg_sender(Some(crate::Msg::InitPlaylistTabs)),
+            WsMessage::GStreamerMessage(msg) => msg_sender(Some(crate::Msg::GStreamerMessage(msg))),
         };
     }
 }

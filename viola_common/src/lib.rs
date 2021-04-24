@@ -87,7 +87,7 @@ pub enum WsMessage {
     ReloadTabs,
     ReloadPlaylist,
     Ping,
-    //GStreamerAction(GStreamerAction),
+    GStreamerMessage(GStreamerMessage),
 }
 
 impl From<WsMessage> for String {

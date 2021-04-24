@@ -49,10 +49,10 @@ pub mod utils;
 use clap::{App, Arg};
 use parking_lot::Mutex;
 use preferences::{prefs_base_dir, Preferences, PreferencesMap};
+use std::env;
 use std::sync::Arc;
-use std::{env, io};
 
-fn main() -> io::Result<()> {
+fn main() -> () {
     let matches = App::new("Viola")
         .about("Music Player")
         .version(crate_version!())
@@ -105,7 +105,7 @@ fn main() -> io::Result<()> {
         db::create_db();
         println!("Please call viola with -m to set the music dir.");
         println!("Afterwards, update the music library by calling with -u.");
-        return Ok(());
+        return ();
     }
     let pool = Arc::new(Mutex::new(tmp_pool.unwrap()));
     if matches.is_present("update") {
@@ -179,5 +179,4 @@ fn main() -> io::Result<()> {
             .run()
             .unwrap();
     };
-    Ok(())
 }

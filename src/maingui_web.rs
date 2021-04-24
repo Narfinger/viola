@@ -173,7 +173,7 @@ async fn current_image(
         .playlist_tabs
         .get_current_track()
         .albumpath
-        .ok_or(warp::reject::not_found())
+        .ok_or_else(warp::reject::not_found)
     {
         let mut f = std::fs::File::open(p).map_err(|_| warp::reject::not_found())?;
         let mut str = String::new();
@@ -256,21 +256,6 @@ impl WebGui {
 
 type WebGuiData = Arc<RwLock<WebGui>>;
 
-/*
-async fn ws_start(
-    state: WebGuiData,
-    req: HttpRequest,
-    stream: web::Payload,
-) -> Result<HttpResponse, Error> {
-    let mut ws = MyWs { addr: None };
-    let (addr, resp) = ws::start_with_addr(ws.clone(), &req, stream)?;
-    //println!("websocket {:?}", resp);
-    ws.addr = Some(addr);
-    *state.ws.write() = Some(ws);
-    Ok(resp)
-}
-*/
-
 /// blocking function that handles messages on the GStreamer Bus
 async fn handle_gstreamer_messages(
     state: WebGuiData,
@@ -278,12 +263,14 @@ async fn handle_gstreamer_messages(
 ) {
     let mut rx = rx;
     while rx.changed().await.is_ok() {
+        let state = state.clone();
         let val = *rx.borrow();
         match val {
             viola_common::GStreamerMessage::Playing => {
-                let pos = state.read().await.playlist_tabs.current_position();
                 let state = state.clone();
+                let pos = state.read().await.playlist_tabs.current_position();
                 tokio::spawn(async move {
+                    //let state = state.clone();
                     my_websocket::send_my_message(
                         &state.read().await.ws,
                         WsMessage::PlayChanged(pos),
@@ -292,6 +279,21 @@ async fn handle_gstreamer_messages(
                 });
             }
             _ => (),
+        }
+        if vec![
+            viola_common::GStreamerMessage::Pausing,
+            viola_common::GStreamerMessage::Stopped,
+        ]
+        .contains(&val)
+        {
+            tokio::spawn(async move {
+                //let state = state.clone();
+                my_websocket::send_my_message(
+                    &state.read().await.ws,
+                    WsMessage::GStreamerMessage(val),
+                )
+                .await;
+            });
         }
     }
 }

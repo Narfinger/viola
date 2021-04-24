@@ -12,7 +12,7 @@ use viola_common::{schema::tracks::dsl::*, TreeType};
 /// produces the filter string, for sorting reasons we need the type_vec to be the first n of the types in the original query
 /// where n is the current iteration depth
 fn get_filter_string(
-    new_bunch: &Vec<viola_common::Track>,
+    new_bunch: &[viola_common::Track],
     current_ttype: &TreeType,
     index: &usize,
     recursion_depth: usize,

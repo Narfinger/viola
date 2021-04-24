@@ -50,6 +50,7 @@ pub(crate) enum Msg {
     DeleteRange,
     PlayIndexInputChanged(String),
     PlayIndex,
+    GStreamerMessage(viola_common::GStreamerMessage),
 }
 
 pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -399,6 +400,9 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             {
                 orders.send_msg(Msg::Transport(GStreamerAction::Play(index.to_owned())));
             }
+        }
+        Msg::GStreamerMessage(msg) => {
+            model.play_status = msg;
         }
     }
 }
