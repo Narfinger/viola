@@ -167,6 +167,7 @@ async fn current_image(
     state: WebGuiData,
     _query: ImageQuery,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+    info!("into stuff");
     if let Ok(p) = state
         .read()
         .await
@@ -175,15 +176,25 @@ async fn current_image(
         .albumpath
         .ok_or_else(warp::reject::not_found)
     {
-        let mut f = std::fs::File::open(p).map_err(|_| warp::reject::not_found())?;
-        let mut str = String::new();
-        f.read_to_string(&mut str)
+        info!("into if");
+        let path = std::path::PathBuf::from(p);
+        let mut f = std::fs::File::open(&path).map_err(|_| warp::reject::not_found())?;
+        let mut v = Vec::new();
+        info!("Finding path");
+        f.read_to_end(&mut v)
             .map_err(|_| warp::reject::not_found())?;
-        let res = warp::hyper::Response::builder()
-            .status(StatusCode::OK)
-            .body(str)
-            .map_err(|_| warp::reject::not_found())?;
-        Ok(res)
+        info!("Constructing response");
+        let content_type = match path.extension().and_then(|s| s.to_str()) {
+            Some("jpg") => "image/jpeg",
+            Some("png") => "image/png",
+            _ => "application/octet-stream",
+        };
+        let resp = warp::hyper::Response::builder()
+            .status(warp::hyper::StatusCode::OK)
+            .header(warp::hyper::header::CONTENT_TYPE, content_type)
+            .body(v)
+            .unwrap();
+        Ok(resp)
     } else {
         info!("Nothng playing so we don't have a query");
         Err(warp::reject::not_found())
