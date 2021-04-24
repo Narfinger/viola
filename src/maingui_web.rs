@@ -5,7 +5,7 @@ use std::time::Duration;
 use std::{io::Read, sync::Arc};
 use tokio::sync::RwLock;
 use viola_common::*;
-use warp::{hyper::StatusCode, Filter};
+use warp::Filter;
 
 use crate::gstreamer_wrapper;
 use crate::gstreamer_wrapper::GStreamerExt;
@@ -176,14 +176,11 @@ async fn current_image(
         .albumpath
         .ok_or_else(warp::reject::not_found)
     {
-        info!("into if");
         let path = std::path::PathBuf::from(p);
         let mut f = std::fs::File::open(&path).map_err(|_| warp::reject::not_found())?;
         let mut v = Vec::new();
-        info!("Finding path");
         f.read_to_end(&mut v)
             .map_err(|_| warp::reject::not_found())?;
-        info!("Constructing response");
         let content_type = match path.extension().and_then(|s| s.to_str()) {
             Some("jpg") => "image/jpeg",
             Some("png") => "image/png",
