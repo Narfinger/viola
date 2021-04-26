@@ -1,5 +1,7 @@
 use crate::models::*;
-use viola_common::{GStreamerAction, GStreamerMessage, Smartplaylists, Track, PlaylistTabJSON, PlaylistTabsJSON};
+use viola_common::{
+    GStreamerAction, GStreamerMessage, PlaylistTabJSON, PlaylistTabsJSON, Smartplaylists, Track,
+};
 
 use seed::prelude::*;
 
@@ -96,10 +98,7 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
         Msg::PlaylistTabDelete(index) => {
             model.playlist_tabs.swap_remove(index);
             orders.perform_cmd(async move {
-                let req = Request::new("/playlisttab/")
-                    .method(Method::Delete)
-                    .json(&index)
-                    .expect("Could not build query");
+                let req = Request::new(format!("/playlisttab/{}/", index)).method(Method::Delete);
                 fetch(req).await.expect("Error in sending request");
                 Msg::PlaylistTabChange(0)
             });
