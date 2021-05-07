@@ -52,7 +52,7 @@ use preferences::{prefs_base_dir, Preferences, PreferencesMap};
 use std::env;
 use std::sync::Arc;
 
-fn main() -> () {
+fn main() {
     let matches = App::new("Viola")
         .about("Music Player")
         .version(crate_version!())
@@ -105,7 +105,7 @@ fn main() -> () {
         db::create_db();
         println!("Please call viola with -m to set the music dir.");
         println!("Afterwards, update the music library by calling with -u.");
-        return ();
+        return;
     }
     let pool = Arc::new(Mutex::new(tmp_pool.unwrap()));
     if matches.is_present("update") {
