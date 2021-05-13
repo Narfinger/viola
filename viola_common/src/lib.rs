@@ -120,6 +120,15 @@ impl TreeViewQuery {
     pub fn get_after_last_ttype(&self) -> Option<&TreeType> {
         self.types.get(self.indices.len() + 1)
     }
+
+    /// Returns the treetypes that are not yet indexed
+    pub fn get_remaining_ttypes(&self) -> &[TreeType] {
+        self.types.split_at(self.indices.len() + 1).1
+    }
+
+    pub fn get_indexed_ttypes(&self) -> &[TreeType] {
+        self.types.split_at(self.indices.len() + 1).0
+    }
 }
 
 pub type Smartplaylists = Vec<String>;

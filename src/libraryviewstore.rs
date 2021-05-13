@@ -110,7 +110,24 @@ fn sort_key_from_treetype<'a>(
 }
 
 /// sorts the tracks according to the treeviewquery we have
+/// TODO: This has the problem that we rarely want to sort albums by name but mostly by year.
+/// But sometimes by name
 fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
+    let indexed = query.get_indexed_ttypes();
+    t.sort_unstable_by(|x, y| {
+        // We build a map of Ordering that compares all the keys in indexed.
+        // Then we fold over this to use Ordering::Then to get the correct evaluation
+        let ordering = std::cmp::Ordering::Equal;
+        indexed
+            .iter()
+            .map(|ttype| {
+                sort_key_from_treetype(&Some(&ttype), x)
+                    .cmp(sort_key_from_treetype(&Some(&ttype), y))
+            })
+            .fold(ordering, |acc, x| acc.then(x))
+    });
+
+    /*
     if query.indices.is_empty() {
         let ttype = query.types.get(0);
         t.sort_by(|x, y| sort_key_from_treetype(&ttype, x).cmp(sort_key_from_treetype(&ttype, y)));
@@ -128,7 +145,7 @@ fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
     } else {
         let last = query.get_after_last_ttype();
         t.sort_by(|x, y| sort_key_from_treetype(&last, x).cmp(sort_key_from_treetype(&last, y)));
-    }
+    }*/
 }
 
 /// custom strings that appear in the partial query view
