@@ -142,19 +142,32 @@ fn track_to_partial_string(query: &TreeViewQuery, t: viola_common::Track) -> Str
     {
         format!("{}-{}", t.tracknumber.unwrap_or(0), t.title)
     } else {
-        let last = query
-            .indices
-            .iter()
-            .zip(query.types.iter())
-            .last()
-            .unwrap()
-            .1;
-        match *last {
-            TreeType::Artist => t.artist,
-            TreeType::Album => t.album,
-            TreeType::Track => t.title,
-            TreeType::Genre => t.genre,
+        let last = query.types.iter().nth(query.indices.len() + 1);
+        match last {
+            Some(TreeType::Artist) => t.artist,
+            Some(TreeType::Album) => t.album,
+            Some(TreeType::Track) => t.title,
+            Some(TreeType::Genre) => t.genre,
+            None => t.title,
         }
+    }
+}
+
+/// extracts a playlistname from the query
+fn get_playlist_name(query: &TreeViewQuery, t: &Vec<viola_common::Track>) -> String {
+    if let Some(ref search) = query.search {
+        search.to_owned()
+    } else {
+        let last = query.types.iter().nth(query.indices.len() + 1);
+        let first_track = t.get(0);
+        match last {
+            Some(TreeType::Artist) => first_track.map(|t| t.artist.to_owned()),
+            Some(TreeType::Album) => first_track.map(|t| t.album.to_owned()),
+            Some(TreeType::Genre) => first_track.map(|t| t.genre.to_owned()),
+            Some(TreeType::Track) => first_track.map(|t| t.title.to_owned()),
+            None => None,
+        }
+        .unwrap_or("Foo".to_owned())
     }
 }
 
@@ -171,7 +184,7 @@ pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
     let t = basic_get_tracks(db, query);
     LoadedPlaylist {
         id: -1,
-        name: "Foo".to_string(),
+        name: get_playlist_name(query, &t),
         current_position: 0,
         items: t,
     }
