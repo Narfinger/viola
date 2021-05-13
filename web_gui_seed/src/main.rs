@@ -52,7 +52,11 @@ fn init_treeviews() -> Vec<TreeView> {
         "genretree",
         "#genretree",
         "Genre",
-        vec![viola_common::TreeType::Genre],
+        vec![
+            viola_common::TreeType::Genre,
+            viola_common::TreeType::Artist,
+            viola_common::TreeType::Album,
+        ],
     );
     let tv3 = init_generic_treeview(
         "album",
