@@ -111,31 +111,23 @@ fn sort_key_from_treetype<'a>(
 
 /// sorts the tracks according to the treeviewquery we have
 fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
-    let last = query.get_after_last_ttype();
     if query.indices.is_empty() {
         let ttype = query.types.get(0);
         t.sort_by(|x, y| sort_key_from_treetype(&ttype, x).cmp(sort_key_from_treetype(&ttype, y)));
-    } else if query.indices.len() == 1 {
-        if query.types.get(0) == Some(&TreeType::Artist)
-            && query.types.get(1) == Some(&TreeType::Album)
-        {
-            t.sort_unstable_by_key(|t| t.year);
-        } else {
-            t.sort_by(|x, y| {
-                sort_key_from_treetype(&last, x).cmp(sort_key_from_treetype(&last, y))
-            });
-        }
-    } else if query.indices.len() == 2 {
-        if query.types.get(0) == Some(&viola_common::TreeType::Artist)
-            && query.types.get(1) == Some(&viola_common::TreeType::Album)
-            && query.types.get(2) == Some(&viola_common::TreeType::Track)
-        {
-            t.sort_unstable_by_key(|t| t.tracknumber);
-        } else {
-            t.sort_by(|x, y| {
-                sort_key_from_treetype(&last, x).cmp(sort_key_from_treetype(&last, y))
-            });
-        }
+    } else if query.indices.len() == 1
+        && query.types.get(0) == Some(&TreeType::Artist)
+        && query.types.get(1) == Some(&TreeType::Album)
+    {
+        t.sort_unstable_by_key(|t| t.year);
+    } else if query.indices.len() == 2
+        && query.types.get(0) == Some(&viola_common::TreeType::Artist)
+        && query.types.get(1) == Some(&viola_common::TreeType::Album)
+        && query.types.get(2) == Some(&viola_common::TreeType::Track)
+    {
+        t.sort_unstable_by_key(|t| t.tracknumber);
+    } else {
+        let last = query.get_after_last_ttype();
+        t.sort_by(|x, y| sort_key_from_treetype(&last, x).cmp(sort_key_from_treetype(&last, y)));
     }
 }
 
