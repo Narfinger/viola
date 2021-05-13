@@ -96,27 +96,46 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
     current_tracks
 }
 
+fn sort_key_from_treetype<'a>(
+    ttype: &'a Option<&'a TreeType>,
+    t: &'a viola_common::Track,
+) -> &'a String {
+    match ttype {
+        Some(&TreeType::Artist) => &t.artist,
+        Some(&TreeType::Album) => &t.album,
+        Some(&TreeType::Genre) => &t.genre,
+        Some(&TreeType::Track) => &t.title,
+        None => &t.artist,
+    }
+}
+
 /// sorts the tracks according to the treeviewquery we have
 fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
+    let last = query.get_after_last_ttype();
     if query.indices.is_empty() {
-        match query.types.get(0) {
-            Some(&TreeType::Artist) => t.sort_by_cached_key(|t| t.artist.to_owned()),
-            Some(&TreeType::Album) => t.sort_by_cached_key(|t| t.album.to_owned()),
-            Some(&TreeType::Genre) => t.sort_by_cached_key(|t| t.genre.to_owned()),
-            Some(&TreeType::Track) => t.sort_by_cached_key(|t| t.title.to_owned()),
-            None => t.sort_by_cached_key(|t| t.artist.to_owned()),
+        let ttype = query.types.get(0);
+        t.sort_by(|x, y| sort_key_from_treetype(&ttype, x).cmp(sort_key_from_treetype(&ttype, y)));
+    } else if query.indices.len() == 1 {
+        if query.types.get(0) == Some(&TreeType::Artist)
+            && query.types.get(1) == Some(&TreeType::Album)
+        {
+            t.sort_unstable_by_key(|t| t.year);
+        } else {
+            t.sort_by(|x, y| {
+                sort_key_from_treetype(&last, x).cmp(sort_key_from_treetype(&last, y))
+            });
         }
-    } else if query.indices.len() == 1
-        && query.types.get(0) == Some(&TreeType::Artist)
-        && query.types.get(1) == Some(&TreeType::Album)
-    {
-        t.sort_unstable_by_key(|t| t.year);
-    } else if query.indices.len() == 2
-        && query.types.get(0) == Some(&viola_common::TreeType::Artist)
-        && query.types.get(1) == Some(&viola_common::TreeType::Album)
-        && query.types.get(2) == Some(&viola_common::TreeType::Track)
-    {
-        t.sort_unstable_by_key(|t| t.tracknumber);
+    } else if query.indices.len() == 2 {
+        if query.types.get(0) == Some(&viola_common::TreeType::Artist)
+            && query.types.get(1) == Some(&viola_common::TreeType::Album)
+            && query.types.get(2) == Some(&viola_common::TreeType::Track)
+        {
+            t.sort_unstable_by_key(|t| t.tracknumber);
+        } else {
+            t.sort_by(|x, y| {
+                sort_key_from_treetype(&last, x).cmp(sort_key_from_treetype(&last, y))
+            });
+        }
     }
 }
 
@@ -142,7 +161,7 @@ fn track_to_partial_string(query: &TreeViewQuery, t: viola_common::Track) -> Str
     {
         format!("{}-{}", t.tracknumber.unwrap_or(0), t.title)
     } else {
-        let last = query.types.iter().nth(query.indices.len() + 1);
+        let last = query.get_after_last_ttype();
         match last {
             Some(TreeType::Artist) => t.artist,
             Some(TreeType::Album) => t.album,
@@ -154,11 +173,11 @@ fn track_to_partial_string(query: &TreeViewQuery, t: viola_common::Track) -> Str
 }
 
 /// extracts a playlistname from the query
-fn get_playlist_name(query: &TreeViewQuery, t: &Vec<viola_common::Track>) -> String {
-    if let Some(ref search) = query.search {
+fn get_playlist_name(query: &TreeViewQuery, t: &[viola_common::Track]) -> String {
+    let mut res = if let Some(ref search) = query.search {
         search.to_owned()
     } else {
-        let last = query.types.iter().nth(query.indices.len() + 1);
+        let last = query.get_after_last_ttype();
         let first_track = t.get(0);
         match last {
             Some(TreeType::Artist) => first_track.map(|t| t.artist.to_owned()),
@@ -167,8 +186,10 @@ fn get_playlist_name(query: &TreeViewQuery, t: &Vec<viola_common::Track>) -> Str
             Some(TreeType::Track) => first_track.map(|t| t.title.to_owned()),
             None => None,
         }
-        .unwrap_or("Foo".to_owned())
-    }
+        .unwrap_or_else(|| "Foo".to_owned())
+    };
+    res.truncate(10);
+    res
 }
 
 pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
