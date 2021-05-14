@@ -8,7 +8,7 @@ pub mod schema;
 use crate::schema::tracks;
 
 use serde::{Deserialize, Serialize};
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, Hash, Serialize, Deserialize)]
 #[cfg_attr(feature = "backend", derive(AsChangeset, Identifiable, Queryable))]
 pub struct Track {
     pub id: i32,

@@ -5,7 +5,7 @@ use crate::{
 };
 use diesel::TextExpressionMethods;
 use itertools::{izip, Itertools};
-use std::ops::Deref;
+use std::{collections::HashSet, ops::Deref};
 use viola_common::TreeViewQuery;
 use viola_common::{schema::tracks::dsl::*, TreeType};
 
@@ -48,12 +48,33 @@ fn get_filter_string(
 fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Track> {
     //this function is currently to difficult to implement in diesel as we cannot clone boxed ty pes and otherwise we can cyclic type error
     let mut current_tracks = if let Some(ref search_string) = query.search {
-        tracks
-            .filter(artist.like(String::from("%") + &search_string + "%"))
-            .or_filter(album.like(String::from("%") + &search_string + "%"))
-            .or_filter(title.like(String::from("%") + &search_string + "%"))
-            .load::<viola_common::Track>(db.lock().deref())
-            .unwrap()
+        let mut track_set: HashSet<viola_common::Track> = HashSet::new();
+        for val in &query.types {
+            let new_tracks = match val {
+                TreeType::Artist => tracks
+                    .filter(artist.like(String::from("%") + &search_string + "%"))
+                    .load::<viola_common::Track>(db.lock().deref())
+                    .unwrap(),
+                TreeType::Album => tracks
+                    .filter(album.like(String::from("%") + &search_string + "%"))
+                    .load::<viola_common::Track>(db.lock().deref())
+                    .unwrap(),
+                TreeType::Track => tracks
+                    .filter(title.like(String::from("%") + &search_string + "%"))
+                    .load::<viola_common::Track>(db.lock().deref())
+                    .unwrap(),
+                TreeType::Genre => tracks
+                    .filter(genre.like(String::from("%") + &search_string + "%"))
+                    .load::<viola_common::Track>(db.lock().deref())
+                    .unwrap(),
+            }
+            .into_iter();
+            // yes union is so weird to use that I don't know how to use it.
+            for i in new_tracks {
+                track_set.insert(i);
+            }
+        }
+        track_set.into_iter().collect::<Vec<viola_common::Track>>()
     } else {
         tracks
             .filter(artist.ne(""))
@@ -96,16 +117,31 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
     current_tracks
 }
 
+/// Returns a projection of `t` for which we sort our stuff, dependend on ttype and level
+/// I would love to have this return a reference but because of the options inside it is unclear how to do it
 fn sort_key_from_treetype<'a>(
     ttype: &'a Option<&'a TreeType>,
     t: &'a viola_common::Track,
-) -> &'a String {
+    level: usize,
+) -> String {
     match ttype {
-        Some(&TreeType::Artist) => &t.artist,
-        Some(&TreeType::Album) => &t.album,
-        Some(&TreeType::Genre) => &t.genre,
-        Some(&TreeType::Track) => &t.title,
-        None => &t.artist,
+        Some(&TreeType::Artist) => t.artist.to_owned(),
+        Some(&TreeType::Album) => {
+            if level == 0 {
+                t.album.to_owned()
+            } else {
+                t.year.map(|x| x.to_string()).unwrap_or_default()
+            }
+        }
+        Some(&TreeType::Genre) => t.genre.to_owned(),
+        Some(&TreeType::Track) => {
+            if level == 0 {
+                t.title.to_owned()
+            } else {
+                t.tracknumber.map(|x| x.to_string()).unwrap_or_default()
+            }
+        }
+        None => t.artist.to_owned(),
     }
 }
 
@@ -120,9 +156,11 @@ fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
         let ordering = std::cmp::Ordering::Equal;
         indexed
             .iter()
-            .map(|ttype| {
-                sort_key_from_treetype(&Some(&ttype), x)
-                    .cmp(sort_key_from_treetype(&Some(&ttype), y))
+            .enumerate()
+            .map(|(level, ttype)| {
+                let xkey = sort_key_from_treetype(&Some(&ttype), x, level);
+                let ykey = sort_key_from_treetype(&Some(&ttype), y, level);
+                xkey.cmp(&ykey)
             })
             .fold(ordering, |acc, x| acc.then(x))
     });
