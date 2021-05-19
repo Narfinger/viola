@@ -130,7 +130,7 @@ fn sort_key_from_treetype<'a>(
             if level == 0 {
                 t.album.to_owned()
             } else {
-                t.year.map(|x| x.to_string()).unwrap_or_default()
+                t.year.unwrap_or_default().to_string()
             }
         }
         Some(&TreeType::Genre) => t.genre.to_owned(),
@@ -138,7 +138,7 @@ fn sort_key_from_treetype<'a>(
             if level == 0 {
                 t.title.to_owned()
             } else {
-                t.tracknumber.map(|x| x.to_string()).unwrap_or_default()
+                t.path.to_string()
             }
         }
         None => t.artist.to_owned(),
@@ -164,26 +164,6 @@ fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
             })
             .fold(ordering, |acc, x| acc.then(x))
     });
-
-    /*
-    if query.indices.is_empty() {
-        let ttype = query.types.get(0);
-        t.sort_by(|x, y| sort_key_from_treetype(&ttype, x).cmp(sort_key_from_treetype(&ttype, y)));
-    } else if query.indices.len() == 1
-        && query.types.get(0) == Some(&TreeType::Artist)
-        && query.types.get(1) == Some(&TreeType::Album)
-    {
-        t.sort_unstable_by_key(|t| t.year);
-    } else if query.indices.len() == 2
-        && query.types.get(0) == Some(&viola_common::TreeType::Artist)
-        && query.types.get(1) == Some(&viola_common::TreeType::Album)
-        && query.types.get(2) == Some(&viola_common::TreeType::Track)
-    {
-        t.sort_unstable_by_key(|t| t.tracknumber);
-    } else {
-        let last = query.get_after_last_ttype();
-        t.sort_by(|x, y| sort_key_from_treetype(&last, x).cmp(sort_key_from_treetype(&last, y)));
-    }*/
 }
 
 /// custom strings that appear in the partial query view
