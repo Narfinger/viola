@@ -205,16 +205,20 @@ impl PlaylistControls for LoadedPlaylistPtr {
     }
 
     fn next_or_eol(&self) -> Option<usize> {
-        let next_pos = {
-            let mut s = self.write();
-            s.current_position += 1 % (s.items.len() - 1);
-            s.current_position
-        };
-
-        if next_pos != 0 {
-            Some(next_pos)
-        } else {
+        if self.read().items.len() == 1 {
             None
+        } else {
+            let next_pos = {
+                let mut s = self.write();
+                s.current_position += 1 % (s.items.len() - 1);
+                s.current_position
+            };
+
+            if next_pos != 0 {
+                Some(next_pos)
+            } else {
+                None
+            }
         }
     }
 }
