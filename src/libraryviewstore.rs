@@ -377,4 +377,39 @@ mod test {
         let res = partial_query(&db, &query);
         assert_eq!(res[5714], "Enter Sandman");
     }
+
+    #[test]
+    fn test_partial_strings_genre_depth0() {
+        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let query = TreeViewQuery {
+            types: vec![
+                TreeType::Genre,
+                TreeType::Artist,
+                TreeType::Album,
+                TreeType::Track,
+            ],
+            indices: vec![],
+            search: None,
+        };
+        let res = partial_query(&db, &query);
+        assert_eq!(res[26], "Cello Rock");
+    }
+
+    #[test]
+    fn test_partial_strings_genre_depth1() {
+        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let query = TreeViewQuery {
+            types: vec![
+                TreeType::Genre,
+                TreeType::Artist,
+                TreeType::Album,
+                TreeType::Track,
+            ],
+            indices: vec![26],
+            search: None,
+        };
+        let res = partial_query(&db, &query);
+        let exp_res: Vec<String> = vec!["Apocalyptica"].iter().map(|x| x.to_string()).collect();
+        assert_eq!(res, exp_res);
+    }
 }
