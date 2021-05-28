@@ -414,7 +414,20 @@ mod test {
             search: None,
         };
         let res = partial_query(&db, &query);
-        let exp_res: Vec<String> = vec!["Apocalyptica"].iter().map(|x| x.to_string()).collect();
+        let exp_res: Vec<String> = vec![
+            "Apocalyptica",
+            "Apocalyptica feat. Tomoyasu Hotei",
+            "Apocalyptica feat. Corey Taylor",
+            "Apocalyptica feat. Till Lindemann",
+            "Apocalyptica feat. Dave Lombardo",
+            "Apocalyptica feat. Adam Gontier",
+            "Apocalyptica feat. Cristina Scabbia",
+            "Melora Creager",
+            "Rasputina",
+        ]
+        .iter()
+        .map(|x| x.to_string())
+        .collect();
         assert_eq!(res, exp_res);
     }
 }
