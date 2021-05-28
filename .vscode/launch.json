@@ -64,6 +64,26 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug executable 'viola -w'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=viola",
+                    "--package=viola"
+                ],
+                "filter": {
+                    "name": "viola",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "-w"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in executable 'viola'",
             "cargo": {
                 "args": [

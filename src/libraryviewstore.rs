@@ -92,7 +92,11 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
             recursion_depth,
             query.types.clone(),
         );
-
+        info!(
+            "recursion depth {}, index {}, current_ttype {:?}",
+            &recursion_depth, &index, &current_ttype
+        );
+        info!("Filter value {}", &filter_value);
         current_tracks = match current_ttype {
             TreeType::Artist => current_tracks
                 .into_iter()
@@ -112,6 +116,7 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
                 .collect(),
         };
     }
+    info!("Sorting tracks now");
     sort_tracks(query, &mut current_tracks);
 
     current_tracks
@@ -149,21 +154,26 @@ fn sort_key_from_treetype<'a>(
 /// TODO: This has the problem that we rarely want to sort albums by name but mostly by year.
 /// But sometimes by name
 fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
-    let indexed = query.get_indexed_ttypes();
-    t.sort_unstable_by(|x, y| {
-        // We build a map of Ordering that compares all the keys in indexed.
-        // Then we fold over this to use Ordering::Then to get the correct evaluation
-        let ordering = std::cmp::Ordering::Equal;
-        indexed
-            .iter()
-            .enumerate()
-            .map(|(level, ttype)| {
-                let xkey = sort_key_from_treetype(&Some(&ttype), x, level);
-                let ykey = sort_key_from_treetype(&Some(&ttype), y, level);
-                xkey.cmp(&ykey)
-            })
-            .fold(ordering, |acc, x| acc.then(x))
-    });
+    if query.indices.len() != 1 {
+        let indexed = query.get_indexed_ttypes();
+        t.sort_unstable_by(|x, y| {
+            // We build a map of Ordering that compares all the keys in indexed.
+            // Then we fold over this to use Ordering::Then to get the correct evaluation
+            let ordering = std::cmp::Ordering::Equal;
+            indexed
+                .iter()
+                .enumerate()
+                .map(|(level, ttype)| {
+                    let xkey = sort_key_from_treetype(&Some(&ttype), x, level);
+                    let ykey = sort_key_from_treetype(&Some(&ttype), y, level);
+                    xkey.cmp(&ykey)
+                })
+                .fold(ordering, |acc, x| acc.then(x))
+        });
+    } else {
+        t.sort_unstable_by_key(|t| t.path.clone());
+        panic!("test");
+    }
 }
 
 /// custom strings that appear in the partial query view
