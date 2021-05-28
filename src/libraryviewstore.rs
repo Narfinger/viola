@@ -158,7 +158,7 @@ fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
         let indexed = query.get_indexed_ttypes();
         t.sort_unstable_by(|x, y| {
             // We build a map of Ordering that compares all the keys in indexed.
-            // Then we fold over this to use Ordering::Then to get the correct evaluation
+            // Then we fold over this to use Ordering::Then to get the correct valuation
             let ordering = std::cmp::Ordering::Equal;
             indexed
                 .iter()
@@ -173,6 +173,10 @@ fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
     } else {
         t.sort_unstable_by_key(|t| t.path.clone());
     }
+
+    //let ttype = query.get_after_last_ttype();
+    //println!("ttype {:?}", ttype);
+    //t.sort_by_cached_key(|x| sort_key_from_treetype(&ttype, &x));
 }
 
 /// custom strings that appear in the partial query view
@@ -256,7 +260,7 @@ mod test {
     use super::*;
     use crate::db;
     #[test]
-    fn test_partial_strings_depth1() {
+    fn test_partial_strings_depth0() {
         let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
         let query = TreeViewQuery {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
@@ -268,7 +272,7 @@ mod test {
     }
 
     #[test]
-    fn test_partial_strings_depth1_alt() {
+    fn test_partial_strings_depth0_alt() {
         let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
         let query = TreeViewQuery {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
@@ -276,11 +280,12 @@ mod test {
             search: None,
         };
         let res = partial_query(&db, &query);
+        println!("res {:?}", res);
         assert_eq!(res[95], "Apocalyptica");
     }
 
     #[test]
-    fn test_partial_strings_depth2() {
+    fn test_partial_strings_depth1() {
         let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
         let query = TreeViewQuery {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
@@ -305,7 +310,7 @@ mod test {
     }
 
     #[test]
-    fn test_partial_strings_depth3() {
+    fn test_partial_strings_depth2() {
         let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
         let query = TreeViewQuery {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],

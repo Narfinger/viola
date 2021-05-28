@@ -118,7 +118,7 @@ impl TreeViewQuery {
     /// Returns the treetype that is in the types vector after the last index.
     /// If treetype is [Artist, Album] and index is [0] we return Album
     pub fn get_after_last_ttype(&self) -> Option<&TreeType> {
-        self.types.get(self.indices.len() + 1)
+        self.types.get(self.indices.len())
     }
 
     /// Returns the treetypes that are not yet indexed
