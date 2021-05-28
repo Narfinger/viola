@@ -172,7 +172,6 @@ fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
         });
     } else {
         t.sort_unstable_by_key(|t| t.path.clone());
-        panic!("test");
     }
 }
 
@@ -245,5 +244,88 @@ pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
         name: get_playlist_name(query, &t),
         current_position: 0,
         items: t,
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::sync::Arc;
+
+    use parking_lot::Mutex;
+
+    use super::*;
+    use crate::db;
+    #[test]
+    fn test_partial_strings_depth1() {
+        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let query = TreeViewQuery {
+            types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
+            indices: vec![],
+            search: None,
+        };
+        let res = partial_query(&db, &query);
+        assert_eq!(res[3], "2Cellos");
+    }
+
+    #[test]
+    fn test_partial_strings_depth1_alt() {
+        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let query = TreeViewQuery {
+            types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
+            indices: vec![],
+            search: None,
+        };
+        let res = partial_query(&db, &query);
+        assert_eq!(res[95], "Apocalyptica");
+    }
+
+    #[test]
+    fn test_partial_strings_depth2() {
+        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let query = TreeViewQuery {
+            types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
+            indices: vec![95],
+            search: None,
+        };
+        let res = partial_query(&db, &query);
+        let exp_res: Vec<String> = vec![
+            "1996-Plays Metallica by Four Cellos",
+            "1998-Inquisition Symphony",
+            "2000-Cult",
+            "2001-Cult (Special Edition)",
+            "2003-Reflections",
+            "2005-Apocalyptica",
+            "2006-Amplified",
+            "2007-Worlds Collide",
+        ]
+        .iter()
+        .map(|x| x.to_string())
+        .collect();
+        assert_eq!(res, exp_res);
+    }
+
+    #[test]
+    fn test_partial_strings_depth3() {
+        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let query = TreeViewQuery {
+            types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
+            indices: vec![95, 0],
+            search: None,
+        };
+        let res = partial_query(&db, &query);
+        let exp_res: Vec<String> = vec![
+            "1-Enter Sandman",
+            "2-Master of Puppets",
+            "3-Harvester of Sorrow",
+            "4-The Unforgiven",
+            "5-Sad but True",
+            "6-Creeping Death",
+            "7-Wherever I May Roam",
+            "8-Welcome Home (Sanitarium)",
+        ]
+        .iter()
+        .map(|x| x.to_string())
+        .collect();
+        assert_eq!(res, exp_res);
     }
 }
