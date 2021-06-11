@@ -58,6 +58,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "app_dirs"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7e0dac2aff970152ad2d6de9f75e0ad7d706a1f394affbdb7f9f6c1834e4f17b"
+
+[[package]]
 name = "async-io"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1591,7 +1597,7 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "da724bda86ecf80904babc11b0ca492e83987a3d735b48b8ff19688ce330605a"
 dependencies = [
- "app_dirs",
+ "app_dirs 1.2.1",
  "serde 0.9.15",
  "serde_json 0.9.10",
 ]
@@ -2450,7 +2456,7 @@ checksum = "5fecdca9a5291cc2b8dcf7dc02453fee791a280f3743cb0905f8822ae463b3fe"
 name = "viola"
 version = "0.2.1"
 dependencies = [
- "app_dirs",
+ "app_dirs 2.0.1",
  "base64",
  "bus",
  "clap",

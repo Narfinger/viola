@@ -6,7 +6,7 @@ authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-app_dirs = "1.2"         # Put your app's data in the right place on every platform
+app_dirs = "2.0"         # Put your app's data in the right place on every platform
 base64 = "0.13"
 clap = "2.33"                    # A simple to use, efficient, and full featured  Command Line Argument Parser
 diesel = { version = "1.4", features = ["sqlite", "r2d2"] }
