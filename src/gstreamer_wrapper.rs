@@ -13,7 +13,7 @@ pub struct GStreamer {
     element: gstreamer::Element,
     current_playlist: PlaylistTabsPtr,
     /// Handles gstreamer changes to the gui
-    sender: bus::Bus<GStreamerMessage>,
+    sender: tokio::sync::watch::Sender<GStreamerMessage>,
     pool: DBPool,
     repeat_once: AtomicBool,
 }
@@ -29,7 +29,7 @@ impl Drop for GStreamer {
 pub fn new(
     current_playlist: PlaylistTabsPtr,
     pool: DBPool,
-    msg_bus: bus::Bus<GStreamerMessage>,
+    msg_bus: tokio::sync::watch::Sender<GStreamerMessage>,
 ) -> Result<Arc<RwLock<GStreamer>>, String> {
     gstreamer::init().unwrap();
     let element = {
@@ -218,7 +218,7 @@ impl GStreamerExt for GStreamer {
                 self.repeat_once.store(true, Ordering::SeqCst);
             }
         }
-        if let Err(e) = self.sender.try_broadcast(action.into()) {
+        if let Err(e) = self.sender.send(action.into()) {
             warn!("Could not broadcast, ignoring: {}", e);
         }
     }

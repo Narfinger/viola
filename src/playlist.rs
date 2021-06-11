@@ -67,6 +67,7 @@ pub fn restore_playlists(db: &DBPool) -> Vec<LoadedPlaylist> {
     use viola_common::schema::tracks::dsl::*;
 
     let pls = playlists
+        .order(viola_common::schema::playlists::dsl::id.asc())
         .load::<Playlist>(db.lock().deref())
         .expect("Error restoring playlists");
     pls.iter()

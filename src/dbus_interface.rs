@@ -1,5 +1,8 @@
+use glib::object;
 use parking_lot::RwLock;
-use std::{collections::HashMap, convert::TryInto, error::Error, sync::Arc, thread};
+use std::{
+    collections::HashMap, convert::TryInto, error::Error, sync::Arc, thread, time::Duration,
+};
 
 use crate::{
     gstreamer_wrapper::{GStreamer, GStreamerExt},
@@ -221,7 +224,7 @@ impl PlayerInterface {
 fn main(
     gstreamer: Arc<RwLock<GStreamer>>,
     playlisttabs: PlaylistTabsPtr,
-    bus: bus::BusReader<viola_common::GStreamerMessage>,
+    bus: tokio::sync::watch::Receiver<GStreamerMessage>,
 ) -> Result<(), Box<dyn Error>> {
     let connection = zbus::Connection::new_session()?;
     fdo::DBusProxy::new(&connection)?.request_name(
@@ -236,26 +239,34 @@ fn main(
         playlisttabs: playlisttabs.clone(),
     };
     object_server.at(&"/org/mpris/MediaPlayer2".try_into()?, handler2)?;
-    let mut bus = bus;
+    //tokio::spawn(async {
+    //    if bus.changed().await.is_ok() {
+    //        object_server.with(
+    //            &"/org/mpris/MediaPlayer2".try_into().expect("Error"),
+    //            |iface: &PlayerInterface| iface.properties_changed(),
+    //        );
+    //    }
+    //});
+
     loop {
         if let Err(err) = object_server.try_handle_next() {
             println!("working on dbus message");
             eprintln!("{}", err);
         }
-        if let Ok(_) = bus.try_recv() {
-            info!("Got Message on bus");
-            object_server.with(
-                &"/org/mpris/MediaPlayer2".try_into()?,
-                |iface: &PlayerInterface| iface.properties_changed(),
-            )?;
-        }
+        //if bus.changed().into_future().poll() {
+        //    object_server.with(
+        //        &"/org/mpris/MediaPlayer2".try_into().expect("Error"),
+        //        |iface: &PlayerInterface| iface.properties_changed(),
+        //    );
+        //}
+        thread::sleep(Duration::new(1, 0));
     }
 }
 
 pub(crate) fn new(
     gstreamer: Arc<RwLock<GStreamer>>,
     playlisttabs: PlaylistTabsPtr,
-    bus: bus::BusReader<viola_common::GStreamerMessage>,
+    bus: tokio::sync::watch::Receiver<GStreamerMessage>,
 ) {
     thread::spawn(|| main(gstreamer, playlisttabs, bus).expect("Error in starting dbus"));
 }

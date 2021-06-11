@@ -126,14 +126,6 @@ fn get_album_file(s: &str) -> Option<String> {
         .and_then(|p: PathBuf| p.to_str().map(String::from))
 }
 
-fn convert_to_i32_option(u: Option<u32>) -> Option<i32> {
-    if let Some(i) = u {
-        Some(i as i32)
-    } else {
-        None
-    }
-}
-
 fn construct_track_from_path(s: &str) -> NewTrack {
     let taglibfile = taglib::File::new(&s);
     if let Ok(ataglib) = taglibfile {
@@ -150,8 +142,8 @@ fn construct_track_from_path(s: &str) -> NewTrack {
             artist: tags.artist().unwrap_or_default(),
             album: tags.album().unwrap_or_default(),
             genre: tags.genre().unwrap_or_default(),
-            tracknumber: convert_to_i32_option(tags.track()),
-            year: convert_to_i32_option(tags.year()),
+            tracknumber: tags.track().map(|i| i as i32),
+            year: tags.year().map(|i| i as i32),
             path: s.to_string(),
             length: properties.length() as i32,
             albumpath: album,

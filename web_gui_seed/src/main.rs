@@ -52,7 +52,11 @@ fn init_treeviews() -> Vec<TreeView> {
         "genretree",
         "#genretree",
         "Genre",
-        vec![viola_common::TreeType::Genre],
+        vec![
+            viola_common::TreeType::Genre,
+            viola_common::TreeType::Artist,
+            viola_common::TreeType::Album,
+        ],
     );
     let tv3 = init_generic_treeview(
         "album",
@@ -122,14 +126,14 @@ fn view_buttons(model: &Model) -> Node<Msg> {
         if model.play_status == GStreamerMessage::Playing {
             button![
                 C!["btn", "btn-success"],
-                icon("/static/pause.svg", Some(22)),
+                icon("/pause.svg", Some(22)),
                 "Pause",
                 ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
             ]
         } else {
             button![
                 C!["btn", "btn-success"],
-                icon("/static/play.svg", None),
+                icon("/play.svg", None),
                 "Play",
                 ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Playing))
             ]
@@ -143,7 +147,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 button![
                     C!["btn", "btn-info"],
                     attrs!(At::from("data-toggle") => "collapse", At::from("data-target") => "#sidebar", At::from("aria-expanded") => "false", At::from("aria-controls") => "sidebar"),
-                    icon("/static/menu-button.svg", Some(20)),
+                    icon("/menu-button.svg", Some(20)),
                     "Menu"
                 ]
             ],
@@ -151,7 +155,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 C!["col"],
                 button![
                     C!["btn", "btn-primary"],
-                    icon("/static/skip-backward.svg", None),
+                    icon("/skip-backward.svg", None),
                     "Prev",
                     ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Previous))
                 ]
@@ -162,7 +166,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 button![
                     C!["btn", "btn-primary"],
                     "Pause",
-                    icon("/static/pause.svg", Some(22)),
+                    icon("/pause.svg", Some(22)),
                     ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
                 ]
             ],
@@ -170,7 +174,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 C!["col"],
                 button![
                     C!["btn", "btn-primary"],
-                    icon("/static/skip-forward.svg", None),
+                    icon("/skip-forward.svg", None),
                     "Next",
                     ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Next))
                 ]
@@ -179,7 +183,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 C!["col"],
                 button![
                     C!["btn", "btn-secondary"],
-                    icon("/static/arrow-repeat.svg", Some(20)),
+                    icon("/arrow-repeat.svg", Some(20)),
                     "Again",
                     ev(Ev::Click, |_| Msg::Transport(GStreamerAction::RepeatOnce))
                 ]
@@ -188,7 +192,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 C!["col"],
                 button![
                     C!["btn", "btn-danger"],
-                    icon("/static/trash.svg", Some(18)),
+                    icon("/trash.svg", Some(18)),
                     "Clean",
                     ev(Ev::Click, |_| Msg::Clean)
                 ]
@@ -198,7 +202,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 button![
                     C!["btn", "btn-danger"],
                     attrs!(At::from("data-toggle") => "modal", At::from("data-target") => "#deleterangemodal"),
-                    icon("/static/trash.svg", Some(12)),
+                    icon("/trash.svg", Some(12)),
                     "Delete Range",
                 ]
             ],
@@ -225,7 +229,7 @@ fn view_tabs(model: &Model) -> Node<Msg> {
                                 &tab.name,
                                 span![
                                     style!(St::PaddingLeft => unit!(5,px)),
-                                    img![attrs!(At::Src => "/static/x-square.svg", At::Height => unit!(8,px), At::Width => unit!(8,px)),
+                                    img![attrs!(At::Src => "/x-square.svg", At::Height => unit!(8,px), At::Width => unit!(8,px)),
                                     ev(Ev::Click, move |_| Msg::PlaylistTabDelete(pos)),
                                     ],
                                 ],
@@ -249,18 +253,18 @@ fn view_track(
     tr![
         IF!(is_selected => style!(St::Color => "Red")),
         td![
-            IF!(is_selected && *playstatus==GStreamerMessage::Playing => icon("/static/play.svg", Some(24))),
-            IF!(is_selected && *playstatus==GStreamerMessage::Pausing => icon("/static/pause.svg", Some(24))),
+            IF!(is_selected && *playstatus==GStreamerMessage::Playing => icon("/play.svg", Some(24))),
+            IF!(is_selected && *playstatus==GStreamerMessage::Pausing => icon("/pause.svg", Some(24))),
             &pos,
             ev(Ev::DblClick, move |_| Msg::Transport(
                 GStreamerAction::Play(pos)
             )),
         ],
         td![&t.tracknumber],
-        td![&t.title,],
-        td![&t.artist,],
-        td![&t.album,],
-        td![&t.genre,],
+        td![&t.title.chars().take(30).collect::<String>(),],
+        td![&t.artist.chars().take(30).collect::<String>(),],
+        td![&t.album.chars().take(30).collect::<String>(),],
+        td![&t.genre.chars().take(30).collect::<String>(),],
         td![&t.year,],
         td![&length,],
         td![&t.playcount.unwrap_or(0)],
@@ -341,7 +345,7 @@ fn view_status(model: &Model) -> Node<Msg> {
         div![
             C!["col-md"],
             img![
-                attrs!(At::Src => format!("/currentimage/?{}", &track_option.map(|t| &t.title).unwrap_or(&String::from(""))), At::Width => unit!(100,px), At::Height => unit!(100,px))
+                attrs!(At::Src => format!("/currentimage?nonce={}", &track_option.map(|t| &t.title).unwrap_or(&String::from(""))), At::Width => unit!(100,px), At::Height => unit!(100,px))
             ]
         ],
         div![C!["col"], window_string],

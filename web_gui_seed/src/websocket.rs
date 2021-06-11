@@ -1,6 +1,6 @@
 use seed::prelude::*;
 use viola_common::WsMessage;
-const WS_URL: &str = "ws://127.0.0.1:8088/ws/";
+const WS_URL: &str = "ws://127.0.0.1:8080/ws/";
 
 pub(crate) fn create_websocket(orders: &impl Orders<crate::Msg>) -> WebSocket {
     let msg_sender = orders.msg_sender();
@@ -26,6 +26,7 @@ fn decode_message(message: WebSocketMessage, msg_sender: std::rc::Rc<dyn Fn(Opti
             }
             WsMessage::ReloadTabs => msg_sender(Some(crate::Msg::InitPlaylistTabs)),
             WsMessage::ReloadPlaylist => msg_sender(Some(crate::Msg::InitPlaylistTabs)),
+            WsMessage::GStreamerMessage(msg) => msg_sender(Some(crate::Msg::GStreamerMessage(msg))),
         };
     }
 }
