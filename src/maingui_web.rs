@@ -374,7 +374,7 @@ pub async fn run(pool: DBPool) {
         });
     }
 
-    println!("Starting web gui on 127.0.0.1:8088");
+    println!("Starting web gui on http://localhost:8088");
 
     let statec = state.clone();
     let data = warp::any().map(move || Arc::clone(&state));
