@@ -253,8 +253,8 @@ fn view_track(
     tr![
         IF!(is_selected => style!(St::Color => "Red")),
         td![
-            IF!(is_selected && *playstatus==GStreamerMessage::Playing => icon("/play.svg", Some(24))),
-            IF!(is_selected && *playstatus==GStreamerMessage::Pausing => icon("/pause.svg", Some(24))),
+            IF!(is_selected && *playstatus==GStreamerMessage::Playing => icon("/play.svg", Some(16))),
+            IF!(is_selected && *playstatus==GStreamerMessage::Pausing => icon("/pause.svg", Some(16))),
             &pos,
             ev(Ev::DblClick, move |_| Msg::Transport(
                 GStreamerAction::Play(pos)
