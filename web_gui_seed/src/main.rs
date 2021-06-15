@@ -146,7 +146,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 C!["col"],
                 button![
                     C!["btn", "btn-info"],
-                    attrs!(At::from("data-toggle") => "collapse", At::from("data-target") => "#sidebar", At::from("aria-expanded") => "false", At::from("aria-controls") => "sidebar"),
+                    attrs!(At::from("data-bs-toggle") => "collapse", At::from("data-bs-target") => "#sidebar", At::from("aria-expanded") => "false", At::from("aria-controls") => "sidebar"),
                     icon("/menu-button.svg", Some(20)),
                     "Menu"
                 ]
@@ -201,7 +201,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 C!["col-2"],
                 button![
                     C!["btn", "btn-danger"],
-                    attrs!(At::from("data-toggle") => "modal", At::from("data-target") => "#deleterangemodal"),
+                    attrs!(At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => "#deleterangemodal"),
                     icon("/trash.svg", Some(12)),
                     "Delete Range",
                 ]
@@ -420,7 +420,7 @@ fn view_smartplaylists(model: &Model) -> Node<Msg> {
                         .iter()
                         .enumerate()
                         .map(|(i, smp)| li![a![
-                            attrs!(At::from("data-dismiss") => "modal"),
+                            attrs!(At::from("data-bs-dismiss") => "modal"),
                             smp,
                             ev(Ev::Click, move |_| Msg::LoadSmartPlaylist(i))
                         ]])]
@@ -446,7 +446,7 @@ fn view_tree_lvl3(
             button![
                 C!["btn", "btn-outline-primary", "btn-sm"],
                 style!(St::MarginLeft => unit!(25,px)),
-                attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "artisttree"),
+                attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => "artisttree"),
                 "Load",
                 ev(Ev::Click, move |_| Msg::LoadFromTreeView {
                     tree_index: vec![index, index2, index3],
@@ -480,7 +480,7 @@ fn view_tree_lvl2(
                 button![
                     C!["btn", "btn-outline-primary", "btn-sm"],
                     style!(St::MarginLeft => unit!(25,px)),
-                    attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "artisttree"),
+                    attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => "artisttree"),
                     "Load",
                     ev(Ev::Click, move |_| Msg::LoadFromTreeView {
                         tree_index: vec![index, index2],
@@ -512,7 +512,7 @@ fn view_tree_lvl1(
         button![
             C!["btn", "btn-outline-primary", "btn-sm"],
             style!(St::MarginLeft => unit!(25,px)),
-            attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "artisttree"),
+            attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => "artisttree"),
             "Load",
             ev(Ev::Click, move |_| Msg::LoadFromTreeView {
                 tree_index: vec![index],
@@ -601,7 +601,7 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
                 style!(St::Padding => unit!(5, px)),
                 button![
                     C!["btn", "btn-primary"],
-                    attrs![At::from("data-toggle") => "modal", At::from("data-target") => t.treeview_html.idref],
+                    attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => t.treeview_html.idref],
                     t.treeview_html.label.to_owned(),
                     //    ev(Ev::Click, move |_| Msg::FillTreeView {
                     //        model_index: 0,
@@ -629,7 +629,7 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
                 C!["nav-item"],
                 button![
                     C!["btn", "btn-primary"],
-                    attrs![At::from("data-toggle") => "modal", At::from("data-target") => "#sm_modal"],
+                    attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => "#sm_modal"],
                     "SmartPlaylist",
                     ev(Ev::Click, move |_| Msg::LoadSmartPlaylistList),
                 ]
@@ -640,7 +640,7 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
                 style!(St::Padding => unit!(5, px)),
                 button![
                     C!["btn", "btn-primary"],
-                    attrs![At::from("data-toggle") => "modal", At::from("data-dismiss") => "#sidebar"],
+                    attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-dismiss") => "#sidebar"],
                     "Show Full Playlist Window",
                     ev(Ev::Click, |_| Msg::FullPlaylistWindow),
                 ],
@@ -650,7 +650,7 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
                 style!(St::Padding => unit!(5,px)),
                 button![
                     C!["btn", "btn-primary"],
-                    attrs![At::from("data-toggle") => "modal", At::from("data-target") => "#playindex_modal", At::from("data-dismiss") => "#sidebar"],
+                    attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => "#playindex_modal", At::from("data-bs-dismiss") => "#sidebar"],
                     "Play Index",
                 ]
             ],
@@ -682,12 +682,12 @@ fn view_playindex_modal(_model: &Model) -> Node<Msg> {
                 C!["modal-footer"],
                 button![
                     C!["btn" "btn-secondary"],
-                    attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "playindex_modal"),
+                    attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => "playindex_modal"),
                     "Close"
                 ],
                 button![
                     C!["btn" "btn-secondary"],
-                    attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "playindex_modal"),
+                    attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => "playindex_modal"),
                     "Play Index",
                     ev(Ev::Click, |_| Msg::PlayIndex),
                 ]
@@ -725,12 +725,12 @@ fn view_deleterangemodal(_model: &Model) -> Node<Msg> {
                 C!["modal-footer"],
                 button![
                     C!["btn" "btn-secondary"],
-                    attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "deleterangemodal"),
+                    attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => "deleterangemodal"),
                     "Close"
                 ],
                 button![
                     C!["btn" "btn-danger"],
-                    attrs!(At::from("data-dismiss") => "modal", At::from("data-target") => "deleterangemodal"),
+                    attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => "deleterangemodal"),
                     "Delete Range",
                     ev(Ev::Click, |_| Msg::DeleteRange),
                 ]
