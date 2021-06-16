@@ -168,7 +168,7 @@ fn main() {
         println!("Starting webview");
         WebViewBuilder::new()
             .title("Viola")
-            .content(Content::Url("http://localhost:8080"))
+            .content(Content::Url(crate::types::URL))
             .size(1920, 1080)
             .resizable(true)
             //.debug(true)

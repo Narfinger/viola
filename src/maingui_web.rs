@@ -1,6 +1,7 @@
 use diesel::Connection;
 use futures::StreamExt;
 use std::convert::Infallible;
+use std::net::SocketAddr;
 use std::time::Duration;
 use std::{io::Read, sync::Arc};
 use tokio::sync::RwLock;
@@ -374,7 +375,7 @@ pub async fn run(pool: DBPool) {
         });
     }
 
-    println!("Starting web gui on http://localhost:8080");
+    println!("Starting web gui on {}", crate::types::URL);
 
     let statec = state.clone();
     let data = warp::any().map(move || Arc::clone(&state));
@@ -480,5 +481,6 @@ pub async fn run(pool: DBPool) {
         //.or(static_files)
         .or(websocket)
         .or(index);
-    warp::serve(all).run(([127, 0, 0, 1], 8080)).await;
+    let addr: SocketAddr = crate::types::URL.parse().unwrap();
+    warp::serve(all).run(addr).await;
 }

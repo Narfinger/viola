@@ -18,6 +18,7 @@ pub const LENGTH_COLUMN: i32 = 4;
 pub const YEAR_COLUMN: i32 = 5;
 pub const PLAYCOUNT_COLUMN: i32 = 7;
 pub const COLOR_COLUMN: u32 = 8;
+pub const URL: &str = "http://127.0.0.1:8080";
 
 //pub type BuilderPtr = Arc<RwLock<Builder>>;
 pub type GstreamerPipeline = Arc<RwLock<Element>>;
