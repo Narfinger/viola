@@ -201,7 +201,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 C!["col-2"],
                 button![
                     C!["btn", "btn-danger"],
-                    attrs!(At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => "#deleterangemodal"),
+                    attrs!(At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => "deleterangemodal"),
                     icon("/trash.svg", Some(12)),
                     "Delete Range",
                 ]
@@ -767,15 +767,15 @@ fn view(model: &Model) -> Node<Msg> {
                             C!["table", "table-sm", "table-bordered"],
                             thead![
                                 style!(St::Position => "sticky"),
-                                th!["#"],
-                                th!["TrackNumber"],
-                                th!["Title"],
-                                th!["Artist"],
-                                th!["Album"],
-                                th!["Genre"],
-                                th!["Year"],
-                                th!["Length"],
-                                th!["PlyCnt"],
+                                th![style!(St::Width => "5%"), "#"],
+                                th![style!(St::Width => "5%"), "TrackNumber"],
+                                th![style!(St::Width => "20%"), "Title"],
+                                th![style!(St::Width => "20%"), "Artist"],
+                                th![style!(St::Width => "20%"), "Album"],
+                                th![style!(St::Width => "15%"), "Genre"],
+                                th![style!(St::Width => "5%"), "Year"],
+                                th![style!(St::Width =>"5%"), "Length"],
+                                th![style!(St::Width => "5%"), "PlyCnt"],
                             ],
                             tbody![model
                                 .get_current_playlist_tab_tracks()
