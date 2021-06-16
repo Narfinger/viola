@@ -6,6 +6,7 @@ use std::time::Duration;
 use std::{io::Read, sync::Arc};
 use tokio::sync::RwLock;
 use viola_common::*;
+use warp::hyper::Uri;
 use warp::Filter;
 
 use crate::gstreamer_wrapper;
@@ -481,6 +482,6 @@ pub async fn run(pool: DBPool) {
         //.or(static_files)
         .or(websocket)
         .or(index);
-    let addr: SocketAddr = crate::types::URL.parse().unwrap();
-    warp::serve(all).run(addr).await;
+    let s: SocketAddr = crate::types::SOCKETADDR.parse().unwrap();
+    warp::serve(all).run(s).await;
 }
