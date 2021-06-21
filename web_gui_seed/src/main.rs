@@ -14,6 +14,13 @@ use messages::*;
 use models::*;
 use viola_common::{GStreamerAction, GStreamerMessage, Track};
 
+const TABLE_WIDTH: &'static [&'static str; 9] =
+    &["5%", "5%", "25%", "15%", "20%", "15%", "5%", "5%", "5%"];
+
+//notice that this does not include all types
+//[title, artist, album, genre]
+const CHARS_PER_COLUM: &'static [usize; 4] = &[40, 30, 30, 30];
+
 fn init_generic_treeview(
     id: &str,
     idref: &str,
@@ -261,10 +268,14 @@ fn view_track(
             )),
         ],
         td![&t.tracknumber],
-        td![&t.title.chars().take(30).collect::<String>(),],
-        td![&t.artist.chars().take(30).collect::<String>(),],
-        td![&t.album.chars().take(30).collect::<String>(),],
-        td![&t.genre.chars().take(30).collect::<String>(),],
+        td![&t.title.chars().take(CHARS_PER_COLUM[0]).collect::<String>(),],
+        td![&t
+            .artist
+            .chars()
+            .take(CHARS_PER_COLUM[1])
+            .collect::<String>(),],
+        td![&t.album.chars().take(CHARS_PER_COLUM[2]).collect::<String>(),],
+        td![&t.genre.chars().take(CHARS_PER_COLUM[3]).collect::<String>(),],
         td![&t.year,],
         td![&length,],
         td![&t.playcount.unwrap_or(0)],
@@ -767,15 +778,15 @@ fn view(model: &Model) -> Node<Msg> {
                             C!["table", "table-sm", "table-bordered"],
                             thead![
                                 style!(St::Position => "sticky"),
-                                th![style!(St::Width => "5%"), "#"],
-                                th![style!(St::Width => "5%"), "TrackNumber"],
-                                th![style!(St::Width => "25%"), "Title"],
-                                th![style!(St::Width => "15%"), "Artist"],
-                                th![style!(St::Width => "20%"), "Album"],
-                                th![style!(St::Width => "15%"), "Genre"],
-                                th![style!(St::Width => "5%"), "Year"],
-                                th![style!(St::Width =>"5%"), "Length"],
-                                th![style!(St::Width => "5%"), "PlyCnt"],
+                                th![style!(St::Width => TABLE_WIDTH[0]), "#"],
+                                th![style!(St::Width => TABLE_WIDTH[1]), "TrackNumber"],
+                                th![style!(St::Width => TABLE_WIDTH[2]), "Title"],
+                                th![style!(St::Width => TABLE_WIDTH[3]), "Artist"],
+                                th![style!(St::Width => TABLE_WIDTH[4]), "Album"],
+                                th![style!(St::Width => TABLE_WIDTH[5]), "Genre"],
+                                th![style!(St::Width => TABLE_WIDTH[6]), "Year"],
+                                th![style!(St::Width => TABLE_WIDTH[7]), "Length"],
+                                th![style!(St::Width => TABLE_WIDTH[8]), "PlyCnt"],
                             ],
                             tbody![model
                                 .get_current_playlist_tab_tracks()
