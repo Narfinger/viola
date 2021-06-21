@@ -19,7 +19,7 @@ const TABLE_WIDTH: &'static [&'static str; 9] =
 
 //notice that this does not include all types
 //[title, artist, album, genre]
-const CHARS_PER_COLUM: &'static [usize; 4] = &[40, 30, 30, 30];
+const CHARS_PER_COLUM: &'static [usize; 4] = &[40, 20, 30, 20];
 
 fn init_generic_treeview(
     id: &str,
