@@ -285,6 +285,18 @@ mod test {
     }
 
     #[test]
+    fn test_partial_strings_depth0_search() {
+        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let query = TreeViewQuery {
+            types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
+            indices: vec![],
+            search: Some("2Cel".to_string()),
+        };
+        let res = partial_query(&db, &query);
+        assert_eq!(res[0], "2Cellos");
+    }
+
+    #[test]
     fn test_partial_strings_depth1() {
         let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
         let query = TreeViewQuery {
