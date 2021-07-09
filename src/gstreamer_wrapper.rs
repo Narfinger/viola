@@ -1,4 +1,4 @@
-use crate::glib::ObjectExt;
+use crate::gstreamer::prelude::ObjectExt;
 use gstreamer::{ElementExt, ElementExtManual, GstObjectExt};
 use parking_lot::RwLock;
 use std::sync::atomic::{AtomicBool, Ordering};
