@@ -15,7 +15,7 @@ erased-serde = "0.3"
 error-chain = "0.12"
 futures = "0.3"
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
-env_logger = "0.8"
+env_logger = "0.9"
 indicatif = {version = "0.16", features = ["rayon"]}
 image = "0.23"
 humantime = "2.1"
