@@ -253,15 +253,41 @@ pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
 
 #[cfg(test)]
 mod test {
-    use std::sync::Arc;
+    use std::{fs, sync::Arc};
 
     use parking_lot::Mutex;
 
     use super::*;
-    use crate::db;
+    use crate::db::{self, NewTrack};
+
+    embed_migrations!("migrations/");
+    fn fill_db(db: &diesel::SqliteConnection) {
+        #[derive(Deserialize)]
+        struct Obj {
+            newtracks: Vec<NewTrack>,
+        }
+
+        let string = fs::read_to_string("tests/tracks.toml").unwrap();
+        let val = toml::from_str::<Obj>(&string).expect("Could not parse");
+
+        diesel::insert_into(tracks)
+            .values(&val.newtracks)
+            .execute(db)
+            .unwrap();
+    }
+
+    fn setup_db_connection() -> diesel::SqliteConnection {
+        let conn = <diesel::SqliteConnection as diesel::Connection>::establish(":memory:")
+            .map_err(|_| String::from("DB Connection error"))
+            .unwrap();
+        embedded_migrations::run(&conn).expect("Could not run migration");
+        fill_db(&conn);
+        conn
+    }
+
     #[test]
     fn test_partial_strings_depth0() {
-        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
             indices: vec![],
@@ -273,7 +299,7 @@ mod test {
 
     #[test]
     fn test_partial_strings_depth0_alt() {
-        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
             indices: vec![],
@@ -286,7 +312,7 @@ mod test {
 
     #[test]
     fn test_partial_strings_depth0_search() {
-        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
             indices: vec![],
@@ -298,7 +324,7 @@ mod test {
 
     #[test]
     fn test_partial_strings_depth1() {
-        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
             indices: vec![95],
@@ -323,7 +349,7 @@ mod test {
 
     #[test]
     fn test_partial_strings_depth2() {
-        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
             indices: vec![95, 0],
@@ -348,7 +374,7 @@ mod test {
 
     #[test]
     fn test_partial_strings_album_track_depth0() {
-        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![TreeType::Album, TreeType::Track],
             indices: vec![],
@@ -360,7 +386,7 @@ mod test {
 
     #[test]
     fn test_partial_strings_album_track_depth1() {
-        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![TreeType::Album, TreeType::Track],
             indices: vec![1146],
@@ -385,7 +411,7 @@ mod test {
 
     #[test]
     fn test_partial_strings_track_depth0() {
-        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![TreeType::Track],
             indices: vec![],
@@ -397,7 +423,7 @@ mod test {
 
     #[test]
     fn test_partial_strings_genre_depth0() {
-        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![
                 TreeType::Genre,
@@ -414,7 +440,7 @@ mod test {
 
     #[test]
     fn test_partial_strings_genre_depth1() {
-        let db = Arc::new(Mutex::new(db::setup_db_connection().unwrap()));
+        let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![
                 TreeType::Genre,

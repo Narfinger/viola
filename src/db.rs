@@ -46,18 +46,18 @@ impl UpdatePlayCount for Track {
     }
 }
 
-#[derive(Debug, Insertable)]
+#[derive(Debug, Insertable, Deserialize)]
 #[table_name = "tracks"]
 pub struct NewTrack {
-    title: String,
-    artist: String,
-    album: String,
-    genre: String,
-    tracknumber: Option<i32>,
-    year: Option<i32>,
-    path: String,
-    length: i32,
-    albumpath: Option<String>,
+    pub title: String,
+    pub artist: String,
+    pub album: String,
+    pub genre: String,
+    pub tracknumber: Option<i32>,
+    pub year: Option<i32>,
+    pub path: String,
+    pub length: i32,
+    pub albumpath: Option<String>,
 }
 
 embed_migrations!("migrations/");
