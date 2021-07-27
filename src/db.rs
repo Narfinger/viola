@@ -104,7 +104,7 @@ fn is_valid_file(s: &Result<DirEntry, walkdir::Error>) -> bool {
     }
 }
 
-const ALBUM_NAMES: [&'static str; 2] = ["cover.jpg", "cover.png"];
+const ALBUM_NAMES: [&str; 2] = ["cover.jpg", "cover.png"];
 /// for a given path, tries to find cover.jpg, cover.png and also check the parent directory for it.
 /// Returns Option of the string it found
 fn get_album_file(s: &str) -> Option<String> {
