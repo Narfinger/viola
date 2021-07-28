@@ -1,10 +1,141 @@
 [[newtracks]]
-title = "Enter Sandmann"
+title = "Highway to Hell"
+artist = "2Cellos"
+album = "In2ition"
+genre = "Cello Rock"
+tracknumber = 3
+year = 2012
+path = "foo/2Cel/1/3.mp3"
+length = 1
+albumpath = ""
+[[newtracks]]
+title = "Enter Sandman"
 artist = "Apocalyptica"
-album = "Plays Metallica"
+album = "Plays Metallica by Four Cellos"
 genre = "Cello Rock"
 tracknumber = 1
 year = 1996
 path = "foo/Apo/1/1.mp3"
+length = 1
+albumpath = ""
+[[newtracks]]
+title = "Master of Puppets"
+artist = "Apocalyptica"
+album = "Plays Metallica by Four Cellos"
+genre = "Cello Rock"
+tracknumber = 2
+year = 1996
+path = "foo/Apo/1/2.mp3"
+length = 1
+albumpath = ""
+[[newtracks]]
+title = "Harvester of Sorrow"
+artist = "Apocalyptica"
+album = "Plays Metallica by Four Cellos"
+genre = "Cello Rock"
+tracknumber = 3
+year = 1996
+path = "foo/Apo/1/3.mp3"
+length = 1
+albumpath = ""
+[[newtracks]]
+title = "The Unforgiven"
+artist = "Apocalyptica"
+album = "Plays Metallica by Four Cellos"
+genre = "Cello Rock"
+tracknumber = 4
+year = 1996
+path = "foo/Apo/1/4.mp3"
+length = 1
+albumpath = ""
+[[newtracks]]
+title = "Sad But True"
+artist = "Apocalyptica"
+album = "Plays Metallica by Four Cellos"
+genre = "Cello Rock"
+tracknumber = 5
+year = 1996
+path = "foo/Apo/1/5.mp3"
+length = 1
+albumpath = ""
+[[newtracks]]
+title = "Creeping Death"
+artist = "Apocalyptica"
+album = "Plays Metallica by Four Cellos"
+genre = "Cello Rock"
+tracknumber = 6
+year = 1996
+path = "foo/Apo/1/6.mp3"
+length = 1
+albumpath = ""
+[[newtracks]]
+title = "Wherever I May Roam"
+artist = "Apocalyptica"
+album = "Plays Metallica by Four Cellos"
+genre = "Cello Rock"
+tracknumber = 7
+year = 1996
+path = "foo/Apo/1/7.mp3"
+length = 1
+albumpath = ""
+[[newtracks]]
+title = "Welcome Home"
+artist = "Apocalyptica"
+album = "Plays Metallica by Four Cellos"
+genre = "Cello Rock"
+tracknumber = 8
+year = 1996
+path = "foo/Apo/1/8.mp3"
+length = 1
+albumpath = ""
+[[newtracks]]
+title = "Nothing Else Matters"
+artist = "Apocalyptica"
+album = "Inquisition Symphony"
+genre = "Cello Rock"
+tracknumber = 4
+year = 1998
+path = "foo/Apo/2/4.mp3"
+length = 1
+albumpath = ""
+
+[[newtracks]]
+title = "Nothing Else Matters"
+artist = "Metallica"
+album = "Metallica"
+genre = "Thrash Metal"
+tracknumber = 8
+year = 1991
+path = "foo/Meta/1/08.mp3"
+length = 1
+albumpath = ""
+[[newtracks]]
+title = "Of Wolf And Men"
+artist = "Metallica"
+album = "Metallica"
+genre = "Thrash Metal"
+tracknumber = 9
+year = 1991
+path = "foo/Meta/1/09.mp3"
+length = 1
+albumpath = ""
+[[newtracks]]
+title = "The God That Failed"
+artist = "Metallica"
+album = "Metallica"
+genre = "Thrash Metal"
+tracknumber = 10
+year = 1991
+path = "foo/Meta/1/10.mp3"
+length = 1
+albumpath = ""
+[[newtracks]]
+title = "My Friend of Misery"
+artist = "Metallica"
+album = "Metallica"
+genre = "Thrash Metal"
+tracknumber = 11
+year = 1991
+path = "foo/Meta/1/11.mp3"
 length = 1
 albumpath = ""

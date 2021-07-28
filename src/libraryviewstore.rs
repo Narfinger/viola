@@ -294,7 +294,7 @@ mod test {
             search: None,
         };
         let res = partial_query(&db, &query);
-        assert_eq!(res[3], "2Cellos");
+        assert_eq!(res[0], "2Cellos");
     }
 
     #[test]
@@ -307,7 +307,7 @@ mod test {
         };
         let res = partial_query(&db, &query);
         println!("res {:?}", res);
-        assert_eq!(res[95], "Apocalyptica");
+        assert_eq!(res[1], "Apocalyptica");
     }
 
     #[test]
@@ -327,19 +327,13 @@ mod test {
         let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
-            indices: vec![95],
+            indices: vec![1],
             search: None,
         };
         let res = partial_query(&db, &query);
         let exp_res: Vec<String> = vec![
             "1996-Plays Metallica by Four Cellos",
             "1998-Inquisition Symphony",
-            "2000-Cult",
-            "2001-Cult (Special Edition)",
-            "2003-Reflections",
-            "2005-Apocalyptica",
-            "2006-Amplified",
-            "2007-Worlds Collide",
         ]
         .iter()
         .map(|x| x.to_string())
@@ -352,7 +346,7 @@ mod test {
         let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
-            indices: vec![95, 0],
+            indices: vec![1, 0],
             search: None,
         };
         let res = partial_query(&db, &query);
@@ -361,10 +355,10 @@ mod test {
             "2-Master of Puppets",
             "3-Harvester of Sorrow",
             "4-The Unforgiven",
-            "5-Sad but True",
+            "5-Sad But True",
             "6-Creeping Death",
             "7-Wherever I May Roam",
-            "8-Welcome Home (Sanitarium)",
+            "8-Welcome Home",
         ]
         .iter()
         .map(|x| x.to_string())
@@ -381,7 +375,19 @@ mod test {
             search: None,
         };
         let res = partial_query(&db, &query);
-        assert_eq!(res[1146], "Plays Metallica by Four Cellos");
+        assert_eq!(res[3], "Plays Metallica by Four Cellos");
+    }
+
+    #[test]
+    fn test_partial_strings_album_track_depth0_alt() {
+        let db = Arc::new(Mutex::new(setup_db_connection()));
+        let query = TreeViewQuery {
+            types: vec![TreeType::Album, TreeType::Track],
+            indices: vec![],
+            search: None,
+        };
+        let res = partial_query(&db, &query);
+        assert_eq!(res[2], "Metallica");
     }
 
     #[test]
@@ -389,7 +395,7 @@ mod test {
         let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![TreeType::Album, TreeType::Track],
-            indices: vec![1146],
+            indices: vec![3],
             search: None,
         };
         let res = partial_query(&db, &query);
@@ -398,10 +404,10 @@ mod test {
             "Master of Puppets",
             "Harvester of Sorrow",
             "The Unforgiven",
-            "Sad but True",
+            "Sad But True",
             "Creeping Death",
             "Wherever I May Roam",
-            "Welcome Home (Sanitarium)",
+            "Welcome Home",
         ]
         .iter()
         .map(|x| x.to_string())
