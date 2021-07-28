@@ -306,7 +306,7 @@ mod test {
             search: None,
         };
         let res = partial_query(&db, &query);
-        println!("res {:?}", res);
+        //println!("res {:?}", res);
         assert_eq!(res[1], "Apocalyptica");
     }
 
@@ -320,6 +320,18 @@ mod test {
         };
         let res = partial_query(&db, &query);
         assert_eq!(res[0], "2Cellos");
+    }
+
+    #[test]
+    fn test_partial_strings_depth0_search_alt() {
+        let db = Arc::new(Mutex::new(setup_db_connection()));
+        let query = TreeViewQuery {
+            types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
+            indices: vec![],
+            search: Some("Ap".to_string()),
+        };
+        let res = partial_query(&db, &query);
+        assert_eq!(res[0], "Apocalyptica");
     }
 
     #[test]
@@ -424,7 +436,20 @@ mod test {
             search: None,
         };
         let res = partial_query(&db, &query);
-        assert_eq!(res[5714], "Enter Sandman");
+        assert_eq!(res[6], "Nothing Else Matters");
+    }
+
+    #[test]
+    fn test_partial_strings_track_depth0_alt() {
+        let db = Arc::new(Mutex::new(setup_db_connection()));
+        let query = TreeViewQuery {
+            types: vec![TreeType::Track],
+            indices: vec![],
+            search: None,
+        };
+        let res = partial_query(&db, &query);
+        println!("{:?}", res);
+        assert_eq!(res[7], "Nothing Else Matters");
     }
 
     #[test]
@@ -441,7 +466,7 @@ mod test {
             search: None,
         };
         let res = partial_query(&db, &query);
-        assert_eq!(res[26], "Cello Rock");
+        assert_eq!(res[0], "Cello Rock");
     }
 
     #[test]
@@ -454,24 +479,14 @@ mod test {
                 TreeType::Album,
                 TreeType::Track,
             ],
-            indices: vec![26],
+            indices: vec![0],
             search: None,
         };
         let res = partial_query(&db, &query);
-        let exp_res: Vec<String> = vec![
-            "Apocalyptica",
-            "Apocalyptica feat. Tomoyasu Hotei",
-            "Apocalyptica feat. Corey Taylor",
-            "Apocalyptica feat. Till Lindemann",
-            "Apocalyptica feat. Dave Lombardo",
-            "Apocalyptica feat. Adam Gontier",
-            "Apocalyptica feat. Cristina Scabbia",
-            "Melora Creager",
-            "Rasputina",
-        ]
-        .iter()
-        .map(|x| x.to_string())
-        .collect();
+        let exp_res: Vec<String> = vec!["2Cellos", "Apocalyptica"]
+            .iter()
+            .map(|x| x.to_string())
+            .collect();
         assert_eq!(res, exp_res);
     }
 }
