@@ -46,7 +46,7 @@ fn get_filter_string(
 }
 
 fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Track> {
-    //this function is currently to difficult to implement in diesel as we cannot clone boxed ty pes and otherwise we can cyclic type error
+    //this function is currently to difficult to implement in diesel as we cannot clone boxed types and otherwise we can cyclic type error
     let mut current_tracks = if let Some(ref search_string) = query.search {
         let mut track_set: HashSet<viola_common::Track> = HashSet::new();
         for val in &query.types {
@@ -440,7 +440,8 @@ mod test {
     }
 
     #[test]
-    fn test_partial_strings_track_depth0_alt() {
+    /// Nothing Else Matters is two times in the track list, we only want to show it one times and hence, the predecessor and successor are different
+    fn test_partial_strings_track_depth0_doubles() {
         let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![TreeType::Track],
@@ -449,7 +450,9 @@ mod test {
         };
         let res = partial_query(&db, &query);
         println!("{:?}", res);
-        assert_eq!(res[7], "Nothing Else Matters");
+        assert_ne!(res[5], "Nothing Else Matters");
+        assert_eq!(res[6], "Nothing Else Matters");
+        assert_ne!(res[7], "Nothing Else Matters");
     }
 
     #[test]
