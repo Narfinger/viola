@@ -1,5 +1,5 @@
 use crate::gstreamer::prelude::ObjectExt;
-use gstreamer::{ElementExt, ElementExtManual, GstObjectExt};
+use gstreamer::prelude::{ElementExt, ElementExtManual, GstObjectExt};
 use parking_lot::RwLock;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -59,7 +59,7 @@ pub fn new(
         //    .expect("elements could not be linked");
         playbin
     };
-    let bus = element.get_bus().unwrap();
+    let bus = element.bus().unwrap();
     let res = Arc::new(RwLock::new(GStreamer {
         element,
         //pipeline,
@@ -72,19 +72,14 @@ pub fn new(
     let resc = res.clone();
     std::thread::spawn(move || {
         use gstreamer::MessageView;
-        for msg in bus.iter_timed(gstreamer::CLOCK_TIME_NONE) {
+        for msg in bus.iter_timed(gstreamer::ClockTime::NONE) {
             match msg.view() {
                 MessageView::Eos(..) => {
                     info!("We found an eos on the bus!");
                     resc.write().gstreamer_handle_eos();
                     info!("returned from eos handling");
                 }
-                MessageView::Error(err) => println!(
-                    "Error from {:?}: {} ({:?})",
-                    err.get_src().map(|s| s.get_path_string()),
-                    err.get_error(),
-                    err.get_debug()
-                ),
+                MessageView::Error(err) => println!("Error {:?}", err),
                 MessageView::StateChanged(state_changed) => {
                     warn!("Message bus has state change: {:?}", state_changed)
                 }
@@ -199,7 +194,7 @@ impl GStreamerExt for GStreamer {
                     info!("gstreamer state: {:?}", self.get_state());
                     info!(
                         "gstreamer real state: {:?}",
-                        self.element.get_state(gstreamer::ClockTime(Some(500)))
+                        self.element.state(gstreamer::ClockTime::SECOND)
                     );
                 } else {
                     info!("Stopping gstreamer because we did not find next track");
@@ -253,7 +248,7 @@ impl GStreamerExt for GStreamer {
     }
 
     fn get_state(&self) -> viola_common::GStreamerMessage {
-        match self.element.get_state(gstreamer::ClockTime(Some(500))).1 {
+        match self.element.state(gstreamer::ClockTime::SECOND).1 {
             gstreamer::State::VoidPending => GStreamerMessage::Stopped,
             gstreamer::State::Null => GStreamerMessage::Stopped,
             gstreamer::State::Ready => GStreamerMessage::Stopped,
@@ -265,6 +260,6 @@ impl GStreamerExt for GStreamer {
 
     fn get_elapsed(&self) -> Option<u64> {
         let cltime_opt: Option<gstreamer::ClockTime> = self.element.query_position();
-        cltime_opt.and_then(|s| s.seconds())
+        cltime_opt.map(|s| s.seconds())
     }
 }

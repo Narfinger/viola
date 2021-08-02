@@ -8,10 +8,10 @@ edition = "2018"
 
 [dependencies]
 seed = "0.8.0"
-serde_derive = "1.0"                   # Macros 1.1 implementation of #[derive(Serialize, Deserialize)]
-serde_json = "1.0"
-serde = "1.0"
-indextree = "4.3"
+serde_derive = "1.0.126"
+serde_json = "1.0.64"
+serde = "1.0.126"
+indextree = "4.3.1"
 viola_common = { path = "../viola_common" }
-wee_alloc = "0.4"
+wee_alloc = "0.4.5"
 console_error_panic_hook = "0.1.6"

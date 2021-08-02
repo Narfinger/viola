@@ -1,5 +1,4 @@
 #![recursion_limit = "4096"]
-extern crate app_dirs;
 extern crate base64;
 extern crate bus;
 extern crate tokio;
