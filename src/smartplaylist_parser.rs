@@ -147,7 +147,7 @@ impl LoadSmartPlaylist for SmartPlaylist {
                     IncludeTag::Dir(v) => {
                         let mut s = tracks.into_boxed::<Sqlite>();
                         for value in v {
-                            s = s.or_filter(path.like(String::from("%") + &value + "%"));
+                            s = s.or_filter(path.like(String::from("%") + value + "%"));
                         }
                         //println!("Query DirInclude: {:?}", debug_query(&s));
                         s.load(db.lock().deref())

@@ -1,5 +1,5 @@
 use crate::gstreamer::prelude::ObjectExt;
-use gstreamer::prelude::{ElementExt, ElementExtManual, GstObjectExt};
+use gstreamer::prelude::{ElementExt, ElementExtManual};
 use parking_lot::RwLock;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;

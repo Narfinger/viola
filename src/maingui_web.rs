@@ -6,7 +6,6 @@ use std::time::Duration;
 use std::{io::Read, sync::Arc};
 use tokio::sync::RwLock;
 use viola_common::*;
-use warp::hyper::Uri;
 use warp::Filter;
 
 use crate::gstreamer_wrapper;

@@ -90,7 +90,7 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
     fn items_for_json(&self, index: usize) -> String {
         let cur = self.read();
         let pl = cur.pls.get(index).unwrap();
-        let items = crate::loaded_playlist::items(&pl);
+        let items = crate::loaded_playlist::items(pl);
         serde_json::to_string::<Vec<viola_common::Track>>(items.as_ref())
             .expect("Error in serializing")
     }

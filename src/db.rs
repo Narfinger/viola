@@ -68,7 +68,7 @@ pub fn setup_db_connection() -> Result<diesel::SqliteConnection, String> {
         return Err(String::from("Dir does not exists"));
     }
     db_file.push("music.db");
-    SqliteConnection::establish(&db_file.to_str().unwrap())
+    SqliteConnection::establish(db_file.to_str().unwrap())
         .map_err(|_| String::from("DB Connection error"))
 }
 
@@ -84,7 +84,7 @@ pub fn create_db() {
         get_app_root(AppDataType::UserConfig, &APP_INFO).expect("Could not get app root");
     db_file.push("music.db");
     let connection =
-        SqliteConnection::establish(&db_file.to_str().unwrap()).expect("Something wrong");
+        SqliteConnection::establish(db_file.to_str().unwrap()).expect("Something wrong");
     embedded_migrations::run(&connection).expect("Could not run migration");
 }
 
@@ -135,7 +135,7 @@ fn construct_track_from_path(s: &str) -> NewTrack {
         let properties = ataglib
             .audioproperties()
             .unwrap_or_else(|_| panic!("Could not find audio properties for: {}", s));
-        let album = get_album_file(&s);
+        let album = get_album_file(s);
         //tracknumber and year return 0 if none set
         NewTrack {
             title: tags.title().unwrap_or_default(),

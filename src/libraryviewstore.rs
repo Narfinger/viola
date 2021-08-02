@@ -52,19 +52,19 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
         for val in &query.types {
             let new_tracks = match val {
                 TreeType::Artist => tracks
-                    .filter(artist.like(String::from("%") + &search_string + "%"))
+                    .filter(artist.like(String::from("%") + search_string + "%"))
                     .load::<viola_common::Track>(db.lock().deref())
                     .unwrap(),
                 TreeType::Album => tracks
-                    .filter(album.like(String::from("%") + &search_string + "%"))
+                    .filter(album.like(String::from("%") + search_string + "%"))
                     .load::<viola_common::Track>(db.lock().deref())
                     .unwrap(),
                 TreeType::Track => tracks
-                    .filter(title.like(String::from("%") + &search_string + "%"))
+                    .filter(title.like(String::from("%") + search_string + "%"))
                     .load::<viola_common::Track>(db.lock().deref())
                     .unwrap(),
                 TreeType::Genre => tracks
-                    .filter(genre.like(String::from("%") + &search_string + "%"))
+                    .filter(genre.like(String::from("%") + search_string + "%"))
                     .load::<viola_common::Track>(db.lock().deref())
                     .unwrap(),
             }
@@ -87,7 +87,7 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
     {
         let filter_value = get_filter_string(
             &current_tracks,
-            &current_ttype,
+            current_ttype,
             index,
             recursion_depth,
             query.types.clone(),
@@ -164,8 +164,8 @@ fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
                 .iter()
                 .enumerate()
                 .map(|(level, ttype)| {
-                    let xkey = sort_key_from_treetype(&Some(&ttype), x, level);
-                    let ykey = sort_key_from_treetype(&Some(&ttype), y, level);
+                    let xkey = sort_key_from_treetype(&Some(ttype), x, level);
+                    let ykey = sort_key_from_treetype(&Some(ttype), y, level);
                     xkey.cmp(&ykey)
                 })
                 .fold(ordering, |acc, x| acc.then(x))
@@ -258,7 +258,7 @@ mod test {
     use parking_lot::Mutex;
 
     use super::*;
-    use crate::db::{self, NewTrack};
+    use crate::db::NewTrack;
 
     embed_migrations!("migrations/");
     fn fill_db(db: &diesel::SqliteConnection) {

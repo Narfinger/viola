@@ -43,7 +43,7 @@ fn get_ordering(&(ref t, ref pt): &(Track, PlaylistTrack)) -> (i32, &Track) {
     (pt.playlist_order, t)
 }
 
-fn only_tracks<'a>(&(_, ref t): &'a (i32, &Track)) -> &'a Track {
+fn only_tracks<'a>(&(_, t): &'a (i32, &Track)) -> &'a Track {
     t
 }
 
