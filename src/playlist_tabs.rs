@@ -1,4 +1,5 @@
 use parking_lot::RwLock;
+use std::fs::File;
 use std::sync::Arc;
 use std::{cmp::min, path::PathBuf};
 
@@ -115,9 +116,10 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
     }
 
     fn restore_tab_position(&self) {
+        let mut prefs_file = File::open(crate::utils::get_config_file().unwrap()).unwrap();
         //we need to split this because of how the allocation of the locks work
         let val = min(
-            PreferencesMap::<String>::load(&crate::types::APP_INFO, crate::types::PREFS_KEY)
+            PreferencesMap::<String>::load_from(&mut prefs_file)
                 .ok()
                 .and_then(|m| m.get("tab").cloned())
                 .and_then(|t| t.parse::<usize>().ok())
@@ -129,12 +131,11 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
     }
 
     fn save_tab_position(&self) {
-        if let Ok(mut prefs) =
-            PreferencesMap::<String>::load(&crate::types::APP_INFO, crate::types::PREFS_KEY)
-        {
+        let mut prefs_file = File::open(crate::utils::get_config_file().unwrap()).unwrap();
+        if let Ok(mut prefs) = PreferencesMap::<String>::load_from(&mut prefs_file) {
             prefs.insert(String::from("tab"), self.read().current_pl.to_string());
             prefs
-                .save(&crate::types::APP_INFO, crate::types::PREFS_KEY)
+                .save_to(&mut prefs_file)
                 .expect("Error in writing prefs");
         }
     }

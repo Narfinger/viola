@@ -6,7 +6,6 @@ authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-app_dirs = "1.2"
 base64 = "0.13.0"
 clap = "2.33.3"
 diesel = { version = "1.4.7", features = ["sqlite", "r2d2"] }
@@ -43,3 +42,4 @@ bus = "2.2.3"
 parking_lot = { version = "0.11.1", features = ["serde", "deadlock_detection"] }
 warp = "0.3.1"
 tokio = "1.9.0"
+directories = "3.0.2"

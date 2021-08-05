@@ -1,18 +1,10 @@
 use crate::loaded_playlist::LoadedPlaylist;
-use app_dirs::*;
 use gstreamer::Element;
 use parking_lot::{Mutex, RwLock};
 use std::sync::Arc;
 use viola_common::GStreamerMessage;
 //use crate::maingui::MainGui;
 use crate::playlist_tabs::PlaylistTabs;
-
-pub const APP_INFO: AppInfo = AppInfo {
-    name: "viola",
-    author: "Narfinger",
-};
-
-pub const PREFS_KEY: &str = "viola_prefs";
 
 pub const LENGTH_COLUMN: i32 = 4;
 pub const YEAR_COLUMN: i32 = 5;
