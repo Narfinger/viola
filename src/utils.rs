@@ -1,13 +1,23 @@
+use std::fs::{File, OpenOptions};
+
 use directories::ProjectDirs;
 
 pub fn get_config_dir() -> Result<std::path::PathBuf, String> {
     ProjectDirs::from("com", "narfinger", "viola")
         .map(|p| p.config_dir().to_path_buf())
-        .ok_or(String::from("Could not find config dir"))
+        .ok_or_else(|| String::from("Could not find config dir"))
 }
 
-pub fn get_config_file() -> Result<std::path::PathBuf, String> {
-    get_config_dir().map(|p| p.join("viola_prefs.json"))
+pub fn get_config_file() -> Result<File, String> {
+    get_config_dir()
+        .map(|p| p.join("viola_prefs.json"))
+        .and_then(|f| {
+            OpenOptions::new()
+                .write(true)
+                .create(true)
+                .open(f)
+                .map_err(|_| String::from("Cannot open file"))
+        })
 }
 
 pub fn format_into_full_duration(i: i64) -> String {

@@ -49,7 +49,6 @@ use clap::{App, Arg};
 use parking_lot::Mutex;
 use preferences::{prefs_base_dir, Preferences, PreferencesMap};
 use std::env;
-use std::fs::File;
 use std::sync::Arc;
 
 fn main() {
@@ -110,9 +109,7 @@ fn main() {
     let pool = Arc::new(Mutex::new(tmp_pool.unwrap()));
     if matches.is_present("update") {
         info!("Updating Database");
-        let mut pref_reader =
-            File::open(crate::utils::get_config_file().expect("Cannot find config"))
-                .expect("No settings file");
+        let mut pref_reader = crate::utils::get_config_file().expect("No settings file");
         if let Ok(preferences) = PreferencesMap::<String>::load_from(&mut pref_reader) {
             if let Some(music_dir) = preferences.get("music_dir") {
                 db::build_db(music_dir, &pool, true).unwrap();
@@ -129,9 +126,7 @@ fn main() {
         }
         db::build_db(path, &pool, false).unwrap();
     } else if let Some(new_music_dir) = matches.value_of("music_dir") {
-        let mut prefs_file =
-            File::create(crate::utils::get_config_file().expect("Cannot find config"))
-                .expect("No settings file");
+        let mut prefs_file = crate::utils::get_config_file().expect("Cannot find config");
         let mut prefs = PreferencesMap::<String>::new();
         prefs.insert(String::from("music_dir"), String::from(new_music_dir));
         prefs
