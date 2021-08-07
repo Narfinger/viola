@@ -812,6 +812,5 @@ fn view(model: &Model) -> Node<Msg> {
 
 fn main() {
     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-    seed::log("We could refactor delete_range and clean to both use just a simple recieved for a playlist with index, the same holds for initplaylisttabs");
     App::start("app", init, update, view);
 }

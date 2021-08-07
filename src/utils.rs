@@ -8,13 +8,20 @@ pub fn get_config_dir() -> Result<std::path::PathBuf, String> {
         .ok_or_else(|| String::from("Could not find config dir"))
 }
 
-pub fn get_config_file() -> Result<File, String> {
+#[derive(Debug, PartialEq, Eq)]
+pub enum ConfigWriteMode {
+    Read,
+    Write,
+}
+
+pub fn get_config_file(mode: ConfigWriteMode) -> Result<File, String> {
     get_config_dir()
         .map(|p| p.join("viola_prefs.json"))
         .and_then(|f| {
             OpenOptions::new()
-                .write(true)
-                .create(true)
+                .read(true)
+                .create(mode == ConfigWriteMode::Write)
+                .write(mode == ConfigWriteMode::Write)
                 .open(f)
                 .map_err(|_| String::from("Cannot open file"))
         })
