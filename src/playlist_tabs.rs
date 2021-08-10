@@ -131,14 +131,18 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
     }
 
     fn save_tab_position(&self) {
-        let mut prefs_file =
+        info!("Saving tab position");
+        let mut prefs = {
+            let mut prefs_file =
+                crate::utils::get_config_file(crate::utils::ConfigWriteMode::Read).unwrap();
+            PreferencesMap::<String>::load_from(&mut prefs_file).expect("Error in loading prefs")
+        };
+        prefs.insert(String::from("tab"), self.read().current_pl.to_string());
+        let mut file_write =
             crate::utils::get_config_file(crate::utils::ConfigWriteMode::Write).unwrap();
-        if let Ok(mut prefs) = PreferencesMap::<String>::load_from(&mut prefs_file) {
-            prefs.insert(String::from("tab"), self.read().current_pl.to_string());
-            prefs
-                .save_to(&mut prefs_file)
-                .expect("Error in writing prefs");
-        }
+        prefs
+            .save_to(&mut file_write)
+            .expect("Error in writing prefs");
     }
 }
 

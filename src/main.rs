@@ -1,4 +1,6 @@
 #![recursion_limit = "4096"]
+#[macro_use]
+extern crate anyhow;
 extern crate base64;
 extern crate bus;
 extern crate tokio;
@@ -45,13 +47,14 @@ pub mod smartplaylist_parser;
 pub mod types;
 pub mod utils;
 
+use anyhow::{Context, Result};
 use clap::{App, Arg};
 use parking_lot::Mutex;
 use preferences::{prefs_base_dir, Preferences, PreferencesMap};
 use std::env;
 use std::sync::Arc;
 
-fn main() {
+fn main() -> Result<()> {
     let matches = App::new("Viola")
         .about("Music Player")
         .version(crate_version!())
@@ -104,22 +107,20 @@ fn main() {
         db::create_db();
         println!("Please call viola with -m to set the music dir.");
         println!("Afterwards, update the music library by calling with -u.");
-        return;
+        bail!("See Above: {}");
     }
     let pool = Arc::new(Mutex::new(tmp_pool.unwrap()));
     if matches.is_present("update") {
         info!("Updating Database");
         let mut pref_reader =
             crate::utils::get_config_file(utils::ConfigWriteMode::Read).expect("No settings file");
-        if let Ok(preferences) = PreferencesMap::<String>::load_from(&mut pref_reader) {
-            if let Some(music_dir) = preferences.get("music_dir") {
-                db::build_db(music_dir, &pool, true).unwrap();
-            } else {
-                error!("Could not find music_dir");
-            }
-        } else {
-            error!("could not find settings file");
-        }
+
+        let preferences = PreferencesMap::<String>::load_from(&mut pref_reader)
+            .context("Could not read settings file")?;
+        let music_dir = preferences
+            .get("music_dir")
+            .context("Could not get musicdir")?;
+        db::build_db(music_dir, &pool, true).unwrap();
     } else if let Some(path) = matches.value_of("fastupdate") {
         info!("Updating database with path {}", path);
         if !std::path::Path::new(path).exists() {
@@ -127,25 +128,25 @@ fn main() {
         }
         db::build_db(path, &pool, false).unwrap();
     } else if let Some(new_music_dir) = matches.value_of("music_dir") {
-        let mut prefs_file = crate::utils::get_config_file(utils::ConfigWriteMode::Write)
-            .expect("Cannot find config");
         let mut prefs = PreferencesMap::<String>::new();
         prefs.insert(String::from("music_dir"), String::from(new_music_dir));
+        let mut prefs_file = crate::utils::get_config_file(utils::ConfigWriteMode::Write)
+            .expect("Cannot find config");
         prefs
             .save_to(&mut prefs_file)
-            .expect("Error in saving preferences");
+            .context("Error in saving preferences")?;
         info!("saved music directory");
     } else if matches.is_present("configpath") {
-        let mut p = prefs_base_dir().expect("Base dir cannot be founds");
+        let mut p = prefs_base_dir().context("Base dir cannot be founds")?;
         p.push("viola");
-        let s = p.to_str().expect("Error in convert");
+        let s = p.to_str().context("Error in convert")?;
         println!(
             "The config path can be found under {}.\n Please add the file smartplaylists.toml\
              if you want to add smartplaylists",
             s
         );
     } else if matches.is_present("editsmartplaylists") {
-        let mut path = prefs_base_dir().expect("Could not find base dir");
+        let mut path = prefs_base_dir().context("Could not find base dir")?;
         path.extend(&["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else if matches.is_present("no-webview") {
@@ -180,4 +181,5 @@ fn main() {
             .run()
             .unwrap();
     };
+    Ok(())
 }

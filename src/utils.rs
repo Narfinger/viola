@@ -15,15 +15,16 @@ pub enum ConfigWriteMode {
 }
 
 pub fn get_config_file(mode: ConfigWriteMode) -> Result<File, String> {
+    info!("Settings file with {:?}", mode);
     get_config_dir()
         .map(|p| p.join("viola_prefs.json"))
         .and_then(|f| {
-            OpenOptions::new()
-                .read(true)
-                .create(mode == ConfigWriteMode::Write)
-                .write(mode == ConfigWriteMode::Write)
-                .open(f)
-                .map_err(|_| String::from("Cannot open file"))
+            if mode == ConfigWriteMode::Write {
+                File::create(f)
+            } else {
+                File::open(f)
+            }
+            .map_err(|_| String::from("Could not open file"))
         })
 }
 
