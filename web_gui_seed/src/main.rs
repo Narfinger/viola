@@ -14,12 +14,18 @@ use messages::*;
 use models::*;
 use viola_common::{GStreamerAction, GStreamerMessage, Track};
 
-const TABLE_WIDTH: &'static [&'static str; 9] =
-    &["5%", "5%", "25%", "15%", "20%", "15%", "5%", "5%", "5%"];
+const TABLE_WIDTH: &[&str; 9] = &["5%", "5%", "25%", "15%", "20%", "15%", "5%", "5%", "5%"];
 
 //notice that this does not include all types
 //[title, artist, album, genre]
-const CHARS_PER_COLUM: &'static [usize; 4] = &[40, 20, 30, 20];
+const CHARS_PER_COLUM: &[usize; 4] = &[40, 20, 30, 20];
+
+const DELETE_RANGE_MODAL_ID: &str = "deleterange_modal";
+const HDELETE_RANGE_MODAL_ID: &str = "#deleterange_modal";
+const PLAY_INDEX_MODAL_ID: &str = "playindex_modal";
+const HPLAY_INDEX_MODAL_ID: &str = "#playindex_modal";
+const SM_MODAL_ID: &str = "sm_modal";
+const HSM_MODAL_ID: &str = "#sm_modal";
 
 fn init_generic_treeview(
     id: &str,
@@ -208,7 +214,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 C!["col-2"],
                 button![
                     C!["btn", "btn-danger"],
-                    attrs!(At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => "deleterangemodal"),
+                    attrs!(At::from("type")=> "button", At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => HDELETE_RANGE_MODAL_ID),
                     icon("/trash.svg", Some(12)),
                     "Delete Range",
                 ]
@@ -418,7 +424,7 @@ fn tuple_to_selected_true<'a>(
 fn view_smartplaylists(model: &Model) -> Node<Msg> {
     div![
         C!["modal", "fade"],
-        attrs![At::from("aria-hidden") => "true", At::Id => "sm_modal"],
+        attrs![At::from("aria-hidden") => "true", At::Id => SM_MODAL_ID],
         div![
             C!["modal-dialog"],
             div![
@@ -640,7 +646,7 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
                 C!["nav-item"],
                 button![
                     C!["btn", "btn-primary"],
-                    attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => "#sm_modal"],
+                    attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => HSM_MODAL_ID],
                     "SmartPlaylist",
                     ev(Ev::Click, move |_| Msg::LoadSmartPlaylistList),
                 ]
@@ -661,7 +667,7 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
                 style!(St::Padding => unit!(5,px)),
                 button![
                     C!["btn", "btn-primary"],
-                    attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => "#playindex_modal", At::from("data-bs-dismiss") => "#sidebar"],
+                    attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => HPLAY_INDEX_MODAL_ID, At::from("data-bs-dismiss") => "#sidebar"],
                     "Play Index",
                 ]
             ],
@@ -672,7 +678,7 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
 fn view_playindex_modal(_model: &Model) -> Node<Msg> {
     div![
         C!["modal"],
-        attrs!(At::Id => "playindex_modal", At::from("aria-hidden") => false, At::from("role") => "dialog"),
+        attrs!(At::Id => PLAY_INDEX_MODAL_ID, At::from("aria-hidden") => false, At::from("role") => "dialog"),
         div![
             C!["modal-content"],
             attrs!(At::from("role") => "document"),
@@ -693,12 +699,12 @@ fn view_playindex_modal(_model: &Model) -> Node<Msg> {
                 C!["modal-footer"],
                 button![
                     C!["btn" "btn-secondary"],
-                    attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => "playindex_modal"),
+                    attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => HPLAY_INDEX_MODAL_ID),
                     "Close"
                 ],
                 button![
                     C!["btn" "btn-secondary"],
-                    attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => "playindex_modal"),
+                    attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => HPLAY_INDEX_MODAL_ID),
                     "Play Index",
                     ev(Ev::Click, |_| Msg::PlayIndex),
                 ]
@@ -709,41 +715,47 @@ fn view_playindex_modal(_model: &Model) -> Node<Msg> {
 
 fn view_deleterangemodal(_model: &Model) -> Node<Msg> {
     div![
-        C!["modal"],
-        attrs!(At::Id => "deleterangemodal", At::from("aria-hidden") => "false", At::from("role") => "dialog"),
+        C!["modal", "fade"],
+        attrs!(At::Id => DELETE_RANGE_MODAL_ID, At::from("role") => "dialog", At::from("aria-hidden") => true),
         div![
-            C!["modal-content"],
+            C!["modal-dialog"],
             attrs!(At::from("role") => "document"),
-            div![C!["modal-header"],],
             div![
-                C!["modal-body"],
-                form![div![
-                    C!["form-group"],
-                    label![attrs!(At::from("for") => "rangeinput"), "Range"],
-                    input![
-                        C!["form-control"],
-                        attrs!(At::Id => "rangeinput"),
-                        input_ev(Ev::Input, Msg::DeleteRangeInputChanged),
-                    ],
-                    small![
-                        attrs!(At::Id => "rangeinputhelp"),
-                        C!["form-text", "text-muted"],
-                        "Number-Number or Number- to have it till the ned"
-                    ],
-                ]],
-            ],
-            div![
-                C!["modal-footer"],
-                button![
-                    C!["btn" "btn-secondary"],
-                    attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => "deleterangemodal"),
-                    "Close"
+                C!["modal-content"],
+                div![
+                    C!["modal-header"],
+                    h5![C!["modal-title"], "Remove Items in Range"],
                 ],
-                button![
-                    C!["btn" "btn-danger"],
-                    attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => "deleterangemodal"),
-                    "Delete Range",
-                    ev(Ev::Click, |_| Msg::DeleteRange),
+                div![
+                    C!["modal-body"],
+                    form![div![
+                        C!["form-group"],
+                        label![attrs!(At::from("for") => "rangeinput"), "Range"],
+                        input![
+                            C!["form-control"],
+                            attrs!(At::Id => "rangeinput"),
+                            input_ev(Ev::Input, Msg::DeleteRangeInputChanged),
+                        ],
+                        small![
+                            attrs!(At::Id => "rangeinputhelp"),
+                            C!["form-text", "text-muted"],
+                            "Number-Number or Number- to have it till the ned"
+                        ],
+                    ]],
+                ],
+                div![
+                    C!["modal-footer"],
+                    button![
+                        C!["btn" "btn-secondary"],
+                        attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => HDELETE_RANGE_MODAL_ID),
+                        "Close"
+                    ],
+                    button![
+                        C!["btn" "btn-danger"],
+                        attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => HDELETE_RANGE_MODAL_ID),
+                        "Delete Range",
+                        ev(Ev::Click, |_| Msg::DeleteRange),
+                    ]
                 ]
             ]
         ]
@@ -760,8 +772,8 @@ fn view(model: &Model) -> Node<Msg> {
         div![
             C!["row"],
             style!(St::Width => unit!(95,%), St::PaddingTop => unit!(0.1,em)),
-            view_deleterangemodal(model),
             view_playindex_modal(model),
+            view_deleterangemodal(model),
             sidebar_navigation(model, &model.treeviews),
             div![
                 C!["col"],
