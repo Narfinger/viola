@@ -42,5 +42,5 @@ bus = "2.2.3"
 parking_lot = { version = "0.11.1", features = ["serde", "deadlock_detection"] }
 warp = "0.3.1"
 tokio = "1.10.1"
-directories = "3.0.2"
+directories = "4.0.1"
 anyhow = "1.0.43"
