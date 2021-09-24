@@ -8,7 +8,9 @@ pub mod messages;
 pub mod models;
 pub mod websocket;
 
+use humantime::format_duration;
 use seed::{prelude::*, *};
+use std::time::Duration;
 
 use messages::*;
 use models::*;
@@ -104,25 +106,6 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         delete_range_input: None,
         play_index_input: None,
     }
-}
-
-fn format_time_string(time_in_seconds: u64) -> String {
-    let mut res = String::new();
-    let seconds: u64 = time_in_seconds % 60;
-    let minutes: u64 = (time_in_seconds / 60) % 60;
-    let hours: u64 = (time_in_seconds / 60 / 60) % 24;
-    let days: u64 = time_in_seconds / 60 / 60 / 24;
-    if days != 0 {
-        res.push_str(&format!("{} Days, ", days));
-    }
-    if days != 0 || hours != 0 {
-        res.push_str(&format!("{}:", hours));
-    }
-    if days != 0 || hours != 0 || minutes != 0 {
-        res.push_str(&format!("{:02}:", minutes));
-    }
-    res.push_str(&format!("{:02}", seconds));
-    res
 }
 
 fn icon(path: &str, size: Option<usize>) -> Node<Msg> {
@@ -307,20 +290,21 @@ fn view_status(model: &Model) -> Node<Msg> {
         track_status_string = "Nothing playing".to_string();
     }
 
-    let total_time_string = format_time_string(
+    let total_time_string = format_duration(Duration::from_secs(
         model
             .get_current_playlist_tab_tracks()
             .unwrap_or(&vec![])
             .iter()
             .map(|track| track.length as u64)
             .sum(),
-    );
+    ))
+    .to_string();
     let current_track_index = model
         .playlist_tabs
         .get(model.current_playlist_tab)
         .map(|tab| tab.current_index)
         .unwrap_or(0);
-    let partial_time_string = format_time_string(
+    let partial_time_string = format_duration(Duration::from_secs(
         model
             .get_current_playlist_tab_tracks()
             .unwrap_or(&vec![])
@@ -328,7 +312,8 @@ fn view_status(model: &Model) -> Node<Msg> {
             .skip(current_track_index)
             .map(|track| track.length as u64)
             .sum(),
-    );
+    ))
+    .to_string();
 
     let tracks_number_option = model
         .get_current_playlist_tab_tracks()
@@ -380,9 +365,12 @@ fn view_status(model: &Model) -> Node<Msg> {
         div![
             C!["col"],
             "Time:",
-            format_time_string(model.current_time),
+            format_duration(Duration::from_secs(model.current_time)).to_string(),
             "--",
-            format_time_string(track_option.map(|t| t.length as u64).unwrap_or(0))
+            format_duration(Duration::from_secs(
+                track_option.map(|t| t.length as u64).unwrap_or(0)
+            ))
+            .to_string()
         ],
         div![
             C!["col"],

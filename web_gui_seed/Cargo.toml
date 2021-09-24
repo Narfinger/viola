@@ -15,3 +15,4 @@ indextree = "4.3.1"
 viola_common = { path = "../viola_common" }
 wee_alloc = "0.4.5"
 console_error_panic_hook = "0.1.6"
+humantime = "2.1.0"
