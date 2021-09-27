@@ -364,13 +364,13 @@ fn view_status(model: &Model) -> Node<Msg> {
         div![C!["col"], IF!(model.is_repeat_once => "Repeat")],
         div![
             C!["col"],
-            "Time:",
-            format_duration(Duration::from_secs(model.current_time)).to_string(),
+            "Time: ",
+            span![format_duration(Duration::from_secs(model.current_time)).to_string()],
             "--",
-            format_duration(Duration::from_secs(
+            span![format_duration(Duration::from_secs(
                 track_option.map(|t| t.length as u64).unwrap_or(0)
             ))
-            .to_string()
+            .to_string()],
         ],
         div![
             C!["col"],
