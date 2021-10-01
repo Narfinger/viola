@@ -352,7 +352,7 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             model.delete_range_input = Some(text);
         }
         Msg::DeleteRange => {
-            let range = model.delete_range_input.as_ref().unwrap();
+            let range = model.delete_range_input.take().unwrap();
             let size = model.get_current_playlist_tab_tracks().unwrap().len();
             let strings: Vec<&str> = range.split('-').collect();
             let start: usize = std::str::FromStr::from_str(strings.get(0).unwrap()).unwrap();
@@ -361,7 +361,6 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 .and_then(|t| std::str::FromStr::from_str(t).ok())
                 .unwrap_or(size - 1);
             let range = std::ops::Range { start, end };
-            //let rangec = range.clone();
             //remove in our model
             let new_playlist = model
                 .get_current_playlist_tab_tracks()
