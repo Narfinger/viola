@@ -147,9 +147,9 @@ checksum = "904dfeac50f3cdaba28fc6f57fdcddb75f49ed61346676a78c4ffe55877802fd"
 
 [[package]]
 name = "bitflags"
-version = "1.3.2"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
+checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 
 [[package]]
 name = "block-buffer"
@@ -1346,15 +1346,15 @@ dependencies = [
 
 [[package]]
 name = "nix"
-version = "0.17.0"
+version = "0.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50e4785f2c3b7589a0d0c1dd60285e1188adac4006e8abd6dd578e1567027363"
+checksum = "f5e06129fb611568ef4e868c14b326274959aa70ff7776e9d55323531c374945"
 dependencies = [
  "bitflags",
  "cc",
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "libc",
- "void",
+ "memoffset",
 ]
 
 [[package]]
@@ -2629,12 +2629,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "void"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
-
-[[package]]
 name = "waker-fn"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2820,9 +2814,9 @@ checksum = "d089681aa106a86fade1b0128fb5daf07d5867a509ab036d99988dec80429a57"
 
 [[package]]
 name = "zbus"
-version = "1.9.1"
+version = "1.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2326acc379a3ac4e34b794089f5bdb17086bf29a5fdf619b7b4cc772dc2e9dad"
+checksum = "e5983c3d035549ab80db67c844ec83ed271f7c1f2546fd9577c594d34c1b6c85"
 dependencies = [
  "async-io",
  "byteorder",
@@ -2843,9 +2837,9 @@ dependencies = [
 
 [[package]]
 name = "zbus_macros"
-version = "1.9.1"
+version = "1.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a482c56029e48681b89b92b5db3c446db0915e8dd1052c0328a574eda38d5f93"
+checksum = "bce54ac7b2150a2fa21ad5842a7470ce2288158d7da1f9bfda8ad455a1c59a97"
 dependencies = [
  "proc-macro-crate 0.1.5",
  "proc-macro2",
