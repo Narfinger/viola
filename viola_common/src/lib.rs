@@ -7,8 +7,10 @@ pub mod schema;
 #[cfg(feature = "backend")]
 use crate::schema::tracks;
 
+use std::hash::Hash;
+
 use serde::{Deserialize, Serialize};
-#[derive(Debug, Clone, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "backend", derive(AsChangeset, Identifiable, Queryable))]
 pub struct Track {
     pub id: i32,
@@ -27,6 +29,12 @@ pub struct Track {
 impl PartialEq for Track {
     fn eq(&self, other: &Self) -> bool {
         self.path == other.path
+    }
+}
+
+impl Hash for Track {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.path.hash(state);
     }
 }
 
