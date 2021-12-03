@@ -1,7 +1,5 @@
 use crate::models::*;
-use viola_common::{
-    GStreamerAction, GStreamerMessage, PlaylistTabJSON, PlaylistTabsJSON, Smartplaylists, Track,
-};
+use viola_common::{GStreamerAction, GStreamerMessage, PlaylistTabsJSON, Smartplaylists, Track};
 
 use seed::prelude::*;
 
@@ -52,6 +50,8 @@ pub(crate) enum Msg {
     DeleteRange,
     PlayIndexInputChanged(String),
     PlayIndex,
+    PlayArtistInputChanged(String),
+    PlayArtist,
     GStreamerMessage(viola_common::GStreamerMessage),
 }
 
@@ -180,6 +180,15 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             model.play_status = GStreamerMessage::Playing;
             if let Some(tab) = model.playlist_tabs.get_mut(model.current_playlist_tab) {
                 tab.current_index = index;
+            }
+        }
+        Msg::PlayArtist => {
+            if let Some(ref text) = model.play_artist_input {
+                if let Some(tab) = model.playlist_tabs.get(model.current_playlist_tab) {
+                    if let Some(index) = tab.tracks.iter().position(|t| t.artist == *text) {
+                        orders.send_msg(Msg::PlaylistIndexChange(index));
+                    }
+                }
             }
         }
         Msg::Clean => {
@@ -389,6 +398,9 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
         }
         Msg::PlayIndexInputChanged(text) => {
             model.play_index_input = Some(text);
+        }
+        Msg::PlayArtistInputChanged(text) => {
+            model.play_artist_input = Some(text);
         }
         Msg::PlayIndex => {
             if let Some(ref index) = model

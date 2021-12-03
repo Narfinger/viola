@@ -29,6 +29,10 @@ const PLAY_INDEX_MODAL_ID: &str = "playindex_modal";
 const HPLAY_INDEX_MODAL_ID: &str = concatcp!("#", PLAY_INDEX_MODAL_ID);
 const SM_MODAL_ID: &str = "sm_modal";
 const HSM_MODAL_ID: &str = concatcp!("#", SM_MODAL_ID);
+const PLAY_ARTIST_MODAL_ID: &str = "playartist_modal";
+const HPLAY_ARTIST_MODAL_ID: &str = concatcp!("#", PLAY_ARTIST_MODAL_ID);
+const SIDEBAR_ID: &str = "sidebar";
+const HSIDEBAR_ID: &str = concatcp!("#", SIDEBAR_ID);
 
 fn init_generic_treeview(
     id: &str,
@@ -106,6 +110,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         treeviews: init_treeviews(),
         delete_range_input: None,
         play_index_input: None,
+        play_artist_input: None,
     }
 }
 
@@ -143,7 +148,7 @@ fn view_buttons(model: &Model) -> Node<Msg> {
                 C!["col"],
                 button![
                     C!["btn", "btn-info"],
-                    attrs!(At::from("data-bs-toggle") => "collapse", At::from("data-bs-target") => "#sidebar", At::from("aria-expanded") => "false", At::from("aria-controls") => "sidebar"),
+                    attrs!(At::from("data-bs-toggle") => "collapse", At::from("data-bs-target") => HSIDEBAR_ID, At::from("aria-expanded") => "false", At::from("aria-controls") => SIDEBAR_ID),
                     icon("/menu-button.svg", Some(20)),
                     "Menu"
                 ]
@@ -627,7 +632,7 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
         //sidebar
         C!["col-xs", "collapse"],
         style!(St::Width => unit!(20,%), St::Padding => unit!(20,px)),
-        attrs![At::Id => "sidebar"],
+        attrs![At::Id => SIDEBAR_ID],
         ul![
             C!["navbar-nav"],
             li![
@@ -646,7 +651,7 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
                 style!(St::Padding => unit!(5, px)),
                 button![
                     C!["btn", "btn-primary"],
-                    attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-dismiss") => "#sidebar"],
+                    attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-dismiss") => HSIDEBAR_ID],
                     "Show Full Playlist Window",
                     ev(Ev::Click, |_| Msg::FullPlaylistWindow),
                 ],
@@ -656,46 +661,100 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
                 style!(St::Padding => unit!(5,px)),
                 button![
                     C!["btn", "btn-primary"],
-                    attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => HPLAY_INDEX_MODAL_ID, At::from("data-bs-dismiss") => "#sidebar"],
+                    attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => HPLAY_INDEX_MODAL_ID, At::from("data-bs-dismiss") => HSIDEBAR_ID],
                     "Play Index",
                 ]
             ],
+            li![
+                C!["nav-item"],
+                style!(St::Padding => unit!(5,px)),
+                button![
+                    C!["btn", "btn-primary"],
+                    attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => HPLAY_ARTIST_MODAL_ID, At::from("data-bs-dismiss") => HSIDEBAR_ID],
+                ]
+            ]
         ],
     ]
 }
 
 fn view_playindex_modal(_model: &Model) -> Node<Msg> {
     div![
-        C!["modal"],
+        C!["modal", "fade"],
         attrs!(At::Id => PLAY_INDEX_MODAL_ID, At::from("aria-hidden") => false, At::from("role") => "dialog"),
         div![
-            C!["modal-content"],
+            C!["modal-dialog"],
             attrs!(At::from("role") => "document"),
-            div![C!["modal-header"]],
             div![
-                C!["modal-body"],
-                form![div![
-                    C!["form-group"],
-                    label![attrs!(At::from("index") => "indexinput"), "Index"],
-                    input![
-                        C!["form-control"],
-                        attrs!(At::Id => "indexinput"),
-                        input_ev(Ev::Input, Msg::PlayIndexInputChanged),
-                    ]
-                ]]
-            ],
-            div![
-                C!["modal-footer"],
-                button![
-                    C!["btn" "btn-secondary"],
-                    attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => HPLAY_INDEX_MODAL_ID),
-                    "Close"
+                C!["modal-content"],
+                attrs!(At::from("role") => "document"),
+                div![C!["modal-header"]],
+                div![
+                    C!["modal-body"],
+                    form![div![
+                        C!["form-group"],
+                        label![attrs!(At::from("index") => "indexinput"), "Index"],
+                        input![
+                            C!["form-control"],
+                            attrs!(At::Id => "indexinput"),
+                            input_ev(Ev::Input, Msg::PlayIndexInputChanged),
+                        ]
+                    ]]
                 ],
-                button![
-                    C!["btn" "btn-secondary"],
-                    attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => HPLAY_INDEX_MODAL_ID),
-                    "Play Index",
-                    ev(Ev::Click, |_| Msg::PlayIndex),
+                div![
+                    C!["modal-footer"],
+                    button![
+                        C!["btn" "btn-secondary"],
+                        attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => HPLAY_INDEX_MODAL_ID),
+                        "Close"
+                    ],
+                    button![
+                        C!["btn" "btn-secondary"],
+                        attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => HPLAY_INDEX_MODAL_ID),
+                        "Play Index",
+                        ev(Ev::Click, |_| Msg::PlayIndex),
+                    ]
+                ]
+            ]
+        ]
+    ]
+}
+
+fn view_playartist_modal(_model: &Model) -> Node<Msg> {
+    div![
+        C!["modal", "fade"],
+        attrs!(At::Id => PLAY_INDEX_MODAL_ID, At::from("aria-hidden") => false, At::from("role") => "dialog"),
+        div![
+            C!["modal-dialog"],
+            attrs!(At::from("role") => "document"),
+            div![
+                C!["modal-content"],
+                attrs!(At::from("role") => "document"),
+                div![C!["modal-header"]],
+                div![
+                    C!["modal-body"],
+                    form![div![
+                        C!["form-group"],
+                        label![attrs!(At::from("artist") => "artistinput"), "Artist"],
+                        input![
+                            C!["form-control"],
+                            attrs!(At::Id => "artistinput"),
+                            input_ev(Ev::Input, Msg::PlayArtistInputChanged),
+                        ]
+                    ]]
+                ],
+                div![
+                    C!["modal-footer"],
+                    button![
+                        C!["btn" "btn-secondary"],
+                        attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => HPLAY_ARTIST_MODAL_ID),
+                        "Close"
+                    ],
+                    button![
+                        C!["btn" "btn-secondary"],
+                        attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => HDELETE_RANGE_MODAL_ID),
+                        "Play Index",
+                        ev(Ev::Click, |_| Msg::PlayArtist),
+                    ]
                 ]
             ]
         ]
@@ -763,6 +822,7 @@ fn view(model: &Model) -> Node<Msg> {
             style!(St::Width => unit!(95,%), St::PaddingTop => unit!(0.1,em)),
             view_playindex_modal(model),
             view_deleterangemodal(model),
+            view_playartist_modal(model),
             sidebar_navigation(model, &model.treeviews),
             div![
                 C!["col"],
@@ -780,7 +840,7 @@ fn view(model: &Model) -> Node<Msg> {
                             thead![
                                 style!(St::Position => "sticky"),
                                 th![style!(St::Width => TABLE_WIDTH[0]), "#"],
-                                th![style!(St::Width => TABLE_WIDTH[1]), "TrackNumber"],
+                                th![style!(St::Width => TABLE_WIDTH[1]), "#T"],
                                 th![style!(St::Width => TABLE_WIDTH[2]), "Title"],
                                 th![style!(St::Width => TABLE_WIDTH[3]), "Artist"],
                                 th![style!(St::Width => TABLE_WIDTH[4]), "Album"],
