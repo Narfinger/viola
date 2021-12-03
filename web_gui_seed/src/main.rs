@@ -8,6 +8,7 @@ pub mod messages;
 pub mod models;
 pub mod websocket;
 
+use const_format::concatcp;
 use humantime::format_duration;
 use seed::{prelude::*, *};
 use std::time::Duration;
@@ -23,11 +24,11 @@ const TABLE_WIDTH: &[&str; 9] = &["5%", "5%", "25%", "15%", "20%", "15%", "5%", 
 const CHARS_PER_COLUM: &[usize; 4] = &[40, 20, 30, 20];
 
 const DELETE_RANGE_MODAL_ID: &str = "deleterange_modal";
-const HDELETE_RANGE_MODAL_ID: &str = "#deleterange_modal";
+const HDELETE_RANGE_MODAL_ID: &str = concatcp!("#", DELETE_RANGE_MODAL_ID);
 const PLAY_INDEX_MODAL_ID: &str = "playindex_modal";
-const HPLAY_INDEX_MODAL_ID: &str = "#playindex_modal";
+const HPLAY_INDEX_MODAL_ID: &str = concatcp!("#", PLAY_INDEX_MODAL_ID);
 const SM_MODAL_ID: &str = "sm_modal";
-const HSM_MODAL_ID: &str = "#sm_modal";
+const HSM_MODAL_ID: &str = concatcp!("#", SM_MODAL_ID);
 
 fn init_generic_treeview(
     id: &str,
