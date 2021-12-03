@@ -182,15 +182,6 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 tab.current_index = index;
             }
         }
-        Msg::PlayArtist => {
-            if let Some(ref text) = model.play_artist_input {
-                if let Some(tab) = model.playlist_tabs.get(model.current_playlist_tab) {
-                    if let Some(index) = tab.tracks.iter().position(|t| t.artist == *text) {
-                        orders.send_msg(Msg::PlaylistIndexChange(index));
-                    }
-                }
-            }
-        }
         Msg::Clean => {
             let index = model
                 .get_current_playlist_tab()
@@ -401,6 +392,15 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
         }
         Msg::PlayArtistInputChanged(text) => {
             model.play_artist_input = Some(text);
+        }
+        Msg::PlayArtist => {
+            if let Some(ref text) = model.play_artist_input {
+                if let Some(tab) = model.playlist_tabs.get(model.current_playlist_tab) {
+                    if let Some(index) = tab.tracks.iter().position(|t| t.artist.contains(text)) {
+                        orders.send_msg(Msg::Transport(GStreamerAction::Play(index)));
+                    }
+                }
+            }
         }
         Msg::PlayIndex => {
             if let Some(ref index) = model

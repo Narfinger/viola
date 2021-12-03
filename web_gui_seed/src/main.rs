@@ -671,6 +671,7 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
                 button![
                     C!["btn", "btn-primary"],
                     attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => HPLAY_ARTIST_MODAL_ID, At::from("data-bs-dismiss") => HSIDEBAR_ID],
+                    "Play Artist",
                 ]
             ]
         ],
@@ -722,7 +723,7 @@ fn view_playindex_modal(_model: &Model) -> Node<Msg> {
 fn view_playartist_modal(_model: &Model) -> Node<Msg> {
     div![
         C!["modal", "fade"],
-        attrs!(At::Id => PLAY_INDEX_MODAL_ID, At::from("aria-hidden") => false, At::from("role") => "dialog"),
+        attrs!(At::Id => PLAY_ARTIST_MODAL_ID, At::from("aria-hidden") => false, At::from("role") => "dialog"),
         div![
             C!["modal-dialog"],
             attrs!(At::from("role") => "document"),
@@ -751,8 +752,8 @@ fn view_playartist_modal(_model: &Model) -> Node<Msg> {
                     ],
                     button![
                         C!["btn" "btn-secondary"],
-                        attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => HDELETE_RANGE_MODAL_ID),
-                        "Play Index",
+                        attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => HPLAY_ARTIST_MODAL_ID),
+                        "Play Artist",
                         ev(Ev::Click, |_| Msg::PlayArtist),
                     ]
                 ]
