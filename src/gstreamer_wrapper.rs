@@ -1,5 +1,6 @@
 use crate::gstreamer::prelude::ObjectExt;
-use gstreamer::prelude::{ElementExt, ElementExtManual};
+use gstreamer::prelude::{ElementExt, ElementExtManual, GstBinExtManual};
+use gstreamer::traits::PadExt;
 use parking_lot::RwLock;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -35,34 +36,67 @@ pub fn new(
     let element = {
         let playbin = gstreamer::ElementFactory::make("playbin", None)
             .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        //let audioconvert1 = gstreamer::ElementFactory::make("audioconvert", None)
-        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        //let rgvolume = gstreamer::ElementFactory::make("rgvolume", None)
-        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        //let audioconvert2 = gstreamer::ElementFactory::make("audioconvert", None)
-        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        //let audioresample = gstreamer::ElementFactory::make("audioresample", None)
-        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        //let autoaudiosink = gstreamer::ElementFactory::make("autoaudiosink", None)
-        //    .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-
         playbin
             .set_property("volume", &0.5)
             .expect("Could not set volume");
+        /* based on
+               bin = gst_bin_new ("audio_sink_bin");
+        gst_bin_add_many (GST_BIN (bin), equalizer, convert, sink, NULL);
+        gst_element_link_many (equalizer, convert, sink, NULL);
 
-        //let bin = gstreamer::Bin::new(Some("audio_sink_bin"));
-        //bin.add_many(&[&audioconvert1, &rgvolume, &audioconvert2, &autoaudiosink])
-        //    .expect("Error in gstreamer");
-        //bin.add_pad(&autoaudiosink.get_static_pad("sink").expect("Error in pad"));
-        //playbin
-        //    .set_property("audio_sink", &bin)
-        //    .expect("elements could not be linked");
+        pad = gst_element_get_static_pad (equalizer, "sink");
+        ghost_pad = gst_ghost_pad_new ("sink", pad);
+        gst_pad_set_active (ghost_pad, TRUE);
+        gst_element_add_pad (bin, ghost_pad);
+        gst_object_unref (pad);
+
+        /* Configure the equalizer */
+        g_object_set (G_OBJECT (equalizer), "band1", (gdouble)-24.0, NULL);
+        g_object_set (G_OBJECT (equalizer), "band2", (gdouble)-24.0, NULL);
+
+        /* Set playbin's audio sink to be our sink bin */
+        g_object_set (GST_OBJECT (pipeline), "audio-sink", bin, NULL);
+        */
+        let audioconvert1 = gstreamer::ElementFactory::make("audioconvert", Some("audioconvert1"))
+            .expect("Error in convert");
+        let rgvolume = gstreamer::ElementFactory::make("rgvolume", Some("rgvolume"))
+            .expect("Error in rgvolume");
+        let audioconvert2 = gstreamer::ElementFactory::make("audioconvert", Some("audioconvert2"))
+            .expect("Error in convert2");
+        let audioresample = gstreamer::ElementFactory::make("audioresample", Some("audioresample"))
+            .expect("Errror in resample");
+        let sink = gstreamer::ElementFactory::make("autoaudiosink", Some("autosink"))
+            .expect("Errror in sink");
+        let bin = gstreamer::Bin::new(Some("mybin"));
+        bin.add_many(&[
+            &audioconvert1,
+            &rgvolume,
+            &audioconvert2,
+            &audioresample,
+            &sink,
+        ])
+        .expect("Could not add");
+        gstreamer::Element::link_many(&[
+            &audioconvert1,
+            &rgvolume,
+            &audioconvert2,
+            &audioresample,
+            &sink,
+        ])
+        .expect("Could not link");
+        let pad = audioconvert1.static_pad("sink").expect("Could not get pad");
+        let ghost =
+            gstreamer::GhostPad::with_target(Some("sink"), &pad).expect("Could not create ghost");
+        ghost.set_active(true).expect("Could not set active");
+        bin.add_pad(&ghost).expect("Could not add pad");
+        playbin
+            .set_property("audio-sink", bin)
+            .expect("Error in changing audio sink");
         playbin
     };
     let bus = element.bus().unwrap();
     let res = Arc::new(RwLock::new(GStreamer {
         element,
-        //pipeline,
         current_playlist,
         sender: msg_bus,
         pool,
