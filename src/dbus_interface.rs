@@ -1,4 +1,3 @@
-use glib::object;
 use parking_lot::RwLock;
 use std::{
     collections::HashMap, convert::TryInto, error::Error, sync::Arc, thread, time::Duration,
