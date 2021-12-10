@@ -21,7 +21,7 @@ pub struct SmartPlaylist {
 
 #[derive(Deserialize, Debug)]
 struct SmartPlaylistConfig {
-    _test: String,
+    test: String,
     smartplaylist: Vec<SmartPlaylistParsed>,
 }
 
