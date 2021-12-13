@@ -16,7 +16,7 @@ static PROGRESSBAR_STYLE: &str =
     "[{elapsed_precise}] {msg} {spinner:.green} {bar:.green/blue} {pos:>7}/{len:7} ({percent}%)";
 
 static PROGRESSBAR_UNKNOWN_STYLE: &str =
-    "{msg} {spinner:.green} | Elapsed: {elapsed} | Files/sec: {per_sec} | Pos: {pos}";
+    "{msg} {spinner:.green} | Elapsed: {elapsed} | Files/sec: {per_sec}";
 
 pub trait UpdatePlayCount {
     fn update_playcount(&mut self, _: DBPool);
