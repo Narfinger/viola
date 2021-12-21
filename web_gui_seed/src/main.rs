@@ -718,7 +718,7 @@ fn view_playindex_modal(_model: &Model) -> Node<Msg> {
                         "Close"
                     ],
                     button![
-                        C!["btn" "btn-secondary"],
+                        C!["btn" "btn-success"],
                         attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => HPLAY_INDEX_MODAL_ID),
                         "Play Index",
                         ev(Ev::Click, |_| Msg::PlayIndex),
@@ -760,7 +760,7 @@ fn view_playartist_modal(_model: &Model) -> Node<Msg> {
                         "Close"
                     ],
                     button![
-                        C!["btn" "btn-secondary"],
+                        C!["btn" "btn-success"],
                         attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => HPLAY_ARTIST_MODAL_ID),
                         "Play Artist",
                         ev(Ev::Click, |_| Msg::PlayArtist),
