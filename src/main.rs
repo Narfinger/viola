@@ -167,6 +167,7 @@ fn main() -> Result<()> {
         use web_view::*;
         println!("Starting webview");
         std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_secs(1));
             WebViewBuilder::new()
                 .title("Viola")
                 .content(Content::Url(crate::types::URL))
@@ -182,7 +183,6 @@ fn main() -> Result<()> {
             info!("Webview exited");
             shutdown_send.send(()).expect("error in shutdown");
         });
-        std::thread::sleep(std::time::Duration::from_secs(1));
         //std::thread::spawn(|| {
         tokio::runtime::Builder::new_multi_thread()
             .enable_all()
