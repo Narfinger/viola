@@ -52,6 +52,7 @@ pub(crate) enum Msg {
     PlayIndex,
     PlayArtistInputChanged(String),
     PlayArtist,
+    Save,
     GStreamerMessage(viola_common::GStreamerMessage),
 }
 
@@ -410,6 +411,12 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             {
                 orders.send_msg(Msg::Transport(GStreamerAction::Play(index.to_owned())));
             }
+        }
+        Msg::Save => {
+            orders.perform_cmd(async {
+                let req = Request::new("/save/").method(Method::Post);
+                fetch(req).await.expect("Could not send request");
+            });
         }
         Msg::GStreamerMessage(msg) => {
             model.play_status = msg;

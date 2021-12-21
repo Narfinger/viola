@@ -682,6 +682,15 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
                     attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => HPLAY_ARTIST_MODAL_ID, At::from("data-bs-dismiss") => HSIDEBAR_ID],
                     "Play Artist",
                 ]
+            ],
+            li![
+                C!["nav-item"],
+                style!(St::Padding => unit!(5,px)),
+                button![
+                    C!["btn", "btn-success"],
+                    ev(Ev::Click, |_| Msg::Save),
+                    "Save"
+                ]
             ]
         ],
     ]
