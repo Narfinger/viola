@@ -21,7 +21,7 @@ const TABLE_WIDTH: &[&str; 9] = &["5%", "5%", "25%", "15%", "20%", "15%", "5%", 
 
 //notice that this does not include all types
 //[title, artist, album, genre]
-const CHARS_PER_COLUM: &[usize; 4] = &[40, 20, 30, 20];
+const CHARS_PER_COLUM: &[usize; 4] = &[50, 30, 40, 30];
 
 const DELETE_RANGE_MODAL_ID: &str = "deleterange_modal";
 const HDELETE_RANGE_MODAL_ID: &str = concatcp!("#", DELETE_RANGE_MODAL_ID);
@@ -263,14 +263,23 @@ fn view_track(
             )),
         ],
         td![&t.tracknumber],
-        td![&t.title.chars().take(CHARS_PER_COLUM[0]).collect::<String>(),],
+        td![
+            style!(St::Overflow => "hidden", St::TextOverflow => "ellipsis"),
+            &t.title.chars().take(CHARS_PER_COLUM[0]).collect::<String>(),
+        ],
         td![&t
             .artist
             .chars()
             .take(CHARS_PER_COLUM[1])
             .collect::<String>(),],
-        td![&t.album.chars().take(CHARS_PER_COLUM[2]).collect::<String>(),],
-        td![&t.genre.chars().take(CHARS_PER_COLUM[3]).collect::<String>(),],
+        td![
+            style!(St::Overflow => "hidden", St::TextOverflow => "ellipsis"),
+            &t.album.chars().take(CHARS_PER_COLUM[2]).collect::<String>(),
+        ],
+        td![
+            style!(St::Overflow => "hidden", St::TextOverflow => "ellipsis"),
+            &t.genre.chars().take(CHARS_PER_COLUM[3]).collect::<String>(),
+        ],
         td![&t.year,],
         td![&length,],
         td![&t.playcount.unwrap_or(0)],
