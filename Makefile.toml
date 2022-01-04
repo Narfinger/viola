@@ -22,3 +22,11 @@ args = ["build", "--release"]
 
 [tasks.build]
 dependencies = ["build_backend", "build_frontend"]
+
+[tasks.ci-flow]
+# CI task will run cargo build but do not run tests for the moment
+dependencies = [
+    "pre-build",
+    "build-verbose",
+    "post-build",
+]
