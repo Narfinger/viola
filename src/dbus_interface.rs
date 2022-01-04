@@ -1,7 +1,5 @@
 use parking_lot::RwLock;
-use std::{
-    collections::HashMap, convert::TryInto, error::Error, sync::Arc, thread, time::Duration,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use crate::{
     gstreamer_wrapper::{GStreamer, GStreamerExt},
@@ -9,7 +7,7 @@ use crate::{
     types::*,
 };
 use viola_common::{GStreamerAction, GStreamerMessage};
-use zbus::{dbus_interface, export::zvariant, fdo};
+use zbus::{dbus_interface, ConnectionBuilder, SignalContext};
 
 struct BaseInterface {}
 
@@ -150,7 +148,7 @@ impl PlayerInterface {
     }
 
     #[dbus_interface(signal)]
-    fn properties_changed(&self) -> zbus::Result<()>;
+    async fn properties_changed(ctxt: &SignalContext<'_>) -> zbus::Result<()>;
 
     //methods
     fn next(&self) -> zbus::fdo::Result<()> {
@@ -220,52 +218,22 @@ impl PlayerInterface {
     }
 }
 
-fn main(
+pub(crate) async fn main(
     gstreamer: Arc<RwLock<GStreamer>>,
     playlisttabs: PlaylistTabsPtr,
     bus: tokio::sync::watch::Receiver<GStreamerMessage>,
-) -> Result<(), Box<dyn Error>> {
-    let connection = zbus::Connection::new_session()?;
-    fdo::DBusProxy::new(&connection)?.request_name(
-        "org.mpris.MediaPlayer2.Viola",
-        fdo::RequestNameFlags::ReplaceExisting.into(),
-    )?;
-    let mut object_server = zbus::ObjectServer::new(&connection);
+) -> Result<(), String> {
+    println!("Starting dbus");
     let handler = BaseInterface {};
-    object_server.at(&"/org/mpris/MediaPlayer2".try_into()?, handler)?;
-    let handler2 = PlayerInterface {
-        gstreamer: gstreamer.clone(),
-        playlisttabs: playlisttabs.clone(),
-    };
-    object_server.at(&"/org/mpris/MediaPlayer2".try_into()?, handler2)?;
-    //tokio::spawn(async {
-    //    if bus.changed().await.is_ok() {
-    //        object_server.with(
-    //            &"/org/mpris/MediaPlayer2".try_into().expect("Error"),
-    //            |iface: &PlayerInterface| iface.properties_changed(),
-    //        );
-    //    }
-    //});
+    let _ = ConnectionBuilder::session()
+        .map_err(|_| String::from("Could not connect to session bus"))?
+        .name("org.mpris.MediaPlayer2.Viola")
+        .map_err(|_| String::from("Could not use name"))?
+        .serve_at("/org/mpris/MediaPlayer2", handler)
+        .map_err(|_| String::from("Could not serve dbus"))?
+        .build()
+        .await
+        .map_err(|_| String::from("Error in dbus"))?;
 
-    loop {
-        if let Err(err) = object_server.try_handle_next() {
-            println!("working on dbus message");
-            eprintln!("{}", err);
-        }
-        //if bus.changed().into_future().poll() {
-        //    object_server.with(
-        //        &"/org/mpris/MediaPlayer2".try_into().expect("Error"),
-        //        |iface: &PlayerInterface| iface.properties_changed(),
-        //    );
-        //}
-        thread::sleep(Duration::new(1, 0));
-    }
-}
-
-pub(crate) fn new(
-    gstreamer: Arc<RwLock<GStreamer>>,
-    playlisttabs: PlaylistTabsPtr,
-    bus: tokio::sync::watch::Receiver<GStreamerMessage>,
-) {
-    thread::spawn(|| main(gstreamer, playlisttabs, bus).expect("Error in starting dbus"));
+    Ok(())
 }

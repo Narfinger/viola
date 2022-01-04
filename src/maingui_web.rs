@@ -328,7 +328,11 @@ pub async fn run(pool: DBPool) {
 
     {
         println!("Starting dbus");
-        crate::dbus_interface::new(gst.clone(), plt.clone(), dbus_recv)
+        tokio::spawn(crate::dbus_interface::main(
+            gst.clone(),
+            plt.clone(),
+            dbus_recv,
+        ));
     }
 
     println!("Setting up gui");
