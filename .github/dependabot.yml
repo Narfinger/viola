@@ -11,7 +11,7 @@ updates:
   # Enable version updates for Docker
   - package-ecosystem: "npm"
     # Look for a `Dockerfile` in the `root` directory
-    directory: "/web_gui"
+    directory: "/web_gui_seed"
     # Check for updates once a week
     schedule:
       interval: "weekly"
