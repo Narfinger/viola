@@ -147,9 +147,6 @@ impl PlayerInterface {
         true
     }
 
-    #[dbus_interface(signal)]
-    async fn properties_changed(ctxt: &SignalContext<'_>) -> zbus::Result<()>;
-
     //methods
     fn next(&self) -> zbus::fdo::Result<()> {
         self.gstreamer
@@ -225,15 +222,47 @@ pub(crate) async fn main(
 ) -> Result<(), String> {
     println!("Starting dbus");
     let handler = BaseInterface {};
-    let _ = ConnectionBuilder::session()
-        .map_err(|_| String::from("Could not connect to session bus"))?
+    let player_interface = PlayerInterface {
+        gstreamer,
+        playlisttabs,
+    };
+    let conn = ConnectionBuilder::session()
+        .expect("Could not connect to session bus")
         .name("org.mpris.MediaPlayer2.Viola")
-        .map_err(|_| String::from("Could not use name"))?
+        .expect("Could not use name")
         .serve_at("/org/mpris/MediaPlayer2", handler)
-        .map_err(|_| String::from("Could not serve dbus"))?
+        .expect("Could not serve dbus")
+        .serve_at("/org/mpris/MediaPlayer2", player_interface)
+        .expect("Could not serve player dbus")
+        .internal_executor(false)
         .build()
         .await
-        .map_err(|_| String::from("Error in dbus"))?;
-
+        .expect("Error in creating connection");
+    {
+        tokio::task::spawn(async move {
+            loop {
+                conn.executor().tick().await;
+            }
+        });
+    }
+    /*
+    {
+        let conn = conn.clone();
+        tokio::task::spawn(async move {
+            loop {
+                bus.changed().await;
+                println!("doing signal");
+                conn.emit_signal(
+                    Some("org.mpris.MediaPlayer2.Viola"),
+                    String::from("/org/mpris/MediaPlayer2"),
+                    String::from("org.mpris.MediaPlayer2.Player"),
+                    String::from("metadata_changed"),
+                    "",
+                )
+                .await;
+            }
+        });
+    }
+    */
     Ok(())
 }
