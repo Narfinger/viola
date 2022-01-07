@@ -823,6 +823,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "viola_common",
+ "wasm-bindgen",
  "wee_alloc",
 ]
 

@@ -17,11 +17,11 @@ use messages::*;
 use models::*;
 use viola_common::{GStreamerAction, GStreamerMessage, Track};
 
-const TABLE_WIDTH: &[&str; 9] = &["5%", "5%", "25%", "15%", "20%", "15%", "5%", "5%", "5%"];
+const TABLE_WIDTH: &[&str; 9] = &["5%", "2%", "25%", "20%", "20%", "15%", "5%", "5%", "3%"];
 
 //notice that this does not include all types
 //[title, artist, album, genre]
-const CHARS_PER_COLUM: &[usize; 4] = &[50, 30, 40, 30];
+const CHARS_PER_COLUM: &[usize; 4] = &[30, 30, 25, 30];
 
 const DELETE_RANGE_MODAL_ID: &str = "deleterange_modal";
 const HDELETE_RANGE_MODAL_ID: &str = concatcp!("#", DELETE_RANGE_MODAL_ID);
@@ -442,7 +442,16 @@ fn view_smartplaylists(model: &Model) -> Node<Msg> {
                         .map(|(i, smp)| li![a![
                             attrs!(At::from("data-bs-dismiss") => "modal"),
                             smp,
-                            ev(Ev::Click, move |_| Msg::LoadSmartPlaylist(i))
+                            ev(Ev::Click, move |_| {
+                                seed::document().get_element_by_id(SIDEBAR_ID).unwrap();
+                                //let m = Modal::new(
+                                //    seed::document().get_element_by_id(SIDEBAR_ID).unwrap(),
+                                //);
+                                //m.hide();
+
+                                log!("we set the attribute");
+                                Msg::LoadSmartPlaylist(i)
+                            })
                         ]])]
                 ]
             ]
