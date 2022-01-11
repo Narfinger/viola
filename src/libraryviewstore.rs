@@ -100,7 +100,10 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
         current_tracks = match current_ttype {
             TreeType::Artist => current_tracks
                 .into_iter()
-                .filter(|t| t.artist == filter_value)
+                .filter(|t| {
+                    (t.artist == filter_value)
+                        || (t.artist.contains("feat") && t.artist.contains(&filter_value))
+                })
                 .collect(),
             TreeType::Album => current_tracks
                 .into_iter()
