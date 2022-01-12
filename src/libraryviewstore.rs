@@ -378,7 +378,7 @@ mod test {
             search: None,
         };
         let res = partial_query(&db, &query);
-        assert_eq!(res[3], "Plays Metallica by Four Cellos");
+        assert_eq!(res[4], "Plays Metallica by Four Cellos");
     }
 
     #[test]
@@ -390,7 +390,7 @@ mod test {
             search: None,
         };
         let res = partial_query(&db, &query);
-        assert_eq!(res[2], "Metallica");
+        assert_eq!(res[3], "Metallica");
     }
 
     #[test]
@@ -398,7 +398,7 @@ mod test {
         let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![TreeType::Album, TreeType::Track],
-            indices: vec![3],
+            indices: vec![4],
             search: None,
         };
         let res = partial_query(&db, &query);

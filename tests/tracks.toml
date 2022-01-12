@@ -139,3 +139,25 @@ year = 1991
 path = "foo/Meta/1/11.mp3"
 length = 1
 albumpath = ""
+
+[[newtracks]]
+title = "Somewhere"
+artist = "Within Temptation & The Metropole Orchestra feat. Anneke van Giersbergen"
+album = "Black Symphony"
+genre = "Symphonic Metal"
+tracknumber = 10
+year = 2008
+path = "foo/With/1/10.mp3"
+length = 1
+albumpath = ""
+
+[[newtracks]]
+title = "Overture"
+artist = "Within Temptation & The Metropole Orchestra"
+album = "Black Symphony"
+genre = "Symphonic Metal"
+tracknumber = 1
+year = 2008
+path = "foo/With/1/1.mp3"
+length = 1
+albumpath = ""
