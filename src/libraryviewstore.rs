@@ -561,4 +561,35 @@ mod test {
         let res = partial_query(&db, &query);
         assert_eq!(res, vec!["1-Overture", "10-Somewhere"]);
     }
+
+    fn compare_load(query: &TreeViewQuery, vec: &[&str]) {
+        let db = Arc::new(Mutex::new(setup_db_connection()));
+        let t: Vec<String> = basic_get_tracks(&db, query)
+            .into_iter()
+            .map(|t| t.title)
+            .collect();
+        let exp_res: Vec<String> = vec.iter().map(|x| x.to_string()).collect();
+
+        assert_eq!(t, exp_res);
+    }
+
+    #[test]
+    fn load_query_test() {
+        let query = TreeViewQuery {
+            types: vec![TreeType::Album, TreeType::Track],
+            indices: vec![4],
+            search: None,
+        };
+        let vec = vec![
+            "Enter Sandman",
+            "Master of Puppets",
+            "Harvester of Sorrow",
+            "The Unforgiven",
+            "Sad But True",
+            "Creeping Death",
+            "Wherever I May Roam",
+            "Welcome Home",
+        ];
+        compare_load(&query, &vec);
+    }
 }
