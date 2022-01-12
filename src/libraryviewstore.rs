@@ -427,7 +427,7 @@ mod test {
             search: None,
         };
         let res = partial_query(&db, &query);
-        assert_eq!(res[6], "Nothing Else Matters");
+        assert_eq!(res[7], "Nothing Else Matters");
     }
 
     #[test]
@@ -441,9 +441,9 @@ mod test {
         };
         let res = partial_query(&db, &query);
         println!("{:?}", res);
-        assert_ne!(res[5], "Nothing Else Matters");
-        assert_eq!(res[6], "Nothing Else Matters");
-        assert_ne!(res[7], "Nothing Else Matters");
+        assert_ne!(res[6], "Nothing Else Matters");
+        assert_eq!(res[7], "Nothing Else Matters");
+        assert_ne!(res[8], "Nothing Else Matters");
     }
 
     #[test]
@@ -520,5 +520,45 @@ mod test {
         .map(|x| x.to_string())
         .collect();
         assert_eq!(res, exp_res);
+    }
+
+    #[test]
+    fn feat_test() {
+        let db = Arc::new(Mutex::new(setup_db_connection()));
+        let mut query = TreeViewQuery {
+            types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
+            indices: vec![],
+            search: None,
+        };
+        let res = partial_query(&db, &query);
+        assert_eq!(res[4], "Within Temptation & The Metropole Orchestra");
+
+        query.indices = vec![4];
+        let res = partial_query(&db, &query);
+        assert_eq!(res[0], "2008-Black Symphony");
+
+        query.indices = vec![4, 0];
+        let res = partial_query(&db, &query);
+        assert_eq!(res, vec!["1-Overture", "10-Somewhere"]);
+    }
+
+    #[test]
+    fn feat_test_search() {
+        let db = Arc::new(Mutex::new(setup_db_connection()));
+        let mut query = TreeViewQuery {
+            types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
+            indices: vec![],
+            search: Some(String::from("Within")),
+        };
+        let res = partial_query(&db, &query);
+        assert_eq!(res[0], "Within Temptation");
+
+        query.indices = vec![0];
+        let res = partial_query(&db, &query);
+        assert_eq!(res[0], "2008-Black Symphony");
+
+        query.indices = vec![0, 0];
+        let res = partial_query(&db, &query);
+        assert_eq!(res, vec!["1-Overture", "10-Somewhere"]);
     }
 }
