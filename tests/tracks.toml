@@ -129,6 +129,7 @@ year = 1991
 path = "foo/Meta/1/10.mp3"
 length = 1
 albumpath = ""
+
 [[newtracks]]
 title = "My Friend of Misery"
 artist = "Metallica"
@@ -137,6 +138,17 @@ genre = "Thrash Metal"
 tracknumber = 11
 year = 1991
 path = "foo/Meta/1/11.mp3"
+length = 1
+albumpath = ""
+
+[[newtracks]]
+title = "Ice Queen"
+artist = "Within Temptation"
+album = "Mother Earth"
+tracknumber = 1
+genre = "Symphonic Metal"
+year = 2001
+path = "foo/With/0/1.mp3"
 length = 1
 albumpath = ""
 

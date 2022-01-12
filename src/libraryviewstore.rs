@@ -379,7 +379,7 @@ mod test {
             search: None,
         };
         let res = partial_query(&db, &query);
-        assert_eq!(res[4], "Plays Metallica by Four Cellos");
+        assert_eq!(res[5], "Plays Metallica by Four Cellos");
     }
 
     #[test]
@@ -399,7 +399,7 @@ mod test {
         let db = Arc::new(Mutex::new(setup_db_connection()));
         let query = TreeViewQuery {
             types: vec![TreeType::Album, TreeType::Track],
-            indices: vec![4],
+            indices: vec![5],
             search: None,
         };
         let res = partial_query(&db, &query);
@@ -428,7 +428,7 @@ mod test {
             search: None,
         };
         let res = partial_query(&db, &query);
-        assert_eq!(res[7], "Nothing Else Matters");
+        assert_eq!(res[8], "Nothing Else Matters");
     }
 
     #[test]
@@ -442,9 +442,9 @@ mod test {
         };
         let res = partial_query(&db, &query);
         println!("{:?}", res);
-        assert_ne!(res[6], "Nothing Else Matters");
-        assert_eq!(res[7], "Nothing Else Matters");
-        assert_ne!(res[8], "Nothing Else Matters");
+        assert_ne!(res[7], "Nothing Else Matters");
+        assert_eq!(res[8], "Nothing Else Matters");
+        assert_ne!(res[9], "Nothing Else Matters");
     }
 
     #[test]
@@ -500,13 +500,18 @@ mod test {
 
     #[test]
     fn test_partial_strings_album_track_depth1_search() {
+        // currently this test selects the metallica album and not the apocalyptica album.
+        // despite both matching the Met.
         let db = Arc::new(Mutex::new(setup_db_connection()));
-        let query = TreeViewQuery {
+        let mut query = TreeViewQuery {
             types: vec![TreeType::Album, TreeType::Track],
-            indices: vec![0],
+            indices: vec![],
             search: Some("Met".to_string()),
         };
         let res = partial_query(&db, &query);
+        assert_eq!(res[0], "Plays Metallica by Four Cellos");
+
+        query.indices = vec![0];
         let exp_res: Vec<String> = vec![
             "Enter Sandman",
             "Master of Puppets",
@@ -556,9 +561,9 @@ mod test {
 
         query.indices = vec![0];
         let res = partial_query(&db, &query);
-        assert_eq!(res[0], "2008-Black Symphony");
+        assert_eq!(res[1], "2008-Black Symphony");
 
-        query.indices = vec![0, 0];
+        query.indices = vec![0, 1];
         let res = partial_query(&db, &query);
         assert_eq!(res, vec!["1-Overture", "10-Somewhere"]);
     }
@@ -578,7 +583,7 @@ mod test {
     fn load_query_test() {
         let query = TreeViewQuery {
             types: vec![TreeType::Album, TreeType::Track],
-            indices: vec![4],
+            indices: vec![5],
             search: None,
         };
         let vec = vec![
@@ -591,6 +596,24 @@ mod test {
             "Wherever I May Roam",
             "Welcome Home",
         ];
+        compare_load(&query, &vec);
+    }
+
+    #[test]
+    fn load_feat_test() {
+        let mut query = TreeViewQuery {
+            types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
+            indices: vec![],
+            search: None,
+        };
+        {
+            let db = Arc::new(Mutex::new(setup_db_connection()));
+            let res = partial_query(&db, &query);
+            assert_eq!(res[3], "Within Temptation");
+        }
+
+        query.indices = vec![3];
+        let vec = vec!["Ice Queen", "Overture", "Somewhere", "Faster"];
         compare_load(&query, &vec);
     }
 }
