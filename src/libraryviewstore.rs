@@ -102,7 +102,8 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
                 .into_iter()
                 .filter(|t| {
                     (t.artist == filter_value)
-                        || (t.artist.contains("feat") && t.artist.contains(&filter_value))
+                        || ((t.artist.contains("feat") || t.artist.contains(" & "))
+                            && t.artist.contains(&filter_value))
                 })
                 .collect(),
             TreeType::Album => current_tracks
