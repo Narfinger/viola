@@ -7,7 +7,7 @@ use crate::{
     types::*,
 };
 use viola_common::{GStreamerAction, GStreamerMessage};
-use zbus::{dbus_interface, ConnectionBuilder, SignalContext};
+use zbus::{dbus_interface, ConnectionBuilder};
 
 struct BaseInterface {}
 

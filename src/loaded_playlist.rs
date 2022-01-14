@@ -166,12 +166,10 @@ impl PlaylistControls for LoadedPlaylistPtr {
     fn get_current_uri(&self) -> Option<String> {
         let s = self.read();
         info!("loading from playlist with name: {}", s.name);
-        s.items.get(s.current_position).as_ref().map(|p| {
-            format!(
-                "file:////{}",
-                utf8_percent_encode(&p.path, FRAGMENT).to_string()
-            )
-        })
+        s.items
+            .get(s.current_position)
+            .as_ref()
+            .map(|p| format!("file:////{}", utf8_percent_encode(&p.path, FRAGMENT)))
     }
 
     fn previous(&self) -> Option<usize> {
