@@ -321,13 +321,13 @@ pub async fn run(pool: DBPool) {
     println!("Starting gstreamer");
     let (rx, tx) = tokio::sync::watch::channel(GStreamerMessage::Nop);
     //let mut bus = bus::Bus::new(50);
-    let dbus_recv = tx.clone();
     let websocket_recv = tx.clone();
     let gst = gstreamer_wrapper::new(plt.clone(), pool.clone(), rx)
         .expect("Error Initializing gstreamer");
 
     {
         println!("Starting dbus");
+        let dbus_recv = tx.clone();
         tokio::spawn(crate::dbus_interface::main(
             gst.clone(),
             plt.clone(),

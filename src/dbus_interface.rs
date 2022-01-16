@@ -239,30 +239,35 @@ pub(crate) async fn main(
         .await
         .expect("Error in creating connection");
     {
+        let conn = conn.clone();
         tokio::task::spawn(async move {
             loop {
                 conn.executor().tick().await;
             }
         });
     }
-    /*
+
     {
-        let conn = conn.clone();
+        //let conn = conn.clone();
+        let mut bus = bus.clone();
         tokio::task::spawn(async move {
+            println!("doing signal");
+            let iface_ref = conn
+                .object_server()
+                .interface::<_, PlayerInterface>("/org/mpris/MediaPlayer2")
+                .await
+                .unwrap();
+            let iface = iface_ref.get_mut().await;
             loop {
-                bus.changed().await;
-                println!("doing signal");
-                conn.emit_signal(
-                    Some("org.mpris.MediaPlayer2.Viola"),
-                    String::from("/org/mpris/MediaPlayer2"),
-                    String::from("org.mpris.MediaPlayer2.Player"),
-                    String::from("metadata_changed"),
-                    "",
-                )
-                .await;
+                if bus.changed().await.is_ok() {
+                    iface
+                        .metadata_changed(iface_ref.signal_context())
+                        .await
+                        .unwrap();
+                }
             }
         });
     }
-    */
+
     Ok(())
 }
