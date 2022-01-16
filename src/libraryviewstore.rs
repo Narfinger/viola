@@ -509,22 +509,19 @@ mod test {
             search: Some("Met".to_string()),
         };
         let res = partial_query(&db, &query);
-        assert_eq!(res[0], "Plays Metallica by Four Cellos");
+        assert_eq!(res[0], "Metallica");
 
-        query.indices = vec![0];
         let exp_res: Vec<String> = vec![
-            "Enter Sandman",
-            "Master of Puppets",
-            "Harvester of Sorrow",
-            "The Unforgiven",
-            "Sad But True",
-            "Creeping Death",
-            "Wherever I May Roam",
-            "Welcome Home",
+            "Nothing Else Matters",
+            "Of Wolf And Men",
+            "The God That Failed",
+            "My Friend Of Misery",
         ]
         .iter()
         .map(|x| x.to_string())
         .collect();
+        query.indices = vec![0];
+        let res = partial_query(&db, &query);
         assert_eq!(res, exp_res);
     }
 
