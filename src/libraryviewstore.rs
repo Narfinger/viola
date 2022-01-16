@@ -613,4 +613,15 @@ mod test {
         let vec = vec!["Ice Queen", "Overture", "Somewhere", "Faster"];
         compare_load(&query, &vec);
     }
+
+    #[test]
+    fn load_test_track() {
+        let query = TreeViewQuery {
+            types: vec![TreeType::Track],
+            indices: vec![0],
+            search: None,
+        };
+        let vec = vec!["Creeping Death"];
+        compare_load(&query, &vec);
+    }
 }
