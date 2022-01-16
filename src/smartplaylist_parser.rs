@@ -21,7 +21,6 @@ pub struct SmartPlaylist {
 
 #[derive(Deserialize, Debug)]
 struct SmartPlaylistConfig {
-    test: String,
     smartplaylist: Vec<SmartPlaylistParsed>,
 }
 
@@ -230,18 +229,77 @@ pub fn construct_smartplaylists_from_config() -> Vec<SmartPlaylist> {
     }
 }
 
-#[test]
-fn test_query_output() {
-    let string = fs::read_to_string("tests/playlists.toml").unwrap();
-    println!("{}\n\n", string);
-    let s = toml::from_str::<SmartPlaylistConfig>(&string).unwrap();
-    println!("{:?}", s);
-    /*
-    let res = read_file("tests/playlists.toml");
-    assert!(res.len() == 2, "Did not read all playlists");
-    let pl1 = &res[0];
-    let pl2 = &res[1];
-    assert!(false, "Playlist 1 did not parse correctly");
-    assert!(false, "Playlist 2 did not parse correctly");
-    */
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::db::NewTrack;
+    use std::{fs, sync::Arc};
+
+    use parking_lot::Mutex;
+
+    embed_migrations!("migrations/");
+    fn fill_db(db: &diesel::SqliteConnection) {
+        #[derive(Deserialize)]
+        struct Obj {
+            newtracks: Vec<NewTrack>,
+        }
+
+        let string = fs::read_to_string("tests/tracks.toml").unwrap();
+        let val = toml::from_str::<Obj>(&string).expect("Could not parse");
+
+        diesel::insert_into(tracks)
+            .values(&val.newtracks)
+            .execute(db)
+            .unwrap();
+    }
+
+    fn setup_db_connection() -> diesel::SqliteConnection {
+        let conn = <diesel::SqliteConnection as diesel::Connection>::establish(":memory:")
+            .map_err(|_| String::from("DB Connection error"))
+            .unwrap();
+        embedded_migrations::run(&conn).expect("Could not run migration");
+        fill_db(&conn);
+        conn
+    }
+
+    fn parse_smartplaylist() -> Vec<SmartPlaylistParsed> {
+        let string = fs::read_to_string("tests/playlists.toml").unwrap();
+        let s = toml::from_str::<SmartPlaylistConfig>(&string).unwrap();
+        s.smartplaylist
+    }
+
+    #[test]
+    fn test_query_output() {
+        let smarts = parse_smartplaylist();
+
+        let one = smarts.get(0).unwrap();
+        let two = smarts.get(1).unwrap();
+        let three = smarts.get(2).unwrap();
+
+        assert_eq!(one.name, "Test1");
+        assert_eq!(two.name, "Test2");
+        assert_eq!(three.name, "ExcludeApo")
+    }
+
+    #[test]
+    fn test_exclude_apo() {
+        let db = Arc::new(Mutex::new(setup_db_connection()));
+        let mut smarts = parse_smartplaylist();
+        let exclude_apo = smarts.swap_remove(2);
+        let exclude_apo_const = construct_smartplaylist(exclude_apo);
+        let pl = exclude_apo_const.load(&db);
+        let t: Vec<String> = pl.items.into_iter().map(|t| t.title).collect();
+        let test_tracks = vec![
+            "Highway to Hell",
+            "Nothing Else Matters",
+            "Of Wolf And Men",
+            "A God That Failed",
+            "A Friend Of Misery",
+            "Ice Queen",
+            "Overture",
+            "Somewhere",
+        ];
+
+        assert_eq!(t, test_tracks);
+    }
 }

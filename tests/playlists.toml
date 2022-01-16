@@ -1,4 +1,3 @@
-test = ""
 [[smartplaylist]]
 name = "Test1"
 album_include = ["Frozen Synapse Original Soundtrack"]
@@ -12,3 +11,7 @@ dir_include = []
 artist_include = ["Mega Drive", "Magic Sword"]
 genre_include = ["Synthwave", "Retrowave"]
 random = true
+
+[[smartplaylist]]
+name = "ExcludeApo"
+dir_exclude = ["Apo"]
