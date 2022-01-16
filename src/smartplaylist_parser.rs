@@ -293,11 +293,12 @@ mod test {
             "Highway to Hell",
             "Nothing Else Matters",
             "Of Wolf And Men",
-            "A God That Failed",
-            "A Friend Of Misery",
+            "The God That Failed",
+            "My Friend Of Misery",
             "Ice Queen",
             "Overture",
             "Somewhere",
+            "Faster",
         ];
 
         assert_eq!(t, test_tracks);
