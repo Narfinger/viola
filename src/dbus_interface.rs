@@ -258,12 +258,28 @@ pub(crate) async fn main(
                 .await
                 .unwrap();
             let iface = iface_ref.get_mut().await;
-            loop {
-                if bus.changed().await.is_ok() {
-                    iface
-                        .metadata_changed(iface_ref.signal_context())
-                        .await
-                        .unwrap();
+            while bus.changed().await.is_ok() {
+                let val = *bus.borrow();
+                match val {
+                    GStreamerMessage::Playing
+                    | GStreamerMessage::Pausing
+                    | GStreamerMessage::Stopped => {
+                        iface
+                            .metadata_changed(iface_ref.signal_context())
+                            .await
+                            .unwrap();
+                        iface
+                            .playback_status_changed(iface_ref.signal_context())
+                            .await
+                            .unwrap();
+                    }
+                    GStreamerMessage::ChangedDuration(_) => {
+                        iface
+                            .position_changed(iface_ref.signal_context())
+                            .await
+                            .unwrap();
+                    }
+                    GStreamerMessage::Nop => {}
                 }
             }
         });

@@ -133,7 +133,6 @@ async fn smartplaylist_load(
     index: viola_common::LoadSmartPlaylistJson,
     state: WebGuiData,
 ) -> Result<impl warp::Reply, Infallible> {
-    use crate::smartplaylist_parser::LoadSmartPlaylist;
     let spl = smartplaylist_parser::construct_smartplaylists_from_config();
     let pl = spl.get(index.index);
 

@@ -52,58 +52,56 @@ pub enum ExcludeTag {
     Dir(Vec<String>),
 }
 
-fn construct_smartplaylist(smp: SmartPlaylistParsed) -> SmartPlaylist {
-    /// returns None if the option is none or the vector in it empty
-    fn insert_vec_value(v: Option<Vec<String>>) -> Option<Vec<String>> {
-        if let Some(value) = v {
-            if !value.is_empty() {
-                Some(value)
+impl From<SmartPlaylistParsed> for SmartPlaylist {
+    fn from(smp: SmartPlaylistParsed) -> Self {
+        /// returns None if the option is none or the vector in it empty
+        fn insert_vec_value(v: Option<Vec<String>>) -> Option<Vec<String>> {
+            if let Some(value) = v {
+                if !value.is_empty() {
+                    Some(value)
+                } else {
+                    None
+                }
             } else {
                 None
             }
-        } else {
-            None
+        }
+
+        /// Inserts `vec` into `pushto` with the tag `value`
+        macro_rules! vec_option_insert {
+            ($value: expr, $vec: expr, $pushto: expr) => {
+                if let Some(v) = insert_vec_value($vec) {
+                    $pushto.push($value(v));
+                }
+            };
+        }
+
+        let random = smp.random.unwrap_or(false);
+        let mut include_query = Vec::new();
+
+        vec_option_insert!(IncludeTag::Dir, smp.dir_include, include_query);
+        vec_option_insert!(IncludeTag::Artist, smp.artist_include, include_query);
+        vec_option_insert!(IncludeTag::Album, smp.album_include, include_query);
+        vec_option_insert!(IncludeTag::Genre, smp.genre_include, include_query);
+
+        if let Some(v) = smp.play_count_least_include {
+            include_query.push(IncludeTag::PlayCountLeast(v));
+        }
+
+        if let Some(v) = smp.play_count_exact_include {
+            include_query.push(IncludeTag::PlayCountExact(v));
+        }
+
+        let mut exclude_query = Vec::new();
+        vec_option_insert!(ExcludeTag::Dir, smp.dir_exclude, exclude_query);
+
+        SmartPlaylist {
+            name: smp.name,
+            random,
+            include_query,
+            exclude_query,
         }
     }
-
-    /// Inserts `vec` into `pushto` with the tag `value`
-    macro_rules! vec_option_insert {
-        ($value: expr, $vec: expr, $pushto: expr) => {
-            if let Some(v) = insert_vec_value($vec) {
-                $pushto.push($value(v));
-            }
-        };
-    }
-
-    let random = smp.random.unwrap_or(false);
-    let mut include_query = Vec::new();
-
-    vec_option_insert!(IncludeTag::Dir, smp.dir_include, include_query);
-    vec_option_insert!(IncludeTag::Artist, smp.artist_include, include_query);
-    vec_option_insert!(IncludeTag::Album, smp.album_include, include_query);
-    vec_option_insert!(IncludeTag::Genre, smp.genre_include, include_query);
-
-    if let Some(v) = smp.play_count_least_include {
-        include_query.push(IncludeTag::PlayCountLeast(v));
-    }
-
-    if let Some(v) = smp.play_count_exact_include {
-        include_query.push(IncludeTag::PlayCountExact(v));
-    }
-
-    let mut exclude_query = Vec::new();
-    vec_option_insert!(ExcludeTag::Dir, smp.dir_exclude, exclude_query);
-
-    SmartPlaylist {
-        name: smp.name,
-        random,
-        include_query,
-        exclude_query,
-    }
-}
-
-pub trait LoadSmartPlaylist {
-    fn load(&self, _: &DBPool) -> LoadedPlaylist;
 }
 
 fn matched_with_exclude(t: &Track, h: &[ExcludeTag]) -> bool {
@@ -112,10 +110,10 @@ fn matched_with_exclude(t: &Track, h: &[ExcludeTag]) -> bool {
     })
 }
 
-impl LoadSmartPlaylist for SmartPlaylist {
+impl SmartPlaylist {
     /// This is kind of weird because we need to construct the vector instead of the query.
     /// I would love to use union of queries but it doesn't seem to work in diesel
-    fn load(&self, db: &DBPool) -> LoadedPlaylist {
+    pub fn load(&self, db: &DBPool) -> LoadedPlaylist {
         use diesel::{ExpressionMethods, TextExpressionMethods};
 
         let basic: Vec<Track> = if self.include_query.is_empty() {
@@ -211,10 +209,7 @@ fn read_file(file: &str) -> Vec<SmartPlaylist> {
     let string = fs::read_to_string(file).unwrap();
     let s = toml::from_str::<SmartPlaylistConfig>(&string).expect("Could not parse");
 
-    s.smartplaylist
-        .into_iter()
-        .map(construct_smartplaylist)
-        .collect()
+    s.smartplaylist.into_iter().map(|v| v.into()).collect()
 }
 
 pub fn construct_smartplaylists_from_config() -> Vec<SmartPlaylist> {
@@ -286,7 +281,7 @@ mod test {
         let db = Arc::new(Mutex::new(setup_db_connection()));
         let mut smarts = parse_smartplaylist();
         let exclude_apo = smarts.swap_remove(2);
-        let exclude_apo_const = construct_smartplaylist(exclude_apo);
+        let exclude_apo_const: SmartPlaylist = exclude_apo.into();
         let pl = exclude_apo_const.load(&db);
         let t: Vec<String> = pl.items.into_iter().map(|t| t.title).collect();
         let test_tracks = vec![
