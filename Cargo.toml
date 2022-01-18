@@ -44,4 +44,4 @@ warp = "0.3.2"
 tokio = { version = "1.15.0", features = ["full"] }
 directories = "4.0.1"
 anyhow = "1.0.52"
-zvariant = "3.0.0"
+zvariant = "3.1.0"
