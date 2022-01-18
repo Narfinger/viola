@@ -2114,9 +2114,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.74"
+version = "1.0.75"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee2bb9cd061c5865d345bb02ca49fcef1391741b672b54a0bf7b679badec3142"
+checksum = "c059c05b48c5c0067d4b4b2b4f0732dd65feb52daf7e0ea09cd87e7dadc1af79"
 dependencies = [
  "itoa 1.0.1",
  "ryu",
@@ -2723,7 +2723,7 @@ dependencies = [
  "rusqlite",
  "serde 1.0.133",
  "serde_derive",
- "serde_json 1.0.74",
+ "serde_json 1.0.75",
  "taglib",
  "tokio",
  "toml",
@@ -2741,7 +2741,7 @@ version = "0.1.0"
 dependencies = [
  "diesel",
  "serde 1.0.133",
- "serde_json 1.0.74",
+ "serde_json 1.0.75",
 ]
 
 [[package]]
@@ -2791,7 +2791,7 @@ dependencies = [
  "pin-project",
  "scoped-tls",
  "serde 1.0.133",
- "serde_json 1.0.74",
+ "serde_json 1.0.75",
  "serde_urlencoded",
  "tokio",
  "tokio-stream",
