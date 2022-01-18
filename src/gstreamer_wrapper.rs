@@ -36,9 +36,7 @@ pub fn new(
     let element = {
         let playbin = gstreamer::ElementFactory::make("playbin", None)
             .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        playbin
-            .set_property("volume", &0.5)
-            .expect("Could not set volume");
+        playbin.set_property("volume", 0.5);
         /* based on
                bin = gst_bin_new ("audio_sink_bin");
         gst_bin_add_many (GST_BIN (bin), equalizer, convert, sink, NULL);
@@ -89,9 +87,7 @@ pub fn new(
             gstreamer::GhostPad::with_target(Some("sink"), &pad).expect("Could not create ghost");
         ghost.set_active(true).expect("Could not set active");
         bin.add_pad(&ghost).expect("Could not add pad");
-        playbin
-            .set_property("audio-sink", bin)
-            .expect("Error in changing audio sink");
+        playbin.set_property("audio-sink", bin);
         playbin
     };
     let bus = element.bus().unwrap();
@@ -219,9 +215,7 @@ impl GStreamerExt for GStreamer {
                         .set_state(gstreamer::State::Ready)
                         .expect("Errorr in setting gstreamer state");
 
-                    self.element
-                        .set_property("uri", &uri)
-                        .expect("Error setting new gstreamer url");
+                    self.element.set_property("uri", &uri);
                     self.element
                         .set_state(gstreamer::State::Playing)
                         .expect("Error setting gstreamer state");
