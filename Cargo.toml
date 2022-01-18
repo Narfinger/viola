@@ -7,7 +7,7 @@ edition = "2018"
 
 [dependencies]
 base64 = "0.13.0"
-clap = { version = "3.0", features = ["cargo"] }
+clap = { version = "3.0.9", features = ["cargo"] }
 diesel = { version = "1.4.8", features = ["sqlite", "r2d2"] }
 diesel_migrations = { version = "1.4.0", features = ["sqlite"] }
 erased-serde = "0.3.17"
@@ -20,7 +20,7 @@ image = "0.23.14"
 humantime = "2.1.0"
 #jwalk = "0.4"    # A progress bar and cli reporting library for Rust
 taglib = "1.0.0"
-gstreamer = "0.17.4"
+gstreamer = "0.18.0"
 glib = "0.15.2"
 percent-encoding = "2.1.0"
 preferences = "1.1.0"
@@ -37,11 +37,11 @@ walkdir = "2.3.2"
 web-view = "0.7.3"
 viola_common = {path ="viola_common", features =["backend"]}
 itertools = "0.10.3"
-zbus = "2.0"
+zbus = "2.0.1"
 bus = "2.2.3"
 parking_lot = { version = "0.11.2", features = ["serde", "deadlock_detection"] }
 warp = "0.3.2"
 tokio = { version = "1.15.0", features = ["full"] }
 directories = "4.0.1"
 anyhow = "1.0.52"
-zvariant = "3.0.0"
+zvariant = "3.1.0"
