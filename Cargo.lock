@@ -668,12 +668,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fragile"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8da1b8f89c5b5a5b7e59405cfcf0bb9588e5ed19f0b57a4cd542bbba3f164a6d"
-
-[[package]]
 name = "futures"
 version = "0.3.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -936,13 +930,12 @@ dependencies = [
 
 [[package]]
 name = "gstreamer"
-version = "0.18.0"
+version = "0.18.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "939fd4f8afd09be887d05bb7ced532f215f21401837bf59f9fd2f68608e1e285"
+checksum = "a54229ced7e44752bff52360549cd412802a4b1a19852b87346625ca9f6d4330"
 dependencies = [
  "bitflags",
  "cfg-if 1.0.0",
- "fragile",
  "futures-channel",
  "futures-core",
  "futures-util",
