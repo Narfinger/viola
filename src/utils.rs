@@ -8,18 +8,18 @@ pub fn get_config_dir() -> Result<std::path::PathBuf, String> {
         .ok_or_else(|| String::from("Could not find config dir"))
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ConfigWriteMode {
     Read,
     Write,
 }
 
-pub fn get_config_file(mode: ConfigWriteMode) -> Result<File, String> {
+pub fn get_config_file(mode: &ConfigWriteMode) -> Result<File, String> {
     info!("Settings file with {:?}", mode);
     get_config_dir()
         .map(|p| p.join("viola_prefs.json"))
         .and_then(|f| {
-            if mode == ConfigWriteMode::Write {
+            if mode == &ConfigWriteMode::Write {
                 File::create(f)
             } else {
                 File::open(f)
@@ -28,6 +28,7 @@ pub fn get_config_file(mode: ConfigWriteMode) -> Result<File, String> {
         })
 }
 
+#[must_use]
 pub fn format_into_full_duration(i: i64) -> String {
     let mut s = String::new();
     let seconds = i % 60;

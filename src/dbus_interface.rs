@@ -89,7 +89,7 @@ impl PlayerInterface {
     fn metadata(&self) -> HashMap<&str, zvariant::Value> {
         let mut map = HashMap::new();
         let track = self.playlisttabs.get_current_track();
-        let length = 1000000 * track.length;
+        let length = 1_000_000 * track.length;
         map.insert("xesam:artist", track.artist.into());
         map.insert("xesam:album", track.album.into());
         map.insert("xesam:title", track.title.into());
@@ -104,7 +104,7 @@ impl PlayerInterface {
 
     #[dbus_interface(property)]
     fn position(&self) -> i64 {
-        1000000 * self.gstreamer.read().get_elapsed().unwrap_or(0) as i64
+        1_000_000 * self.gstreamer.read().get_elapsed().unwrap_or(0) as i64
     }
 
     #[dbus_interface(property)]

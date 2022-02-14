@@ -34,9 +34,8 @@ impl From<GStreamerMessage> for PlayerStatus {
         match item {
             GStreamerMessage::Pausing => PlayerStatus::Paused,
             GStreamerMessage::Stopped => PlayerStatus::Stopped,
-            GStreamerMessage::Playing => PlayerStatus::Playing,
+            GStreamerMessage::Playing | GStreamerMessage::Nop => PlayerStatus::Playing,
             GStreamerMessage::ChangedDuration(i) => PlayerStatus::ChangedDuration(i),
-            GStreamerMessage::Nop => PlayerStatus::Playing,
         }
     }
 }

@@ -207,7 +207,7 @@ async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible>
         .pls
         .iter()
         .map(|pl| PlaylistTabJSON {
-            name: pl.read().name.to_owned(),
+            name: pl.read().name.clone(),
             current_position: pl.read().current_position,
         })
         .collect::<Vec<PlaylistTabJSON>>();

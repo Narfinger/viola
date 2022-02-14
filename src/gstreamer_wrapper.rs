@@ -277,9 +277,9 @@ impl GStreamerExt for GStreamer {
 
     fn get_state(&self) -> viola_common::GStreamerMessage {
         match self.element.state(gstreamer::ClockTime::SECOND).1 {
-            gstreamer::State::VoidPending => GStreamerMessage::Stopped,
-            gstreamer::State::Null => GStreamerMessage::Stopped,
-            gstreamer::State::Ready => GStreamerMessage::Stopped,
+            gstreamer::State::VoidPending | gstreamer::State::Null | gstreamer::State::Ready => {
+                GStreamerMessage::Stopped
+            }
             gstreamer::State::Paused => GStreamerMessage::Pausing,
             gstreamer::State::Playing => GStreamerMessage::Playing,
             _ => GStreamerMessage::Stopped,
@@ -288,6 +288,6 @@ impl GStreamerExt for GStreamer {
 
     fn get_elapsed(&self) -> Option<u64> {
         let cltime_opt: Option<gstreamer::ClockTime> = self.element.query_position();
-        cltime_opt.map(|s| s.seconds())
+        cltime_opt.map(gstreamer::ClockTime::seconds)
     }
 }

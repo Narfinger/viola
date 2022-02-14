@@ -212,10 +212,10 @@ impl PlaylistControls for LoadedPlaylistPtr {
                 s.current_position
             };
 
-            if next_pos != 0 {
-                Some(next_pos)
-            } else {
+            if next_pos == 0 {
                 None
+            } else {
+                Some(next_pos)
             }
         }
     }

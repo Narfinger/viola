@@ -114,7 +114,7 @@ fn main() -> Result<()> {
     if matches.is_present("update") {
         info!("Updating Database");
         let mut pref_reader =
-            crate::utils::get_config_file(utils::ConfigWriteMode::Read).expect("No settings file");
+            crate::utils::get_config_file(&utils::ConfigWriteMode::Read).expect("No settings file");
 
         let preferences = PreferencesMap::<String>::load_from(&mut pref_reader)
             .context("Could not read settings file")?;
@@ -131,7 +131,7 @@ fn main() -> Result<()> {
     } else if let Some(new_music_dir) = matches.value_of("music_dir") {
         let mut prefs = PreferencesMap::<String>::new();
         prefs.insert(String::from("music_dir"), String::from(new_music_dir));
-        let mut prefs_file = crate::utils::get_config_file(utils::ConfigWriteMode::Write)
+        let mut prefs_file = crate::utils::get_config_file(&utils::ConfigWriteMode::Write)
             .expect("Cannot find config");
         prefs
             .save_to(&mut prefs_file)

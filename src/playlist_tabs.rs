@@ -65,19 +65,18 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
             index, current_pl, length
         );
         if index < length {
-            let lp = self.write().pls.swap_remove(index);
-            if current_pl >= index {
-                self.write().current_pl = 0;
-            }
-
             // delete in database
             use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
             use std::ops::Deref;
             use viola_common::schema::playlists::dsl::*;
+            let lp = self.write().pls.swap_remove(index);
+            if current_pl >= index {
+                self.write().current_pl = 0;
+            }
             let db = pool.lock();
 
             diesel::delete(playlists.filter(id.eq(lp.read().id)))
-                .execute(db.deref())
+                .execute(&*db)
                 .expect("Error deleting");
         }
     }
@@ -116,7 +115,7 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
 
     fn restore_tab_position(&self) {
         let mut prefs_file =
-            crate::utils::get_config_file(crate::utils::ConfigWriteMode::Read).unwrap();
+            crate::utils::get_config_file(&crate::utils::ConfigWriteMode::Read).unwrap();
         //we need to split this because of how the allocation of the locks work
         let val = min(
             PreferencesMap::<String>::load_from(&mut prefs_file)
@@ -134,12 +133,12 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
         info!("Saving tab position");
         let mut prefs = {
             let mut prefs_file =
-                crate::utils::get_config_file(crate::utils::ConfigWriteMode::Read).unwrap();
+                crate::utils::get_config_file(&crate::utils::ConfigWriteMode::Read).unwrap();
             PreferencesMap::<String>::load_from(&mut prefs_file).expect("Error in loading prefs")
         };
         prefs.insert(String::from("tab"), self.read().current_pl.to_string());
         let mut file_write =
-            crate::utils::get_config_file(crate::utils::ConfigWriteMode::Write).unwrap();
+            crate::utils::get_config_file(&crate::utils::ConfigWriteMode::Write).unwrap();
         prefs
             .save_to(&mut file_write)
             .expect("Error in writing prefs");
@@ -169,7 +168,7 @@ impl LoadedPlaylistExt for PlaylistTabsPtr {
     }
 
     fn clean(&self) {
-        self.current(LoadedPlaylistExt::clean)
+        self.current(LoadedPlaylistExt::clean);
     }
 }
 
@@ -211,7 +210,7 @@ impl PlaylistControls for PlaylistTabsPtr {
 
 impl SavePlaylistExt for PlaylistTabsPtr {
     fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error> {
-        for i in self.read().pls.iter() {
+        for i in &self.read().pls {
             i.save(db)?;
         }
         info!("Saved all playlists");

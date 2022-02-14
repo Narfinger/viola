@@ -57,10 +57,10 @@ impl From<SmartPlaylistParsed> for SmartPlaylist {
         /// returns None if the option is none or the vector in it empty
         fn insert_vec_value(v: Option<Vec<String>>) -> Option<Vec<String>> {
             if let Some(value) = v {
-                if !value.is_empty() {
-                    Some(value)
-                } else {
+                if value.is_empty() {
                     None
+                } else {
+                    Some(value)
                 }
             } else {
                 None
@@ -113,12 +113,13 @@ fn matched_with_exclude(t: &Track, h: &[ExcludeTag]) -> bool {
 impl SmartPlaylist {
     /// This is kind of weird because we need to construct the vector instead of the query.
     /// I would love to use union of queries but it doesn't seem to work in diesel
+    #[must_use]
     pub fn load(&self, db: &DBPool) -> LoadedPlaylist {
         use diesel::{ExpressionMethods, TextExpressionMethods};
 
         let basic: Vec<Track> = if self.include_query.is_empty() {
             tracks
-                .load(db.lock().deref())
+                .load(&*db.lock())
                 .expect("Error in loading smart playlist")
         } else {
             self.include_query
@@ -127,9 +128,9 @@ impl SmartPlaylist {
                     IncludeTag::Album(v) => {
                         let mut s = tracks.into_boxed::<Sqlite>();
                         for value in v {
-                            s = s.or_filter(album.eq(value))
+                            s = s.or_filter(album.eq(value));
                         }
-                        s.load(db.lock().deref())
+                        s.load(&*db.lock())
                             .expect("Error in loading smart playlist")
                     }
                     IncludeTag::Artist(v) => {
@@ -138,7 +139,7 @@ impl SmartPlaylist {
                             s = s.or_filter(artist.eq(value));
                         }
                         //println!("Query ArtistInclude: {:?}", debug_query(&s));
-                        s.load(db.lock().deref())
+                        s.load(&*db.lock())
                             .expect("Error in loading smart playlist")
                     }
                     IncludeTag::Dir(v) => {
@@ -147,7 +148,7 @@ impl SmartPlaylist {
                             s = s.or_filter(path.like(String::from("%") + value + "%"));
                         }
                         //println!("Query DirInclude: {:?}", debug_query(&s));
-                        s.load(db.lock().deref())
+                        s.load(&*db.lock())
                             .expect("Error in loading smart playlist")
                     }
                     IncludeTag::Genre(v) => {
@@ -156,21 +157,21 @@ impl SmartPlaylist {
                             s = s.or_filter(genre.eq(value));
                         }
                         //println!("Query GenreInclude: {:?}", debug_query(&s));
-                        s.load(db.lock().deref())
+                        s.load(&*db.lock())
                             .expect("Error in loading smart playlist")
                     }
                     IncludeTag::PlayCountLeast(v) => {
                         let mut s = tracks.into_boxed::<Sqlite>();
                         s = s.or_filter(playcount.ge(v));
 
-                        s.load(db.lock().deref())
+                        s.load(&*db.lock())
                             .expect("Error in loading smart playlist")
                     }
                     IncludeTag::PlayCountExact(v) => {
                         let mut s = tracks.into_boxed::<Sqlite>();
                         s = s.or_filter(playcount.eq(v));
 
-                        s.load(db.lock().deref())
+                        s.load(&*db.lock())
                             .expect("Error in loading smart playlist")
                     }
                 })
@@ -209,9 +210,13 @@ fn read_file(file: &str) -> Vec<SmartPlaylist> {
     let string = fs::read_to_string(file).unwrap();
     let s = toml::from_str::<SmartPlaylistConfig>(&string).expect("Could not parse");
 
-    s.smartplaylist.into_iter().map(|v| v.into()).collect()
+    s.smartplaylist
+        .into_iter()
+        .map(std::convert::Into::into)
+        .collect()
 }
 
+#[must_use]
 pub fn construct_smartplaylists_from_config() -> Vec<SmartPlaylist> {
     let mut p = prefs_base_dir().expect("Could not find base dir");
     p.push("viola");

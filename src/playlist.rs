@@ -1,4 +1,3 @@
-use std::ops::Deref;
 use viola_common::schema::{playlists, playlisttracks};
 
 use crate::loaded_playlist::LoadedPlaylist;
@@ -60,6 +59,7 @@ fn create_loaded_from_playlist(pl: &Playlist, r: &[(Track, PlaylistTrack)]) -> L
     }
 }
 
+#[must_use]
 pub fn restore_playlists(db: &DBPool) -> Vec<LoadedPlaylist> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     use viola_common::schema::playlists::dsl::*;
@@ -68,14 +68,14 @@ pub fn restore_playlists(db: &DBPool) -> Vec<LoadedPlaylist> {
 
     let pls = playlists
         .order(viola_common::schema::playlists::dsl::id.asc())
-        .load::<Playlist>(db.lock().deref())
+        .load::<Playlist>(&*db.lock())
         .expect("Error restoring playlists");
     pls.iter()
         .map(|pl| {
             let t: Vec<(Track, PlaylistTrack)> = tracks
                 .inner_join(playlisttracks)
                 .filter(playlist_id.eq(pl.id))
-                .load(db.lock().deref())
+                .load(&*db.lock())
                 .expect("Error restoring a playlist");
 
             create_loaded_from_playlist(pl, &t)
