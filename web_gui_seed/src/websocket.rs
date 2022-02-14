@@ -19,13 +19,14 @@ fn decode_message(message: WebSocketMessage, msg_sender: std::rc::Rc<dyn Fn(Opti
         match msg {
             WsMessage::Ping => {}
             WsMessage::PlayChanged(index) => {
-                msg_sender(Some(crate::Msg::PlaylistIndexChange(index)))
+                msg_sender(Some(crate::Msg::PlaylistIndexChange(index)));
             }
             WsMessage::CurrentTimeChanged(time) => {
-                msg_sender(Some(crate::Msg::CurrentTimeChanged(time)))
+                msg_sender(Some(crate::Msg::CurrentTimeChanged(time)));
             }
-            WsMessage::ReloadTabs => msg_sender(Some(crate::Msg::InitPlaylistTabs)),
-            WsMessage::ReloadPlaylist => msg_sender(Some(crate::Msg::InitPlaylistTabs)),
+            WsMessage::ReloadTabs | WsMessage::ReloadPlaylist => {
+                msg_sender(Some(crate::Msg::InitPlaylistTabs))
+            }
             WsMessage::GStreamerMessage(msg) => msg_sender(Some(crate::Msg::GStreamerMessage(msg))),
         };
     }

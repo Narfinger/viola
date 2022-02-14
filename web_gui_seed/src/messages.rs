@@ -145,10 +145,10 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                     .json(&t)
                     .expect("Could not build result");
                 fetch(req).await.expect("Could not send message");
-                if t != GStreamerAction::RepeatOnce {
-                    Msg::RefreshPlayStatus
-                } else {
+                if t == GStreamerAction::RepeatOnce {
                     Msg::Nop
+                } else {
+                    Msg::RefreshPlayStatus
                 }
             });
         }
@@ -230,21 +230,16 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 SearchString::EmptySearch => "".to_owned(),
                 SearchString::UpdateSearch(s) => s,
                 SearchString::UseStoredSearch => {
-                    model.treeviews.get(model_index).unwrap().search.to_owned()
+                    model.treeviews.get(model_index).unwrap().search.clone()
                 }
             };
             let query_search = if newsearch.is_empty() {
                 None
             } else {
-                Some(model.treeviews.get(model_index).unwrap().search.to_owned())
+                Some(model.treeviews.get(model_index).unwrap().search.clone())
             };
             model.treeviews.get_mut(model_index).unwrap().search = newsearch;
-            let type_vec = model
-                .treeviews
-                .get(model_index)
-                .unwrap()
-                .type_vec
-                .to_owned();
+            let type_vec = model.treeviews.get(model_index).unwrap().type_vec.clone();
             if type_vec.len() <= tree_index.len() {
                 //we should not query if there is nothing left to query
                 return;
@@ -299,7 +294,7 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 };
                 if let Some(nodeid) = nodeid {
                     if nodeid.children(&treeview.tree).next().is_none() {
-                        for i in result.into_iter() {
+                        for i in result {
                             let new_node = treeview.tree.new_node(i);
                             nodeid.append(new_node, &mut treeview.tree);
                         }
@@ -318,7 +313,7 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             let mut tree = model.treeviews.get_mut(tree_index).unwrap();
             tree.current_window += WINDOW_INCREMENT;
             if tree.current_window >= tree.tree.count() {
-                tree.stream_handle = None
+                tree.stream_handle = None;
             };
         }
         Msg::LoadFromTreeView {

@@ -317,8 +317,7 @@ fn view_status(model: &Model) -> Node<Msg> {
     let current_track_index = model
         .playlist_tabs
         .get(model.current_playlist_tab)
-        .map(|tab| tab.current_index)
-        .unwrap_or(0);
+        .map_or(0, |tab| tab.current_index);
     let partial_time_string = format_duration(Duration::from_secs(
         model
             .get_current_playlist_tab_tracks()
@@ -332,7 +331,7 @@ fn view_status(model: &Model) -> Node<Msg> {
 
     let tracks_number_option = model
         .get_current_playlist_tab_tracks()
-        .map(|tracks| tracks.len());
+        .map(std::vec::Vec::len);
     let window_number_option = model.playlist_window.current_window;
     let window_string =
         if tracks_number_option.is_some() && tracks_number_option.unwrap() > window_number_option {
@@ -347,14 +346,12 @@ fn view_status(model: &Model) -> Node<Msg> {
                 tracks_number_option.map_or("".to_string(), |t| t.to_string())
             )
         };
-    let track_percentage_width = track_option
-        .map(|t| {
-            format!(
-                "{}%",
-                ((model.current_time as f64 / t.length as f64) * 100.0).round() as u64
-            )
-        })
-        .unwrap_or_else(|| "0%".to_string());
+    let track_percentage_width = track_option.map_or("0%".to_string(), |t| {
+        format!(
+            "{}%",
+            ((model.current_time as f64 / t.length as f64) * 100.0).round() as u64
+        )
+    });
 
     div![
         C!["row", "border", "border-dark"],
@@ -362,7 +359,7 @@ fn view_status(model: &Model) -> Node<Msg> {
         div![
             C!["col-md"],
             img![
-                attrs!(At::Src => format!("/currentimage?nonce={}", &track_option.map(|t| &t.title).unwrap_or(&String::from(""))), At::Width => unit!(100,px), At::Height => unit!(100,px))
+                attrs!(At::Src => format!("/currentimage?nonce={}", &track_option.map_or(&String::from(""), |t| &t.title)), At::Width => unit!(100,px), At::Height => unit!(100,px))
             ]
         ],
         div![C!["col"], window_string],
@@ -383,7 +380,7 @@ fn view_status(model: &Model) -> Node<Msg> {
             span![format_duration(Duration::from_secs(model.current_time)).to_string()],
             "--",
             span![format_duration(Duration::from_secs(
-                track_option.map(|t| t.length as u64).unwrap_or(0)
+                track_option.map_or(0, |t| t.length as u64)
             ))
             .to_string()],
         ],
@@ -393,7 +390,7 @@ fn view_status(model: &Model) -> Node<Msg> {
                 C!["progress"],
                 div![
                     C!["progress-bar"],
-                    attrs!(At::from("Role") => "progressbar", At::from("aria-valuenow") => model.current_time, At::from("aria-valuemin") => 0, At::from("aria-valuemax") => track_option.map(|t| t.length as u64).unwrap_or(0)),
+                    attrs!(At::from("Role") => "progressbar", At::from("aria-valuenow") => model.current_time, At::from("aria-valuemin") => 0, At::from("aria-valuemax") => track_option.map_or(0, |t| t.length as u64)),
                     style!(St::Width => track_percentage_width),
                 ]
             ]
@@ -415,8 +412,7 @@ fn tuple_to_selected_true<'a>(
             model
                 .playlist_tabs
                 .get(model.current_playlist_tab)
-                .map(|tab| tab.current_index == id)
-                .unwrap_or(false)
+                .map_or(false, |tab| tab.current_index == id)
         } else {
             false
         },
@@ -631,7 +627,7 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
                 button![
                     C!["btn", "btn-primary"],
                     attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => t.treeview_html.idref],
-                    t.treeview_html.label.to_owned(),
+                    t.treeview_html.label.clone(),
                     //    ev(Ev::Click, move |_| Msg::FillTreeView {
                     //        model_index: 0,
                     //        tree_index: vec![],
