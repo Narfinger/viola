@@ -5,7 +5,7 @@ use crate::{
 };
 use diesel::TextExpressionMethods;
 use itertools::{izip, Itertools};
-use std::{collections::HashSet, ops::Deref};
+use std::collections::HashSet;
 use viola_common::TreeViewQuery;
 use viola_common::{schema::tracks::dsl::*, TreeType};
 
@@ -13,8 +13,8 @@ use viola_common::{schema::tracks::dsl::*, TreeType};
 /// where n is the current iteration depth
 fn get_filter_string(
     new_bunch: &[viola_common::Track],
-    current_ttype: &TreeType,
-    index: &usize,
+    current_ttype: TreeType,
+    index: usize,
     recursion_depth: usize,
     type_vec: Vec<TreeType>,
 ) -> String {
@@ -39,8 +39,7 @@ fn get_filter_string(
         .collect();
     //println!("full unique {:?}", &full_unique);
 
-    let st = (*full_unique.get(*index).unwrap()).to_owned();
-    //let st = full_unique.get(*index).unwrap().clone().clone();
+    let st = (*full_unique.get(index).unwrap()).clone();
 
     st
 }
@@ -53,19 +52,19 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
             let new_tracks = match val {
                 TreeType::Artist => tracks
                     .filter(artist.like(String::from("%") + search_string + "%"))
-                    .load::<viola_common::Track>(db.lock().deref())
+                    .load::<viola_common::Track>(&*db.lock())
                     .unwrap(),
                 TreeType::Album => tracks
                     .filter(album.like(String::from("%") + search_string + "%"))
-                    .load::<viola_common::Track>(db.lock().deref())
+                    .load::<viola_common::Track>(&*db.lock())
                     .unwrap(),
                 TreeType::Track => tracks
                     .filter(title.like(String::from("%") + search_string + "%"))
-                    .load::<viola_common::Track>(db.lock().deref())
+                    .load::<viola_common::Track>(&*db.lock())
                     .unwrap(),
                 TreeType::Genre => tracks
                     .filter(genre.like(String::from("%") + search_string + "%"))
-                    .load::<viola_common::Track>(db.lock().deref())
+                    .load::<viola_common::Track>(&*db.lock())
                     .unwrap(),
             }
             .into_iter();
@@ -78,7 +77,7 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
     } else {
         tracks
             .filter(artist.ne(""))
-            .load::<viola_common::Track>(db.lock().deref())
+            .load::<viola_common::Track>(&*db.lock())
             .unwrap()
     };
 
@@ -87,8 +86,8 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
     {
         let filter_value = get_filter_string(
             &current_tracks,
-            current_ttype,
-            index,
+            *current_ttype,
+            *index,
             recursion_depth,
             query.types.clone(),
         );
@@ -129,28 +128,27 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
 /// Returns a projection of `t` for which we sort our stuff, dependend on ttype and level
 /// I would love to have this return a reference but because of the options inside it is unclear how to do it
 fn sort_key_from_treetype<'a>(
-    ttype: &'a Option<&'a TreeType>,
+    ttype: Option<&'a TreeType>,
     t: &'a viola_common::Track,
     level: usize,
 ) -> String {
     match ttype {
-        Some(&TreeType::Artist) => t.artist.to_owned(),
+        Some(&TreeType::Artist) | None => t.artist.clone(),
         Some(&TreeType::Album) => {
             if level == 0 {
-                t.album.to_owned()
+                t.album.clone()
             } else {
                 t.year.unwrap_or_default().to_string()
             }
         }
-        Some(&TreeType::Genre) => t.genre.to_owned(),
+        Some(&TreeType::Genre) => t.genre.clone(),
         Some(&TreeType::Track) => {
             if level == 0 {
-                t.title.to_owned()
+                t.title.clone()
             } else {
                 t.path.to_string()
             }
         }
-        None => t.artist.to_owned(),
     }
 }
 
@@ -158,7 +156,9 @@ fn sort_key_from_treetype<'a>(
 /// TODO: This has the problem that we rarely want to sort albums by name but mostly by year.
 /// But sometimes by name
 fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
-    if query.indices.len() != 1 {
+    if query.indices.len() == 1 {
+        t.sort_unstable_by_key(|t| t.path.clone());
+    } else {
         let indexed = query.get_indexed_ttypes();
         t.sort_unstable_by(|x, y| {
             // We build a map of Ordering that compares all the keys in indexed.
@@ -168,14 +168,12 @@ fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
                 .iter()
                 .enumerate()
                 .map(|(level, ttype)| {
-                    let xkey = sort_key_from_treetype(&Some(ttype), x, level);
-                    let ykey = sort_key_from_treetype(&Some(ttype), y, level);
+                    let xkey = sort_key_from_treetype(Some(ttype), x, level);
+                    let ykey = sort_key_from_treetype(Some(ttype), y, level);
                     xkey.cmp(&ykey)
                 })
                 .fold(ordering, |acc, x| acc.then(x))
         });
-    } else {
-        t.sort_unstable_by_key(|t| t.path.clone());
     }
 
     //let ttype = query.get_after_last_ttype();
@@ -209,9 +207,8 @@ fn track_to_partial_string(query: &TreeViewQuery, t: viola_common::Track) -> Str
         match last {
             Some(TreeType::Artist) => t.artist,
             Some(TreeType::Album) => t.album,
-            Some(TreeType::Track) => t.title,
+            Some(TreeType::Track) | None => t.title,
             Some(TreeType::Genre) => t.genre,
-            None => t.title,
         }
     }
 }
@@ -219,18 +216,18 @@ fn track_to_partial_string(query: &TreeViewQuery, t: viola_common::Track) -> Str
 /// extracts a playlistname from the query
 fn get_playlist_name(query: &TreeViewQuery, t: &[viola_common::Track]) -> String {
     let mut res = if let Some(ref search) = query.search {
-        search.to_owned()
+        search.clone()
     } else {
         let last = query.get_after_last_ttype();
         let first_track = t.get(0);
         match last {
-            Some(TreeType::Artist) => first_track.map(|t| t.artist.to_owned()),
-            Some(TreeType::Album) => first_track.map(|t| t.album.to_owned()),
-            Some(TreeType::Genre) => first_track.map(|t| t.genre.to_owned()),
-            Some(TreeType::Track) => first_track.map(|t| t.title.to_owned()),
+            Some(TreeType::Artist) => first_track.map(|t| t.artist.clone()),
+            Some(TreeType::Album) => first_track.map(|t| t.album.clone()),
+            Some(TreeType::Genre) => first_track.map(|t| t.genre.clone()),
+            Some(TreeType::Track) => first_track.map(|t| t.title.clone()),
             None => None,
         }
-        .unwrap_or_else(|| "Foo".to_owned())
+        .unwrap_or_else(|| String::from("Foo"))
     };
     res.truncate(10);
     res
@@ -244,7 +241,7 @@ pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
         .collect()
 }
 
-/// produces a LoadedPlaylist frrom a treeviewquery
+/// produces a `LoadedPlaylist` frrom a treeviewquery
 pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
     let t = basic_get_tracks(db, query);
     LoadedPlaylist {

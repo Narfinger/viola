@@ -273,20 +273,14 @@ async fn handle_gstreamer_messages(
     while rx.changed().await.is_ok() {
         let state = state.clone();
         let val = *rx.borrow();
-        match val {
-            viola_common::GStreamerMessage::Playing => {
-                let state = state.clone();
-                let pos = state.read().await.playlist_tabs.current_position();
-                tokio::spawn(async move {
-                    //let state = state.clone();
-                    my_websocket::send_my_message(
-                        &state.read().await.ws,
-                        WsMessage::PlayChanged(pos),
-                    )
+        if val == viola_common::GStreamerMessage::Playing {
+            let state = state.clone();
+            let pos = state.read().await.playlist_tabs.current_position();
+            tokio::spawn(async move {
+                //let state = state.clone();
+                my_websocket::send_my_message(&state.read().await.ws, WsMessage::PlayChanged(pos))
                     .await;
-                });
-            }
-            _ => (),
+            });
         }
         if vec![
             viola_common::GStreamerMessage::Pausing,

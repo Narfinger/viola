@@ -4,7 +4,6 @@ use indicatif::ParallelProgressIterator;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::iter::FromIterator;
-use std::ops::Deref;
 use std::path::Path;
 use std::{collections::HashSet, path::PathBuf};
 use std::{thread, time};

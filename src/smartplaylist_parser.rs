@@ -3,7 +3,6 @@ use diesel::{QueryDsl, RunQueryDsl};
 use preferences::prefs_base_dir;
 use rand::prelude::*;
 use std::fs;
-use std::ops::Deref;
 use viola_common::schema::tracks::dsl::*;
 
 use crate::db;

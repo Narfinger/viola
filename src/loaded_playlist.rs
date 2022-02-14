@@ -47,7 +47,7 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
 
     fn get_playlist_full_time(&self) -> i64 {
         let s = self.read();
-        s.items.iter().map(|t| t.length as i64).sum()
+        s.items.iter().map(|t| i64::from(t.length)).sum()
     }
 
     fn current_position(&self) -> usize {

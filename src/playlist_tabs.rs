@@ -67,7 +67,6 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
         if index < length {
             // delete in database
             use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
-            use std::ops::Deref;
             use viola_common::schema::playlists::dsl::*;
             let lp = self.write().pls.swap_remove(index);
             if current_pl >= index {
