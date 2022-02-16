@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 seed = "0.8.0"
 serde_derive = "1.0.136"
-serde_json = "1.0.78"
+serde_json = "1.0.79"
 serde = "1.0.136"
 indextree = "4.3.1"
 viola_common = { path = "../viola_common" }
