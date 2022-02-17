@@ -3,10 +3,9 @@
 extern crate anyhow;
 extern crate base64;
 extern crate bus;
+extern crate clap;
 extern crate tokio;
 extern crate warp;
-#[macro_use]
-extern crate clap;
 extern crate zbus;
 #[macro_use]
 extern crate diesel;
@@ -48,54 +47,42 @@ pub mod types;
 pub mod utils;
 
 use anyhow::{Context, Result};
-use clap::{App, Arg};
+use clap::Parser;
 use parking_lot::Mutex;
 use preferences::{prefs_base_dir, Preferences, PreferencesMap};
 use std::sync::Arc;
 
+///A Music player that does exactly what I want with a webinterface.
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    /// Updates the database
+    #[clap(short, long)]
+    update: bool,
+
+    /// Does a fast update of the database, doing a heuristic on time modified
+    #[clap(short, long)]
+    fast_update: Option<String>,
+
+    /// Sets the music directory
+    #[clap(short, long)]
+    music_dir: Option<String>,
+
+    /// Shows the config path
+    #[clap(short, long)]
+    config_path: bool,
+
+    /// Opens and editor to edit the smartplaylist file
+    #[clap(short, long)]
+    edit_smartplaylist: bool,
+
+    /// Does not run the embedded webview
+    #[clap(short, long)]
+    webview: bool,
+}
+
 fn main() -> Result<()> {
-    let matches = App::new("Viola")
-        .about("Music Player")
-        .version(crate_version!())
-        .arg(
-            Arg::new("update")
-                .short('u')
-                .long("update")
-                .help("Updates the database"),
-        )
-        .arg(
-            Arg::new("fastupdate")
-                .short('f')
-                .value_name("path")
-                .long("fastupdate")
-                .help("Does a fast update of the database, doing a heuristic on time modified"),
-        )
-        .arg(
-            Arg::new("music_dir")
-                .short('m')
-                .takes_value(true)
-                .long("music_dir")
-                .help("Set the music directory"),
-        )
-        .arg(
-            Arg::new("configpath")
-                .short('c')
-                .long("config")
-                .help("Shows the config path"),
-        )
-        .arg(
-            Arg::new("editsmartplaylists")
-                .short('e')
-                .long("editsmartplaylists")
-                .help("Opens an editor to edit the smartplaylist file"),
-        )
-        .arg(
-            Arg::new("no-webview")
-                .short('w')
-                .long("nowebview")
-                .help("Does not run the embedded webview"),
-        )
-        .get_matches();
+    let args = Args::parse();
 
     //env::set_var("RUST_LOG", "actix_web=debug,actix_server=info");
     env_logger::init();
@@ -111,7 +98,7 @@ fn main() -> Result<()> {
         bail!("See Above: ");
     }
     let pool = Arc::new(Mutex::new(tmp_pool.unwrap()));
-    if matches.is_present("update") {
+    if args.update {
         info!("Updating Database");
         let mut pref_reader =
             crate::utils::get_config_file(&utils::ConfigWriteMode::Read).expect("No settings file");
@@ -122,22 +109,22 @@ fn main() -> Result<()> {
             .get("music_dir")
             .context("Could not get musicdir")?;
         db::build_db(music_dir, &pool, true).unwrap();
-    } else if let Some(path) = matches.value_of("fastupdate") {
+    } else if let Some(path) = args.fast_update {
         info!("Updating database with path {}", path);
-        if !std::path::Path::new(path).exists() {
+        if !std::path::Path::new(&path).exists() {
             println!("Path does not seem to exist");
         }
-        db::build_db(path, &pool, false).unwrap();
-    } else if let Some(new_music_dir) = matches.value_of("music_dir") {
+        db::build_db(&path, &pool, false).unwrap();
+    } else if let Some(new_music_dir) = args.music_dir {
         let mut prefs = PreferencesMap::<String>::new();
-        prefs.insert(String::from("music_dir"), String::from(new_music_dir));
+        prefs.insert(String::from("music_dir"), new_music_dir);
         let mut prefs_file = crate::utils::get_config_file(&utils::ConfigWriteMode::Write)
             .expect("Cannot find config");
         prefs
             .save_to(&mut prefs_file)
             .context("Error in saving preferences")?;
         info!("saved music directory");
-    } else if matches.is_present("configpath") {
+    } else if args.config_path {
         let mut p = prefs_base_dir().context("Base dir cannot be founds")?;
         p.push("viola");
         let s = p.to_str().context("Error in convert")?;
@@ -146,11 +133,11 @@ fn main() -> Result<()> {
              if you want to add smartplaylists",
             s
         );
-    } else if matches.is_present("editsmartplaylists") {
+    } else if args.edit_smartplaylist {
         let mut path = prefs_base_dir().context("Could not find base dir")?;
         path.extend(&["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
-    } else if matches.is_present("no-webview") {
+    } else if args.webview {
         //tokio::runtime::Builder::new_current_thread()
         //.enable_all()
         //    .build()
