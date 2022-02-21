@@ -3,9 +3,9 @@ use viola_common::{GStreamerAction, GStreamerMessage, PlaylistTabsJSON, Smartpla
 
 use seed::prelude::*;
 
-const WINDOW_INCREMENT: usize = 100;
+const WINDOW_INCREMENT: usize = 50;
 const WINDOW_INCREMENT_INTERVALL: u32 = 1000;
-const WINDOW_MAX: usize = 500;
+const WINDOW_MAX: usize = 200;
 #[derive(Debug)]
 pub(crate) enum Msg {
     Nop,
