@@ -1027,9 +1027,9 @@ dependencies = [
 
 [[package]]
 name = "gstreamer"
-version = "0.18.3"
+version = "0.18.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a54229ced7e44752bff52360549cd412802a4b1a19852b87346625ca9f6d4330"
+checksum = "8564e2f284af8050f02252c5bb563ef8cbd4363403013ad4755852f743ca8c43"
 dependencies = [
  "bitflags",
  "cfg-if 1.0.0",
@@ -2775,7 +2775,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "viola"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "anyhow",
  "base64",

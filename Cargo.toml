@@ -19,7 +19,7 @@ indicatif = { version = "0.16.2", features = ["rayon"] }
 image = "0.24.0"
 humantime = "2.1.0"
 taglib = "1.0.0"
-gstreamer = "0.18.3"
+gstreamer = "0.18.5"
 glib = "0.15.5"
 percent-encoding = "2.1.0"
 preferences = "1.1.0"
