@@ -64,8 +64,13 @@ pub(crate) struct TreeView {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum SearchString {
+    /// Use the stored Search String
     UseStoredSearch,
+
+    /// Update the stored search string with parameter
     UpdateSearch(String),
+
+    /// The search is empty
     EmptySearch,
 }
 

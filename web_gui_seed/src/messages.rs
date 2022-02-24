@@ -1,7 +1,7 @@
 use crate::models::*;
 use viola_common::{GStreamerAction, GStreamerMessage, PlaylistTabsJSON, Smartplaylists, Track};
 
-use seed::prelude::*;
+use seed::{log, prelude::*};
 
 const WINDOW_INCREMENT: usize = 50;
 const WINDOW_INCREMENT_INTERVALL: u32 = 2000;
@@ -38,6 +38,7 @@ pub(crate) enum Msg {
         model_index: usize,
         tree_index: Vec<usize>,
         result: Vec<String>,
+        query: viola_common::TreeViewQuery,
     },
     TreeWindowIncrement {
         tree_index: usize,
@@ -231,19 +232,17 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             search,
         } => {
             let newsearch = match search {
-                SearchString::EmptySearch => "".to_owned(),
-                SearchString::UpdateSearch(s) => s,
+                SearchString::EmptySearch => None,
+                SearchString::UpdateSearch(s) => Some(s),
                 SearchString::UseStoredSearch => {
-                    model.treeviews.get(model_index).unwrap().search.clone()
+                    Some(model.treeviews.get(model_index).unwrap().search.clone())
                 }
             };
-            let query_search = if newsearch.is_empty() {
-                None
-            } else {
-                Some(model.treeviews.get(model_index).unwrap().search.clone())
-            };
-            model.treeviews.get_mut(model_index).unwrap().search = newsearch;
+
+            model.treeviews.get_mut(model_index).unwrap().search =
+                newsearch.clone().unwrap_or_default();
             let type_vec = model.treeviews.get(model_index).unwrap().type_vec.clone();
+
             if type_vec.len() <= tree_index.len() {
                 //we should not query if there is nothing left to query
                 return;
@@ -253,7 +252,7 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 let data = viola_common::TreeViewQuery {
                     types: type_vec,
                     indices: tree_index.clone(),
-                    search: query_search,
+                    search: newsearch,
                 };
                 let req = Request::new("/libraryview/partial/")
                     .method(Method::Post)
@@ -269,6 +268,7 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                     model_index,
                     tree_index,
                     result,
+                    query: data,
                 }
             });
         }
@@ -276,7 +276,14 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             model_index,
             tree_index,
             result,
+            query,
         } => {
+            if model.treeviews.get(model_index).unwrap().search != query.search.unwrap_or_default()
+            {
+                // we are an old query, we shouldn't do anything
+                return;
+            }
+
             if let Some(treeview) = model.treeviews.get_mut(model_index) {
                 let nodeid = &match tree_index.len() {
                     0 => {
