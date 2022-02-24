@@ -29,7 +29,7 @@ fn update_state(event_sink: druid::ExtEventSink) {
             title: t.title.clone(),
             artist: t.artist.clone(),
         })
-        .take(1000)
+        .take(500)
         .collect();
     event_sink.add_idle_callback(move |data: &mut AppData| {
         data.tracks = modified_tracks;
@@ -40,7 +40,7 @@ pub fn main() {
     // describe the main window
     let main_window = WindowDesc::new(build_root_widget())
         .title("Hello World!")
-        .window_size((400.0, 400.0));
+        .window_size((800.0, 800.0));
 
     // create the initial app state
 
@@ -70,7 +70,7 @@ fn build_root_widget() -> impl Widget<AppData> {
                 Label::new(|item: &TrackStub, _env: &_| format!("{}", item.artist))
                     .align_vertical(UnitPoint::LEFT)
                     .padding(10.0)
-                    .fix_width(100.0)
+                    .fix_width(200.0)
                     .fix_height(50.0)
                     .background(Color::rgb(0.5, 0.5, 0.5)),
             )
@@ -79,7 +79,7 @@ fn build_root_widget() -> impl Widget<AppData> {
                     .align_vertical(UnitPoint::LEFT)
                     .padding(10.0)
                     .fix_height(50.0)
-                    .fix_width(100.0)
+                    .fix_width(200.0)
                     .background(Color::rgb(0.5, 0.5, 0.5)),
             )
     }))
