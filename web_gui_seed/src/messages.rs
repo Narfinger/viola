@@ -4,8 +4,10 @@ use viola_common::{GStreamerAction, GStreamerMessage, PlaylistTabsJSON, Smartpla
 use seed::prelude::*;
 
 const WINDOW_INCREMENT: usize = 50;
-const WINDOW_INCREMENT_INTERVALL: u32 = 1000;
-const WINDOW_MAX: usize = 200;
+const WINDOW_INCREMENT_INTERVALL: u32 = 2000;
+const WINDOW_MAX: usize = 600;
+const WINDOW_INITIAL_SIZE: usize = 50;
+
 #[derive(Debug)]
 pub(crate) enum Msg {
     Nop,
@@ -58,7 +60,9 @@ pub(crate) enum Msg {
 
 pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-        Msg::Nop => {}
+        Msg::Nop => {
+            orders.skip();
+        }
         Msg::InitPlaylistTabs => {
             orders.perform_cmd(async {
                 let response = fetch("/playlisttab/").await.expect("HTTP Request failed");
@@ -89,16 +93,16 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 Msg::InitPlaylistTabRecv((playlisttabs.current, tabs))
                 //Msg::InitPlaylistTabRecv((playlisttabs.current, playlisttabs.iter().map(|tab_name| {PlaylistTab {name: tab_name, tracks: vec![]}}.collect()))
             });
-            orders.send_msg(Msg::RefreshPlayStatus);
+            orders.skip().send_msg(Msg::RefreshPlayStatus);
         }
         Msg::InitPlaylistTabRecv((current, tabs)) => {
             model.playlist_tabs = tabs;
             model.current_playlist_tab = current;
-            orders.send_msg(Msg::PlaylistWindowIncrement);
+            orders.skip().send_msg(Msg::PlaylistWindowIncrement);
         }
         Msg::PlaylistTabDelete(index) => {
             model.playlist_tabs.swap_remove(index);
-            orders.perform_cmd(async move {
+            orders.skip().perform_cmd(async move {
                 let req = Request::new(format!("/playlisttab/{}/", index)).method(Method::Delete);
                 fetch(req).await.expect("Error in sending request");
                 Msg::PlaylistTabChange(0)
@@ -132,14 +136,14 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                     .expect("Error in setting stuff");
                 fetch(req).await.expect("Could not send message");
             });
-            model.playlist_window.current_window = WINDOW_INCREMENT;
-            orders.send_msg(Msg::PlaylistWindowIncrement);
+            model.playlist_window.current_window = WINDOW_INITIAL_SIZE;
+            orders.skip().send_msg(Msg::PlaylistWindowIncrement);
         }
         Msg::Transport(t) => {
             if t == GStreamerAction::RepeatOnce {
                 model.is_repeat_once = true;
             }
-            orders.perform_cmd(async move {
+            orders.skip().perform_cmd(async move {
                 let req = Request::new("/transport/")
                     .method(Method::Post)
                     .json(&t)
@@ -153,7 +157,7 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             });
         }
         Msg::RefreshPlayStatus => {
-            orders.perform_cmd(async {
+            orders.skip().perform_cmd(async {
                 let req = fetch("/transport/").await.expect("Could not send req");
                 let action = req
                     .json::<GStreamerMessage>()
@@ -191,13 +195,13 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             model.get_current_playlist_tab_mut().unwrap().current_index = 0;
             let mut_tracks = model.get_current_playlist_tab_tracks_mut().unwrap();
             *mut_tracks = mut_tracks.split_off(index);
-            orders.perform_cmd(async {
+            orders.skip().perform_cmd(async {
                 let req = Request::new("/clean/").method(Method::Post);
                 fetch(req).await.expect("Could not send request");
             });
         }
         Msg::LoadSmartPlaylistList => {
-            orders.perform_cmd(async {
+            orders.skip().perform_cmd(async {
                 let fill = fetch("/smartplaylist/")
                     .await
                     .expect("Error in request")
@@ -211,7 +215,7 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             model.sidebar.smartplaylists = list;
         }
         Msg::LoadSmartPlaylist(index) => {
-            orders.perform_cmd(async move {
+            orders.skip().perform_cmd(async move {
                 let data = viola_common::LoadSmartPlaylistJson { index };
                 let req = Request::new("/smartplaylist/load/")
                     .method(Method::Post)
@@ -245,7 +249,7 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 return;
             }
 
-            orders.perform_cmd(async move {
+            orders.skip().perform_cmd(async move {
                 let data = viola_common::TreeViewQuery {
                     types: type_vec,
                     indices: tree_index.clone(),
@@ -322,7 +326,7 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
         } => {
             let search = model.treeviews.get(model_index).map(|t| t.search.clone());
             let type_vec = model.treeviews.get(model_index).unwrap().type_vec.clone();
-            orders.perform_cmd(async move {
+            orders.skip().perform_cmd(async move {
                 let data = viola_common::TreeViewQuery {
                     types: type_vec,
                     indices: tree_index,
@@ -381,7 +385,9 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 fetch(req).await.expect("Could not send request");
                 Msg::RefreshPlayStatus
             });
-            orders.send_msg(Msg::PlaylistTabChange(model.current_playlist_tab));
+            orders
+                .skip()
+                .send_msg(Msg::PlaylistTabChange(model.current_playlist_tab));
         }
         Msg::PlayIndexInputChanged(text) => {
             model.play_index_input = Some(text);
@@ -393,7 +399,9 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             if let Some(ref text) = model.play_artist_input {
                 if let Some(tab) = model.playlist_tabs.get(model.current_playlist_tab) {
                     if let Some(index) = tab.tracks.iter().position(|t| t.artist.contains(text)) {
-                        orders.send_msg(Msg::Transport(GStreamerAction::Play(index)));
+                        orders
+                            .skip()
+                            .send_msg(Msg::Transport(GStreamerAction::Play(index)));
                     }
                 }
             }
@@ -404,11 +412,13 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 .as_ref()
                 .and_then(|t| t.parse::<usize>().ok())
             {
-                orders.send_msg(Msg::Transport(GStreamerAction::Play(index.to_owned())));
+                orders
+                    .skip()
+                    .send_msg(Msg::Transport(GStreamerAction::Play(index.to_owned())));
             }
         }
         Msg::Save => {
-            orders.perform_cmd(async {
+            orders.skip().perform_cmd(async {
                 let req = Request::new("/save/").method(Method::Post);
                 fetch(req).await.expect("Could not send request");
             });
