@@ -10,13 +10,11 @@ base64 = "0.13.0"
 clap = { version = "3.1.2", features = ["cargo", "derive"] }
 diesel = { version = "1.4.8", features = ["sqlite", "r2d2"] }
 diesel_migrations = { version = "1.4.0", features = ["sqlite"] }
-erased-serde = "0.3.18"
 error-chain = "0.12.4"
 futures = "0.3.21"
 log = { version = "0.4.14", features = ["max_level_debug", "release_max_level_warn"] }
 env_logger = "0.9.0"
 indicatif = { version = "0.16.2", features = ["rayon"] }
-image = "0.24.0"
 humantime = "2.1.0"
 taglib = "1.0.0"
 gstreamer = "0.18.3"
@@ -29,15 +27,12 @@ serde_json = "1.0.79"
 serde = "1.0.136"
 open = "2.0.3"
 rand = "0.8.5"
-rusqlite = "0.25.1"
 toml = "0.5.8"
-owning_ref = "0.4.1"
 walkdir = "2.3.2"
 web-view = "0.7.3"
 viola_common = {path ="viola_common", features =["backend"]}
 itertools = "0.10.3"
 zbus = "2.1.1"
-bus = "2.2.3"
 parking_lot = { version = "0.12.0", features = ["serde", "deadlock_detection"] }
 warp = "0.3.2"
 tokio = { version = "1.16.1", features = ["full"] }

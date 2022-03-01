@@ -2,7 +2,6 @@
 #[macro_use]
 extern crate anyhow;
 extern crate base64;
-extern crate bus;
 extern crate clap;
 extern crate tokio;
 extern crate warp;
@@ -17,7 +16,6 @@ extern crate log;
 extern crate glib;
 extern crate gstreamer;
 extern crate humantime;
-extern crate image;
 extern crate indicatif;
 extern crate open;
 extern crate preferences;
@@ -27,7 +25,6 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate parking_lot;
-extern crate rusqlite;
 extern crate serde_json;
 extern crate toml;
 extern crate walkdir;
