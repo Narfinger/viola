@@ -58,6 +58,7 @@ pub enum GStreamerMessage {
     Pausing,
     Stopped,
     Playing,
+    IncreasePlayCount(usize),
     Nop,
     ChangedDuration((u64, u64)), //in seconds
 }
@@ -67,6 +68,7 @@ impl std::fmt::Display for GStreamerMessage {
         match self {
             GStreamerMessage::Pausing => write!(f, "Paused"),
             GStreamerMessage::Stopped => write!(f, "Stopped"),
+            GStreamerMessage::IncreasePlayCount(_) => write!(f, "IncreasePlayCount"),
             GStreamerMessage::Playing => write!(f, "Playing"),
             GStreamerMessage::Nop => write!(f, "NOP"),
             GStreamerMessage::ChangedDuration((_, _)) => write!(f, "NOP"),

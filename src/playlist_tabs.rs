@@ -45,6 +45,7 @@ pub trait PlaylistTabsExt {
     fn set_tab(&self, index: usize);
     fn restore_tab_position(&self);
     fn save_tab_position(&self);
+    fn update_current_playcount(&self);
 }
 
 impl PlaylistTabsExt for PlaylistTabsPtr {
@@ -142,6 +143,15 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
             .save_to(&mut file_write)
             .expect("Error in writing prefs");
     }
+
+    fn update_current_playcount(&self) {
+        let index = self.read().current_pl;
+        self.read()
+            .pls
+            .get(index)
+            .unwrap()
+            .update_current_playcount();
+    }
 }
 
 impl LoadedPlaylistExt for PlaylistTabsPtr {
@@ -168,6 +178,10 @@ impl LoadedPlaylistExt for PlaylistTabsPtr {
 
     fn clean(&self) {
         self.current(LoadedPlaylistExt::clean);
+    }
+
+    fn update_current_playcount(&self) {
+        self.current(LoadedPlaylistExt::update_current_playcount);
     }
 }
 

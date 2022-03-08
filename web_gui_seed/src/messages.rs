@@ -430,8 +430,21 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 fetch(req).await.expect("Could not send request");
             });
         }
-        Msg::GStreamerMessage(msg) => {
-            model.play_status = msg;
-        }
+        Msg::GStreamerMessage(msg) => match msg {
+            GStreamerMessage::Pausing | GStreamerMessage::Playing | GStreamerMessage::Stopped => {
+                model.play_status = msg
+            }
+            GStreamerMessage::Nop | GStreamerMessage::ChangedDuration((_, _)) => {}
+            GStreamerMessage::IncreasePlayCount(index) => {
+                let playcount: &mut i32 = model
+                    .get_current_playlist_tab_tracks_mut()
+                    .unwrap()
+                    .get_mut(index)
+                    .unwrap()
+                    .playcount
+                    .get_or_insert(0);
+                *playcount += 1;
+            }
+        },
     }
 }

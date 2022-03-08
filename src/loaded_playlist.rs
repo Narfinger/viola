@@ -24,6 +24,7 @@ pub trait LoadedPlaylistExt {
     //fn get_items_reader(&self) -> std::rc::Rc<dyn erased_serde::Serialize>;
     fn get_remaining_length(&self) -> u64;
     fn clean(&self);
+    fn update_current_playcount(&self);
 }
 
 pub trait SavePlaylistExt {
@@ -75,6 +76,13 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
         let mut s = self.write();
         s.items.drain(0..index);
         s.current_position = 0;
+    }
+
+    fn update_current_playcount(&self) {
+        let index = self.current_position();
+        let mut s = self.write();
+        let mut item = s.items.get_mut(index).unwrap();
+        item.playcount = Some(item.playcount.unwrap_or(0) + 1);
     }
 }
 

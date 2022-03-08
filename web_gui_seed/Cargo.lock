@@ -711,7 +711,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "viola_common"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -809,7 +809,7 @@ dependencies = [
 
 [[package]]
 name = "web_gui_seed"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "console_error_panic_hook",
  "const_format",

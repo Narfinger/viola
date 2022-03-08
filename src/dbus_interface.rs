@@ -279,7 +279,7 @@ pub(crate) async fn main(
                             .await
                             .unwrap();
                     }
-                    GStreamerMessage::Nop => {}
+                    GStreamerMessage::Nop | GStreamerMessage::IncreasePlayCount(_) => {}
                 }
             }
         });

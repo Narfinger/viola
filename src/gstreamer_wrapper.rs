@@ -255,11 +255,19 @@ impl GStreamerExt for GStreamer {
         use crate::db::UpdatePlayCount;
         info!("Handling EOS");
 
+        self.current_playlist.update_current_playcount();
+
+        //we want to separately update the playcount in the database because we never want to miss if something was played
         let mut old_track = self.current_playlist.get_current_track();
         let pc = self.pool.clone();
         std::thread::spawn(move || {
             old_track.update_playcount(pc);
         });
+        self.sender
+            .send(GStreamerMessage::IncreasePlayCount(
+                self.current_playlist.current_position(),
+            ))
+            .expect("Error in sending gstreamer message");
 
         let res = if self.repeat_once.load(Ordering::Acquire) {
             info!("we are repeat playing");
