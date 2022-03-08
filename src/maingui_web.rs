@@ -273,29 +273,33 @@ async fn handle_gstreamer_messages(
     while rx.changed().await.is_ok() {
         let state = state.clone();
         let val = *rx.borrow();
-        if val == viola_common::GStreamerMessage::Playing {
-            let state = state.clone();
-            let pos = state.read().await.playlist_tabs.current_position();
-            tokio::spawn(async move {
-                //let state = state.clone();
-                my_websocket::send_my_message(&state.read().await.ws, WsMessage::PlayChanged(pos))
+
+        match val {
+            viola_common::GStreamerMessage::Playing => {
+                let state = state.clone();
+                let pos = state.read().await.playlist_tabs.current_position();
+                tokio::spawn(async move {
+                    //let state = state.clone();
+                    my_websocket::send_my_message(
+                        &state.read().await.ws,
+                        WsMessage::PlayChanged(pos),
+                    )
                     .await;
-            });
-        }
-        if vec![
-            viola_common::GStreamerMessage::Pausing,
-            viola_common::GStreamerMessage::Stopped,
-        ]
-        .contains(&val)
-        {
-            tokio::spawn(async move {
-                //let state = state.clone();
-                my_websocket::send_my_message(
-                    &state.read().await.ws,
-                    WsMessage::GStreamerMessage(val),
-                )
-                .await;
-            });
+                });
+            }
+            GStreamerMessage::Pausing
+            | GStreamerMessage::Stopped
+            | GStreamerMessage::IncreasePlayCount(_) => {
+                tokio::spawn(async move {
+                    //let state = state.clone();
+                    my_websocket::send_my_message(
+                        &state.read().await.ws,
+                        WsMessage::GStreamerMessage(val),
+                    )
+                    .await;
+                });
+            }
+            GStreamerMessage::Nop | GStreamerMessage::ChangedDuration(_) => {}
         }
     }
 }
