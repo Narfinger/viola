@@ -36,7 +36,7 @@ pub fn new(
     let element = {
         let playbin = gstreamer::ElementFactory::make("playbin", None)
             .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        playbin.set_property("volume", 0.5 as f64);
+        playbin.set_property("volume", 0.5_f64);
         /* based on
                bin = gst_bin_new ("audio_sink_bin");
         gst_bin_add_many (GST_BIN (bin), equalizer, convert, sink, NULL);

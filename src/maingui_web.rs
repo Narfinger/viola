@@ -324,7 +324,7 @@ pub async fn run(pool: DBPool) {
         println!("Starting dbus");
         let plt = plt.clone();
         let gst = gst.clone();
-        tokio::spawn(async move { crate::dbus_interface::main(gst, plt, rx) });
+        tokio::spawn(async move { crate::dbus_interface::main(gst, plt, rx).await });
     }
 
     println!("Setting up gui");
