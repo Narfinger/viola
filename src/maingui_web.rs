@@ -267,12 +267,11 @@ type WebGuiData = Arc<RwLock<WebGui>>;
 /// blocking function that handles messages on the GStreamer Bus
 async fn handle_gstreamer_messages(
     state: WebGuiData,
-    rx: tokio::sync::watch::Receiver<viola_common::GStreamerMessage>,
+    rx: &mut tokio::sync::broadcast::Receiver<viola_common::GStreamerMessage>,
 ) {
-    let mut rx = rx;
-    while rx.changed().await.is_ok() {
+    while let Ok(val) = rx.recv().await {
         let state = state.clone();
-        let val = *rx.borrow();
+        //let val = *rx.borrow();
 
         match val {
             viola_common::GStreamerMessage::Playing => {
@@ -316,20 +315,16 @@ pub async fn run(pool: DBPool) {
     let plt = crate::playlist_tabs::load(&pool).expect("Failure to load old playlists");
 
     println!("Starting gstreamer");
-    let (rx, tx) = tokio::sync::watch::channel(GStreamerMessage::Nop);
-    //let mut bus = bus::Bus::new(50);
-    let websocket_recv = tx.clone();
-    let gst = gstreamer_wrapper::new(plt.clone(), pool.clone(), rx)
-        .expect("Error Initializing gstreamer");
+    let (tx, rx) = tokio::sync::broadcast::channel(10);
+    let mut websocket_recv = tx.subscribe();
 
+    let gst = gstreamer_wrapper::new(plt.clone(), pool.clone(), tx)
+        .expect("Error Initializing gstreamer");
     {
         println!("Starting dbus");
-        let dbus_recv = tx.clone();
-        tokio::spawn(crate::dbus_interface::main(
-            gst.clone(),
-            plt.clone(),
-            dbus_recv,
-        ));
+        let plt = plt.clone();
+        let gst = gst.clone();
+        tokio::spawn(async move { crate::dbus_interface::main(gst, plt, rx) });
     }
 
     println!("Setting up gui");
@@ -345,7 +340,7 @@ pub async fn run(pool: DBPool) {
 
     {
         let datac = state.clone();
-        tokio::spawn(async move { handle_gstreamer_messages(datac, websocket_recv).await });
+        tokio::spawn(async move { handle_gstreamer_messages(datac, &mut websocket_recv).await });
     }
     {
         let datac = state.clone();

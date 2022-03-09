@@ -218,7 +218,7 @@ impl PlayerInterface {
 pub(crate) async fn main(
     gstreamer: Arc<RwLock<GStreamer>>,
     playlisttabs: PlaylistTabsPtr,
-    bus: tokio::sync::watch::Receiver<GStreamerMessage>,
+    bus: tokio::sync::broadcast::Receiver<GStreamerMessage>,
 ) -> Result<(), String> {
     println!("Starting dbus");
     let handler = BaseInterface {};
@@ -249,7 +249,7 @@ pub(crate) async fn main(
 
     {
         //let conn = conn.clone();
-        let mut bus = bus.clone();
+        //let mut bus = bus.clone();
         tokio::task::spawn(async move {
             println!("doing signal");
             let iface_ref = conn
@@ -258,8 +258,8 @@ pub(crate) async fn main(
                 .await
                 .unwrap();
             let iface = iface_ref.get_mut().await;
-            while bus.changed().await.is_ok() {
-                let val = *bus.borrow();
+            let mut bus = bus;
+            while let Ok(val) = bus.recv().await {
                 match val {
                     GStreamerMessage::Playing
                     | GStreamerMessage::Pausing

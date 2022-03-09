@@ -14,7 +14,7 @@ pub struct GStreamer {
     element: gstreamer::Element,
     current_playlist: PlaylistTabsPtr,
     /// Handles gstreamer changes to the gui
-    sender: tokio::sync::watch::Sender<GStreamerMessage>,
+    sender: tokio::sync::broadcast::Sender<GStreamerMessage>,
     pool: DBPool,
     repeat_once: AtomicBool,
 }
@@ -30,13 +30,13 @@ impl Drop for GStreamer {
 pub fn new(
     current_playlist: PlaylistTabsPtr,
     pool: DBPool,
-    msg_bus: tokio::sync::watch::Sender<GStreamerMessage>,
+    msg_bus: tokio::sync::broadcast::Sender<GStreamerMessage>,
 ) -> Result<Arc<RwLock<GStreamer>>, String> {
     gstreamer::init().unwrap();
     let element = {
         let playbin = gstreamer::ElementFactory::make("playbin", None)
             .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
-        playbin.set_property("volume", 0.5);
+        playbin.set_property("volume", 0.5 as f64);
         /* based on
                bin = gst_bin_new ("audio_sink_bin");
         gst_bin_add_many (GST_BIN (bin), equalizer, convert, sink, NULL);
@@ -101,7 +101,7 @@ pub fn new(
 
     let resc = res.clone();
     // this has to be a real thread as otherwise the send in gstreamer_handle_eos does not work correctly.
-    std::thread::spawn(move || {
+    tokio::spawn(async move {
         use gstreamer::MessageView;
         for msg in bus.iter_timed(gstreamer::ClockTime::NONE) {
             match msg.view() {
@@ -261,7 +261,7 @@ impl GStreamerExt for GStreamer {
         //we want to separately update the playcount in the database because we never want to miss if something was played
         let mut old_track = self.current_playlist.get_current_track();
         let pc = self.pool.clone();
-        std::thread::spawn(move || {
+        tokio::spawn(async move {
             old_track.update_playcount(pc);
         });
         self.sender
