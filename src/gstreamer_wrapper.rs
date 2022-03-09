@@ -100,6 +100,7 @@ pub fn new(
     }));
 
     let resc = res.clone();
+    // this has to be a real thread as otherwise the send in gstreamer_handle_eos does not work correctly.
     std::thread::spawn(move || {
         use gstreamer::MessageView;
         for msg in bus.iter_timed(gstreamer::ClockTime::NONE) {
