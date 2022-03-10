@@ -1,5 +1,5 @@
 ## Synopsis
-Build: [![CircleCI](https://circleci.com/gh/Narfinger/viola.svg?style=svg)](https://circleci.com/gh/Narfinger/viola)
+[![CI](https://github.com/Narfinger/viola/actions/workflows/rust.yml/badge.svg)](https://github.com/Narfinger/viola/actions/workflows/rust.yml)
 
 History:
 - Backend written in rust using gstreamer and taglib.
