@@ -161,7 +161,7 @@ fn tags_equal(nt: &NewTrack, ot: &Track) -> bool {
 }
 
 fn insert_track_with_error_retries(s: &str, db: &DBPool) -> Result<(), String> {
-    let mut i = 2;
+    let mut i = 3;
     let mut res = Err("retry".into());
     while res.is_err() {
         res = insert_track(s, db);
@@ -169,8 +169,7 @@ fn insert_track_with_error_retries(s: &str, db: &DBPool) -> Result<(), String> {
         if res.is_ok() {
             return res;
         } else if i > 0 {
-            let ten_millis = time::Duration::from_millis(10);
-            thread::sleep(ten_millis);
+            thread::sleep(time::Duration::from_secs(2));
         } else if i <= 0 {
             return res;
         }
