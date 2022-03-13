@@ -5,7 +5,7 @@ use seed::{log, prelude::*};
 
 const WINDOW_INCREMENT: usize = 50;
 const WINDOW_INCREMENT_INTERVALL: u32 = 2000;
-const WINDOW_MAX: usize = 200;
+const WINDOW_MAX: usize = 100;
 const WINDOW_INITIAL_SIZE: usize = 50;
 
 #[derive(Debug)]
