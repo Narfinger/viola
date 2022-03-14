@@ -17,7 +17,7 @@ env_logger = "0.9.0"
 indicatif = { version = "0.16.2", features = ["rayon"] }
 humantime = "2.1.0"
 taglib = "1.0.0"
-gstreamer = "0.18.5"
+gstreamer = "0.18.6"
 glib = "0.15.9"
 percent-encoding = "2.1.0"
 preferences = "1.1.0"
