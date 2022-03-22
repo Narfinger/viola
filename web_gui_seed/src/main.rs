@@ -666,6 +666,7 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
                 button![
                     C!["btn", "btn-primary"],
                     attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-dismiss") => HSIDEBAR_ID],
+                    icon("/window-fullscreen.svg", Some(20)),
                     "Show Full Playlist Window",
                     ev(Ev::Click, |_| Msg::FullPlaylistWindow),
                 ],
@@ -676,6 +677,7 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
                 button![
                     C!["btn", "btn-primary"],
                     attrs![At::from("data-bs-toggle") => "modal", At::from("data-bs-target") => HPLAY_INDEX_MODAL_ID, At::from("data-bs-dismiss") => HSIDEBAR_ID],
+                    icon("/play-btn.svg", Some(20)),
                     "Play Index",
                 ]
             ],
@@ -694,6 +696,7 @@ fn sidebar_navigation(_model: &Model, treeviews: &[TreeView]) -> Node<Msg> {
                 button![
                     C!["btn", "btn-success"],
                     ev(Ev::Click, |_| Msg::Save),
+                    icon("/save.svg", Some(20)),
                     "Save"
                 ]
             ]
