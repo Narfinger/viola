@@ -11,19 +11,34 @@ const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ').add(b'#');
 pub struct LoadedPlaylist {
     /// The id we have in the database for it. If none, means this was not yet saved
     pub id: i32,
+
+    /// Name of the Playlist
     pub name: String,
+
+    /// All the tracks in the playlist
     pub items: Vec<Track>,
+
+    /// The current position of the playlist
     pub current_position: usize,
 }
 
 pub trait LoadedPlaylistExt {
+    /// Returns the current track
     fn get_current_track(&self) -> Track;
+
+    /// get the added time of the whole playlist
     fn get_playlist_full_time(&self) -> i64;
+
+    /// returns the raw current_position
     fn current_position(&self) -> usize;
-    //fn items(&self) -> RwLockReadGuardRef<LoadedPlaylist, Vec<Track>>;
-    //fn get_items_reader(&self) -> std::rc::Rc<dyn erased_serde::Serialize>;
+
+    /// get the remaining length, ignoring already played tracks and the current playling track
     fn get_remaining_length(&self) -> u64;
+
+    /// removes all tracks that are smaller than the current position
     fn clean(&self);
+
+    /// update the current playcount only in the datastructure, not in the current database
     fn update_current_playcount(&self);
 }
 
@@ -54,12 +69,6 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
     fn current_position(&self) -> usize {
         self.read().current_position
     }
-
-    //fn get_items_reader(&self) -> std::rc::Rc<dyn erased_serde::Serialize> {
-    //    std::rc::Rc::new(LoadedPlaylistReader {
-    //        guard: RwLockReadGuardRef::new(self.read().unwrap()).map(|s| &s.items),
-    //    })
-    //}
 
     fn get_remaining_length(&self) -> u64 {
         let current_position = self.current_position();
@@ -151,11 +160,17 @@ impl SavePlaylistExt for LoadedPlaylistPtr {
 }
 
 pub trait PlaylistControls {
+    /// Get current track path
     fn get_current_path(&self) -> Option<PathBuf>;
+    /// Get current track uri
     fn get_current_uri(&self) -> Option<String>;
+    /// Get previous position, wraps to zero
     fn previous(&self) -> Option<usize>;
+    /// set the current position and return it
     fn set(&self, _: usize) -> usize;
+    /// delete the tracks in range where the range is inclusive
     fn delete_range(&self, _: std::ops::Range<usize>);
+    /// sets the position to the next one or zero if we are eol. Returns None if we are eol otherwise the position.
     fn next_or_eol(&self) -> Option<usize>;
 }
 
