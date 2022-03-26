@@ -362,39 +362,45 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             let range = model.delete_range_input.take().unwrap();
             let size = model.get_current_playlist_tab_tracks().unwrap().len();
             let strings: Vec<&str> = range.split('-').collect();
-            let start: usize = std::str::FromStr::from_str(strings.get(0).unwrap()).unwrap();
-            let end: usize = strings
-                .get(1)
-                .and_then(|t| std::str::FromStr::from_str(t).ok())
-                .unwrap_or(size - 1);
-            let range = std::ops::Range { start, end };
-            //remove in our model
-            let new_playlist = model
-                .get_current_playlist_tab_tracks()
-                .unwrap()
-                .iter()
-                .enumerate()
-                .skip_while(|(index, _)| start <= *index && *index <= end)
-                .map(|(_, val)| val)
-                .cloned()
-                .collect();
-            model
-                .playlist_tabs
-                .get_mut(model.current_playlist_tab)
-                .unwrap()
-                .tracks = new_playlist;
+            if strings.len() <= 1 {
+                seed::browser::util::window()
+                    .alert_with_message("Not deleting as no hyphen found")
+                    .expect("error in window");
+            } else {
+                let start: usize = std::str::FromStr::from_str(strings.get(0).unwrap()).unwrap();
+                let end: usize = strings
+                    .get(1)
+                    .and_then(|t| std::str::FromStr::from_str(t).ok())
+                    .unwrap_or(size - 1);
+                let range = std::ops::Range { start, end };
+                //remove in our model
+                let new_playlist = model
+                    .get_current_playlist_tab_tracks()
+                    .unwrap()
+                    .iter()
+                    .enumerate()
+                    .skip_while(|(index, _)| start <= *index && *index <= end)
+                    .map(|(_, val)| val)
+                    .cloned()
+                    .collect();
+                model
+                    .playlist_tabs
+                    .get_mut(model.current_playlist_tab)
+                    .unwrap()
+                    .tracks = new_playlist;
 
-            orders.perform_cmd(async move {
-                let req = Request::new("/deletefromplaylist/")
-                    .method(Method::Delete)
-                    .json(&range)
-                    .expect("Could not construct request");
-                fetch(req).await.expect("Could not send request");
-                Msg::RefreshPlayStatus
-            });
-            orders
-                .skip()
-                .send_msg(Msg::PlaylistTabChange(model.current_playlist_tab));
+                orders.perform_cmd(async move {
+                    let req = Request::new("/deletefromplaylist/")
+                        .method(Method::Delete)
+                        .json(&range)
+                        .expect("Could not construct request");
+                    fetch(req).await.expect("Could not send request");
+                    Msg::RefreshPlayStatus
+                });
+                orders
+                    .skip()
+                    .send_msg(Msg::PlaylistTabChange(model.current_playlist_tab));
+            }
         }
         Msg::PlayIndexInputChanged(text) => {
             model.play_index_input = Some(text);
