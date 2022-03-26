@@ -814,7 +814,7 @@ fn view_deleterangemodal(_model: &Model) -> Node<Msg> {
                         small![
                             attrs!(At::Id => "rangeinputhelp"),
                             C!["form-text", "text-muted"],
-                            "Number-Number or Number- to have it till the ned"
+                            "Number-Number or Number- to have it till the ned. These ranges are inclusive."
                         ],
                     ]],
                 ],
