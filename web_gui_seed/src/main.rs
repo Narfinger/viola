@@ -21,7 +21,7 @@ const TABLE_WIDTH: &[&str; 9] = &["5%", "2%", "25%", "20%", "20%", "15%", "5%", 
 
 //notice that this does not include all types
 //[title, artist, album, genre]
-const CHARS_PER_COLUM: &[usize; 4] = &[30, 30, 25, 30];
+const CHARS_PER_COLUM: &[usize; 4] = &[40, 30, 25, 30];
 
 const DELETE_RANGE_MODAL_ID: &str = "deleterange_modal";
 const HDELETE_RANGE_MODAL_ID: &str = concatcp!("#", DELETE_RANGE_MODAL_ID);
@@ -262,7 +262,7 @@ fn view_track(
                 GStreamerAction::Play(pos)
             )),
         ],
-        td![&t.tracknumber],
+        td![style!(St::TextAlign => "center"), &t.tracknumber],
         td![
             style!(St::Overflow => "hidden", St::TextOverflow => "ellipsis"),
             &t.title.chars().take(CHARS_PER_COLUM[0]).collect::<String>(),
@@ -280,9 +280,9 @@ fn view_track(
             style!(St::Overflow => "hidden", St::TextOverflow => "ellipsis"),
             &t.genre.chars().take(CHARS_PER_COLUM[3]).collect::<String>(),
         ],
-        td![&t.year,],
-        td![&length,],
-        td![&t.playcount.unwrap_or(0)],
+        td![style!(St::TextAlign => "center"), &t.year,],
+        td![style!(St::TextAlign => "center"), &length,],
+        td![style!(St::TextAlign => "center"), &t.playcount.unwrap_or(0)],
         ev(Ev::DblClick, move |_| Msg::Transport(
             GStreamerAction::Play(pos)
         ))
@@ -462,8 +462,11 @@ fn view_tree_lvl3(
     index2: usize,
     el: indextree::NodeId,
 ) -> Node<Msg> {
-    ul![el
+    ul![
+        style!(St::from("list-style-type") => "disclosure-closed"),
+        el
     .children(&treeview.tree)
+    .filter(|node| !node.is_removed(&treeview.tree))
     .enumerate()
     .map(|(index3, el2)| {
         li![span![
@@ -488,8 +491,13 @@ fn view_tree_lvl2(
     index: usize,
     nodeid: indextree::NodeId,
 ) -> Node<Msg> {
-    ul![nodeid
+    let no_children = nodeid.children(&treeview.tree).count() == 0;
+    ul![
+        IF!(no_children => style!(St::from("list-style-type") => "disclosure-closed")),
+        IF!(!no_children => style!(St::from("list-style-type") => "disclosure-closed")),
+    nodeid
     .children(&treeview.tree)
+    .filter(|node| !node.is_removed(&treeview.tree))
     .enumerate()
     .map(|(index2, el)| {
         li![
@@ -525,27 +533,32 @@ fn view_tree_lvl1(
     model_index: usize,
     index: usize,
 ) -> Node<Msg> {
-    li![span![
+    let no_children = nodeid.children(&treeview.tree).count() == 0;
+    li![
+        IF!(no_children => style!(St::from("list-style-type") => "disclosure-closed")),
+        IF!(!no_children => style!(St::from("list-style-type") => "disclosure-closed")),
         span![
-            treeview.tree.get(nodeid).unwrap().get(),
-            mouse_ev(Ev::Click, move |_| Msg::FillTreeView {
-                model_index,
-                tree_index: vec![index],
-                search: SearchString::UseStoredSearch,
-            })
+            span![
+                treeview.tree.get(nodeid).unwrap().get(),
+                mouse_ev(Ev::Click, move |_| Msg::FillTreeView {
+                    model_index,
+                    tree_index: vec![index],
+                    search: SearchString::UseStoredSearch,
+                })
+            ],
+            button![
+                C!["btn", "btn-outline-primary", "btn-sm"],
+                style!(St::MarginLeft => unit!(25,px)),
+                attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => "artisttree"),
+                "Load",
+                ev(Ev::Click, move |_| Msg::LoadFromTreeView {
+                    tree_index: vec![index],
+                    model_index,
+                }),
+            ],
+            view_tree_lvl2(treeview, model_index, index, nodeid),
         ],
-        button![
-            C!["btn", "btn-outline-primary", "btn-sm"],
-            style!(St::MarginLeft => unit!(25,px)),
-            attrs!(At::from("data-bs-dismiss") => "modal", At::from("data-bs-target") => "artisttree"),
-            "Load",
-            ev(Ev::Click, move |_| Msg::LoadFromTreeView {
-                tree_index: vec![index],
-                model_index,
-            }),
-        ],
-        view_tree_lvl2(treeview, model_index, index, nodeid)
-    ],]
+    ]
 }
 
 fn view_tree(model: &Model, treeviews: &[TreeView]) -> Vec<Node<Msg>> {
@@ -594,6 +607,7 @@ fn view_tree(model: &Model, treeviews: &[TreeView]) -> Vec<Node<Msg>> {
                                 ul![treeview
                                     .root
                                     .children(&treeview.tree)
+                                    .filter(|node| !node.is_removed(&treeview.tree))
                                     .take(treeview.current_window)
                                     .enumerate()
                                     .map(|(i, tree)| view_tree_lvl1(

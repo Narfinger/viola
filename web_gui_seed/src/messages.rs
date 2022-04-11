@@ -231,6 +231,28 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             tree_index,
             search,
         } => {
+            let type_vec = model.treeviews.get(model_index).unwrap().type_vec.clone();
+            let treeview = model.treeviews.get_mut(model_index).unwrap();
+            if let Some(nodeid) = tree_index_to_nodeid(&tree_index, treeview) {
+                let arena: &mut indextree::Arena<String> = &mut treeview.tree;
+                // if we already have children we are going to remove them (we clicked it again to close)
+                // and afterwards we return without querying
+                let node_children = nodeid.children(arena).collect::<Vec<indextree::NodeId>>();
+                let mut removed = false;
+                for i in &node_children {
+                    i.remove_subtree(arena);
+                    removed = true;
+                }
+                if removed {
+                    return;
+                }
+            }
+
+            if type_vec.len() <= tree_index.len() {
+                //we should not query if there is nothing left to query
+                return;
+            }
+
             let newsearch = match search {
                 SearchString::EmptySearch => None,
                 SearchString::UpdateSearch(s) => Some(s),
@@ -241,12 +263,6 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
 
             model.treeviews.get_mut(model_index).unwrap().search =
                 newsearch.clone().unwrap_or_default();
-            let type_vec = model.treeviews.get(model_index).unwrap().type_vec.clone();
-
-            if type_vec.len() <= tree_index.len() {
-                //we should not query if there is nothing left to query
-                return;
-            }
 
             orders.skip().perform_cmd(async move {
                 let data = viola_common::TreeViewQuery {
@@ -285,25 +301,7 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             }
 
             if let Some(treeview) = model.treeviews.get_mut(model_index) {
-                let nodeid = &match tree_index.len() {
-                    0 => {
-                        // this means we are the second message, hence we need to clear our arena (and make a new root node)
-                        let mut arena = indextree::Arena::new();
-                        let root = arena.new_node("".to_string());
-                        treeview.tree = arena;
-                        treeview.root = root;
-                        Some(treeview.root)
-                    }
-                    1 => treeview.root.children(&treeview.tree).nth(tree_index[0]),
-                    2 => treeview
-                        .root
-                        .children(&treeview.tree)
-                        .nth(tree_index[0])
-                        .map(|t| t.children(&treeview.tree))
-                        .and_then(|mut t| t.nth(tree_index[1])),
-                    _ => None,
-                };
-                if let Some(nodeid) = nodeid {
+                if let Some(nodeid) = tree_index_to_nodeid(&tree_index, treeview) {
                     if nodeid.children(&treeview.tree).next().is_none() {
                         for i in result {
                             let new_node = treeview.tree.new_node(i);
@@ -452,5 +450,31 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 *playcount += 1;
             }
         },
+    }
+}
+
+/// Converts a given tree index to an nodeid in the indextree
+/// This also prepares the root
+fn tree_index_to_nodeid(
+    tree_index: &[usize],
+    treeview: &mut TreeView,
+) -> Option<indextree::NodeId> {
+    match tree_index.len() {
+        0 => {
+            // this means we are the second message, hence we need to clear our arena (and make a new root node)
+            let mut arena = indextree::Arena::new();
+            let root = arena.new_node("".to_string());
+            treeview.tree = arena;
+            treeview.root = root;
+            Some(treeview.root)
+        }
+        1 => treeview.root.children(&treeview.tree).nth(tree_index[0]),
+        2 => treeview
+            .root
+            .children(&treeview.tree)
+            .nth(tree_index[0])
+            .map(|t| t.children(&treeview.tree))
+            .and_then(|mut t| t.nth(tree_index[1])),
+        _ => None,
     }
 }
