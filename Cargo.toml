@@ -27,7 +27,7 @@ serde_json = "1.0.79"
 serde = "1.0.136"
 open = "2.1.1"
 rand = "0.8.5"
-toml = "0.5.8"
+toml = "0.5.9"
 walkdir = "2.3.2"
 web-view = "0.7.3"
 viola_common = {path ="viola_common", features =["backend"]}
