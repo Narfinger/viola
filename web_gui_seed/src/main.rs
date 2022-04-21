@@ -21,7 +21,7 @@ const TABLE_WIDTH: &[&str; 9] = &["5%", "2%", "25%", "20%", "20%", "15%", "5%", 
 
 //notice that this does not include all types
 //[title, artist, album, genre]
-const CHARS_PER_COLUM: &[usize; 4] = &[40, 30, 25, 30];
+const CHARS_PER_COLUM: &[usize; 4] = &[37, 30, 30, 30];
 
 const DELETE_RANGE_MODAL_ID: &str = "deleterange_modal";
 const HDELETE_RANGE_MODAL_ID: &str = concatcp!("#", DELETE_RANGE_MODAL_ID);
