@@ -138,6 +138,7 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 fetch(req).await.expect("Could not send message");
             });
             model.playlist_window.current_window = WINDOW_INITIAL_SIZE;
+            model.changed_playtab_without_playing = true;
             orders.skip().send_msg(Msg::PlaylistWindowIncrement);
         }
         Msg::Transport(t) => {
@@ -223,8 +224,8 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                     .json(&data)
                     .expect("could not construct query");
                 fetch(req).await.expect("Could not send request");
-                Msg::InitPlaylistTabs
             });
+            orders.perform_cmd(cmds::timeout(500, || Msg::InitPlaylistTabs));
         }
         Msg::FillTreeView {
             model_index,
@@ -435,8 +436,10 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             });
         }
         Msg::GStreamerMessage(msg) => match msg {
-            GStreamerMessage::Pausing | GStreamerMessage::Playing | GStreamerMessage::Stopped => {
-                model.play_status = msg
+            GStreamerMessage::Pausing | GStreamerMessage::Stopped => model.play_status = msg,
+            GStreamerMessage::Playing => {
+                model.play_status = msg;
+                model.changed_playtab_without_playing = false;
             }
             GStreamerMessage::Nop | GStreamerMessage::ChangedDuration((_, _)) => {}
             GStreamerMessage::IncreasePlayCount(index) => {

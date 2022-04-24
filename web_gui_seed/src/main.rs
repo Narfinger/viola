@@ -111,6 +111,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         delete_range_input: None,
         play_index_input: None,
         play_artist_input: None,
+        changed_playtab_without_playing: false,
     }
 }
 
@@ -124,22 +125,24 @@ fn icon(path: &str, size: Option<usize>) -> Node<Msg> {
 }
 
 fn view_buttons(model: &Model) -> Node<Msg> {
-    let play_button: seed::virtual_dom::node::Node<Msg> =
-        if model.play_status == GStreamerMessage::Playing {
-            button![
-                C!["btn", "btn-success"],
-                icon("/pause.svg", Some(22)),
-                "Pause",
-                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
-            ]
-        } else {
-            button![
-                C!["btn", "btn-success"],
-                icon("/play.svg", None),
-                "Play",
-                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Playing))
-            ]
-        };
+    let play_button: seed::virtual_dom::node::Node<Msg> = if model.play_status
+        != GStreamerMessage::Playing
+        || model.changed_playtab_without_playing
+    {
+        button![
+            C!["btn", "btn-success"],
+            icon("/play.svg", None),
+            "Play",
+            ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Playing))
+        ]
+    } else {
+        button![
+            C!["btn", "btn-success"],
+            icon("/pause.svg", Some(22)),
+            "Pause",
+            ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
+        ]
+    };
     div![
         C!["container"],
         div![
@@ -250,10 +253,16 @@ fn view_track(
     t: &Track,
     is_selected: bool,
     pos: usize,
+    changed_playtab_without_playing: bool,
 ) -> Node<Msg> {
     let length = format!("{}:{:02}", t.length / 60, t.length % 60);
+    let color = if changed_playtab_without_playing {
+        style!(St::Color => "Red")
+    } else {
+        style!(St::Color => "Green")
+    };
     tr![
-        IF!(is_selected => style!(St::Color => "Red")),
+        IF!(is_selected => color),
         td![
             IF!(is_selected && *playstatus==GStreamerMessage::Playing => icon("/play.svg", Some(16))),
             IF!(is_selected && *playstatus==GStreamerMessage::Pausing => icon("/pause.svg", Some(16))),
@@ -901,7 +910,8 @@ fn view(model: &Model) -> Node<Msg> {
                                     &model.play_status,
                                     t,
                                     is_selected,
-                                    pos
+                                    pos,
+                                    model.changed_playtab_without_playing
                                 )),]
                         ]
                     ],

@@ -16,6 +16,8 @@ pub(crate) struct Model {
     pub delete_range_input: Option<String>,
     pub play_index_input: Option<String>,
     pub play_artist_input: Option<String>,
+    /// shows if we changed the playlist tab but the current_playing and paused track is still on the old tab.
+    pub changed_playtab_without_playing: bool,
 }
 impl Model {
     pub fn get_current_playlist_tab_tracks_mut(&mut self) -> Option<&mut Vec<Track>> {
