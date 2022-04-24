@@ -192,7 +192,9 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             if let Some(tab) = model.playlist_tabs.get_mut(model.current_playlist_tab) {
                 tab.current_index = index;
             }
-            model.current_playing_tab = None;
+            if let Some(current_playing_tab) = model.current_playing_tab {
+                orders.send_msg(Msg::PlaylistTabChange(current_playing_tab));
+            }
         }
         Msg::Clean => {
             let index = model
