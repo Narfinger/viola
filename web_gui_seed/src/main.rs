@@ -111,7 +111,7 @@ fn init(_: Url, orders: &mut impl Orders<Msg>) -> Model {
         delete_range_input: None,
         play_index_input: None,
         play_artist_input: None,
-        changed_playtab_without_playing: false,
+        current_playing_tab: None,
     }
 }
 
@@ -125,24 +125,22 @@ fn icon(path: &str, size: Option<usize>) -> Node<Msg> {
 }
 
 fn view_buttons(model: &Model) -> Node<Msg> {
-    let play_button: seed::virtual_dom::node::Node<Msg> = if model.play_status
-        != GStreamerMessage::Playing
-        || model.changed_playtab_without_playing
-    {
-        button![
-            C!["btn", "btn-success"],
-            icon("/play.svg", None),
-            "Play",
-            ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Playing))
-        ]
-    } else {
-        button![
-            C!["btn", "btn-success"],
-            icon("/pause.svg", Some(22)),
-            "Pause",
-            ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
-        ]
-    };
+    let play_button: seed::virtual_dom::node::Node<Msg> =
+        if model.play_status != GStreamerMessage::Playing || model.current_playing_tab.is_some() {
+            button![
+                C!["btn", "btn-success"],
+                icon("/play.svg", None),
+                "Play",
+                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Playing))
+            ]
+        } else {
+            button![
+                C!["btn", "btn-success"],
+                icon("/pause.svg", Some(22)),
+                "Pause",
+                ev(Ev::Click, |_| Msg::Transport(GStreamerAction::Pausing))
+            ]
+        };
     div![
         C!["container"],
         div![
@@ -864,24 +862,24 @@ fn view_deleterangemodal(_model: &Model) -> Node<Msg> {
 fn view(model: &Model) -> Node<Msg> {
     div![
         C!["container-fluid"],
-        style!(St::PaddingLeft => unit!(5,vw), St::PaddingBottom => unit!(1,vh), St::Height => unit!(75,vh)),
+        style!(St::PaddingLeft => unit!(5 as u8,vw), St::PaddingBottom => unit!(1 as u8,vh), St::Height => unit!(75 as u32,vh)),
         view_tree(model, &model.treeviews),
         view_smartplaylists(model),
         div![
             C!["row"],
-            style!(St::Width => unit!(95,%), St::PaddingTop => unit!(0.1,em)),
+            style!(St::Width => unit!(95 as u32,%), St::PaddingTop => unit!(0.1,em)),
             view_playindex_modal(model),
             view_deleterangemodal(model),
             view_playartist_modal(model),
             sidebar_navigation(model, &model.treeviews),
             div![
                 C!["col"],
-                style!(St::Height => unit!(80,vh)),
+                style!(St::Height => unit!(80 as u32,vh)),
                 view_buttons(model),
                 view_tabs(model),
                 div![
                     C!["row"],
-                    style!(St::Height => unit!(75,vh),  St::OverflowX => "auto"),
+                    style!(St::Height => unit!(75 as u32,vh),  St::OverflowX => "auto"),
                     div![
                         C!["col-xs", "table-responsive"],
                         style!(St::Overflow => "auto"),
@@ -911,7 +909,7 @@ fn view(model: &Model) -> Node<Msg> {
                                     t,
                                     is_selected,
                                     pos,
-                                    model.changed_playtab_without_playing
+                                    model.current_playing_tab.is_some()
                                 )),]
                         ]
                     ],

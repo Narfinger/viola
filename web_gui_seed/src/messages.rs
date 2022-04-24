@@ -129,6 +129,11 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 model.get_current_playlist_tab_tracks().unwrap().len();
         }
         Msg::PlaylistTabChange(index) => {
+            if model.current_playing_tab == Some(index) {
+                model.current_playing_tab = None;
+            } else {
+                model.current_playing_tab = Some(model.current_playlist_tab);
+            }
             model.current_playlist_tab = index;
             orders.perform_cmd(async move {
                 let req = Request::new("/playlisttab/")
@@ -138,7 +143,6 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
                 fetch(req).await.expect("Could not send message");
             });
             model.playlist_window.current_window = WINDOW_INITIAL_SIZE;
-            model.changed_playtab_without_playing = true;
             orders.skip().send_msg(Msg::PlaylistWindowIncrement);
         }
         Msg::Transport(t) => {
@@ -188,6 +192,7 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             if let Some(tab) = model.playlist_tabs.get_mut(model.current_playlist_tab) {
                 tab.current_index = index;
             }
+            model.current_playing_tab = None;
         }
         Msg::Clean => {
             let index = model
@@ -439,7 +444,7 @@ pub(crate) fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>)
             GStreamerMessage::Pausing | GStreamerMessage::Stopped => model.play_status = msg,
             GStreamerMessage::Playing => {
                 model.play_status = msg;
-                model.changed_playtab_without_playing = false;
+                model.current_playing_tab = None;
             }
             GStreamerMessage::Nop | GStreamerMessage::ChangedDuration((_, _)) => {}
             GStreamerMessage::IncreasePlayCount(index) => {
