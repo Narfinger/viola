@@ -6,9 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+console_error_panic_hook = "0.1.7"
 humantime = "2.1.0"
+log = "0.4.16"
 serde_derive = "1.0.136"
 serde_json = "1.0.79"
 viola_common = { path = "../viola_common" }
+wasm-logger = "0.2.0"
 yew = "0.19.3"
 
