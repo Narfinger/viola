@@ -25,7 +25,8 @@ impl Component for TracksComponent {
     type Message = TracksComponentMsg;
     type Properties = ();
 
-    fn create(_ctx: &Context<Self>) -> Self {
+    fn create(ctx: &Context<Self>) -> Self {
+        ctx.link().send_message(TracksComponentMsg::RefreshList);
         TracksComponent {
             tracks: vec![],
             index: 0,
@@ -36,14 +37,13 @@ impl Component for TracksComponent {
         match msg {
             TracksComponentMsg::RefreshList => {
                 ctx.link().send_future(async move {
-                    let new_tracks: Vec<viola_common::Track> =
-                        Request::get("127.0.0.1:8080/playlist/")
-                            .send()
-                            .await
-                            .unwrap()
-                            .json()
-                            .await
-                            .unwrap_or_default();
+                    let new_tracks: Vec<viola_common::Track> = Request::get("/playlist/")
+                        .send()
+                        .await
+                        .unwrap()
+                        .json()
+                        .await
+                        .unwrap_or_default();
                     TracksComponentMsg::RefreshListDone(new_tracks)
                 });
                 false
@@ -71,10 +71,11 @@ impl Component for TracksComponent {
         let table_rows = self
             .tracks
             .iter()
-            .map(|track| {
+            .enumerate()
+            .map(|(index, track)| {
                 html! {
                     <tr>
-                        <td>{self.index}</td>
+                        <td>{index}</td>
                         <td>{unwrap_or_empty(&track.tracknumber)}</td>
                         <td>{&track.title}</td>
                         <td>{&track.artist}</td>

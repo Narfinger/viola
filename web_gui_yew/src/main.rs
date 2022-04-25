@@ -5,31 +5,28 @@ use reqwasm::http::Request;
 use viola_common::GStreamerAction;
 use yew::prelude::*;
 
+mod button;
+mod status;
 mod tracks;
 use button::Button;
+use status::Status;
 use tracks::TracksComponent;
-mod button;
 
 #[function_component(Buttons)]
 fn buttons() -> Html {
     html! {
-        <> </>
+        html! {
+        <div class="row">
+            <Button text="Menu" icon="" btype={button::ButtonType::Primary} on_click={None} />
+            <Button text="Prev" icon="" btype={button::ButtonType::Primary} on_click={Some(GStreamerAction::Previous)} />
+            <Button text="Play" icon="" btype={button::ButtonType::Primary} on_click={Some(GStreamerAction::Playing)} />
+            <Button text="Pause" icon="" btype={button::ButtonType::Primary} on_click={Some(GStreamerAction::Pausing)} />
+            <Button text="Next" icon="" btype={button::ButtonType::Primary} on_click={Some(GStreamerAction::Next)} />
+            <Button text="Again" icon="" btype={button::ButtonType::Primary} on_click={Some(GStreamerAction::RepeatOnce)} />
+            <Button text="Clean" icon="" btype={button::ButtonType::Primary} on_click={None} />
+            <Button text="Delete Range" icon="" btype={button::ButtonType::Primary} on_click={None} />
+        </div>}
     }
-}
-
-#[function_component(Status)]
-fn status() -> Html {
-    html! {
-    <div class="col">
-        <Button text="Menu" icon="" btype={button::ButtonType::Primary} on_click={None} />
-        <Button text="Prev" icon="" btype={button::ButtonType::Primary} on_click={Some(GStreamerAction::Previous)} />
-        <Button text="Play" icon="" btype={button::ButtonType::Primary} on_click={Some(GStreamerAction::Playing)} />
-        <Button text="Pause" icon="" btype={button::ButtonType::Primary} on_click={Some(GStreamerAction::Pausing)} />
-        <Button text="Next" icon="" btype={button::ButtonType::Primary} on_click={Some(GStreamerAction::Next)} />
-        <Button text="Again" icon="" btype={button::ButtonType::Primary} on_click={Some(GStreamerAction::RepeatOnce)} />
-        <Button text="Clean" icon="" btype={button::ButtonType::Primary} on_click={None} />
-        <Button text="Delete Range" icon="" btype={button::ButtonType::Primary} on_click={None} />
-    </div>}
 }
 
 #[function_component(App)]
@@ -41,7 +38,7 @@ fn app() -> Html {
             <div class="row" style="height: 75vh; overflowx: auto">
                 <TracksComponent />
             </div>
-            <Status />
+            <Status current_track = {None} />
             </div>
         </div>
     }

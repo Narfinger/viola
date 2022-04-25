@@ -1,3 +1,4 @@
+use reqwasm::http::Request;
 use viola_common::GStreamerAction;
 use yew::prelude::*;
 
@@ -19,6 +20,7 @@ pub(crate) struct ButtonProbs {
 
 pub(crate) enum ButtonMsg {
     Clicked,
+    Nop,
 }
 
 pub(crate) struct Button;
@@ -42,9 +44,29 @@ impl Component for Button {
         let onclick = ctx.link().callback(|_| ButtonMsg::Clicked);
         let icon: String = ctx.props().icon.clone();
         html! {
-            <div class="col">
-                <button class={class} icon={ icon } onclick={onclick}>{ &ctx.props().text}</button>
-            </div>
+                <div class="col">
+                    <button class={class} icon={ icon } onclick={onclick}>{ &ctx.props().text}</button>
+                </div>
         }
+    }
+
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+        match msg {
+            ButtonMsg::Clicked => {
+                if let Some(on_click) = ctx.props().on_click {
+                    ctx.link().send_future(async move {
+                        Request::post("/transport/")
+                            .header("Content-Type", "application/json")
+                            .body(serde_json::to_string(&on_click).unwrap())
+                            .send()
+                            .await
+                            .unwrap();
+                        ButtonMsg::Nop
+                    });
+                }
+            }
+            ButtonMsg::Nop => {}
+        };
+        false
     }
 }
