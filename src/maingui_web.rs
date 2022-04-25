@@ -464,7 +464,7 @@ pub async fn run(pool: DBPool) {
             })
         });
     //let web_gui_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/index.html");
-    let web_gui_dist_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/");
+    let web_gui_dist_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_yew/dist/");
     //let static_files = warp::get().and(warp::path("static").and(warp::fs::dir(web_gui_dist_path)));
     //let statics = warp::get()
     //    .and(warp::path("static"))
