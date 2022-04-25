@@ -1,135 +1,54 @@
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
 use reqwasm::http::Request;
+use viola_common::GStreamerAction;
 use yew::prelude::*;
 
-enum TracksComponentMsg {
-    IncreaseIndex,
-    IncreasePlaycount(usize),
-    RefreshList,
-    RefreshListDone(Vec<viola_common::Track>),
-}
+mod tracks;
+use button::Button;
+use tracks::TracksComponent;
+mod button;
 
-struct TracksComponent {
-    tracks: Vec<viola_common::Track>,
-    index: u32,
-}
-
-fn unwrap_or_empty(i: &Option<i32>) -> String {
-    if let Some(i) = i {
-        i.to_string()
-    } else {
-        "".to_string()
+#[function_component(Buttons)]
+fn buttons() -> Html {
+    html! {
+        <> </>
     }
 }
 
-impl Component for TracksComponent {
-    type Message = TracksComponentMsg;
-    type Properties = ();
-
-    fn create(_ctx: &Context<Self>) -> Self {
-        TracksComponent {
-            tracks: vec![],
-            index: 0,
-        }
-    }
-
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
-        match msg {
-            TracksComponentMsg::RefreshList => {
-                ctx.link().send_future(async move {
-                    let new_tracks: Vec<viola_common::Track> =
-                        Request::get("127.0.0.1:8080/playlist/")
-                            .send()
-                            .await
-                            .unwrap()
-                            .json()
-                            .await
-                            .unwrap_or_default();
-                    TracksComponentMsg::RefreshListDone(new_tracks)
-                });
-                false
-            }
-            TracksComponentMsg::RefreshListDone(new_tracks) => {
-                self.tracks = new_tracks;
-                true
-            }
-            TracksComponentMsg::IncreaseIndex => {
-                self.index += 1;
-                true
-            }
-            TracksComponentMsg::IncreasePlaycount(i) => {
-                if let Some(ref mut t) = self.tracks.get_mut(i) {
-                    t.playcount = Some(t.playcount.unwrap_or(0) + 1);
-                    true
-                } else {
-                    false
-                }
-            }
-        }
-    }
-
-    fn view(&self, _ctx: &Context<Self>) -> Html {
-        self.tracks
-            .iter()
-            .map(|track| {
-                html! {
-                    <tr>
-                        <td>{self.index}</td>
-                        <td>{unwrap_or_empty(&track.tracknumber)}</td>
-                        <td>{&track.title}</td>
-                        <td>{&track.artist}</td>
-                        <td>{&track.album}</td>
-                        <td>{&track.genre}</td>
-                        <td>{unwrap_or_empty(&track.year)}</td>
-                        <td>{track.length}</td>
-                        <td>{unwrap_or_empty(&track.playcount)}</td>
-                    </tr>
-                }
-            })
-            .collect::<Html>()
-    }
+#[function_component(Status)]
+fn status() -> Html {
+    html! {
+    <div class="col">
+        <Button text="Menu" icon="" btype={button::ButtonType::Primary} on_click={None} />
+        <Button text="Prev" icon="" btype={button::ButtonType::Primary} on_click={Some(GStreamerAction::Previous)} />
+        <Button text="Play" icon="" btype={button::ButtonType::Primary} on_click={Some(GStreamerAction::Playing)} />
+        <Button text="Pause" icon="" btype={button::ButtonType::Primary} on_click={Some(GStreamerAction::Pausing)} />
+        <Button text="Next" icon="" btype={button::ButtonType::Primary} on_click={Some(GStreamerAction::Next)} />
+        <Button text="Again" icon="" btype={button::ButtonType::Primary} on_click={Some(GStreamerAction::RepeatOnce)} />
+        <Button text="Clean" icon="" btype={button::ButtonType::Primary} on_click={None} />
+        <Button text="Delete Range" icon="" btype={button::ButtonType::Primary} on_click={None} />
+    </div>}
 }
 
-enum Msg {
-    AddOne,
-}
-
-struct Model {
-    value: i64,
-}
-
-impl Component for Model {
-    type Message = Msg;
-    type Properties = ();
-
-    fn create(_ctx: &Context<Self>) -> Self {
-        Self { value: 0 }
-    }
-
-    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
-        match msg {
-            Msg::AddOne => {
-                self.value += 1;
-                // the value has changed so we need to
-                // re-render for it to appear on the page
-                true
-            }
-        }
-    }
-
-    fn view(&self, ctx: &Context<Self>) -> Html {
-        // This gives us a component's "`Scope`" which allows us to send messages, etc to the component.
-        let link = ctx.link();
-        html! {
-            <div>
-                <button onclick={link.callback(|_| Msg::AddOne)}>{ "+1" }</button>
-                <p>{ self.value }</p>
+#[function_component(App)]
+fn app() -> Html {
+    html! {
+        <div class="container-fluid" style="padding-left: 5vw; padding-bottom: 1vh; height: 75vh">
+            <div class="col" style="height: 80vh">
+            <Buttons />
+            <div class="row" style="height: 75vh; overflowx: auto">
+                <TracksComponent />
             </div>
-        }
+            <Status />
+            </div>
+        </div>
     }
 }
 
 fn main() {
     wasm_logger::init(wasm_logger::Config::new(log::Level::Trace));
     console_error_panic_hook::set_once();
-    yew::start_app::<Model>();
+    yew::start_app::<App>();
 }
