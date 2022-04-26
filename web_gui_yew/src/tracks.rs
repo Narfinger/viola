@@ -1,3 +1,6 @@
+use humantime::format_duration;
+use std::time::Duration;
+
 use reqwasm::http::Request;
 use yew::prelude::*;
 
@@ -82,7 +85,7 @@ impl Component for TracksComponent {
                         <td>{&track.album}</td>
                         <td>{&track.genre}</td>
                         <td>{unwrap_or_empty(&track.year)}</td>
-                        <td>{track.length}</td>
+                        <td>{format_duration(Duration::from_secs(track.length as u64)).to_string().replace(' ', "")}</td>
                         <td>{unwrap_or_empty(&track.playcount)}</td>
                     </tr>
                 }

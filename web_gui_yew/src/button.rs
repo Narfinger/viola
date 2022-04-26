@@ -21,33 +21,33 @@ pub(crate) fn buttons(props: &ButtonRowProps) -> Html {
     };
 
     html! {
-        <div class="row">
-            <div class="col">
-                <Button text="Menu" icon="/menu-button.svg" btype={ButtonType::Info} on_click={None} />
-            </div>
-            <div class="col">
-                <Button text="Prev" icon="/skip-backwards.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Previous)} />
-            </div>
-            <div class="col">
-                {playpause_button}
-            </div>
-            <div class="col">
-                <Button text="Pause" icon="/pause.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Pausing)} />
-            </div>
-            <div class="col">
-                <Button text="Next" icon="/skip-forward.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Next)} />
-            </div>
-            <div class="col">
-                <Button text="Again" icon="/arrow-repeat.svg" btype={ButtonType::Secondary} on_click={Some(GStreamerAction::RepeatOnce)} />
-            </div>
-            <div class="col">
-                <Button text="Clean" icon="/trash.svg" btype={ButtonType::Danger} on_click={None} />
-            </div>
-            <div class="col-2">
-                <Button text="Delete Range" icon="/trash.svg" btype={ButtonType::Danger} on_click={None} />
-            </div>
-        </div>}
-    }
+    <div class="row">
+        <div class="col">
+            <Button text="Menu" icon="/menu-button.svg" btype={ButtonType::Info} on_click={None} />
+        </div>
+        <div class="col">
+            <Button text="Prev" icon="/skip-backward.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Previous)} />
+        </div>
+        <div class="col">
+            {playpause_button}
+        </div>
+        <div class="col">
+            <Button text="Pause" icon="/pause.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Pausing)} />
+        </div>
+        <div class="col">
+            <Button text="Next" icon="/skip-forward.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Next)} />
+        </div>
+        <div class="col">
+            <Button text="Again" icon="/arrow-repeat.svg" btype={ButtonType::Secondary} on_click={Some(GStreamerAction::RepeatOnce)} />
+        </div>
+        <div class="col">
+            <Button text="Clean" icon="/trash.svg" btype={ButtonType::Danger} on_click={None} />
+        </div>
+        <div class="col-2">
+            <Button text="Delete Range" icon="/trash.svg" btype={ButtonType::Danger} on_click={None} />
+        </div>
+    </div>}
+}
 
 #[derive(Clone, PartialEq)]
 enum ButtonType {
@@ -73,6 +73,15 @@ enum ButtonMsg {
 
 struct Button;
 
+fn icon(path: String, size: Option<usize>) -> Html {
+    let size = (size.unwrap_or(24)).to_string() + "px";
+    html! {
+        <span style="padding-right: 5px">
+            <img src ={path} height={size.clone()} width={size} />
+        </span>
+    }
+}
+
 impl Component for Button {
     type Message = ButtonMsg;
     type Properties = ButtonProbs;
@@ -91,10 +100,12 @@ impl Component for Button {
                 ButtonType::Success => "btn-success",
             };
         let onclick = ctx.link().callback(|_| ButtonMsg::Clicked);
-        let icon: String = ctx.props().icon.clone();
+        let icon_path: String = ctx.props().icon.clone();
         html! {
                 <div class="col">
-                    <button class={class} icon={ icon } onclick={onclick}>{ &ctx.props().text}</button>
+                    <button class={class} onclick={onclick}>
+                    {icon(icon_path,None)}
+                    { &ctx.props().text}</button>
                 </div>
         }
     }

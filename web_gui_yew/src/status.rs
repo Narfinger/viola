@@ -28,7 +28,7 @@ impl Component for Status {
         let track_max = "";
         html! {
             <div class="row border border-dark" style="padding: 0.1em">
-                <div class="col-md"><img src="/currentimage?nonce={}" /></div>
+                <div class="col-md"><img src="/currentimage?nonce={}" width=100 height=100 /></div>
                 <div class="col">{window_string}</div>
                 <div class="col">{status}</div>
                 <div class="col">{track_status_string}</div>
