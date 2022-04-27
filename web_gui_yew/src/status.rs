@@ -1,9 +1,10 @@
-use viola_common::Track;
+use viola_common::{GStreamerMessage, Track};
 use yew::prelude::*;
 pub(crate) enum StatusMsg {}
 
 #[derive(Properties, PartialEq)]
 pub(crate) struct StatusMsgProperties {
+    pub(crate) current_status: GStreamerMessage,
     pub(crate) current_track: Option<Track>,
 }
 
@@ -13,13 +14,13 @@ impl Component for Status {
     type Message = StatusMsg;
     type Properties = StatusMsgProperties;
 
-    fn create(ctx: &yew::Context<Self>) -> Self {
+    fn create(_ctx: &yew::Context<Self>) -> Self {
         Self {}
     }
 
     fn view(&self, ctx: &yew::Context<Self>) -> yew::Html {
         let window_string = "";
-        let status = "";
+        let status = ctx.props().current_status.to_string();
         let track_status_string = "";
         let total_time_string = "";
         let repeat_once = "";
