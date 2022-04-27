@@ -119,7 +119,7 @@ impl Component for App {
                 <div class="row" style="height: 75vh; overflow-x: auto">
                     <TracksComponent tracks={&self.current_tracks} current_playing={self.current_playing} status = {self.current_status} />
                 </div>
-                <Status current_status = {self.current_status} current_track = {None} />
+                <Status current_status = {self.current_status} current_track = {self.current_tracks.get(self.current_playing).cloned()} />
                 </div>
             </div>
         }
