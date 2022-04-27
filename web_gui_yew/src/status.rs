@@ -34,12 +34,14 @@ impl Component for Status {
             );
             let total_time_string = "";
             let repeat_once = "";
-            let time_string = "";
-            let current_time = String::from("Time: ")
+            let time_string = String::from("Time: ")
                 + &utils::format_time(ctx.props().current_track_time)
                 + "--"
                 + &utils::format_time(track.length as u64);
-            let track_max = "";
+            let track_percentage_width = format!(
+                "{}%",
+                ((ctx.props().current_track_time as f32 / track.length as f32) * 100.0).round()
+            );
             html! {
                 <div class="row border border-dark" style="padding: 0.1em">
                     <div class="col-md"><img src="/currentimage?nonce={}" width=100 height=100 /></div>
@@ -51,7 +53,9 @@ impl Component for Status {
                     <div class="col">{time_string}</div>
                     <div class="col">
                         <div class="progress">
-                            <div class="progress-bar" role="progressbar" aria-valuenow={current_time} aria-valuemin="0" aria-valuemax={track_max} />
+                            <div class="progress-bar" role="progressbar" style="width:"{track_percentage_width}
+                            aria-valuenow={format!("{}", ctx.props().current_track_time)} aria-valuemin="0"
+                            aria-valuemax={format!("{}", track.length)} />
                         </div>
                     </div>
                 </div>

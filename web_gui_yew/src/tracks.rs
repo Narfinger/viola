@@ -65,7 +65,7 @@ impl Component for TracksComponent {
                         <td>{&track.genre}</td>
                         <td>{unwrap_or_empty(&track.year)}</td>
                         <td>{utils::format_time(track.length as u64)}</td>
-                        <td>{unwrap_or_empty(&track.playcount)}</td>
+                        <td>{&track.playcount.unwrap_or(0)}</td>
                     </tr>
                 }
             })
