@@ -13,6 +13,7 @@ use yew::prelude::*;
 mod button;
 mod status;
 mod tracks;
+mod utils;
 use button::Buttons;
 use status::Status;
 use tracks::{TracksComponent, TracksComponentProps};
@@ -21,6 +22,7 @@ struct App {
     current_playing: usize,
     current_status: GStreamerMessage,
     current_tracks: Rc<Vec<viola_common::Track>>,
+    current_track_time: u64,
 }
 
 enum AppMessage {
@@ -35,9 +37,13 @@ impl App {
             WsMessage::PlayChanged(i) => {
                 self.current_playing = i;
                 self.current_status = GStreamerMessage::Playing;
+                self.current_track_time = 0;
                 true
             }
-            WsMessage::CurrentTimeChanged(_) => false,
+            WsMessage::CurrentTimeChanged(i) => {
+                self.current_track_time = i;
+                true
+            }
             WsMessage::ReloadTabs => false,
             WsMessage::ReloadPlaylist => false,
             WsMessage::Ping => false,
@@ -85,6 +91,7 @@ impl Component for App {
             current_playing: 0,
             current_status: GStreamerMessage::Stopped,
             current_tracks: Rc::new(vec![]),
+            current_track_time: 0,
         }
     }
 
@@ -119,7 +126,7 @@ impl Component for App {
                 <div class="row" style="height: 75vh; overflow-x: auto">
                     <TracksComponent tracks={&self.current_tracks} current_playing={self.current_playing} status = {self.current_status} />
                 </div>
-                <Status current_status = {self.current_status} current_track = {self.current_tracks.get(self.current_playing).cloned()} />
+                <Status current_status = {self.current_status} current_track = {self.current_tracks.get(self.current_playing).cloned()} current_track_time={self.current_track_time} />
                 </div>
             </div>
         }

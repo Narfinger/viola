@@ -5,6 +5,8 @@ use viola_common::GStreamerMessage;
 use reqwasm::http::Request;
 use yew::prelude::*;
 
+use crate::utils;
+
 pub(crate) enum TracksComponentMsg {
     IncreaseIndex,
     //IncreasePlaycount(usize),
@@ -40,14 +42,19 @@ impl Component for TracksComponent {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let table_rows = ctx.props()
+        let table_rows = ctx
+            .props()
             .tracks
             .iter()
             .enumerate()
             .map(|(index, track)| {
-                let (color, image) = if index == ctx.props().current_playing && ctx.props().status==GStreamerMessage::Playing {
+                let (color, image) = if index == ctx.props().current_playing
+                    && ctx.props().status == GStreamerMessage::Playing
+                {
                     ("style: foreground-color: red", "")
-                } else {("","")};
+                } else {
+                    ("", "")
+                };
                 html! {
                     <tr {color}>
                         <td>{image} {index}</td>
@@ -57,7 +64,7 @@ impl Component for TracksComponent {
                         <td>{&track.album}</td>
                         <td>{&track.genre}</td>
                         <td>{unwrap_or_empty(&track.year)}</td>
-                        <td>{format_duration(Duration::from_secs(track.length as u64)).to_string().replace(' ', "")}</td>
+                        <td>{utils::format_time(track.length as u64)}</td>
                         <td>{unwrap_or_empty(&track.playcount)}</td>
                     </tr>
                 }

@@ -1,11 +1,17 @@
+use std::time::Duration;
+
+use humantime::format_duration;
 use viola_common::{GStreamerMessage, Track};
 use yew::prelude::*;
+
+use crate::utils;
 pub(crate) enum StatusMsg {}
 
 #[derive(Properties, PartialEq)]
 pub(crate) struct StatusMsgProperties {
     pub(crate) current_status: GStreamerMessage,
     pub(crate) current_track: Option<Track>,
+    pub(crate) current_track_time: u64,
 }
 
 pub(crate) struct Status {}
@@ -29,7 +35,10 @@ impl Component for Status {
             let total_time_string = "";
             let repeat_once = "";
             let time_string = "";
-            let current_time = "";
+            let current_time = String::from("Time: ")
+                + &utils::format_time(ctx.props().current_track_time)
+                + "--"
+                + &utils::format_time(track.length as u64);
             let track_max = "";
             html! {
                 <div class="row border border-dark" style="padding: 0.1em">
