@@ -1,20 +1,23 @@
 use humantime::format_duration;
-use std::time::Duration;
+use std::{rc::Rc, time::Duration};
+use viola_common::GStreamerMessage;
 
 use reqwasm::http::Request;
 use yew::prelude::*;
 
 pub(crate) enum TracksComponentMsg {
     IncreaseIndex,
-    IncreasePlaycount(usize),
-    RefreshList,
-    RefreshListDone(Vec<viola_common::Track>),
+    //IncreasePlaycount(usize),
 }
 
-pub(crate) struct TracksComponent {
-    pub(crate) tracks: Vec<viola_common::Track>,
-    pub(crate) index: u32,
+#[derive(Properties, PartialEq)]
+pub(crate) struct TracksComponentProps {
+    pub(crate) tracks: Rc<Vec<viola_common::Track>>,
+    pub(crate) current_playing: usize,
+    pub(crate) status: GStreamerMessage,
 }
+
+pub(crate) struct TracksComponent {}
 
 pub(crate) fn unwrap_or_empty(i: &Option<i32>) -> String {
     if let Some(i) = i {
@@ -26,59 +29,28 @@ pub(crate) fn unwrap_or_empty(i: &Option<i32>) -> String {
 
 impl Component for TracksComponent {
     type Message = TracksComponentMsg;
-    type Properties = ();
+    type Properties = TracksComponentProps;
 
     fn create(ctx: &Context<Self>) -> Self {
-        ctx.link().send_message(TracksComponentMsg::RefreshList);
-        TracksComponent {
-            tracks: vec![],
-            index: 0,
-        }
+        TracksComponent {}
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
-        match msg {
-            TracksComponentMsg::RefreshList => {
-                ctx.link().send_future(async move {
-                    let new_tracks: Vec<viola_common::Track> = Request::get("/playlist/")
-                        .send()
-                        .await
-                        .unwrap()
-                        .json()
-                        .await
-                        .unwrap_or_default();
-                    TracksComponentMsg::RefreshListDone(new_tracks)
-                });
-                false
-            }
-            TracksComponentMsg::RefreshListDone(new_tracks) => {
-                self.tracks = new_tracks;
-                true
-            }
-            TracksComponentMsg::IncreaseIndex => {
-                self.index += 1;
-                true
-            }
-            TracksComponentMsg::IncreasePlaycount(i) => {
-                if let Some(ref mut t) = self.tracks.get_mut(i) {
-                    t.playcount = Some(t.playcount.unwrap_or(0) + 1);
-                    true
-                } else {
-                    false
-                }
-            }
-        }
+        false
     }
 
-    fn view(&self, _ctx: &Context<Self>) -> Html {
-        let table_rows = self
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let table_rows = ctx.props()
             .tracks
             .iter()
             .enumerate()
             .map(|(index, track)| {
+                let (color, image) = if index == ctx.props().current_playing && ctx.props().status==GStreamerMessage::Playing {
+                    ("style: foreground-color: red", "")
+                } else {("","")};
                 html! {
-                    <tr>
-                        <td>{index}</td>
+                    <tr {color}>
+                        <td>{image} {index}</td>
                         <td>{unwrap_or_empty(&track.tracknumber)}</td>
                         <td>{&track.title}</td>
                         <td>{&track.artist}</td>

@@ -1,8 +1,11 @@
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
+use std::rc::Rc;
+
 use futures::{stream::SplitStream, StreamExt};
 use gloo_net::websocket::{futures::WebSocket, Message};
+use reqwasm::http::Request;
 use viola_common::*;
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
@@ -12,15 +15,18 @@ mod status;
 mod tracks;
 use button::Buttons;
 use status::Status;
-use tracks::TracksComponent;
+use tracks::{TracksComponent, TracksComponentProps};
 
 struct App {
     current_playing: usize,
     current_status: GStreamerMessage,
+    current_tracks: Rc<Vec<viola_common::Track>>,
 }
 
-enum AppMessages {
+enum AppMessage {
     WsMessage(viola_common::WsMessage),
+    RefreshList,
+    RefreshListDone(Vec<viola_common::Track>),
 }
 
 impl App {
@@ -51,7 +57,7 @@ impl App {
 }
 
 impl Component for App {
-    type Message = AppMessages;
+    type Message = AppMessage;
     type Properties = ();
     fn create(ctx: &Context<Self>) -> Self {
         let ws = WebSocket::open("ws://127.0.0.1:8080/ws/").unwrap();
@@ -64,7 +70,7 @@ impl Component for App {
                 if let Ok(msg) = msg {
                     if let gloo_net::websocket::Message::Text(msg) = msg {
                         if let Ok(val) = serde_json::from_str(&msg) {
-                            link.send_message(AppMessages::WsMessage(val));
+                            link.send_message(AppMessage::WsMessage(val));
                         } else {
                             log::info!("Some problem with ws message decode");
                         }
@@ -74,15 +80,34 @@ impl Component for App {
                 }
             }
         });
+        ctx.link().send_message(AppMessage::RefreshList);
         App {
             current_playing: 0,
             current_status: GStreamerMessage::Stopped,
+            current_tracks: Rc::new(vec![]),
         }
     }
 
-    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            AppMessages::WsMessage(msg) => self.handle_wsmessage(msg),
+            AppMessage::WsMessage(msg) => self.handle_wsmessage(msg),
+            AppMessage::RefreshList => {
+                ctx.link().send_future(async move {
+                    let new_tracks: Vec<viola_common::Track> = Request::get("/playlist/")
+                        .send()
+                        .await
+                        .unwrap()
+                        .json()
+                        .await
+                        .unwrap_or_default();
+                    AppMessage::RefreshListDone(new_tracks)
+                });
+                false
+            }
+            AppMessage::RefreshListDone(tracks) => {
+                self.current_tracks = Rc::new(tracks);
+                true
+            }
         }
     }
 
@@ -92,7 +117,7 @@ impl Component for App {
                 <div class="col" style="height: 80vh">
                 <Buttons status={self.current_status} />
                 <div class="row" style="height: 75vh; overflow-x: auto">
-                    <TracksComponent />
+                    <TracksComponent tracks={&self.current_tracks} current_playing={self.current_playing} status = {self.current_status} />
                 </div>
                 <Status current_status = {self.current_status} current_track = {None} />
                 </div>
