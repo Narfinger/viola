@@ -5,7 +5,11 @@ use viola_common::GStreamerMessage;
 use reqwasm::http::Request;
 use yew::prelude::*;
 
-use crate::utils;
+use crate::utils::{self};
+
+//notice that this does not include all types
+//[title, artist, album, genre]
+const CHARS_PER_COLUMN: &[usize; 4] = &[37, 30, 30, 30];
 
 pub(crate) enum TracksComponentMsg {
     IncreaseIndex,
@@ -51,21 +55,33 @@ impl Component for TracksComponent {
                 let (color, image) = if index == ctx.props().current_playing
                     && ctx.props().status == GStreamerMessage::Playing
                 {
-                    ("style: foreground-color: red", "")
+                    (
+                        "style: color: red",
+                        html! {
+                        <img src="/play.svg" /> },
+                    )
+                } else if index == ctx.props().current_playing
+                    && ctx.props().status == GStreamerMessage::Pausing
+                {
+                    (
+                        "",
+                        html! {
+                        <img src="/pause.svg" /> },
+                    )
                 } else {
-                    ("", "")
+                    ("", html! {})
                 };
                 html! {
                     <tr {color}>
-                        <td>{image} {index}</td>
-                        <td>{unwrap_or_empty(&track.tracknumber)}</td>
-                        <td>{&track.title}</td>
-                        <td>{&track.artist}</td>
-                        <td>{&track.album}</td>
-                        <td>{&track.genre}</td>
-                        <td>{unwrap_or_empty(&track.year)}</td>
-                        <td>{utils::format_time(track.length as u64)}</td>
-                        <td>{&track.playcount.unwrap_or(0)}</td>
+                        <td style="width: 5%" >{image} {index}</td>
+                        <td style="width: 2%" >{unwrap_or_empty(&track.tracknumber)}</td>
+                        <td style="width: 25%">{&track.title}</td>
+                        <td style="width: 20%">{&track.artist}</td>
+                        <td style="width: 20%">{&track.album}</td>
+                        <td style="width: 15%">{&track.genre}</td>
+                        <td style="width: 5%" >{unwrap_or_empty(&track.year)}</td>
+                        <td style="width: 5%" >{utils::format_time(track.length as u64)}</td>
+                        <td style="width: 3%" >{&track.playcount.unwrap_or(0)}</td>
                     </tr>
                 }
             })

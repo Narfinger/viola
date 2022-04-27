@@ -123,7 +123,7 @@ impl Component for App {
             <div class="container-fluid" style="padding-left: 5vw; padding-bottom: 1vh; height: 75vh">
                 <div class="col" style="height: 80vh">
                 <Buttons status={self.current_status} />
-                <div class="row" style="height: 75vh; overflow-x: auto">
+                <div class="row" style="height: 75vh; width: 95vw; overflow-x: auto">
                     <TracksComponent tracks={&self.current_tracks} current_playing={self.current_playing} status = {self.current_status} />
                 </div>
                 <Status current_status = {self.current_status} current_track = {self.current_tracks.get(self.current_playing).cloned()} current_track_time={self.current_track_time} />
