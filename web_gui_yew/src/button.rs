@@ -5,6 +5,7 @@ use yew::prelude::*;
 #[derive(Properties, PartialEq)]
 pub(crate) struct ButtonRowProps {
     pub(crate) status: GStreamerMessage,
+    pub(crate) repeat_callback: yew::callback::Callback<()>,
 }
 
 #[function_component(Buttons)]

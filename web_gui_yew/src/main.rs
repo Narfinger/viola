@@ -23,12 +23,14 @@ struct App {
     current_status: GStreamerMessage,
     current_tracks: Rc<Vec<viola_common::Track>>,
     current_track_time: u64,
+    repeat_once: bool,
 }
 
 enum AppMessage {
     WsMessage(viola_common::WsMessage),
     RefreshList,
     RefreshListDone(Vec<viola_common::Track>),
+    RepeatOnce,
 }
 
 impl App {
@@ -38,6 +40,7 @@ impl App {
                 self.current_playing = i;
                 self.current_status = GStreamerMessage::Playing;
                 self.current_track_time = 0;
+                self.repeat_once = false;
                 true
             }
             WsMessage::CurrentTimeChanged(i) => {
@@ -92,6 +95,7 @@ impl Component for App {
             current_status: GStreamerMessage::Stopped,
             current_tracks: Rc::new(vec![]),
             current_track_time: 0,
+            repeat_once: false,
         }
     }
 
@@ -115,18 +119,31 @@ impl Component for App {
                 self.current_tracks = Rc::new(tracks);
                 true
             }
+            AppMessage::RepeatOnce => {
+                self.repeat_once = true;
+                true
+            }
         }
     }
 
-    fn view(&self, _ctx: &Context<Self>) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let full_time_playing: u64 = self.current_tracks.iter().map(|t| t.length as u64).sum();
+        let remaining_time_playing: u64 = self
+            .current_tracks
+            .iter()
+            .skip(self.current_playing)
+            .map(|t| t.length as u64)
+            .sum::<u64>()
+            - self.current_track_time;
+        let repeat_once_callback = ctx.link().callback(|_| AppMessage::RepeatOnce);
         html! {
             <div class="container-fluid" style="padding-left: 5vw; padding-bottom: 1vh; height: 75vh">
                 <div class="col" style="height: 80vh">
-                <Buttons status={self.current_status} />
+                <Buttons status={self.current_status} repeat_callback = {repeat_once_callback }/>
                 <div class="row" style="height: 75vh; width: 95vw; overflow-x: auto">
                     <TracksComponent tracks={&self.current_tracks} current_playing={self.current_playing} status = {self.current_status} />
                 </div>
-                <Status current_status = {self.current_status} current_track = {self.current_tracks.get(self.current_playing).cloned()} current_track_time={self.current_track_time} />
+                <Status current_status = {self.current_status} current_track = {self.current_tracks.get(self.current_playing).cloned()} total_track_time = {full_time_playing} remaining_time_playing = {remaining_time_playing} current_track_time={self.current_track_time} repeat_once = {self.repeat_once} />
                 </div>
             </div>
         }

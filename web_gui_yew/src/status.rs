@@ -12,6 +12,9 @@ pub(crate) struct StatusMsgProperties {
     pub(crate) current_status: GStreamerMessage,
     pub(crate) current_track: Option<Track>,
     pub(crate) current_track_time: u64,
+    pub(crate) total_track_time: u64,
+    pub(crate) remaining_time_playing: u64,
+    pub(crate) repeat_once: bool,
 }
 
 pub(crate) struct Status {}
@@ -32,8 +35,16 @@ impl Component for Status {
                 "Playing: {} - {} - {}",
                 track.title, track.artist, track.album
             );
-            let total_time_string = "";
-            let repeat_once = "";
+            let total_time_string = utils::format_time(ctx.props().total_track_time)
+                + &format!(
+                    "({})",
+                    utils::format_time(ctx.props().remaining_time_playing)
+                );
+            let repeat_once = if ctx.props().repeat_once {
+                "Repeat"
+            } else {
+                ""
+            };
             let time_string = String::from("Time: ")
                 + &utils::format_time(ctx.props().current_track_time)
                 + "--"
