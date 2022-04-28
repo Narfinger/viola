@@ -5,7 +5,7 @@ use yew::prelude::*;
 #[derive(Properties, PartialEq)]
 pub(crate) struct ButtonRowProps {
     pub(crate) status: GStreamerMessage,
-    pub(crate) repeat_callback: yew::callback::Callback<()>,
+    pub(crate) repeat_once_callback: Callback<()>,
 }
 
 #[function_component(Buttons)]
@@ -27,7 +27,7 @@ pub(crate) fn buttons(props: &ButtonRowProps) -> Html {
             <Button text="Menu" icon="/menu-button.svg" btype={ButtonType::Info} on_click={None} />
         </div>
         <div class="col">
-            <Button text="Prev" icon="/skip-backward.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Previous)} />
+            <Button text="Prev" icon="/skip-backward.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Previous)}  />
         </div>
         <div class="col">
             {playpause_button}
@@ -39,10 +39,10 @@ pub(crate) fn buttons(props: &ButtonRowProps) -> Html {
             <Button text="Next" icon="/skip-forward.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Next)} />
         </div>
         <div class="col">
-            <Button text="Again" icon="/arrow-repeat.svg" btype={ButtonType::Secondary} on_click={Some(GStreamerAction::RepeatOnce)} />
+            <Button text="Again" icon="/arrow-repeat.svg" btype={ButtonType::Secondary} on_click={Some(GStreamerAction::RepeatOnce)} callback = {props.repeat_once_callback.clone()} />
         </div>
         <div class="col">
-            <Button text="Clean" icon="/trash.svg" btype={ButtonType::Danger} on_click={None} />
+            <Button text="Clean" icon="/trash.svg" btype={ButtonType::Danger} on_click={None}/>
         </div>
         <div class="col-2">
             <Button text="Delete Range" icon="/trash.svg" btype={ButtonType::Danger} on_click={None} />
@@ -65,6 +65,7 @@ struct ButtonProbs {
     icon: String,
     btype: ButtonType,
     on_click: Option<GStreamerAction>,
+    callback: Option<Callback<()>>,
 }
 
 enum ButtonMsg {
@@ -124,6 +125,9 @@ impl Component for Button {
                             .unwrap();
                         ButtonMsg::Nop
                     });
+                }
+                if let Some(ref callback) = ctx.props().callback {
+                    callback.emit(());
                 }
             }
             ButtonMsg::Nop => {}
