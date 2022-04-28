@@ -1,15 +1,9 @@
-use humantime::format_duration;
-use std::{rc::Rc, time::Duration};
+use std::rc::Rc;
 use viola_common::GStreamerMessage;
 
-use reqwasm::http::Request;
 use yew::prelude::*;
 
 use crate::utils::{self};
-
-//notice that this does not include all types
-//[title, artist, album, genre]
-const CHARS_PER_COLUMN: &[usize; 4] = &[37, 30, 30, 30];
 
 pub(crate) enum TracksComponentMsg {
     IncreaseIndex,
@@ -25,7 +19,7 @@ pub(crate) struct TracksComponentProps {
 
 pub(crate) struct TracksComponent {}
 
-pub(crate) fn unwrap_or_empty(i: &Option<i32>) -> String {
+fn unwrap_or_empty(i: &Option<i32>) -> String {
     if let Some(i) = i {
         i.to_string()
     } else {
@@ -37,11 +31,11 @@ impl Component for TracksComponent {
     type Message = TracksComponentMsg;
     type Properties = TracksComponentProps;
 
-    fn create(ctx: &Context<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         TracksComponent {}
     }
 
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool {
         false
     }
 

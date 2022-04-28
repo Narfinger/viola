@@ -1,6 +1,3 @@
-use std::time::Duration;
-
-use humantime::format_duration;
 use viola_common::{GStreamerMessage, Track};
 use yew::prelude::*;
 

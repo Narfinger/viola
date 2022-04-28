@@ -3,8 +3,8 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 use std::rc::Rc;
 
-use futures::{stream::SplitStream, StreamExt};
-use gloo_net::websocket::{futures::WebSocket, Message};
+use futures::StreamExt;
+use gloo_net::websocket::futures::WebSocket;
 use reqwasm::http::Request;
 use viola_common::*;
 use wasm_bindgen_futures::spawn_local;
@@ -12,11 +12,13 @@ use yew::prelude::*;
 
 mod button;
 mod status;
+mod tabs;
 mod tracks;
 mod utils;
 use button::Buttons;
 use status::Status;
-use tracks::{TracksComponent, TracksComponentProps};
+use tabs::TabsComponent;
+use tracks::TracksComponent;
 
 struct App {
     current_playing: usize,
@@ -137,12 +139,15 @@ impl Component for App {
             - self.current_track_time;
         html! {
             <div class="container-fluid" style="padding-left: 5vw; padding-bottom: 1vh; height: 75vh">
-                <div class="col" style="height: 80vh">
-                <Buttons status={self.current_status} repeat_once_callback = {ctx.link().callback(|_| AppMessage::RepeatOnce)} />
-                <div class="row" style="height: 75vh; width: 95vw; overflow-x: auto">
-                    <TracksComponent tracks={&self.current_tracks} current_playing={self.current_playing} status = {self.current_status} />
-                </div>
-                <Status current_status = {self.current_status} current_track = {self.current_tracks.get(self.current_playing).cloned()} total_track_time = {full_time_playing} remaining_time_playing = {remaining_time_playing} current_track_time={self.current_track_time} repeat_once = {self.repeat_once} />
+                <div class="row">
+                    <div class="col" style="height: 80vh">
+                    <Buttons status={self.current_status} repeat_once_callback = {ctx.link().callback(|_| AppMessage::RepeatOnce)} />
+                    <TabsComponent />
+                    <div class="row" style="height: 75vh; width: 95vw; overflow-x: auto">
+                        <TracksComponent tracks={&self.current_tracks} current_playing={self.current_playing} status = {self.current_status} />
+                    </div>
+                    <Status current_status = {self.current_status} current_track = {self.current_tracks.get(self.current_playing).cloned()} total_track_time = {full_time_playing} remaining_time_playing = {remaining_time_playing} current_track_time={self.current_track_time} repeat_once = {self.repeat_once} />
+                    </div>
                 </div>
             </div>
         }
