@@ -7,6 +7,7 @@ pub(crate) struct ButtonRowProps {
     pub(crate) status: GStreamerMessage,
     pub(crate) repeat_once_callback: Callback<()>,
     pub(crate) clean_callback: Callback<()>,
+    pub(crate) refresh_play_callback: Callback<()>,
 }
 
 #[function_component(Buttons)]
@@ -14,39 +15,39 @@ pub(crate) fn buttons(props: &ButtonRowProps) -> Html {
     let playpause_button = if props.status == GStreamerMessage::Playing {
         html! {
 
-            <Button text="Pause" icon="/pause.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Pausing)} />
+            <TransportButton text="Pause" icon="/pause.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Pausing)} callback={props.refresh_play_callback.clone()} />
         }
     } else {
         html! {
-            <Button text="Play" icon="/play.svg" btype={ButtonType::Success} on_click={Some(GStreamerAction::Playing)} />
+            <TransportButton text="Play" icon="/play.svg" btype={ButtonType::Success} on_click={Some(GStreamerAction::Playing)} callback={props.refresh_play_callback.clone()} />
         }
     };
 
     html! {
     <div class="row">
         <div class="col">
-            <Button text="Menu" icon="/menu-button.svg" btype={ButtonType::Info} on_click={None} />
+            <Button text="Menu" icon="/menu-button.svg" btype={ButtonType::Info} />
         </div>
         <div class="col">
-            <Button text="Prev" icon="/skip-backward.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Previous)}  />
+            <TransportButton text="Prev" icon="/skip-backward.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Previous)} callback={props.refresh_play_callback.clone()} />
         </div>
         <div class="col">
             {playpause_button}
         </div>
         <div class="col">
-            <Button text="Pause" icon="/pause.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Pausing)} />
+            <TransportButton text="Pause" icon="/pause.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Pausing)} callback={props.refresh_play_callback.clone()} />
         </div>
         <div class="col">
-            <Button text="Next" icon="/skip-forward.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Next)} />
+            <TransportButton text="Next" icon="/skip-forward.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Next)} callback={props.refresh_play_callback.clone()} />
         </div>
         <div class="col">
-            <Button text="Again" icon="/arrow-repeat.svg" btype={ButtonType::Secondary} on_click={Some(GStreamerAction::RepeatOnce)} callback = {props.repeat_once_callback.clone()} />
+            <TransportButton text="Again" icon="/arrow-repeat.svg" btype={ButtonType::Secondary} on_click={Some(GStreamerAction::RepeatOnce)} callback = {props.repeat_once_callback.clone()} />
         </div>
         <div class="col">
-            <UrlCallButton text="Clean" icon="/trash.svg" btype={ButtonType::Danger}  callback={props.clean_callback.clone()} />
+            <UrlCallButton text="Clean" icon="/trash.svg" btype={ButtonType::Danger}  callback={props.clean_callback.clone()} url_call = {"/clean/"} />
         </div>
         <div class="col-2">
-            <Button text="Delete Range" icon="/trash.svg" btype={ButtonType::Danger} on_click={None} />
+            <Button text="Delete Range" icon="/trash.svg" btype={ButtonType::Danger} />
         </div>
     </div>}
 }
@@ -61,21 +62,18 @@ enum ButtonType {
 }
 
 #[derive(Clone, Properties, PartialEq)]
-struct ButtonProps {
+struct TransportButtonProps {
     text: String,
     icon: String,
     btype: ButtonType,
     on_click: Option<GStreamerAction>,
-    callback: Option<Callback<()>>,
-    url_call: Option<String>,
+    callback: Callback<()>,
 }
 
 enum ButtonMsg {
     Clicked,
     Done,
 }
-
-struct Button;
 
 fn icon(path: String, size: Option<usize>) -> Html {
     let size = (size.unwrap_or(24)).to_string() + "px";
@@ -86,9 +84,10 @@ fn icon(path: String, size: Option<usize>) -> Html {
     }
 }
 
-impl Component for Button {
+struct TransportButton;
+impl Component for TransportButton {
     type Message = ButtonMsg;
-    type Properties = ButtonProps;
+    type Properties = TransportButtonProps;
 
     fn create(_ctx: &Context<Self>) -> Self {
         Self
@@ -130,9 +129,7 @@ impl Component for Button {
                 }
             }
             ButtonMsg::Done => {
-                if let Some(ref callback) = ctx.props().callback {
-                    callback.emit(());
-                }
+                ctx.props().callback.emit(());
             }
         };
         false
@@ -146,8 +143,8 @@ struct UrlCallButtonProps {
     text: String,
     icon: String,
     btype: ButtonType,
-    callback: Option<Callback<()>>,
-    url_call: Option<String>,
+    callback: Callback<()>,
+    url_call: String,
 }
 
 impl Component for UrlCallButton {
@@ -155,6 +152,59 @@ impl Component for UrlCallButton {
     type Properties = UrlCallButtonProps;
 
     fn create(_ctx: &Context<Self>) -> Self {
+        Self
+    }
+
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+        match msg {
+            ButtonMsg::Clicked => {
+                ctx.link().send_future(async move {
+                    Request::post("/clean/").send().await.unwrap();
+                    ButtonMsg::Done
+                });
+            }
+            ButtonMsg::Done => {
+                ctx.props().callback.emit(());
+            }
+        };
+        false
+    }
+
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let class = String::from("btn ")
+            + match ctx.props().btype {
+                ButtonType::Info => "btn-info",
+                ButtonType::Primary => "btn-primary",
+                ButtonType::Secondary => "btn-secondary",
+                ButtonType::Danger => "btn-danger",
+                ButtonType::Success => "btn-success",
+            };
+        let onclick = ctx.link().callback(|_| ButtonMsg::Clicked);
+        let icon_path: String = ctx.props().icon.clone();
+        html! {
+                <div class="col">
+                    <button class={class} onclick={onclick}>
+                    {icon(icon_path,None)}
+                    { &ctx.props().text}</button>
+                </div>
+        }
+    }
+}
+
+struct Button;
+
+#[derive(Clone, Properties, PartialEq)]
+struct ButtonProps {
+    text: String,
+    icon: String,
+    btype: ButtonType,
+}
+
+impl Component for Button {
+    type Message = ButtonMsg;
+    type Properties = ButtonProps;
+
+    fn create(ctx: &Context<Self>) -> Self {
         Self
     }
 
@@ -177,21 +227,7 @@ impl Component for UrlCallButton {
                 </div>
         }
     }
-
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
-        match msg {
-            ButtonMsg::Clicked => {
-                ctx.link().send_future(async move {
-                    Request::post("/clean/").send().await.unwrap();
-                    ButtonMsg::Done
-                });
-            }
-            ButtonMsg::Done => {
-                if let Some(ref callback) = ctx.props().callback {
-                    callback.emit(());
-                }
-            }
-        };
         false
     }
 }
