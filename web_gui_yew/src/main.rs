@@ -93,8 +93,7 @@ impl Component for App {
                 }
             }
         });
-        ctx.link()
-            .send_message_batch(vec![AppMessage::RefreshList, AppMessage::RefreshPlayStatus]);
+        ctx.link().send_message(AppMessage::RefreshList);
         App {
             current_playing: 0,
             current_status: GStreamerMessage::Stopped,
@@ -108,7 +107,7 @@ impl Component for App {
         match msg {
             AppMessage::WsMessage(msg) => self.handle_wsmessage(msg),
             AppMessage::RefreshList => {
-                ctx.link().send_future(async move {
+                ctx.link().send_future_batch(async move {
                     let new_tracks: Vec<viola_common::Track> = Request::get("/playlist/")
                         .send()
                         .await
@@ -116,7 +115,10 @@ impl Component for App {
                         .json()
                         .await
                         .unwrap_or_default();
-                    AppMessage::RefreshListDone(new_tracks)
+                    vec![
+                        AppMessage::RefreshListDone(new_tracks),
+                        AppMessage::RefreshPlayStatus,
+                    ]
                 });
                 false
             }
