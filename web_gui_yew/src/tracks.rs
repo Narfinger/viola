@@ -50,7 +50,7 @@ impl Component for TracksComponent {
                     && ctx.props().status == GStreamerMessage::Playing
                 {
                     (
-                        "style: color: red",
+                        "table-success",
                         html! {
                         <img src="/play.svg" /> },
                     )
@@ -66,7 +66,7 @@ impl Component for TracksComponent {
                     ("", html! {})
                 };
                 html! {
-                    <tr {color}>
+                    <tr class={color}>
                         <td style="width: 5%" >{image} {index}</td>
                         <td style="width: 2%" >{unwrap_or_empty(&track.tracknumber)}</td>
                         <td style="width: 25%">{&track.title}</td>

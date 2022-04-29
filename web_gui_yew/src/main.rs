@@ -30,6 +30,8 @@ struct App {
 
 enum AppMessage {
     WsMessage(viola_common::WsMessage),
+    RefreshPlayStatus,
+    RefreshPlayStatusDone((usize, GStreamerMessage)),
     RefreshList,
     RefreshListDone(Vec<viola_common::Track>),
     RepeatOnce,
@@ -91,7 +93,8 @@ impl Component for App {
                 }
             }
         });
-        ctx.link().send_message(AppMessage::RefreshList);
+        ctx.link()
+            .send_message_batch(vec![AppMessage::RefreshList, AppMessage::RefreshPlayStatus]);
         App {
             current_playing: 0,
             current_status: GStreamerMessage::Stopped,
@@ -121,6 +124,31 @@ impl Component for App {
                 self.current_tracks = Rc::new(tracks);
                 true
             }
+            AppMessage::RefreshPlayStatus => {
+                ctx.link().send_future(async move {
+                    let status = Request::get("/transport/")
+                        .send()
+                        .await
+                        .unwrap()
+                        .json()
+                        .await
+                        .unwrap();
+                    let id = Request::get("/currentid/")
+                        .send()
+                        .await
+                        .unwrap()
+                        .json()
+                        .await
+                        .unwrap();
+                    AppMessage::RefreshPlayStatusDone((id, status))
+                });
+                false
+            }
+            AppMessage::RefreshPlayStatusDone((id, status)) => {
+                self.current_playing = id;
+                self.current_status = status;
+                true
+            }
             AppMessage::RepeatOnce => {
                 self.repeat_once = true;
                 true
@@ -141,7 +169,7 @@ impl Component for App {
             <div class="container-fluid" style="padding-left: 5vw; padding-bottom: 1vh; height: 75vh">
                 <div class="row">
                     <div class="col" style="height: 80vh">
-                    <Buttons status={self.current_status} repeat_once_callback = {ctx.link().callback(|_| AppMessage::RepeatOnce)} />
+                    <Buttons status={self.current_status} repeat_once_callback = {ctx.link().callback(|_| AppMessage::RepeatOnce)} clean_callback= {ctx.link().callback(|_| AppMessage::RefreshList)} />
                     <TabsComponent />
                     <div class="row" style="height: 75vh; width: 95vw; overflow-x: auto">
                         <TracksComponent tracks={&self.current_tracks} current_playing={self.current_playing} status = {self.current_status} />
