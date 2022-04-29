@@ -204,7 +204,7 @@ impl Component for Button {
     type Message = ButtonMsg;
     type Properties = ButtonProps;
 
-    fn create(ctx: &Context<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self
     }
 
@@ -227,7 +227,7 @@ impl Component for Button {
                 </div>
         }
     }
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool {
         false
     }
 }
