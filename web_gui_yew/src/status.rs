@@ -32,11 +32,11 @@ impl Component for Status {
                 "Playing: {} - {} - {}",
                 track.title, track.artist, track.album
             );
-            let total_time_string = utils::format_time(ctx.props().total_track_time)
-                + &format!(
-                    "({})",
-                    utils::format_time(ctx.props().remaining_time_playing)
-                );
+            let total_time_string = format!(
+                "{} ({})",
+                utils::format_time(ctx.props().total_track_time),
+                utils::format_time(ctx.props().remaining_time_playing)
+            );
             let repeat_once = if ctx.props().repeat_once {
                 "Repeat"
             } else {
