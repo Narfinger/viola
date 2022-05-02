@@ -50,9 +50,10 @@ impl Component for Status {
                 "width: {}%",
                 ((ctx.props().current_track_time as f32 / track.length as f32) * 100.0).round()
             );
+            let cover_src = format!("/currentimage?nonce={}", track.id);
             html! {
                 <div class="row border border-dark" style="padding: 0.1em">
-                    <div class="col-md"><img src="/currentimage?nonce={}" width=100 height=100 /></div>
+                    <div class="col-md"><img src={cover_src} width=100 height=100 /></div>
                     <div class="col">{ctx.props().number_of_tracks}</div>
                     <div class="col">{status}</div>
                     <div class="col">{track_status_string}</div>
