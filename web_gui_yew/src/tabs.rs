@@ -49,7 +49,19 @@ impl Component for TabsComponent {
             }
             TabsMessage::Add(_) => todo!(),
             TabsMessage::Delete(_) => todo!(),
-            TabsMessage::Change(_) => todo!(),
+            TabsMessage::Change(i) => {
+                ctx.link().send_future(async move {
+                    Request::post("/playlisttab/")
+                        .header("Content-Type", "application/json")
+                        .body(serde_json::to_string(&i).unwrap())
+                        .send()
+                        .await
+                        .unwrap();
+                    TabsMessage::Load
+                });
+                self.current = i;
+                false
+            }
         }
     }
 
