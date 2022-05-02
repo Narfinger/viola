@@ -1,13 +1,14 @@
+use reqwasm::http::Request;
 use std::rc::Rc;
-use viola_common::GStreamerMessage;
+use viola_common::{GStreamerAction, GStreamerMessage};
 
 use yew::prelude::*;
 
 use crate::utils::{self};
 
 pub(crate) enum TracksComponentMsg {
-    IncreaseIndex,
-    //IncreasePlaycount(usize),
+    Play(MouseEvent, usize),
+    Nop,
 }
 
 #[derive(Properties, PartialEq)]
@@ -35,7 +36,21 @@ impl Component for TracksComponent {
         TracksComponent {}
     }
 
-    fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool {
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+        match msg {
+            TracksComponentMsg::Play(ev, index) => {
+                ctx.link().send_future(async move {
+                    Request::post("/transport/")
+                        .header("Content-Type", "application/json")
+                        .body(serde_json::to_string(&GStreamerAction::Play(index)).unwrap())
+                        .send()
+                        .await
+                        .unwrap();
+                    TracksComponentMsg::Nop
+                });
+            }
+            TracksComponentMsg::Nop => {}
+        }
         false
     }
 
@@ -65,8 +80,11 @@ impl Component for TracksComponent {
                 } else {
                     ("", html! {})
                 };
+                let onclick = ctx
+                    .link()
+                    .callback(move |ev: MouseEvent| TracksComponentMsg::Play(ev, index));
                 html! {
-                    <tr class={color}>
+                    <tr class={color} onclick={onclick}>
                         <td style="width: 5%" >{image} {index}</td>
                         <td style="width: 2%" >{unwrap_or_empty(&track.tracknumber)}</td>
                         <td style="width: 25%">{&track.title}</td>
