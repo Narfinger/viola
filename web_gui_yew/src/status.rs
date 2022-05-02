@@ -6,6 +6,7 @@ pub(crate) enum StatusMsg {}
 
 #[derive(Properties, PartialEq)]
 pub(crate) struct StatusMsgProperties {
+    pub(crate) number_of_tracks: usize,
     pub(crate) current_status: GStreamerMessage,
     pub(crate) current_track: Option<Track>,
     pub(crate) current_track_time: u64,
@@ -26,7 +27,6 @@ impl Component for Status {
 
     fn view(&self, ctx: &yew::Context<Self>) -> yew::Html {
         if let Some(ref track) = ctx.props().current_track {
-            let window_string = "";
             let status = ctx.props().current_status.to_string();
             let track_status_string = format!(
                 "Playing: {} - {} - {}",
@@ -53,7 +53,7 @@ impl Component for Status {
             html! {
                 <div class="row border border-dark" style="padding: 0.1em">
                     <div class="col-md"><img src="/currentimage?nonce={}" width=100 height=100 /></div>
-                    <div class="col">{window_string}</div>
+                    <div class="col">{ctx.props().number_of_tracks}</div>
                     <div class="col">{status}</div>
                     <div class="col">{track_status_string}</div>
                     <div class="col">{total_time_string}</div>
