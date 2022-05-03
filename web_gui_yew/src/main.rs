@@ -1,10 +1,7 @@
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-use std::{
-    cell::{Cell, RefCell},
-    rc::Rc,
-};
+use std::{cell::RefCell, rc::Rc};
 
 use futures::StreamExt;
 use gloo_net::websocket::futures::WebSocket;
@@ -22,6 +19,8 @@ use button::Buttons;
 use status::Status;
 use tabs::TabsComponent;
 use tracks::TracksComponent;
+
+const TRACK_MAX_NUMBER: usize = 500;
 
 struct App {
     current_playing: usize,
@@ -168,7 +167,8 @@ impl Component for App {
             }
             AppMessage::ChangeTab => {
                 ctx.link().send_message(AppMessage::RefreshList);
-                false
+                self.current_tracks.take();
+                true
             }
         }
     }
@@ -193,16 +193,28 @@ impl Component for App {
                 <div class="row">
                     <div class="col" style="height: 80vh">
 
-                    <Buttons status={self.current_status} repeat_once_callback = {ctx.link().callback(|_| AppMessage::RepeatOnce)} refresh_play_callback={ctx.link().callback(|_| AppMessage::RefreshPlayStatus)} clean_callback= {ctx.link().callback(|_| AppMessage::RefreshList)} />
+                    <Buttons
+                        status={self.current_status}
+                        repeat_once_callback = {ctx.link().callback(|_| AppMessage::RepeatOnce)} refresh_play_callback={ctx.link().callback(|_| AppMessage::RefreshPlayStatus)} clean_callback= {ctx.link().callback(|_| AppMessage::RefreshList)} />
 
-                    <TabsComponent change_tab_callback = {ctx.link().callback(|_| AppMessage::ChangeTab)} />
+                    <TabsComponent
+                        change_tab_callback = {ctx.link().callback(|_| AppMessage::ChangeTab)}
+                        />
 
 
                     <div class="row" style="height: 75vh; width: 95vw; overflow-x: auto">
-                        <TracksComponent tracks={&self.current_tracks} current_playing={self.current_playing} status = {self.current_status} />
+                        <TracksComponent
+                            tracks={&self.current_tracks}
+                            current_playing={self.current_playing}
+                            max_track_number = {TRACK_MAX_NUMBER}
+                            status = {self.current_status}
+                            />
                     </div>
 
-                    <Status current_status = {self.current_status} current_track = {self.current_tracks.borrow().get(self.current_playing).cloned()} total_track_time = {full_time_playing} remaining_time_playing = {remaining_time_playing} current_track_time={self.current_track_time} repeat_once = {self.repeat_once} number_of_tracks={self.current_tracks.borrow().len()} />
+                    <Status current_status = {self.current_status}
+                        current_track = {self.current_tracks.borrow().get(self.current_playing).cloned()} total_track_time = {full_time_playing} remaining_time_playing = {remaining_time_playing} current_track_time={self.current_track_time} repeat_once = {self.repeat_once} number_of_tracks={self.current_tracks.borrow().len()}
+                        window = {TRACK_MAX_NUMBER}
+                        />
 
                     </div>
                 </div>

@@ -10,7 +10,6 @@ pub(crate) struct TabsComponent {
 pub(crate) enum TabsMessage {
     Load,
     LoadDone(PlaylistTabsJSON),
-    Add(usize),
     Delete(usize),
     Change(usize),
 }
@@ -52,8 +51,18 @@ impl Component for TabsComponent {
                 self.tabs = loaded_tabs.tabs;
                 true
             }
-            TabsMessage::Add(_) => todo!(),
-            TabsMessage::Delete(_) => todo!(),
+            TabsMessage::Delete(i) => {
+                ctx.link().send_future(async move {
+                    Request::delete("/playlisttab/")
+                        .header("Content-Type", "application/json")
+                        .body(serde_json::to_string(&i).unwrap())
+                        .send()
+                        .await
+                        .unwrap();
+                    TabsMessage::Load
+                });
+                false
+            }
             TabsMessage::Change(i) => {
                 ctx.link().send_future(async move {
                     Request::post("/playlisttab/")

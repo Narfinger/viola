@@ -13,6 +13,7 @@ pub(crate) struct StatusMsgProperties {
     pub(crate) total_track_time: u64,
     pub(crate) remaining_time_playing: u64,
     pub(crate) repeat_once: bool,
+    pub(crate) window: usize,
 }
 
 pub(crate) struct Status {}
