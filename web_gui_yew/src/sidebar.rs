@@ -7,8 +7,9 @@ use yew::prelude::*;
 pub(crate) enum SidebarMsg {
     Close,
     SmartPlaylistToggle,
-    LoadSmartPlaylist,
-    LoadSmartPlaylistDone(Vec<String>),
+    LoadSmartPlaylistNames,
+    LoadSmartPlaylistNamesDone(Vec<String>),
+    LoadSmartPlaylist(usize),
 }
 
 pub(crate) struct Sidebar {
@@ -20,6 +21,7 @@ pub(crate) struct Sidebar {
 pub(crate) struct SidebarProperties {
     pub(crate) visible: bool,
     pub(crate) close_callback: Callback<()>,
+    pub(crate) reload_callback: Callback<()>,
 }
 
 impl Component for Sidebar {
@@ -43,10 +45,10 @@ impl Component for Sidebar {
             }
             SidebarMsg::SmartPlaylistToggle => {
                 self.smartplaylist_visible = true;
-                ctx.link().send_message(SidebarMsg::LoadSmartPlaylist);
+                ctx.link().send_message(SidebarMsg::LoadSmartPlaylistNames);
                 true
             }
-            SidebarMsg::LoadSmartPlaylist => {
+            SidebarMsg::LoadSmartPlaylistNames => {
                 ctx.link().send_future(async move {
                     let pls: Vec<String> = Request::get("/smartplaylist/")
                         .send()
@@ -55,13 +57,26 @@ impl Component for Sidebar {
                         .json()
                         .await
                         .unwrap_or_default();
-                    SidebarMsg::LoadSmartPlaylistDone(pls)
+                    SidebarMsg::LoadSmartPlaylistNamesDone(pls)
                 });
                 false
             }
-            SidebarMsg::LoadSmartPlaylistDone(v) => {
+            SidebarMsg::LoadSmartPlaylistNamesDone(v) => {
                 self.smartplaylists = v;
                 true
+            }
+            SidebarMsg::LoadSmartPlaylist(index) => {
+                ctx.link().send_future(async move {
+                    Request::post("/smartplaylist/load/")
+                        .header("Content-Type", "application/json")
+                        .body(serde_json::to_string(&index).unwrap())
+                        .send()
+                        .await
+                        .unwrap();
+                    SidebarMsg::Close
+                });
+                ctx.props().reload_callback.emit(());
+                false
             }
         }
     }
@@ -87,9 +102,12 @@ impl Component for Sidebar {
                         </div>
                         <div class="modal-body">
                             <ul>
-                                {self.smartplaylists.iter().map(|s| {
+                                {self.smartplaylists.iter().enumerate().map(|(i, s)| {
                                     html!{
-                                        <li>{s}</li>
+                                        <li
+                                        onclick={ctx.link().callback(move |_| SidebarMsg::LoadSmartPlaylist(i))}
+                                        >{s}
+                                        </li>
                                     }
                                 }).collect::<Html>()}
                             </ul>

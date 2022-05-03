@@ -31,6 +31,7 @@ struct App {
     current_track_time: u64,
     repeat_once: bool,
     sidebar_visible: bool,
+    playlist_tabs: PlaylistTabsJSON,
 }
 
 enum AppMessage {
@@ -40,7 +41,8 @@ enum AppMessage {
     RefreshList,
     RefreshListDone(Vec<viola_common::Track>),
     RepeatOnce,
-    ChangeTab,
+    LoadTabs,
+    LoadTabsDone(PlaylistTabsJSON),
     ToggleSidebar,
 }
 
@@ -113,6 +115,10 @@ impl Component for App {
             current_track_time: 0,
             repeat_once: false,
             sidebar_visible: false,
+            playlist_tabs: PlaylistTabsJSON {
+                current: 0,
+                tabs: vec![],
+            },
         }
     }
 
@@ -168,13 +174,25 @@ impl Component for App {
                 self.repeat_once = true;
                 true
             }
-            AppMessage::ChangeTab => {
-                ctx.link().send_message(AppMessage::RefreshList);
-                self.current_tracks.take();
-                true
-            }
             AppMessage::ToggleSidebar => {
                 self.sidebar_visible = !self.sidebar_visible;
+                true
+            }
+            AppMessage::LoadTabs => {
+                ctx.link().send_future(async move {
+                    let tabs: PlaylistTabsJSON = Request::get("/playlisttab/")
+                        .send()
+                        .await
+                        .unwrap()
+                        .json()
+                        .await
+                        .unwrap();
+                    AppMessage::LoadTabsDone(tabs)
+                });
+                false
+            }
+            AppMessage::LoadTabsDone(loaded_tabs) => {
+                self.playlist_tabs = loaded_tabs;
                 true
             }
         }
@@ -201,8 +219,8 @@ impl Component for App {
                     <Sidebar
                         visible = {self.sidebar_visible}
                         close_callback = {ctx.link().callback(|_| AppMessage::ToggleSidebar)}
+                        reload_callback = {ctx.link().batch_callback(|_| vec![AppMessage::LoadTabs, AppMessage::RefreshList])}
                         />
-
 
                     <div class="col" style="height: 80vh">
 
@@ -213,7 +231,8 @@ impl Component for App {
                         />
 
                     <TabsComponent
-                        change_tab_callback = {ctx.link().callback(|_| AppMessage::ChangeTab)}
+                        tabs = {self.playlist_tabs.clone()}
+                        reload_tabs_callback = {ctx.link().callback(|_| AppMessage::LoadTabs)}
                         />
 
 
@@ -226,7 +245,8 @@ impl Component for App {
                             />
                     </div>
 
-                    <Status current_status = {self.current_status}
+                    <Status
+                        current_status = {self.current_status}
                         current_track = {self.current_tracks.borrow().get(self.current_playing).cloned()} total_track_time = {full_time_playing} remaining_time_playing = {remaining_time_playing} current_track_time={self.current_track_time} repeat_once = {self.repeat_once} number_of_tracks={self.current_tracks.borrow().len()}
                         window = {TRACK_MAX_NUMBER}
                         />

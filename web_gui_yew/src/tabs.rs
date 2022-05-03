@@ -2,21 +2,18 @@ use reqwasm::http::Request;
 use viola_common::*;
 use yew::prelude::*;
 
-pub(crate) struct TabsComponent {
-    tabs: Vec<PlaylistTabJSON>,
-    current: usize,
-}
+pub(crate) struct TabsComponent {}
 
 pub(crate) enum TabsMessage {
-    Load,
-    LoadDone(PlaylistTabsJSON),
     Delete(usize),
     Change(usize),
+    ReloadEmit,
 }
 
 #[derive(Properties, PartialEq)]
 pub(crate) struct TabsProperties {
-    pub(crate) change_tab_callback: Callback<()>,
+    pub(crate) reload_tabs_callback: Callback<()>,
+    pub(crate) tabs: PlaylistTabsJSON,
 }
 
 impl Component for TabsComponent {
@@ -24,33 +21,11 @@ impl Component for TabsComponent {
     type Properties = TabsProperties;
 
     fn create(ctx: &Context<Self>) -> Self {
-        ctx.link().send_message(TabsMessage::Load);
-        TabsComponent {
-            current: 0,
-            tabs: vec![],
-        }
+        TabsComponent {}
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            TabsMessage::Load => {
-                ctx.link().send_future(async move {
-                    let tabs: PlaylistTabsJSON = Request::get("/playlisttab/")
-                        .send()
-                        .await
-                        .unwrap()
-                        .json()
-                        .await
-                        .unwrap();
-                    TabsMessage::LoadDone(tabs)
-                });
-                false
-            }
-            TabsMessage::LoadDone(loaded_tabs) => {
-                self.current = loaded_tabs.current;
-                self.tabs = loaded_tabs.tabs;
-                true
-            }
             TabsMessage::Delete(i) => {
                 ctx.link().send_future(async move {
                     Request::delete("/playlisttab/")
@@ -59,8 +34,9 @@ impl Component for TabsComponent {
                         .send()
                         .await
                         .unwrap();
-                    TabsMessage::Load
+                    TabsMessage::ReloadEmit
                 });
+                ctx.props().reload_tabs_callback.emit(());
                 false
             }
             TabsMessage::Change(i) => {
@@ -71,17 +47,20 @@ impl Component for TabsComponent {
                         .send()
                         .await
                         .unwrap();
-                    TabsMessage::Load
+                    TabsMessage::ReloadEmit
                 });
-                self.current = i;
-                ctx.props().change_tab_callback.emit(());
+                false
+            }
+            TabsMessage::ReloadEmit => {
+                ctx.props().reload_tabs_callback.emit(());
                 false
             }
         }
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let inner = self
+        let inner = ctx.props()
+            .tabs
             .tabs
             .iter()
             .enumerate()
@@ -90,7 +69,7 @@ impl Component for TabsComponent {
                     <li class="nav-item">
                         <a href="#"
                             onclick={ ctx.link().callback(move |_| TabsMessage::Change(pos))}
-                        class={if pos == self.current {
+                        class={if pos == ctx.props().tabs.current {
                             "nav-link active"
                         } else {"nav-link"}}>
                         {&tab.name}
