@@ -28,10 +28,8 @@ impl Component for Status {
     fn view(&self, ctx: &yew::Context<Self>) -> yew::Html {
         if let Some(ref track) = ctx.props().current_track {
             let status = ctx.props().current_status.to_string();
-            let track_status_string = format!(
-                "Playing: {} - {} - {}",
-                track.title, track.artist, track.album
-            );
+            let track_status_string =
+                format!("{} - {} - {}", track.title, track.artist, track.album);
             let total_time_string = format!(
                 "{} ({})",
                 utils::format_time(ctx.props().total_track_time),
@@ -53,14 +51,14 @@ impl Component for Status {
             let cover_src = format!("/currentimage?nonce={}", track.id);
             html! {
                 <div class="row border border-dark" style="padding: 0.1em">
-                    <div class="col-md"><img src={cover_src} width=100 height=100 /></div>
-                    <div class="col">{ctx.props().number_of_tracks}</div>
-                    <div class="col">{status}</div>
-                    <div class="col">{track_status_string}</div>
-                    <div class="col">{total_time_string}</div>
-                    <div class="col">{repeat_once}</div>
-                    <div class="col">{time_string}</div>
-                    <div class="col">
+                    <div class="col-1"><img src={cover_src} width=100 height=100 /></div>
+                    <div class="col-1">{ctx.props().number_of_tracks}</div>
+                    <div class="col-1">{status}</div>
+                    <div class="col-3">{track_status_string}</div>
+                    <div class="col-2">{total_time_string}</div>
+                    <div class="col-1">{repeat_once}</div>
+                    <div class="col-2">{time_string}</div>
+                    <div class="col-1">
                         <div class="progress">
                             <div class="progress-bar" role="progressbar" style={track_percentage_width}
                             aria-valuenow={format!("{}", ctx.props().current_track_time)} aria-valuemin="0"
@@ -72,14 +70,7 @@ impl Component for Status {
         } else {
             html! {
             <div class="row border border-dark" style="padding: 0.1em">
-                <div classs="col-md"/>
-                <div class="col" />
-                <div class="col">{"Nothing Playing"}</div>
-                <div class="col" />
-                <div class="col"/>
-                <div class="col"/>
-                <div class="col"/>
-                <div class="col" />
+                <div classs="col" />
             </div>}
         }
     }
