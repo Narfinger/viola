@@ -200,6 +200,7 @@ impl Component for App {
                 <div class="row">
                     <Sidebar
                         visible = {self.sidebar_visible}
+                        close_callback = {ctx.link().callback(|_| AppMessage::ToggleSidebar)}
                         />
 
 

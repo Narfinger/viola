@@ -1,18 +1,25 @@
 use crate::button::*;
+use reqwasm::http::Request;
+use viola_common::*;
 use yew::prelude::*;
 
 #[derive(PartialEq)]
 pub(crate) enum SidebarMsg {
+    Close,
     SmartPlaylistToggle,
+    LoadSmartPlaylist,
+    LoadSmartPlaylistDone(Vec<String>),
 }
 
 pub(crate) struct Sidebar {
     smartplaylist_visible: bool,
+    smartplaylists: Vec<String>,
 }
 
 #[derive(Properties, PartialEq)]
 pub(crate) struct SidebarProperties {
     pub(crate) visible: bool,
+    pub(crate) close_callback: Callback<()>,
 }
 
 impl Component for Sidebar {
@@ -22,13 +29,38 @@ impl Component for Sidebar {
     fn create(_ctx: &Context<Self>) -> Self {
         Self {
             smartplaylist_visible: false,
+            smartplaylists: vec![],
         }
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
+            SidebarMsg::Close => {
+                self.smartplaylist_visible = false;
+                ctx.props().close_callback.emit(());
+                self.smartplaylists = vec![];
+                true
+            }
             SidebarMsg::SmartPlaylistToggle => {
                 self.smartplaylist_visible = true;
+                ctx.link().send_message(SidebarMsg::LoadSmartPlaylist);
+                true
+            }
+            SidebarMsg::LoadSmartPlaylist => {
+                ctx.link().send_future(async move {
+                    let pls: Vec<String> = Request::get("/smartplaylist/")
+                        .send()
+                        .await
+                        .unwrap()
+                        .json()
+                        .await
+                        .unwrap_or_default();
+                    SidebarMsg::LoadSmartPlaylistDone(pls)
+                });
+                false
+            }
+            SidebarMsg::LoadSmartPlaylistDone(v) => {
+                self.smartplaylists = v;
                 true
             }
         }
@@ -51,17 +83,24 @@ impl Component for Sidebar {
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">{"Modal title"}</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="false">{"&times;"}</span>
-                            </button>
+                            <h5 class="modal-title">{"Smart Playlists"}</h5>
                         </div>
                         <div class="modal-body">
-                            <p>{"Modal body text goes here."}</p>
+                            <ul>
+                                {self.smartplaylists.iter().map(|s| {
+                                    html!{
+                                        <li>{s}</li>
+                                    }
+                                }).collect::<Html>()}
+                            </ul>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-primary">{"Save changes"}</button>
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">{"Close"}</button>
+                            <CallbackButton
+                                text="Close"
+                                icon="/trash.svg"
+                                btype={ButtonType::Danger}
+                                callback={ctx.link().callback(|_| SidebarMsg::Close)}
+                            />
                         </div>
                     </div>
                 </div>
