@@ -171,10 +171,13 @@ impl Component for App {
             <div class="container-fluid" style="padding-left: 5vw; padding-bottom: 1vh; height: 75vh">
                 <div class="row">
                     <div class="col" style="height: 80vh">
-                    
+
                     <Buttons status={self.current_status} repeat_once_callback = {ctx.link().callback(|_| AppMessage::RepeatOnce)} refresh_play_callback={ctx.link().callback(|_| AppMessage::RefreshPlayStatus)} clean_callback= {ctx.link().callback(|_| AppMessage::RefreshList)} />
 
                     <TabsComponent />
+
+                /// The tracks and status need to be in the tabscomponent, otherwise we will not update the status correctly on tab change.
+
 
                     <div class="row" style="height: 75vh; width: 95vw; overflow-x: auto">
                         <TracksComponent tracks={&self.current_tracks} current_playing={self.current_playing} status = {self.current_status} />
