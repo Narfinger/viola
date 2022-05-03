@@ -28,6 +28,11 @@ impl Component for Status {
 
     fn view(&self, ctx: &yew::Context<Self>) -> yew::Html {
         if let Some(ref track) = ctx.props().current_track {
+            let number_string = if ctx.props().number_of_tracks > ctx.props().window {
+                format!("{} ({})", ctx.props().number_of_tracks, ctx.props().window)
+            } else {
+                format!("{}", ctx.props().number_of_tracks)
+            };
             let status = ctx.props().current_status.to_string();
             let track_status_string =
                 format!("{} - {} - {}", track.title, track.artist, track.album);
@@ -53,7 +58,7 @@ impl Component for Status {
             html! {
                 <div class="row border border-dark" style="padding: 0.1em">
                     <div class="col-1"><img src={cover_src} width=100 height=100 /></div>
-                    <div class="col-1">{ctx.props().number_of_tracks}</div>
+                    <div class="col-1">{number_string}</div>
                     <div class="col-1">{status}</div>
                     <div class="col-3">{track_status_string}</div>
                     <div class="col-2">{total_time_string}</div>

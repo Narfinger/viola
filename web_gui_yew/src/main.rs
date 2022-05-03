@@ -65,11 +65,9 @@ impl App {
                     true
                 }
                 GStreamerMessage::IncreasePlayCount(i) => {
-                    self.current_tracks
-                        .borrow_mut()
-                        .get_mut(i)
-                        .and_then(|t| t.playcount)
-                        .map_or(1, |i| i + 1);
+                    if let Some(ref mut t) = self.current_tracks.borrow_mut().get_mut(i) {
+                        t.playcount = Some(t.playcount.unwrap_or(0) + 1);
+                    }
                     true
                 }
                 GStreamerMessage::Nop => false,
