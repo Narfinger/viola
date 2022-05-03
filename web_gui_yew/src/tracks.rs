@@ -1,5 +1,5 @@
 use reqwasm::http::Request;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 use viola_common::{GStreamerAction, GStreamerMessage};
 
 use yew::prelude::*;
@@ -13,7 +13,7 @@ pub(crate) enum TracksComponentMsg {
 
 #[derive(Properties, PartialEq)]
 pub(crate) struct TracksComponentProps {
-    pub(crate) tracks: Rc<Vec<viola_common::Track>>,
+    pub(crate) tracks: Rc<RefCell<Vec<viola_common::Track>>>,
     pub(crate) current_playing: usize,
     pub(crate) status: GStreamerMessage,
 }
@@ -58,6 +58,7 @@ impl Component for TracksComponent {
         let table_rows = ctx
             .props()
             .tracks
+            .borrow()
             .iter()
             .enumerate()
             .map(|(index, track)| {

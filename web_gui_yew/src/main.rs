@@ -1,7 +1,10 @@
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-use std::rc::Rc;
+use std::{
+    cell::{Cell, RefCell},
+    rc::Rc,
+};
 
 use futures::StreamExt;
 use gloo_net::websocket::futures::WebSocket;
@@ -23,7 +26,7 @@ use tracks::TracksComponent;
 struct App {
     current_playing: usize,
     current_status: GStreamerMessage,
-    current_tracks: Rc<Vec<viola_common::Track>>,
+    current_tracks: Rc<RefCell<Vec<viola_common::Track>>>,
     current_track_time: u64,
     repeat_once: bool,
 }
@@ -35,6 +38,7 @@ enum AppMessage {
     RefreshList,
     RefreshListDone(Vec<viola_common::Track>),
     RepeatOnce,
+    ChangeTab,
 }
 
 impl App {
@@ -61,7 +65,14 @@ impl App {
                     self.current_status = msg;
                     true
                 }
-                GStreamerMessage::IncreasePlayCount(_) => false,
+                GStreamerMessage::IncreasePlayCount(i) => {
+                    self.current_tracks
+                        .borrow_mut()
+                        .get_mut(i)
+                        .and_then(|t| t.playcount)
+                        .map_or(1, |i| i + 1);
+                    true
+                }
                 GStreamerMessage::Nop => false,
                 GStreamerMessage::ChangedDuration(_) => false,
             },
@@ -97,7 +108,7 @@ impl Component for App {
         App {
             current_playing: 0,
             current_status: GStreamerMessage::Stopped,
-            current_tracks: Rc::new(vec![]),
+            current_tracks: Rc::new(RefCell::new(vec![])),
             current_track_time: 0,
             repeat_once: false,
         }
@@ -123,7 +134,7 @@ impl Component for App {
                 false
             }
             AppMessage::RefreshListDone(tracks) => {
-                self.current_tracks = Rc::new(tracks);
+                self.current_tracks.replace(tracks);
                 true
             }
             AppMessage::RefreshPlayStatus => {
@@ -155,13 +166,23 @@ impl Component for App {
                 self.repeat_once = true;
                 true
             }
+            AppMessage::ChangeTab => {
+                ctx.link().send_message(AppMessage::RefreshList);
+                false
+            }
         }
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let full_time_playing: u64 = self.current_tracks.iter().map(|t| t.length as u64).sum();
+        let full_time_playing: u64 = self
+            .current_tracks
+            .borrow()
+            .iter()
+            .map(|t| t.length as u64)
+            .sum();
         let remaining_time_playing: u64 = self
             .current_tracks
+            .borrow()
             .iter()
             .skip(self.current_playing)
             .map(|t| t.length as u64)
@@ -174,16 +195,14 @@ impl Component for App {
 
                     <Buttons status={self.current_status} repeat_once_callback = {ctx.link().callback(|_| AppMessage::RepeatOnce)} refresh_play_callback={ctx.link().callback(|_| AppMessage::RefreshPlayStatus)} clean_callback= {ctx.link().callback(|_| AppMessage::RefreshList)} />
 
-                    <TabsComponent />
-
-                /// The tracks and status need to be in the tabscomponent, otherwise we will not update the status correctly on tab change.
+                    <TabsComponent change_tab_callback = {ctx.link().callback(|_| AppMessage::ChangeTab)} />
 
 
                     <div class="row" style="height: 75vh; width: 95vw; overflow-x: auto">
                         <TracksComponent tracks={&self.current_tracks} current_playing={self.current_playing} status = {self.current_status} />
                     </div>
 
-                    <Status current_status = {self.current_status} current_track = {self.current_tracks.get(self.current_playing).cloned()} total_track_time = {full_time_playing} remaining_time_playing = {remaining_time_playing} current_track_time={self.current_track_time} repeat_once = {self.repeat_once} number_of_tracks={self.current_tracks.len()} />
+                    <Status current_status = {self.current_status} current_track = {self.current_tracks.borrow().get(self.current_playing).cloned()} total_track_time = {full_time_playing} remaining_time_playing = {remaining_time_playing} current_track_time={self.current_track_time} repeat_once = {self.repeat_once} number_of_tracks={self.current_tracks.borrow().len()} />
 
                     </div>
                 </div>

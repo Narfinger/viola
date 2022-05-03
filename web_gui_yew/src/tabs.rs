@@ -15,9 +15,14 @@ pub(crate) enum TabsMessage {
     Change(usize),
 }
 
+#[derive(Properties, PartialEq)]
+pub(crate) struct TabsProperties {
+    pub(crate) change_tab_callback: Callback<()>,
+}
+
 impl Component for TabsComponent {
     type Message = TabsMessage;
-    type Properties = ();
+    type Properties = TabsProperties;
 
     fn create(ctx: &Context<Self>) -> Self {
         ctx.link().send_message(TabsMessage::Load);
@@ -60,6 +65,7 @@ impl Component for TabsComponent {
                     TabsMessage::Load
                 });
                 self.current = i;
+                ctx.props().change_tab_callback.emit(());
                 false
             }
         }
