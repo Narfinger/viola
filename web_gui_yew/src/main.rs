@@ -11,11 +11,13 @@ use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
 
 mod button;
+mod sidebar;
 mod status;
 mod tabs;
 mod tracks;
 mod utils;
 use button::Buttons;
+use sidebar::Sidebar;
 use status::Status;
 use tabs::TabsComponent;
 use tracks::TracksComponent;
@@ -28,6 +30,7 @@ struct App {
     current_tracks: Rc<RefCell<Vec<viola_common::Track>>>,
     current_track_time: u64,
     repeat_once: bool,
+    sidebar_visible: bool,
 }
 
 enum AppMessage {
@@ -38,6 +41,7 @@ enum AppMessage {
     RefreshListDone(Vec<viola_common::Track>),
     RepeatOnce,
     ChangeTab,
+    ToggleSidebar,
 }
 
 impl App {
@@ -108,6 +112,7 @@ impl Component for App {
             current_tracks: Rc::new(RefCell::new(vec![])),
             current_track_time: 0,
             repeat_once: false,
+            sidebar_visible: false,
         }
     }
 
@@ -168,6 +173,10 @@ impl Component for App {
                 self.current_tracks.take();
                 true
             }
+            AppMessage::ToggleSidebar => {
+                self.sidebar_visible = !self.sidebar_visible;
+                true
+            }
         }
     }
 
@@ -189,11 +198,18 @@ impl Component for App {
         html! {
             <div class="container-fluid" style="padding-left: 5vw; padding-bottom: 1vh; height: 75vh">
                 <div class="row">
+                    <Sidebar
+                        visible = {self.sidebar_visible}
+                        />
+
+
                     <div class="col" style="height: 80vh">
 
                     <Buttons
                         status={self.current_status}
-                        repeat_once_callback = {ctx.link().callback(|_| AppMessage::RepeatOnce)} refresh_play_callback={ctx.link().callback(|_| AppMessage::RefreshPlayStatus)} clean_callback= {ctx.link().callback(|_| AppMessage::RefreshList)} />
+                        repeat_once_callback = {ctx.link().callback(|_| AppMessage::RepeatOnce)} refresh_play_callback = {ctx.link().callback(|_| AppMessage::RefreshPlayStatus)} clean_callback = {ctx.link().callback(|_| AppMessage::RefreshList)}
+                        sidebar_callback = {ctx.link().callback(|_| AppMessage::ToggleSidebar)}
+                        />
 
                     <TabsComponent
                         change_tab_callback = {ctx.link().callback(|_| AppMessage::ChangeTab)}

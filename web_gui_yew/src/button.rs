@@ -8,6 +8,7 @@ pub(crate) struct ButtonRowProps {
     pub(crate) repeat_once_callback: Callback<()>,
     pub(crate) clean_callback: Callback<()>,
     pub(crate) refresh_play_callback: Callback<()>,
+    pub(crate) sidebar_callback: Callback<()>,
 }
 
 #[function_component(Buttons)]
@@ -26,7 +27,7 @@ pub(crate) fn buttons(props: &ButtonRowProps) -> Html {
     html! {
     <div class="row">
         <div class="col">
-            <Button text="Menu" icon="/menu-button.svg" btype={ButtonType::Info} />
+            <CallbackButton text="Menu" icon="/menu-button.svg" btype={ButtonType::Info} callback={props.sidebar_callback.clone()} />
         </div>
         <div class="col">
             <TransportButton text="Prev" icon="/skip-backward.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Previous)} callback={props.refresh_play_callback.clone()} />
@@ -47,13 +48,13 @@ pub(crate) fn buttons(props: &ButtonRowProps) -> Html {
             <UrlCallButton text="Clean" icon="/trash.svg" btype={ButtonType::Danger}  callback={props.clean_callback.clone()} url_call = {"/clean/"} />
         </div>
         <div class="col-2">
-            <Button text="Delete Range" icon="/trash.svg" btype={ButtonType::Danger} />
+            <CallbackButton text="Delete Range" icon="/trash.svg" btype={ButtonType::Danger} callback={props.sidebar_callback.clone()} />
         </div>
     </div>}
 }
 
 #[derive(Clone, PartialEq)]
-enum ButtonType {
+pub(crate) enum ButtonType {
     Info,
     Primary,
     Secondary,
@@ -70,7 +71,7 @@ struct TransportButtonProps {
     callback: Callback<()>,
 }
 
-enum ButtonMsg {
+pub(crate) enum ButtonMsg {
     Clicked,
     Done,
 }
@@ -136,15 +137,15 @@ impl Component for TransportButton {
     }
 }
 
-struct UrlCallButton;
+pub(crate) struct UrlCallButton;
 
 #[derive(Clone, Properties, PartialEq)]
-struct UrlCallButtonProps {
-    text: String,
-    icon: String,
-    btype: ButtonType,
-    callback: Callback<()>,
-    url_call: String,
+pub(crate) struct UrlCallButtonProps {
+    pub(crate) text: String,
+    pub(crate) icon: String,
+    pub(crate) btype: ButtonType,
+    pub(crate) callback: Callback<()>,
+    pub(crate) url_call: String,
 }
 
 impl Component for UrlCallButton {
@@ -191,16 +192,17 @@ impl Component for UrlCallButton {
     }
 }
 
-struct Button;
+pub(crate) struct CallbackButton;
 
 #[derive(Clone, Properties, PartialEq)]
-struct ButtonProps {
-    text: String,
-    icon: String,
-    btype: ButtonType,
+pub(crate) struct ButtonProps {
+    pub(crate) text: String,
+    pub(crate) icon: String,
+    pub(crate) btype: ButtonType,
+    pub(crate) callback: Callback<()>,
 }
 
-impl Component for Button {
+impl Component for CallbackButton {
     type Message = ButtonMsg;
     type Properties = ButtonProps;
 
@@ -227,7 +229,13 @@ impl Component for Button {
                 </div>
         }
     }
-    fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool {
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+        match msg {
+            ButtonMsg::Clicked => {
+                ctx.props().callback.emit(());
+            }
+            ButtonMsg::Done => {}
+        };
         false
     }
 }
