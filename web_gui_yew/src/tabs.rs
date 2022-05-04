@@ -28,9 +28,7 @@ impl Component for TabsComponent {
         match msg {
             TabsMessage::Delete(i) => {
                 ctx.link().send_future(async move {
-                    Request::delete("/playlisttab/")
-                        .header("Content-Type", "application/json")
-                        .body(serde_json::to_string(&i).unwrap())
+                    Request::delete(&format!("/playlisttab/{}/", i))
                         .send()
                         .await
                         .unwrap();
@@ -41,7 +39,9 @@ impl Component for TabsComponent {
             }
             TabsMessage::Change(i) => {
                 ctx.link().send_future(async move {
-                    Request::delete(&format!("/playlisttab/{}/", i))
+                    Request::delete("/playlisttab/")
+                        .header("Content-Type", "application/json")
+                        .body(serde_json::to_string(&i).unwrap())
                         .send()
                         .await
                         .unwrap();
@@ -72,7 +72,7 @@ impl Component for TabsComponent {
                         } else {"nav-link"}}>
                         {&tab.name}
                         <span style="padding-left: 5px;">
-                            <img src="/x-square.svg" height="8px" width="8px" onclick={ ctx.link().callback(move |_| TabsMessage::Delete(pos))} />
+                            <img src="/x-square.svg" height="16px" width="16px" onclick={ ctx.link().callback(move |_| TabsMessage::Delete(pos))} />
                         </span>
                         </a>
                     </li>
