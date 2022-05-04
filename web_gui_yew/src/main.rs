@@ -3,9 +3,12 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 use std::{cell::RefCell, rc::Rc};
 
-use futures::StreamExt;
+use futures::{join, FutureExt, StreamExt};
 use gloo_net::websocket::futures::WebSocket;
-use reqwasm::http::Request;
+use reqwasm::{
+    http::{Request, Response},
+    Error,
+};
 use viola_common::*;
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
@@ -108,6 +111,7 @@ impl Component for App {
             }
         });
         ctx.link().send_message(AppMessage::RefreshList);
+        ctx.link().send_message(AppMessage::LoadTabs);
         App {
             current_playing: 0,
             current_status: GStreamerMessage::Stopped,
@@ -126,7 +130,7 @@ impl Component for App {
         match msg {
             AppMessage::WsMessage(msg) => self.handle_wsmessage(msg),
             AppMessage::RefreshList => {
-                ctx.link().send_future_batch(async move {
+                ctx.link().send_future(async move {
                     let new_tracks: Vec<viola_common::Track> = Request::get("/playlist/")
                         .send()
                         .await
@@ -134,11 +138,9 @@ impl Component for App {
                         .json()
                         .await
                         .unwrap_or_default();
-                    vec![
-                        AppMessage::RefreshListDone(new_tracks),
-                        AppMessage::RefreshPlayStatus,
-                    ]
+                    AppMessage::RefreshListDone(new_tracks)
                 });
+                ctx.link().send_message(AppMessage::RefreshPlayStatus);
                 false
             }
             AppMessage::RefreshListDone(tracks) => {
@@ -152,16 +154,14 @@ impl Component for App {
                         .await
                         .unwrap()
                         .json()
-                        .await
-                        .unwrap();
+                        .await;
                     let id = Request::get("/currentid/")
                         .send()
                         .await
                         .unwrap()
                         .json()
-                        .await
-                        .unwrap();
-                    AppMessage::RefreshPlayStatusDone((id, status))
+                        .await;
+                    AppMessage::RefreshPlayStatusDone((id.unwrap(), status.unwrap()))
                 });
                 false
             }

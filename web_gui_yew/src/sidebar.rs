@@ -14,7 +14,7 @@ pub(crate) enum SidebarMsg {
 
 pub(crate) struct Sidebar {
     smartplaylist_visible: bool,
-    smartplaylists: Vec<String>,
+    smartplaylists: Smartplaylists,
 }
 
 #[derive(Properties, PartialEq)]
@@ -67,9 +67,10 @@ impl Component for Sidebar {
             }
             SidebarMsg::LoadSmartPlaylist(index) => {
                 ctx.link().send_future(async move {
+                    let s = viola_common::LoadSmartPlaylistJson { index };
                     Request::post("/smartplaylist/load/")
                         .header("Content-Type", "application/json")
-                        .body(serde_json::to_string(&index).unwrap())
+                        .body(serde_json::to_string(&s).unwrap())
                         .send()
                         .await
                         .unwrap();
