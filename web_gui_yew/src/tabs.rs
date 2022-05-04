@@ -34,12 +34,11 @@ impl Component for TabsComponent {
                         .unwrap();
                     TabsMessage::ReloadEmit
                 });
-                ctx.props().reload_tabs_callback.emit(());
                 false
             }
             TabsMessage::Change(i) => {
                 ctx.link().send_future(async move {
-                    Request::delete("/playlisttab/")
+                    Request::post("/playlisttab/")
                         .header("Content-Type", "application/json")
                         .body(serde_json::to_string(&i).unwrap())
                         .send()

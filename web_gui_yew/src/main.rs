@@ -3,12 +3,9 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 use std::{cell::RefCell, rc::Rc};
 
-use futures::{join, FutureExt, StreamExt};
+use futures::{FutureExt, StreamExt};
 use gloo_net::websocket::futures::WebSocket;
-use reqwasm::{
-    http::{Request, Response},
-    Error,
-};
+use reqwasm::http::Request;
 use viola_common::*;
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
@@ -46,6 +43,7 @@ enum AppMessage {
     RepeatOnce,
     LoadTabs,
     LoadTabsDone(PlaylistTabsJSON),
+    ReloadTabs,
     ToggleSidebar,
 }
 
@@ -195,6 +193,12 @@ impl Component for App {
                 self.playlist_tabs = loaded_tabs;
                 true
             }
+            AppMessage::ReloadTabs => {
+                self.current_tracks.replace(vec![]);
+                ctx.link()
+                    .send_message_batch(vec![AppMessage::LoadTabs, AppMessage::RefreshList]);
+                true
+            }
         }
     }
 
@@ -232,7 +236,7 @@ impl Component for App {
 
                     <TabsComponent
                         tabs = {self.playlist_tabs.clone()}
-                        reload_tabs_callback = {ctx.link().callback(|_| AppMessage::LoadTabs)}
+                        reload_tabs_callback = {ctx.link().callback(|_| AppMessage::ReloadTabs)}
                         />
 
 
