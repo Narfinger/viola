@@ -15,6 +15,7 @@ mod sidebar;
 mod status;
 mod tabs;
 mod tracks;
+mod treeview;
 mod utils;
 use button::Buttons;
 use sidebar::Sidebar;
