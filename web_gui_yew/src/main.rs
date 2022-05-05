@@ -108,8 +108,8 @@ impl Component for App {
                 }
             }
         });
-        ctx.link().send_message(AppMessage::RefreshList);
         ctx.link().send_message(AppMessage::LoadTabs);
+        ctx.link().send_message(AppMessage::RefreshList);
         App {
             current_playing: 0,
             current_status: GStreamerMessage::Stopped,
