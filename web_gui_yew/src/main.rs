@@ -109,9 +109,7 @@ impl Component for App {
                 }
             }
         });
-        ctx.link().send_message(AppMessage::LoadTabs);
-        ctx.link().send_message(AppMessage::RefreshList);
-        App {
+        let a = App {
             current_playing: 0,
             current_status: GStreamerMessage::Stopped,
             current_tracks: Rc::new(RefCell::new(vec![])),
@@ -122,7 +120,10 @@ impl Component for App {
                 current: 0,
                 tabs: vec![],
             },
-        }
+        };
+        ctx.link()
+            .send_message_batch(vec![AppMessage::LoadTabs, AppMessage::RefreshList]);
+        a
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {

@@ -1,3 +1,5 @@
+use indextree::{Arena, NodeId};
+use reqwasm::http::Request;
 use viola_common::*;
 use yew::prelude::*;
 
@@ -86,70 +88,139 @@ fn view_tree_lvl2(
 
 */
 
-enum SearchString {
+pub(crate) enum SearchString {
     UseStoredSearch,
+    EmptySearch,
 }
 
 #[derive(Properties, PartialEq)]
-struct TreeViewLvl1Props {
-    tree: indextree::Arena<String>,
-    root: indextree::NodeId,
-    nodeid: indextree::NodeId,
-    model_index: usize,
-    index: usize,
+pub(crate) struct TreeViewLvl1Props {
+    pub(crate) type_vec: Vec<viola_common::TreeType>,
 }
 
-enum Msg {
+pub(crate) enum Msg {
     FillTreeView {
-        model_index: usize,
-        tree_index: Vec<usize>,
         search: SearchString,
     },
-    LoadFromTreeView {
-        model_index: usize,
-        tree_index: Vec<usize>,
+    FillTreeViewRecv {
+        result: Vec<String>,
+        query: TreeViewQuery,
     },
+    LoadFromTreeView,
 }
 
-struct TreeViewLvl1 {}
+pub(crate) struct TreeViewLvl1 {
+    tree: indextree::Arena<String>,
+    root: indextree::NodeId,
+}
+
+impl TreeViewLvl1 {
+    fn tree_index_to_nodeid(&self, tree_index: &[usize]) -> Option<NodeId> {
+        match tree_index.len() {
+            0 => {
+                // this means we are the second message, hence we need to clear our arena (and make a new root node)
+                //let mut arena = indextree::Arena::new();
+                //let root = arena.new_node("".to_string());
+                //treeview.tree = arena;
+                //treeview.root = root;
+                //Some(treeview.root)
+                None
+            }
+            1 => self.root.children(&self.tree).nth(tree_index[0]),
+            2 => self
+                .root
+                .children(&self.tree)
+                .nth(tree_index[0])
+                .map(|t| t.children(&self.tree))
+                .and_then(|mut t| t.nth(tree_index[1])),
+            _ => None,
+        }
+    }
+}
 
 impl Component for TreeViewLvl1 {
     type Message = Msg;
 
     type Properties = TreeViewLvl1Props;
 
-    fn create(_ctx: &Context<Self>) -> Self {
-        Self {}
+    fn create(ctx: &Context<Self>) -> Self {
+        let mut tree = Arena::new();
+        let root = tree.new_node("".to_string());
+        ctx.link().send_message(Msg::FillTreeView {
+            search: SearchString::EmptySearch,
+        });
+        Self { tree, root }
+    }
+
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+        match msg {
+            Msg::FillTreeView { search } => {
+                let type_vec = ctx.props().type_vec.clone();
+
+                ctx.link().send_future(async move {
+                    let data = viola_common::TreeViewQuery {
+                        indices: vec![],
+                        types: type_vec,
+                        search: None,
+                    };
+                    let result: Vec<String> = Request::post("/libraryview/partial/")
+                        .header("Content-Type", "application/json")
+                        .body(serde_json::to_string(&data).unwrap())
+                        .send()
+                        .await
+                        .unwrap()
+                        .json()
+                        .await
+                        .unwrap();
+                    Msg::FillTreeViewRecv {
+                        result,
+                        query: data,
+                    }
+                });
+                false
+            }
+            Msg::FillTreeViewRecv { result, query } => {
+                for i in result {
+                    let new_node = self.tree.new_node(i);
+                    self.root.append(new_node, &mut self.tree);
+                }
+                true
+            }
+            Msg::LoadFromTreeView => todo!(),
+        }
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        //let no_children = ctx.props().nodeid.children(&ctx.props().tree).count() == 0;
-        let model_index = ctx.props().model_index;
-        let tree_index = vec![ctx.props().index];
-        let tree_indexc = vec![ctx.props().index];
+        let nodes = self
+            .root
+            .children(&self.tree)
+            .map(|nodeid| {
+                html! {
+                    <li>
+                        <span style="list-style-type: disclosure-closed">
+                            <span onclick={ctx.link().callback(move |_|
+                                Msg::FillTreeView{
+                                    search: SearchString::UseStoredSearch}
+                                )}>
+                                    {self.tree.get(nodeid).unwrap().get()}
+                            </span>
+                            <button
+                                class="btn btn-outline-primary btn-sm" style="margin-left: 25px"
+                                onclick={ctx.link().callback(|_| Msg::LoadFromTreeView)}>
+                                {"Load"}
+                            </button>
+                        </span>
+                    //<TreeViewLvl2 />
+                    </li>
+
+                }
+            })
+            .collect::<Html>();
 
         html! {
-            <li>
-                <span style="list-style-type: disclosure-closed">
-                    <span onclick={ctx.link().callback(move |_|
-                        Msg::FillTreeView{
-                            model_index,
-                            tree_index: tree_index.clone(),
-                            search: SearchString::UseStoredSearch}
-                        )}>
-                            {ctx.props().tree.get(ctx.props().nodeid).unwrap().get()}
-                    </span>
-                    <button
-                        class="btn btn-outline-primary btn-sm" style="margin-left: 25px"
-                        onclick={ctx.link().callback(move |_|
-                            Msg::LoadFromTreeView{
-                                tree_index: tree_indexc.clone(),
-                                model_index})}>
-                        {"Load"}
-                    </button>
-                </span>
-            //<TreeViewLvl2 />
-            </li>
+            <ul>
+            {nodes}
+            </ul>
         }
     }
 }

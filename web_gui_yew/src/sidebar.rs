@@ -1,4 +1,5 @@
 use crate::button::*;
+use crate::treeview::TreeViewLvl1;
 use reqwasm::http::Request;
 use viola_common::*;
 use yew::prelude::*;
@@ -10,11 +11,13 @@ pub(crate) enum SidebarMsg {
     LoadSmartPlaylistNames,
     LoadSmartPlaylistNamesDone(Vec<String>),
     LoadSmartPlaylist(usize),
+    TreeViewToggle(usize),
 }
 
 pub(crate) struct Sidebar {
     smartplaylist_visible: bool,
     smartplaylists: Smartplaylists,
+    treeview_visible: Vec<bool>,
 }
 
 #[derive(Properties, PartialEq)]
@@ -32,6 +35,7 @@ impl Component for Sidebar {
         Self {
             smartplaylist_visible: false,
             smartplaylists: vec![],
+            treeview_visible: vec![false],
         }
     }
 
@@ -46,6 +50,10 @@ impl Component for Sidebar {
             SidebarMsg::SmartPlaylistToggle => {
                 self.smartplaylist_visible = true;
                 ctx.link().send_message(SidebarMsg::LoadSmartPlaylistNames);
+                true
+            }
+            SidebarMsg::TreeViewToggle(index) => {
+                self.treeview_visible[index] = !self.treeview_visible[index];
                 true
             }
             SidebarMsg::LoadSmartPlaylistNames => {
@@ -94,7 +102,7 @@ impl Component for Sidebar {
             ""
         };
 
-        let modal = html! {
+        let sm_modal = html! {
             <div class="modal" tabindex="-1" role="dialog" style={style}>
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
@@ -126,9 +134,38 @@ impl Component for Sidebar {
             </div>
         };
 
+        let style = if self.treeview_visible[0] {
+            "display: block"
+        } else {
+            ""
+        };
+        let a_modal = html! {
+            <div class="modal" tabindex="-1" role="dialog" style={style}>
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">{"Smart Playlists"}</h5>
+                        </div>
+                        <div class="modal-body">
+                            <TreeViewLvl1 type_vec={vec![TreeType::Artist, TreeType::Album, TreeType::Track]} />
+                        </div>
+                        <div class="modal-footer">
+                            <CallbackButton
+                                text="Close"
+                                icon="/trash.svg"
+                                btype={ButtonType::Danger}
+                                callback={ctx.link().callback(|_| SidebarMsg::TreeViewToggle(0))}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        };
+
         html! {
             <>
-                {modal}
+                {sm_modal}
+                {a_modal}
                 <div class={class_string} style="width: 20%; padding: 20px">
                     <ul class="navbar-nav">
                         <li class="nav-item" style="padding: 5px">
@@ -137,6 +174,15 @@ impl Component for Sidebar {
                                 icon={""}
                                 btype={ButtonType::Primary}
                                 callback = {ctx.link().callback(|_| SidebarMsg::SmartPlaylistToggle)}
+                                />
+                        </li>
+
+                        <li class="nav-item" style="padding: 5px">
+                            <CallbackButton
+                                text={"Artist"}
+                                icon={""}
+                                btype={ButtonType::Primary}
+                                callback = {ctx.link().callback(|_| SidebarMsg::TreeViewToggle(0))}
                                 />
                         </li>
                     </ul>
