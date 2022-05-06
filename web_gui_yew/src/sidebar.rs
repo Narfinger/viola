@@ -14,10 +14,16 @@ pub(crate) enum SidebarMsg {
     TreeViewToggle(usize),
 }
 
+struct TreeView {
+    name: String,
+    ttype: Vec<TreeType>,
+    visible: bool,
+}
+
 pub(crate) struct Sidebar {
     smartplaylist_visible: bool,
     smartplaylists: Smartplaylists,
-    treeview_visible: Vec<bool>,
+    treeviews: Vec<TreeView>,
 }
 
 #[derive(Properties, PartialEq)]
@@ -32,10 +38,15 @@ impl Component for Sidebar {
     type Properties = SidebarProperties;
 
     fn create(_ctx: &Context<Self>) -> Self {
+        let treeviews = vec![TreeView {
+            name: String::from("Artist"),
+            ttype: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
+            visible: false,
+        }];
         Self {
             smartplaylist_visible: false,
             smartplaylists: vec![],
-            treeview_visible: vec![false],
+            treeviews: treeviews,
         }
     }
 
@@ -43,6 +54,9 @@ impl Component for Sidebar {
         match msg {
             SidebarMsg::Close => {
                 self.smartplaylist_visible = false;
+                for mut i in self.treeviews.iter_mut() {
+                    i.visible = false;
+                }
                 ctx.props().close_callback.emit(());
                 self.smartplaylists = vec![];
                 true
@@ -53,7 +67,8 @@ impl Component for Sidebar {
                 true
             }
             SidebarMsg::TreeViewToggle(index) => {
-                self.treeview_visible[index] = !self.treeview_visible[index];
+                let old = self.treeviews.get(index).unwrap().visible;
+                self.treeviews.get_mut(index).unwrap().visible = !old;
                 true
             }
             SidebarMsg::LoadSmartPlaylistNames => {
@@ -134,12 +149,13 @@ impl Component for Sidebar {
             </div>
         };
 
-        let style = if self.treeview_visible[0] {
+        let treeviews = self.treeviews.iter().map(|t| {
+        let style = if t.visible {
             "display: block"
         } else {
             ""
         };
-        let a_modal = html! {
+        html! {
             <div class="modal" tabindex="-1" role="dialog" style={style}>
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
@@ -147,25 +163,40 @@ impl Component for Sidebar {
                             <h5 class="modal-title">{"Smart Playlists"}</h5>
                         </div>
                         <div class="modal-body">
-                            <TreeViewLvl1 type_vec={vec![TreeType::Artist, TreeType::Album, TreeType::Track]} />
+                            <TreeViewLvl1
+                                type_vec={t.ttype.clone()}
+                                close_callback={ctx.link().callback(|_| SidebarMsg::Close)} />
                         </div>
                         <div class="modal-footer">
                             <CallbackButton
                                 text="Close"
                                 icon="/trash.svg"
                                 btype={ButtonType::Danger}
-                                callback={ctx.link().callback(|_| SidebarMsg::TreeViewToggle(0))}
+                                callback={ctx.link().callback(move |_| SidebarMsg::Close)}
                             />
                         </div>
                     </div>
                 </div>
             </div>
-        };
+        }}).collect::<Html>();
+
+        let treeviews_buttons = self.treeviews.iter().enumerate().map(|(index, tv)| {
+            html!{
+                <li class="nav-item" style="padding: 5px">
+                            <CallbackButton
+                                text={tv.name.clone()}
+                                icon={""}
+                                btype={ButtonType::Primary}
+                                callback = {ctx.link().callback(move |_| SidebarMsg::TreeViewToggle(index))}
+                                />
+                        </li>
+            }
+        }).collect::<Html>();
 
         html! {
             <>
                 {sm_modal}
-                {a_modal}
+                {treeviews}
                 <div class={class_string} style="width: 20%; padding: 20px">
                     <ul class="navbar-nav">
                         <li class="nav-item" style="padding: 5px">
@@ -176,15 +207,7 @@ impl Component for Sidebar {
                                 callback = {ctx.link().callback(|_| SidebarMsg::SmartPlaylistToggle)}
                                 />
                         </li>
-
-                        <li class="nav-item" style="padding: 5px">
-                            <CallbackButton
-                                text={"Artist"}
-                                icon={""}
-                                btype={ButtonType::Primary}
-                                callback = {ctx.link().callback(|_| SidebarMsg::TreeViewToggle(0))}
-                                />
-                        </li>
+                        {treeviews_buttons}
                     </ul>
                 </div>
             </>

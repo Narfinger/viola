@@ -3,7 +3,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 use std::{cell::RefCell, rc::Rc};
 
-use futures::{FutureExt, StreamExt};
+use futures::StreamExt;
 use gloo_net::websocket::futures::WebSocket;
 use reqwasm::http::Request;
 use viola_common::*;
@@ -218,7 +218,7 @@ impl Component for App {
             .skip(self.current_playing)
             .map(|t| t.length as u64)
             .sum::<u64>()
-            - self.current_track_time;
+            .wrapping_sub(self.current_track_time);
         html! {
             <div class="container-fluid" style="padding-left: 5vw; padding-bottom: 1vh; height: 75vh">
                 <div class="row">
