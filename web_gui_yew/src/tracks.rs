@@ -39,7 +39,7 @@ impl Component for TracksComponent {
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            TracksComponentMsg::Play(ev, index) => {
+            TracksComponentMsg::Play(_ev, index) => {
                 ctx.link().send_future(async move {
                     Request::post("/transport/")
                         .header("Content-Type", "application/json")

@@ -87,7 +87,7 @@ impl TreeViewLvl1 {
                 <ul>
                 {
                     nodeid.children(&self.tree).enumerate().map(|(index2, nodeid2)| {
-                        let lvl3 = self.view_lvl3(&ctx, index, index2, nodeid2);
+                        let lvl3 = self.view_lvl3(ctx, index, index2, nodeid2);
                         html! {
                             <li>
                             <span style="list-style-type: disclosure-closed">
@@ -136,7 +136,7 @@ impl Component for TreeViewLvl1 {
 
                 ctx.link().send_future(async move {
                     let data = viola_common::TreeViewQuery {
-                        indices: indices,
+                        indices,
                         types: type_vec,
                         search: None,
                     };
@@ -175,13 +175,10 @@ impl Component for TreeViewLvl1 {
                     search: None,
                 };
                 ctx.link().send_future(async move {
-                    let result: Vec<String> = Request::post("/libraryview/full/")
+                    Request::post("/libraryview/full/")
                         .header("Content-Type", "application/json")
                         .body(serde_json::to_string(&data).unwrap())
                         .send()
-                        .await
-                        .unwrap()
-                        .json()
                         .await
                         .unwrap();
                     TreeViewLvl1Msg::Done
@@ -217,7 +214,7 @@ impl Component for TreeViewLvl1 {
                                 {"Load"}
                             </button>
                         </span>
-                        {self.view_lvl2(&ctx, index, nodeid)}
+                        {self.view_lvl2(ctx, index, nodeid)}
                     </li>
 
                 }

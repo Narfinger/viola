@@ -38,15 +38,32 @@ impl Component for Sidebar {
     type Properties = SidebarProperties;
 
     fn create(_ctx: &Context<Self>) -> Self {
-        let treeviews = vec![TreeView {
-            name: String::from("Artist"),
-            ttype: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
-            visible: false,
-        }];
+        let treeviews = vec![
+            TreeView {
+                name: String::from("Artist"),
+                ttype: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
+                visible: false,
+            },
+            TreeView {
+                name: String::from("Album"),
+                ttype: vec![TreeType::Album, TreeType::Track],
+                visible: false,
+            },
+            TreeView {
+                name: String::from("Track"),
+                ttype: vec![TreeType::Track],
+                visible: false,
+            },
+            TreeView {
+                name: String::from("Genre"),
+                ttype: vec![TreeType::Genre, TreeType::Artist, TreeType::Album],
+                visible: false,
+            },
+        ];
         Self {
             smartplaylist_visible: false,
             smartplaylists: vec![],
-            treeviews: treeviews,
+            treeviews,
         }
     }
 
@@ -183,13 +200,13 @@ impl Component for Sidebar {
         let treeviews_buttons = self.treeviews.iter().enumerate().map(|(index, tv)| {
             html!{
                 <li class="nav-item" style="padding: 5px">
-                            <CallbackButton
-                                text={tv.name.clone()}
-                                icon={""}
-                                btype={ButtonType::Primary}
-                                callback = {ctx.link().callback(move |_| SidebarMsg::TreeViewToggle(index))}
-                                />
-                        </li>
+                    <CallbackButton
+                        text={tv.name.clone()}
+                        icon={"list-nested"}
+                        btype={ButtonType::Primary}
+                        callback = {ctx.link().callback(move |_| SidebarMsg::TreeViewToggle(index))}
+                        />
+                </li>
             }
         }).collect::<Html>();
 
@@ -202,7 +219,7 @@ impl Component for Sidebar {
                         <li class="nav-item" style="padding: 5px">
                             <CallbackButton
                                 text={"Smartplaylist"}
-                                icon={""}
+                                icon={"list-nested"}
                                 btype={ButtonType::Primary}
                                 callback = {ctx.link().callback(|_| SidebarMsg::SmartPlaylistToggle)}
                                 />
