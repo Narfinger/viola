@@ -125,8 +125,6 @@ impl Component for Sidebar {
     fn view(&self, ctx: &Context<Self>) -> Html {
         /// Fix
         /// This view seems to produce a lot of lag and I don't know why.
-
-        /*
         let class_string = if ctx.props().visible {
             "col-xs"
         } else {
@@ -233,7 +231,5 @@ impl Component for Sidebar {
                 </div>
             </>
         }
-        */
-        html! {}
     }
 }

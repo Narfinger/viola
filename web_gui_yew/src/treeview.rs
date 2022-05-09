@@ -122,10 +122,10 @@ impl Component for TreeViewLvl1 {
     fn create(ctx: &Context<Self>) -> Self {
         let mut tree = Arena::new();
         let root = tree.new_node("".to_string());
-        ctx.link().send_message(TreeViewLvl1Msg::FillTreeView {
-            indices: vec![],
-            search: SearchString::EmptySearch,
-        });
+        //ctx.link().send_message(TreeViewLvl1Msg::FillTreeView {
+        //    indices: vec![],
+        //    search: SearchString::EmptySearch,
+        //});
         Self { tree, root }
     }
 
