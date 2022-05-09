@@ -641,6 +641,7 @@ dependencies = [
  "viola_common",
  "wasm-bindgen-futures",
  "wasm-logger",
+ "web-sys",
  "wee_alloc",
  "yew",
 ]

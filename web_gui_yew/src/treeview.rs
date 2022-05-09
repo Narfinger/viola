@@ -1,12 +1,8 @@
 use indextree::{Arena, NodeId};
 use reqwasm::http::Request;
 use viola_common::*;
+use web_sys::HtmlInputElement;
 use yew::prelude::*;
-
-pub(crate) enum SearchString {
-    UseStoredSearch,
-    EmptySearch,
-}
 
 #[derive(Properties, PartialEq)]
 pub(crate) struct TreeViewLvl1Props {
@@ -15,8 +11,9 @@ pub(crate) struct TreeViewLvl1Props {
 }
 
 pub(crate) enum TreeViewLvl1Msg {
+    SearchChange(Event),
+    FillAll,
     FillTreeView {
-        search: SearchString,
         indices: Vec<usize>,
     },
     FillTreeViewRecv {
@@ -30,6 +27,7 @@ pub(crate) enum TreeViewLvl1Msg {
 pub(crate) struct TreeViewLvl1 {
     tree: indextree::Arena<String>,
     root: indextree::NodeId,
+    search: Option<String>,
 }
 
 impl TreeViewLvl1 {
@@ -60,7 +58,6 @@ impl TreeViewLvl1 {
                                 <span style="list-style-type: disclosure-closed">
                                     <span onclick={ctx.link().callback(move |_| TreeViewLvl1Msg::FillTreeView{
                                         indices: vec![index,index2, index3],
-                                        search: SearchString::EmptySearch,
                                     })}>
                                     {self.tree.get(nodeid3).unwrap().get()}
                                     </span>
@@ -93,7 +90,6 @@ impl TreeViewLvl1 {
                             <span style="list-style-type: disclosure-closed">
                                 <span onclick={ctx.link().callback(move |_| TreeViewLvl1Msg::FillTreeView{
                                     indices: vec![index, index2],
-                                    search: SearchString::EmptySearch,
                                 })}>
                                 {self.tree.get(nodeid2).unwrap().get()}
                                 </span>
@@ -126,19 +122,33 @@ impl Component for TreeViewLvl1 {
         //    indices: vec![],
         //    search: SearchString::EmptySearch,
         //});
-        Self { tree, root }
+        Self {
+            tree,
+            root,
+            search: None,
+        }
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            TreeViewLvl1Msg::FillTreeView { search, indices } => {
+            TreeViewLvl1Msg::SearchChange(a) => {
+                self.search = a.target_dyn_into::<HtmlInputElement>().map(|e| e.value());
+                //ctx.link().send_message(TreeViewLvl1Msg::FillTreeView { indices: vec![]});
+                false
+            }
+            TreeViewLvl1Msg::FillAll => {
+                ctx.link()
+                    .send_message(TreeViewLvl1Msg::FillTreeView { indices: vec![] });
+                false
+            }
+            TreeViewLvl1Msg::FillTreeView { indices } => {
                 let type_vec = ctx.props().type_vec.clone();
-
+                let search = self.search.clone();
                 ctx.link().send_future(async move {
                     let data = viola_common::TreeViewQuery {
                         indices,
                         types: type_vec,
-                        search: None,
+                        search,
                     };
                     let result: Vec<String> = Request::post("/libraryview/partial/")
                         .header("Content-Type", "application/json")
@@ -204,7 +214,7 @@ impl Component for TreeViewLvl1 {
                             <span onclick={ctx.link().callback(move |_|
                                 TreeViewLvl1Msg::FillTreeView{
                                     indices: vec![index],
-                                    search: SearchString::UseStoredSearch}
+                                    }
                                 )}>
                                     {self.tree.get(nodeid).unwrap().get()}
                             </span>
@@ -221,10 +231,24 @@ impl Component for TreeViewLvl1 {
             })
             .collect::<Html>();
 
-        html! {
-            <ul>
-            {nodes}
-            </ul>
+        html! {<>
+                <div class="row">
+                    <div class="col">
+                        <input
+                            class="form-control" placeholder = "Search"
+                            onchange={ctx.link().callback(|a| TreeViewLvl1Msg::SearchChange(a))}
+                            />
+                    </div>
+                    <div class="col">
+                        <button class="btn btn-outline-primary btn-sm"
+                            onclick={ctx.link().callback(|_| TreeViewLvl1Msg::FillAll)}
+                        >{"Load All"}</button>
+                    </div>
+                </div>
+                <ul>
+                    {nodes}
+                </ul>
+            </>
         }
     }
 }
