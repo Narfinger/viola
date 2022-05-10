@@ -12,7 +12,6 @@ lto = true
 [dependencies]
 console_error_panic_hook = "0.1.7"
 futures = "0.3.21"
-gloo-net = "0.2.0"
 humantime = "2.1.0"
 indextree = "4.4.0"
 log = "0.4.17"

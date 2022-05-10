@@ -204,7 +204,7 @@ impl Component for Sidebar {
                 <li class="nav-item" style="padding: 5px">
                     <CallbackButton
                         text={tv.name.clone()}
-                        icon={"list-nested"}
+                        icon={"/list-nested.svg"}
                         btype={ButtonType::Primary}
                         callback = {ctx.link().callback(move |_| SidebarMsg::TreeViewToggle(index))}
                         />
@@ -221,7 +221,7 @@ impl Component for Sidebar {
                         <li class="nav-item" style="padding: 5px">
                             <CallbackButton
                                 text={"Smartplaylist"}
-                                icon={"list-nested"}
+                                icon={"/list-nested.svg"}
                                 btype={ButtonType::Primary}
                                 callback = {ctx.link().callback(|_| SidebarMsg::SmartPlaylistToggle)}
                                 />

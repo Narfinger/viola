@@ -4,8 +4,9 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 use std::{cell::RefCell, rc::Rc};
 
 use futures::StreamExt;
-use gloo_net::websocket::futures::WebSocket;
 use reqwasm::http::Request;
+use reqwasm::websocket;
+use reqwasm::websocket::futures::WebSocket;
 use viola_common::*;
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
@@ -97,7 +98,7 @@ impl Component for App {
         spawn_local(async move {
             while let Some(msg) = read.next().await {
                 if let Ok(msg) = msg {
-                    if let gloo_net::websocket::Message::Text(msg) = msg {
+                    if let websocket::Message::Text(msg) = msg {
                         if let Ok(val) = serde_json::from_str(&msg) {
                             link.send_message(AppMessage::WsMessage(val));
                         } else {
