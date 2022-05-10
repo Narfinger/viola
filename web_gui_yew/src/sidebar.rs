@@ -12,6 +12,7 @@ pub(crate) enum SidebarMsg {
     LoadSmartPlaylistNamesDone(Vec<String>),
     LoadSmartPlaylist(usize),
     TreeViewToggle(usize),
+    ShowFullPlaylistWindow,
 }
 
 struct TreeView {
@@ -31,6 +32,7 @@ pub(crate) struct SidebarProperties {
     pub(crate) visible: bool,
     pub(crate) close_callback: Callback<()>,
     pub(crate) reload_callback: Callback<()>,
+    pub(crate) show_all_tracks_callback: Callback<()>,
 }
 
 impl Component for Sidebar {
@@ -119,12 +121,15 @@ impl Component for Sidebar {
                 ctx.props().reload_callback.emit(());
                 false
             }
+            SidebarMsg::ShowFullPlaylistWindow => {
+                ctx.link().send_message(SidebarMsg::Close);
+                ctx.props().show_all_tracks_callback.emit(());
+                false
+            }
         }
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        /// Fix
-        /// This view seems to produce a lot of lag and I don't know why.
         let class_string = if ctx.props().visible {
             "col-xs"
         } else {
@@ -227,6 +232,14 @@ impl Component for Sidebar {
                                 />
                         </li>
                         {treeviews_buttons}
+                        <li class="nav-item" style="padding: 5px">
+                            <CallbackButton
+                                text={"Show Full Playlist Window"}
+                                icon={"/window-fullscreen.svg"}
+                                btype={ButtonType::Danger}
+                                callback = {ctx.link().callback(|_| SidebarMsg::ShowFullPlaylistWindow)}
+                                />
+                        </li>
                     </ul>
                 </div>
             </>

@@ -20,7 +20,7 @@ impl Component for TabsComponent {
     type Message = TabsMessage;
     type Properties = TabsProperties;
 
-    fn create(ctx: &Context<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         TabsComponent {}
     }
 

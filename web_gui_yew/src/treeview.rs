@@ -115,7 +115,7 @@ impl Component for TreeViewLvl1 {
 
     type Properties = TreeViewLvl1Props;
 
-    fn create(ctx: &Context<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         let mut tree = Arena::new();
         let root = tree.new_node("".to_string());
         //ctx.link().send_message(TreeViewLvl1Msg::FillTreeView {

@@ -25,6 +25,7 @@ use tabs::TabsComponent;
 use tracks::TracksComponent;
 
 const TRACK_MAX_NUMBER: usize = 500;
+const RIDICULOUS_LARGE_TRACK_NUMBER: usize = 10000;
 
 struct App {
     current_playing: usize,
@@ -34,6 +35,7 @@ struct App {
     repeat_once: bool,
     sidebar_visible: bool,
     playlist_tabs: PlaylistTabsJSON,
+    show_full_playlist: bool,
 }
 
 enum AppMessage {
@@ -47,6 +49,7 @@ enum AppMessage {
     LoadTabsDone(PlaylistTabsJSON),
     ReloadTabs,
     ToggleSidebar,
+    ShowFullPlaylist,
 }
 
 impl App {
@@ -121,6 +124,7 @@ impl Component for App {
                 current: 0,
                 tabs: vec![],
             },
+            show_full_playlist: false,
         };
         ctx.link()
             .send_message_batch(vec![AppMessage::LoadTabs, AppMessage::RefreshList]);
@@ -202,6 +206,10 @@ impl Component for App {
                     .send_message_batch(vec![AppMessage::LoadTabs, AppMessage::RefreshList]);
                 true
             }
+            AppMessage::ShowFullPlaylist => {
+                self.show_full_playlist = true;
+                false
+            }
         }
     }
 
@@ -227,6 +235,7 @@ impl Component for App {
                         visible = {self.sidebar_visible}
                         close_callback = {ctx.link().callback(|_| AppMessage::ToggleSidebar)}
                         reload_callback = {ctx.link().batch_callback(|_| vec![AppMessage::LoadTabs, AppMessage::RefreshList])}
+                        show_all_tracks_callback = {ctx.link().callback(|_| AppMessage::ShowFullPlaylist)}
                         />
 
                     <div class="col" style="height: 80vh">
@@ -247,7 +256,11 @@ impl Component for App {
                         <TracksComponent
                             tracks={&self.current_tracks}
                             current_playing={self.current_playing}
-                            max_track_number = {TRACK_MAX_NUMBER}
+                            max_track_number = {if self.show_full_playlist {
+                                RIDICULOUS_LARGE_TRACK_NUMBER
+                            } else {
+                                TRACK_MAX_NUMBER
+                            }}
                             status = {self.current_status}
                             />
                     </div>
