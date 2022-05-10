@@ -13,6 +13,7 @@ pub(crate) enum SidebarMsg {
     LoadSmartPlaylist(usize),
     TreeViewToggle(usize),
     ShowFullPlaylistWindow,
+    Save,
 }
 
 struct TreeView {
@@ -124,6 +125,13 @@ impl Component for Sidebar {
             SidebarMsg::ShowFullPlaylistWindow => {
                 ctx.link().send_message(SidebarMsg::Close);
                 ctx.props().show_all_tracks_callback.emit(());
+                false
+            }
+            SidebarMsg::Save => {
+                ctx.link().send_future(async move {
+                    Request::post("/save/").send().await.unwrap();
+                    SidebarMsg::Close
+                });
                 false
             }
         }
@@ -238,6 +246,14 @@ impl Component for Sidebar {
                                 icon={"/window-fullscreen.svg"}
                                 btype={ButtonType::Danger}
                                 callback = {ctx.link().callback(|_| SidebarMsg::ShowFullPlaylistWindow)}
+                                />
+                        </li>
+                        <li class="nav-item" style="padding: 5px">
+                            <CallbackButton
+                                text={"Save"}
+                                icon={"/save.svg"}
+                                btype={ButtonType::Danger}
+                                callback = {ctx.link().callback(|_| SidebarMsg::Save)}
                                 />
                         </li>
                     </ul>
