@@ -230,15 +230,12 @@ impl Component for App {
             .wrapping_sub(self.current_track_time);
         html! {
             <div class="container-fluid" style="padding-left: 5vw; padding-bottom: 1vh; height: 75vh">
-                <div class="col">
                     <Sidebar
                         visible = {self.sidebar_visible}
                         close_callback = {ctx.link().callback(|_| AppMessage::ToggleSidebar)}
                         reload_callback = {ctx.link().batch_callback(|_| vec![AppMessage::LoadTabs, AppMessage::RefreshList])}
                         show_all_tracks_callback = {ctx.link().callback(|_| AppMessage::ShowFullPlaylist)}
                         />
-                </div>
-                <div class="col">
                     <div class="row">
                         <div class="col" style="height: 80vh">
                             <Buttons
@@ -274,7 +271,6 @@ impl Component for App {
                             />
                         </div>
                     </div>
-                </div>
             </div>
         }
     }

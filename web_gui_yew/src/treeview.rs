@@ -236,8 +236,7 @@ impl Component for TreeViewLvl1 {
                     <div class="col">
                         <input
                             class="form-control" placeholder = "Search"
-                            onchange={ctx.link().callback(|a| TreeViewLvl1Msg::SearchChange(a))}
-                            />
+                            onchange={ctx.link().callback(TreeViewLvl1Msg::SearchChange)}                            />
                     </div>
                     <div class="col">
                         <button class="btn btn-outline-primary btn-sm"

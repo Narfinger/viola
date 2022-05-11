@@ -5,16 +5,18 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-
+  # commons
+  - package-ecosystem: "cargo"
+    directory: "/viola_common"
+    schedule:
+      interval: "weekly"
   # npm in webgui
   - package-ecosystem: "npm"
-    # Look for a `Dockerfile` in the `root` directory
-    directory: "/web_gui_seed"
-    # Check for updates once a week
+    directory: "/web_gui_yew"
     schedule:
       interval: "weekly"
   # cargo in webgui
   - package-ecosystem: "cargo"
-    directory: "/web_gui_seed"
+    directory: "/web_gui_yew"
     schedule:
       interval: "weekly"
