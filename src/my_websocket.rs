@@ -13,8 +13,8 @@ pub async fn send_my_message(socket: &MyWs, msg: WsMessage) {
         let st = serde_json::to_string(&msg).expect("Error serializing");
         let msg = Message::text(&st);
         if sink.send(msg).await.is_err() {
-	    info!("Closing Websocket");
-            sink.close().await.expect("Could not close socket");
+	        info!("Closing Websocket");
+            //sink.close().await.expect("Could not close socket");
             socket.take();
         }
     }
