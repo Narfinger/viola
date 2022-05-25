@@ -459,8 +459,9 @@ pub async fn run(pool: DBPool) {
         .map(move |ws: warp::ws::Ws| {
             let statec = statec.clone();
             ws.on_upgrade(|websocket| async move {
+                println!("doing new websocket connection");
                 let (tx, _) = websocket.split();
-                statec.write().await.ws = Arc::new(RwLock::new(Some(tx)));
+                *statec.read().await.ws.write().await = Some(tx);
             })
         });
     //let web_gui_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/index.html");
