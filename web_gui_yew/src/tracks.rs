@@ -87,7 +87,7 @@ impl Component for TracksComponent {
                     .link()
                     .callback(move |ev: MouseEvent| TracksComponentMsg::Play(ev, index));
                 html! {
-                    <tr class={color} onclick={onclick}>
+                    <tr class={color} ondblclick={onclick}>
                         <td style="width: 5%" >{image} {index}</td>
                         <td style="width: 2%" >{unwrap_or_empty(&track.tracknumber)}</td>
                         <td style="width: 25%">{&track.title}</td>

@@ -21,6 +21,9 @@ jobs:
           toolchain: stable
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
+      - uses: jetli/trunk-action@v0.1.0
+        with:
+          version: 'latest'
       - uses: actions/cache@v3
         with:
           path: |
@@ -29,7 +32,5 @@ jobs:
       - name: "NPM Install"
         working-directory: "web_gui_yew"
         run: npm install
-      - run: rustup target add wasm32-unknown-unknown
-      - run: cargo install -f wasm-bindgen-cli trunk
       - run: trunk build
         working-directory: "web_gui_yew"
