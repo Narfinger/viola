@@ -32,5 +32,6 @@ jobs:
       - name: "NPM Install"
         working-directory: "web_gui_yew"
         run: npm install
+      - run: rustup target add wasm32-unknown-unknown
       - run: trunk build
         working-directory: "web_gui_yew"
