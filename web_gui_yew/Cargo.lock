@@ -618,6 +618,7 @@ dependencies = [
  "serde",
  "serde_json",
  "viola_common",
+ "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-logger",
  "web-sys",

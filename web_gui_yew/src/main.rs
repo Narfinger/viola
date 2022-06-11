@@ -12,6 +12,7 @@ use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
 
 mod button;
+mod delete_range_dialog;
 mod sidebar;
 mod status;
 mod tabs;
@@ -23,6 +24,7 @@ use sidebar::Sidebar;
 use status::Status;
 use tabs::TabsComponent;
 use tracks::TracksComponent;
+use delete_range_dialog::DeleteRangeDialog;
 
 const TRACK_MAX_NUMBER: usize = 500;
 const RIDICULOUS_LARGE_TRACK_NUMBER: usize = 10000;
@@ -34,6 +36,7 @@ struct App {
     current_track_time: u64,
     repeat_once: bool,
     sidebar_visible: bool,
+    delete_range_visible: bool,
     playlist_tabs: PlaylistTabsJSON,
     show_full_playlist: bool,
 }
@@ -49,6 +52,7 @@ enum AppMessage {
     LoadTabsDone(PlaylistTabsJSON),
     ReloadTabs,
     ToggleSidebar,
+    ToggleDeleteRange,
     ShowFullPlaylist,
 }
 
@@ -120,6 +124,7 @@ impl Component for App {
             current_track_time: 0,
             repeat_once: false,
             sidebar_visible: false,
+            delete_range_visible:false,
             playlist_tabs: PlaylistTabsJSON {
                 current: 0,
                 tabs: vec![],
@@ -183,6 +188,10 @@ impl Component for App {
                 self.sidebar_visible = !self.sidebar_visible;
                 true
             }
+            AppMessage::ToggleDeleteRange => {
+                self.delete_range_visible = !self.delete_range_visible;
+                true
+            }
             AppMessage::LoadTabs => {
                 ctx.link().send_future(async move {
                     let tabs: PlaylistTabsJSON = Request::get("/playlisttab/")
@@ -236,6 +245,12 @@ impl Component for App {
                         reload_callback = {ctx.link().batch_callback(|_| vec![AppMessage::LoadTabs, AppMessage::RefreshList])}
                         show_all_tracks_callback = {ctx.link().callback(|_| AppMessage::ShowFullPlaylist)}
                         />
+                    <DeleteRangeDialog
+                        visible = {self.delete_range_visible}
+                        refresh_callback = {ctx.link().callback(|_| AppMessage::RefreshList)}
+                        toggle_visible_callback = {ctx.link().callback(|_| AppMessage::ToggleDeleteRange)}
+                        max = {self.current_tracks.borrow().len()}
+                    />
                     <div class="row">
                         <div class="col" style="height: 80vh">
                             <Buttons
@@ -244,6 +259,7 @@ impl Component for App {
                                 refresh_play_callback = {ctx.link().callback(|_| AppMessage::RefreshPlayStatus)}
                                 clean_callback = {ctx.link().callback(|_| AppMessage::RefreshList)}
                                 sidebar_callback = {ctx.link().callback(|_| AppMessage::ToggleSidebar)}
+                                delete_range_callback = {ctx.link().callback(|_| AppMessage::ToggleDeleteRange)}
                                 />
 
                             <TabsComponent

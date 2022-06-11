@@ -9,6 +9,7 @@ pub(crate) struct ButtonRowProps {
     pub(crate) clean_callback: Callback<()>,
     pub(crate) refresh_play_callback: Callback<()>,
     pub(crate) sidebar_callback: Callback<()>,
+    pub(crate) delete_range_callback: Callback<()>,
 }
 
 #[function_component(Buttons)]
@@ -48,7 +49,7 @@ pub(crate) fn buttons(props: &ButtonRowProps) -> Html {
             <UrlCallButton text="Clean" icon="/trash.svg" btype={ButtonType::Danger}  callback={props.clean_callback.clone()} url_call = {"/clean/"} />
         </div>
         <div class="col-2">
-            <CallbackButton text="Delete Range" icon="/trash.svg" btype={ButtonType::Danger} callback={props.sidebar_callback.clone()} />
+            <CallbackButton text="Delete Range" icon="/trash.svg" btype={ButtonType::Danger} callback={props.delete_range_callback.clone()} />
         </div>
     </div>}
 }
