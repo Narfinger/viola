@@ -32,7 +32,7 @@ walkdir = "2.3.2"
 web-view = "0.7.3"
 viola_common = {path ="viola_common", features =["backend"]}
 itertools = "0.10.3"
-zbus = "2.2.0"
+zbus = "2.3.0"
 parking_lot = { version = "0.12.0", features = ["serde", "deadlock_detection"] }
 warp = "0.3.2"
 tokio = { version = "1.18.2", features = ["full"] }
