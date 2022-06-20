@@ -24,7 +24,7 @@ fn send_delete_range(max: usize, input: UseStateHandle<String>, refresh_callback
         end
     };
     wasm_bindgen_futures::spawn_local(async move {
-        Request::post("/deleterange/")
+        Request::post("/deletefromplaylist/")
             .header("Content-Type", "application/json")
             .body(serde_json::to_string(&range).unwrap())
             .send()
@@ -82,13 +82,13 @@ pub(crate) fn delete_range_dialog(props: &DeleteRangeDialogProps ) -> Html {
                         <div class="modal-footer">
                         <CallbackButton
                             text="Close"
-                            icon="/trash.svg"
+                            icon="/x-square.svg"
                             btype={ButtonType::Danger}
                             callback={toggle_visible_callback}
                         />
                         <CallbackButton
-                            text="Submit"
-                            icon="/"
+                            text="Delete"
+                            icon="/trash.svg"
                             btype={ButtonType::Primary}
                             callback={submit_callback}
                         />

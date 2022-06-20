@@ -171,7 +171,7 @@ impl Component for Sidebar {
                         <div class="modal-footer">
                             <CallbackButton
                                 text="Close"
-                                icon="/trash.svg"
+                                icon="/x-square.svg"
                                 btype={ButtonType::Danger}
                                 callback={ctx.link().callback(|_| SidebarMsg::Close)}
                             />
@@ -202,7 +202,7 @@ impl Component for Sidebar {
                         <div class="modal-footer">
                             <CallbackButton
                                 text="Close"
-                                icon="/trash.svg"
+                                icon="/x-square.svg"
                                 btype={ButtonType::Danger}
                                 callback={ctx.link().callback(move |_| SidebarMsg::Close)}
                             />
