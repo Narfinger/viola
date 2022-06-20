@@ -24,7 +24,7 @@ fn send_delete_range(max: usize, input: UseStateHandle<String>, refresh_callback
         end
     };
     wasm_bindgen_futures::spawn_local(async move {
-        Request::post("/deletefromplaylist/")
+        Request::delete("/deletefromplaylist/")
             .header("Content-Type", "application/json")
             .body(serde_json::to_string(&range).unwrap())
             .send()
