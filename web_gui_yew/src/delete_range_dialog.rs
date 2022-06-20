@@ -68,7 +68,7 @@ pub(crate) fn delete_range_dialog(props: &DeleteRangeDialogProps ) -> Html {
         let submit_callback = Callback::from(move |_| send_delete_range(max.clone(), input.clone(), refresh_callback.clone()));
 
         html! {
-            <div class="modal" tabindex="-1" role="dialog">
+            <div class="modal" tabindex="-1" role="dialog" style="display: block">
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">

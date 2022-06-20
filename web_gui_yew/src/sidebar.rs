@@ -192,7 +192,7 @@ impl Component for Sidebar {
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">{"Smart Playlists"}</h5>
+                            <h5 class="modal-title">{format!("Treeview {:?}", t.ttype)}</h5>
                         </div>
                         <div class="modal-body">
                             <TreeViewLvl1
