@@ -2,7 +2,6 @@ use std::ops::Range;
 
 use crate::button::*;
 use reqwasm::http::Request;
-use viola_common::*;
 use web_sys::{HtmlInputElement, EventTarget};
 use yew::prelude::*;
 use wasm_bindgen::JsCast;
@@ -16,7 +15,7 @@ pub(crate) struct DeleteRangeDialogProps {
 }
 
 fn send_delete_range(max: usize, input: UseStateHandle<String>, refresh_callback: Callback<()>) {
-    let split = input.split("-").collect::<Vec<_>>();
+    let split = input.split('-').collect::<Vec<_>>();
     let start:usize = split.get(0).unwrap().parse().unwrap();
     let end:usize = split.get(1).and_then(|s| s.parse().ok()).unwrap_or(max);
     let range = Range {
@@ -63,9 +62,8 @@ pub(crate) fn delete_range_dialog(props: &DeleteRangeDialogProps ) -> Html {
             };
         let toggle_visible_callback = props.toggle_visible_callback.clone();
         let refresh_callback = props.refresh_callback.clone();
-        let input = input.clone();
-        let max = props.max.clone();
-        let submit_callback = Callback::from(move |_| send_delete_range(max.clone(), input.clone(), refresh_callback.clone()));
+        let max = props.max;
+        let submit_callback = Callback::from(move |_| send_delete_range(max, input.clone(), refresh_callback.clone()));
 
         html! {
             <div class="modal" tabindex="-1" role="dialog" style="display: block">

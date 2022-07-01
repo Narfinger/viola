@@ -1,5 +1,5 @@
 use std::fs::File;
-
+use std::fmt::Write;
 use directories::ProjectDirs;
 
 pub fn get_config_dir() -> Result<std::path::PathBuf, String> {
@@ -37,15 +37,15 @@ pub fn format_into_full_duration(i: i64) -> String {
     let days = i / (60 * 60 * 24);
 
     if days > 0 {
-        s.push_str(&format!("{}:", days));
+        write!(s, "{}:", days).expect("Error in conversion");
     }
     if (hours > 0) | (days > 0) {
-        s.push_str(&format!("{:02}:", hours));
+        write!(s,"{:02}:", hours).expect("Error in conversion");
     }
     if (minutes > 0) | (days > 0) | (hours > 0) {
-        s.push_str(&format!("{:02}:", minutes));
+        write!(s, "{:02}:", minutes).expect("Error in conversion");
     }
-    s.push_str(&format!("{:02}", seconds));
+    write!(s,"{:02}", seconds).expect("Error in conversion");
 
     s
 }
