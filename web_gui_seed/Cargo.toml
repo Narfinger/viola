@@ -10,7 +10,7 @@ edition = "2018"
 seed = "0.9.1"
 serde_derive = "1.0.136"
 serde_json = "1.0.81"
-serde = "1.0.137"
+serde = "1.0.138"
 indextree = "4.4.0"
 viola_common = { path = "../viola_common" }
 wee_alloc = "0.4.5"
