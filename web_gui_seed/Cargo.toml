@@ -16,5 +16,5 @@ viola_common = { path = "../viola_common" }
 wee_alloc = "0.4.5"
 console_error_panic_hook = "0.1.7"
 humantime = "2.1.0"
-const_format = "0.2.24"
+const_format = "0.2.26"
 wasm-bindgen = "0.2.80"
