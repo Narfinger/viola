@@ -16,13 +16,13 @@ humantime = "2.1.0"
 indextree = "4.4.0"
 log = "0.4.17"
 reqwasm = "0.5.0"
-serde = { version = "1.0.137", features = ["derive"] }
-serde_json = "1.0.82"
+serde = { version = "1.0.142", features = ["derive"] }
+serde_json = "1.0.83"
 viola_common = { path = "../viola_common" }
-wasm-bindgen = "0.2.81"
-wasm-bindgen-futures = "0.4.31"
+wasm-bindgen = "0.2.82"
+wasm-bindgen-futures = "0.4.32"
 wasm-logger = "0.2.0"
-web-sys = "0.3.58"
+web-sys = "0.3.59"
 wee_alloc = "0.4.5"
 yew = "0.19.3"
 

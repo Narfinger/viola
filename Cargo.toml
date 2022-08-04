@@ -7,14 +7,14 @@ edition = "2018"
 
 [dependencies]
 base64 = "0.13.0"
-clap = { version = "3.2.7", features = ["cargo", "derive"] }
+clap = { version = "3.2.16", features = ["cargo", "derive"] }
 diesel = { version = "1.4.8", features = ["sqlite", "r2d2"] }
 diesel_migrations = { version = "1.4.0", features = ["sqlite"] }
 error-chain = "0.12.4"
 futures = "0.3.21"
 log = { version = "0.4.17", features = ["max_level_debug", "release_max_level_warn"] }
 env_logger = "0.9.0"
-indicatif = { version = "0.16.2", features = ["rayon"] }
+indicatif = { version = "0.17.0", features = ["rayon"] }
 humantime = "2.1.0"
 taglib = "1.0.0"
 gstreamer = "0.18.8"
@@ -22,10 +22,10 @@ glib = "0.15.12"
 percent-encoding = "2.1.0"
 preferences = "1.1.0"
 rayon = "1.5.3"
-serde_derive = "1.0.137"
-serde_json = "1.0.82"
-serde = "1.0.137"
-open = "3.0.1"
+serde_derive = "1.0.142"
+serde_json = "1.0.83"
+serde = "1.0.142"
+open = "3.0.2"
 rand = "0.8.5"
 toml = "0.5.9"
 walkdir = "2.3.2"
@@ -35,7 +35,7 @@ itertools = "0.10.3"
 zbus = "2.3.2"
 parking_lot = { version = "0.12.1", features = ["serde", "deadlock_detection"] }
 warp = "0.3.2"
-tokio = { version = "1.19.2", features = ["full"] }
+tokio = { version = "1.20.1", features = ["full"] }
 directories = "4.0.1"
-anyhow = "1.0.58"
-zvariant = "3.4.1"
+anyhow = "1.0.59"
+zvariant = "3.6.0"
