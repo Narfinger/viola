@@ -7,35 +7,35 @@ edition = "2018"
 
 [dependencies]
 base64 = "0.13.0"
-clap = { version = "3.1.6", features = ["cargo", "derive"] }
+clap = { version = "3.1.18", features = ["cargo", "derive"] }
 diesel = { version = "1.4.8", features = ["sqlite", "r2d2"] }
 diesel_migrations = { version = "1.4.0", features = ["sqlite"] }
 error-chain = "0.12.4"
 futures = "0.3.21"
-log = { version = "0.4.14", features = ["max_level_debug", "release_max_level_warn"] }
+log = { version = "0.4.17", features = ["max_level_debug", "release_max_level_warn"] }
 env_logger = "0.9.0"
 indicatif = { version = "0.16.2", features = ["rayon"] }
 humantime = "2.1.0"
 taglib = "1.0.0"
-gstreamer = "0.18.6"
-glib = "0.15.10"
+gstreamer = "0.18.8"
+glib = "0.15.11"
 percent-encoding = "2.1.0"
 preferences = "1.1.0"
-rayon = "1.5.1"
+rayon = "1.5.3"
 serde_derive = "1.0.136"
-serde_json = "1.0.79"
-serde = "1.0.136"
-open = "2.1.1"
+serde_json = "1.0.81"
+serde = "1.0.137"
+open = "3.0.1"
 rand = "0.8.5"
 toml = "0.5.8"
 walkdir = "2.3.2"
 web-view = "0.7.3"
 viola_common = {path ="viola_common", features =["backend"]}
 itertools = "0.10.3"
-zbus = "2.1.1"
-parking_lot = { version = "0.12.0", features = ["serde", "deadlock_detection"] }
+zbus = "2.3.0"
+parking_lot = { version = "0.12.1", features = ["serde", "deadlock_detection"] }
 warp = "0.3.2"
-tokio = { version = "1.17.0", features = ["full"] }
+tokio = { version = "1.19.2", features = ["full"] }
 directories = "4.0.1"
 anyhow = "1.0.56"
-zvariant = "3.1.2"
+zvariant = "3.3.0"
