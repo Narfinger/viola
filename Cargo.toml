@@ -1,6 +1,6 @@
 [package]
 name = "viola"
-version = "0.3.1"
+version = "0.4.0"
 license = "GPL-3.0-only"
 authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 edition = "2018"
@@ -17,25 +17,25 @@ env_logger = "0.9.0"
 indicatif = { version = "0.17.0", features = ["rayon"] }
 humantime = "2.1.0"
 taglib = "1.0.0"
-gstreamer = "0.18.8"
-glib = "0.15.12"
+gstreamer = "0.18.6"
+glib = "0.15.10"
 percent-encoding = "2.1.0"
 preferences = "1.1.0"
-rayon = "1.5.3"
-serde_derive = "1.0.142"
-serde_json = "1.0.83"
-serde = "1.0.142"
-open = "3.0.2"
+rayon = "1.5.1"
+serde_derive = "1.0.136"
+serde_json = "1.0.79"
+serde = "1.0.136"
+open = "3.0"
 rand = "0.8.5"
 toml = "0.5.9"
 walkdir = "2.3.2"
 web-view = "0.7.3"
 viola_common = {path ="viola_common", features =["backend"]}
 itertools = "0.10.3"
-zbus = "2.3.2"
-parking_lot = { version = "0.12.1", features = ["serde", "deadlock_detection"] }
+zbus = "2.3"
+parking_lot = { version = "0.12.0", features = ["serde", "deadlock_detection"] }
 warp = "0.3.2"
-tokio = { version = "1.20.1", features = ["full"] }
+tokio = { version = "1.20", features = ["full"] }
 directories = "4.0.1"
 anyhow = "1.0.59"
-zvariant = "3.6.0"
+zvariant = "3.1.2"

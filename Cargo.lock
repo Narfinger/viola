@@ -28,9 +28,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.59"
+version = "1.0.60"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c91f1f46651137be86f3a2b9a8359f9ab421d04d941c62b5982e1ca21113adf9"
+checksum = "c794e162a5eff65c72ef524dfe393eb923c354e350bb78b9c7383df13f3bc142"
 
 [[package]]
 name = "app_dirs"
@@ -57,9 +57,9 @@ dependencies = [
 
 [[package]]
 name = "async-channel"
-version = "1.6.1"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2114d64672151c0c5eaa5e131ec84a74f06e1e559830dabba01ca30605d66319"
+checksum = "4b31b87a3367ed04dbcbc252bce3f2a8172fef861d47177524c503c908dff2c6"
 dependencies = [
  "concurrent-queue",
  "event-listener",
@@ -518,7 +518,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e75d4cd21b95383444831539909fbb14b9dc3fdceb2a6f5d36577329a1f55ccb"
 dependencies = [
  "enumflags2_derive",
- "serde 1.0.142",
+ "serde 1.0.143",
 ]
 
 [[package]]
@@ -1143,7 +1143,7 @@ checksum = "327fa5b6a6940e4699ec49a9beae1ea4845c6bab9314e4f84ac68742139d8c53"
 dependencies = [
  "autocfg",
  "scopeguard",
- "serde 1.0.142",
+ "serde 1.0.143",
 ]
 
 [[package]]
@@ -1540,9 +1540,9 @@ checksum = "c6fa0831dd7cc608c38a5e323422a0077678fa5744aa2be4ad91c4ece8eec8d5"
 
 [[package]]
 name = "proc-macro-crate"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26d50bfb8c23f23915855a00d98b5a35ef2e0b871bb52937bacadb798fbb66c8"
+checksum = "eda0fc3b0fb7c975631757e14d9049da17374063edb6ebbcbc54d880d4fe94e9"
 dependencies = [
  "once_cell",
  "thiserror",
@@ -1764,18 +1764,18 @@ checksum = "34b623917345a631dc9608d5194cc206b3fe6c3554cd1c75b937e55e285254af"
 
 [[package]]
 name = "serde"
-version = "1.0.142"
+version = "1.0.143"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e590c437916fb6b221e1d00df6e3294f3fccd70ca7e92541c475d6ed6ef5fee2"
+checksum = "53e8e5d5b70924f74ff5c6d64d9a5acd91422117c60f48c4e07855238a254553"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.142"
+version = "1.0.143"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34b5b8d809babe02f538c2cfec6f2c1ed10804c0e5a6a041a049a4f5588ccc2e"
+checksum = "d3d8e8de557aee63c26b85b947f5e59b690d0454c753f3adeb5cd7835ab88391"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1802,7 +1802,7 @@ checksum = "38dd04e3c8279e75b31ef29dbdceebfe5ad89f4d0937213c53f7d49d01b3d5a7"
 dependencies = [
  "itoa 1.0.3",
  "ryu",
- "serde 1.0.142",
+ "serde 1.0.143",
 ]
 
 [[package]]
@@ -1825,7 +1825,7 @@ dependencies = [
  "form_urlencoded",
  "itoa 1.0.3",
  "ryu",
- "serde 1.0.142",
+ "serde 1.0.143",
 ]
 
 [[package]]
@@ -2199,7 +2199,7 @@ version = "0.5.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d82e1a7758622a465f8cee077614c73484dac5b836c02ff6a40d5d1010324d7"
 dependencies = [
- "serde 1.0.142",
+ "serde 1.0.143",
 ]
 
 [[package]]
@@ -2383,7 +2383,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "viola"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "base64",
@@ -2406,7 +2406,7 @@ dependencies = [
  "preferences",
  "rand",
  "rayon",
- "serde 1.0.142",
+ "serde 1.0.143",
  "serde_derive",
  "serde_json 1.0.83",
  "taglib",
@@ -2422,10 +2422,10 @@ dependencies = [
 
 [[package]]
 name = "viola_common"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "diesel",
- "serde 1.0.142",
+ "serde 1.0.143",
  "serde_json 1.0.83",
 ]
 
@@ -2475,7 +2475,7 @@ dependencies = [
  "percent-encoding",
  "pin-project",
  "scoped-tls",
- "serde 1.0.142",
+ "serde 1.0.143",
  "serde_json 1.0.83",
  "serde_urlencoded",
  "tokio",
@@ -2676,7 +2676,7 @@ dependencies = [
  "once_cell",
  "ordered-stream",
  "rand",
- "serde 1.0.142",
+ "serde 1.0.143",
  "serde_repr",
  "sha1",
  "static_assertions",
@@ -2707,7 +2707,7 @@ version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "41a408fd8a352695690f53906dc7fd036be924ec51ea5e05666ff42685ed0af5"
 dependencies = [
- "serde 1.0.142",
+ "serde 1.0.143",
  "static_assertions",
  "zvariant",
 ]
@@ -2721,7 +2721,7 @@ dependencies = [
  "byteorder",
  "enumflags2",
  "libc",
- "serde 1.0.142",
+ "serde 1.0.143",
  "static_assertions",
  "zvariant_derive",
 ]
