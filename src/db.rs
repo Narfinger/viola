@@ -217,7 +217,10 @@ fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
 pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
     info!("Building database, getting walkdir iterator");
     let pb = ProgressBar::new_spinner();
-    pb.set_style(ProgressStyle::default_spinner().template(PROGRESSBAR_UNKNOWN_STYLE));
+    let style = ProgressStyle::default_spinner()
+        .template(PROGRESSBAR_UNKNOWN_STYLE)
+        .map_err(|_| String::from("Error in progressstyle"))?;
+    pb.set_style(style);
     pb.set_message("Collecting files");
     let files = pb
         .wrap_iter(walkdir::WalkDir::new(&p).into_iter())
@@ -248,7 +251,10 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
         {
             let pb = ProgressBar::new(file_count as u64);
             pb.set_message("Updating tags");
-            pb.set_style(ProgressStyle::default_bar().template(PROGRESSBAR_STYLE));
+            let style = ProgressStyle::default_spinner()
+                .template(PROGRESSBAR_STYLE)
+                .map_err(|_| String::from("Error in progressstyle"))?;
+            pb.set_style(style);
             let res = files
                 .par_iter()
                 .progress_with(pb)
@@ -270,11 +276,10 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
             pb.finish();
 
             let pb2 = ProgressBar::new(to_delete.len() as u64);
-            pb2.set_style(
-                ProgressStyle::default_bar()
-                    .template(PROGRESSBAR_STYLE)
-                    .progress_chars("#>-"),
-            );
+            let style = ProgressStyle::default_spinner()
+                .template(PROGRESSBAR_UNKNOWN_STYLE)
+                .map_err(|_| String::from("Error in progressstyle"))?;
+            pb2.set_style(style.progress_chars("#>-"));
             pb2.set_message("Deleting old unused entries");
             for i in pb2.wrap_iter(to_delete.iter()) {
                 //println!("to delete: {}", i);
