@@ -11,7 +11,7 @@ clap = { version = "3.2.17", features = ["cargo", "derive"] }
 diesel = { version = "1.4.8", features = ["sqlite", "r2d2"] }
 diesel_migrations = { version = "1.4.0", features = ["sqlite"] }
 error-chain = "0.12.4"
-futures = "0.3.21"
+futures = "0.3.23"
 log = { version = "0.4.17", features = ["max_level_debug", "release_max_level_warn"] }
 env_logger = "0.9.0"
 indicatif = { version = "0.17.0", features = ["rayon"] }
