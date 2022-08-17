@@ -29,7 +29,6 @@ open = "3.0.2"
 rand = "0.8.5"
 toml = "0.5.9"
 walkdir = "2.3.2"
-web-view = "0.7.3"
 viola_common = {path ="viola_common", features =["backend"]}
 itertools = "0.10.3"
 zbus = "2.3.2"
@@ -37,5 +36,7 @@ parking_lot = { version = "0.12.1", features = ["serde", "deadlock_detection"] }
 warp = "0.3.2"
 tokio = { version = "1.20.1", features = ["full"] }
 directories = "4.0.1"
-anyhow = "1.0.61"
+anyhow = "1.0.62"
 zvariant = "3.6.0"
+webkit2gtk = "0.18.0"
+gtk = "0.15.5"

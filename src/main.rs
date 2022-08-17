@@ -45,9 +45,12 @@ pub mod utils;
 
 use anyhow::{Context, Result};
 use clap::Parser;
+use gtk::{prelude::*, Inhibit, Window, WindowType};
 use parking_lot::Mutex;
 use preferences::{prefs_base_dir, Preferences, PreferencesMap};
 use std::sync::Arc;
+use tokio::signal;
+use webkit2gtk::{WebView, WebViewExt};
 
 ///A Music player that does exactly what I want with a webinterface.
 #[derive(Parser, Debug)]
@@ -147,24 +150,40 @@ fn main() -> Result<()> {
             .block_on(maingui_web::run(pool));
     //});
     } else {
-        use web_view::*;
         println!("Starting webview");
+
         std::thread::spawn(move || {
             std::thread::sleep(std::time::Duration::from_secs(1));
-            WebViewBuilder::new()
-                .title("Viola")
-                .content(Content::Url(crate::types::URL))
-                .size(1920, 1080)
-                .resizable(true)
-                //.debug(true)
-                .user_data(())
-                .invoke_handler(|_webview, _arg| Ok(()))
-                .build()
-                .unwrap()
-                .run()
-                .unwrap();
-            info!("Webview exited");
-            shutdown_send.send(()).expect("error in shutdown");
+            gtk::init().unwrap();
+            let window = Window::new(WindowType::Toplevel);
+            let webview = WebView::new();
+            webview.load_uri("http://localhost:8080");
+            window.add(&webview);
+            window.connect_delete_event(move |_, _| {
+                gtk::main_quit();
+                shutdown_send.send(()).expect("Error in shutdown");
+                println!("we send shutdown");
+                Inhibit(false)
+            });
+            window.show_all();
+            println!("build, starting main");
+
+            gtk::main();
+            println!("Main quit");
+            //WebViewBuilder::new()
+            //    .title("Viola")
+            //    .content(Content::Url(crate::types::URL))
+            //    .size(1920, 1080)
+            //    .resizable(true)
+            //    //.debug(true)
+            //    .user_data(())
+            //    .invoke_handler(|_webview, _arg| Ok(()))
+            //    .build()
+            //    .unwrap()
+            //    .run()
+            //    .unwrap();
+            //info!("Webview exited");
+            //shutdown_send.send(()).expect("error in shutdown");
         });
         //std::thread::spawn(|| {
         tokio::runtime::Builder::new_multi_thread()
@@ -173,6 +192,7 @@ fn main() -> Result<()> {
             .unwrap()
             .block_on(async {
                 tokio::select! {
+                    //_ = signal::ctrl_c() => {},
                     _ = shutdown_recv.recv() => {},
                     _ =  maingui_web::run(pool) => {},
                 }
