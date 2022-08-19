@@ -12,7 +12,6 @@ pub(crate) enum TabsMessage {
 
 #[derive(Properties, PartialEq)]
 pub(crate) struct TabsProperties {
-    pub(crate) reload_tabs_callback: Callback<()>,
     pub(crate) tabs: PlaylistTabsJSON,
 }
 
@@ -48,10 +47,7 @@ impl Component for TabsComponent {
                 });
                 false
             }
-            TabsMessage::ReloadEmit => {
-                ctx.props().reload_tabs_callback.emit(());
-                false
-            }
+            TabsMessage::ReloadEmit => false,
         }
     }
 

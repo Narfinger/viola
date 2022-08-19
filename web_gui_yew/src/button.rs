@@ -6,7 +6,6 @@ use yew::prelude::*;
 pub(crate) struct ButtonRowProps {
     pub(crate) status: GStreamerMessage,
     pub(crate) repeat_once_callback: Callback<()>,
-    pub(crate) clean_callback: Callback<()>,
     pub(crate) refresh_play_callback: Callback<()>,
     pub(crate) sidebar_callback: Callback<()>,
     pub(crate) delete_range_callback: Callback<()>,
@@ -46,7 +45,7 @@ pub(crate) fn buttons(props: &ButtonRowProps) -> Html {
             <TransportButton text="Again" icon="/arrow-repeat.svg" btype={ButtonType::Secondary} on_click={Some(GStreamerAction::RepeatOnce)} callback = {props.repeat_once_callback.clone()} />
         </div>
         <div class="col">
-            <UrlCallButton text="Clean" icon="/trash.svg" btype={ButtonType::Danger}  callback={props.clean_callback.clone()} url_call = {"/clean/"} />
+            <UrlCallButton text="Clean" icon="/trash.svg" btype={ButtonType::Danger} url_call = {"/clean/"} />
         </div>
         <div class="col-2">
             <CallbackButton text="Delete Range" icon="/trash.svg" btype={ButtonType::Danger} callback={props.delete_range_callback.clone()} />
@@ -145,7 +144,6 @@ pub(crate) struct UrlCallButtonProps {
     pub(crate) text: String,
     pub(crate) icon: String,
     pub(crate) btype: ButtonType,
-    pub(crate) callback: Callback<()>,
     pub(crate) url_call: String,
 }
 
@@ -165,9 +163,7 @@ impl Component for UrlCallButton {
                     ButtonMsg::Done
                 });
             }
-            ButtonMsg::Done => {
-                ctx.props().callback.emit(());
-            }
+            ButtonMsg::Done => {}
         };
         false
     }

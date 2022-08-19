@@ -20,11 +20,11 @@ mod tracks;
 mod treeview;
 mod utils;
 use button::Buttons;
+use delete_range_dialog::DeleteRangeDialog;
 use sidebar::Sidebar;
 use status::Status;
 use tabs::TabsComponent;
 use tracks::TracksComponent;
-use delete_range_dialog::DeleteRangeDialog;
 
 const TRACK_MAX_NUMBER: usize = 500;
 const RIDICULOUS_LARGE_TRACK_NUMBER: usize = 10000;
@@ -57,7 +57,7 @@ enum AppMessage {
 }
 
 impl App {
-    fn handle_wsmessage(&mut self, msg: viola_common::WsMessage) -> bool {
+    fn handle_wsmessage(&mut self, ctx: &Context<Self>, msg: viola_common::WsMessage) -> bool {
         match msg {
             WsMessage::PlayChanged(i) => {
                 self.current_playing = i;
@@ -70,8 +70,15 @@ impl App {
                 self.current_track_time = i;
                 true
             }
-            WsMessage::ReloadTabs => false,
-            WsMessage::ReloadPlaylist => false,
+            WsMessage::ReloadTabs => {
+                ctx.link()
+                    .send_message_batch(vec![AppMessage::LoadTabs, AppMessage::RefreshList]);
+                false
+            }
+            WsMessage::ReloadPlaylist => {
+                ctx.link().send_message(AppMessage::RefreshList);
+                false
+            }
             WsMessage::Ping => false,
             WsMessage::GStreamerMessage(msg) => match msg {
                 GStreamerMessage::Pausing
@@ -124,7 +131,7 @@ impl Component for App {
             current_track_time: 0,
             repeat_once: false,
             sidebar_visible: false,
-            delete_range_visible:false,
+            delete_range_visible: false,
             playlist_tabs: PlaylistTabsJSON {
                 current: 0,
                 tabs: vec![],
@@ -138,7 +145,7 @@ impl Component for App {
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            AppMessage::WsMessage(msg) => self.handle_wsmessage(msg),
+            AppMessage::WsMessage(msg) => self.handle_wsmessage(ctx, msg),
             AppMessage::RefreshList => {
                 ctx.link().send_future(async move {
                     let new_tracks: Vec<viola_common::Track> = Request::get("/playlist/")
@@ -254,17 +261,17 @@ impl Component for App {
                     <div class="row">
                         <div class="col" style="height: 80vh">
                             <Buttons
+                                // the clean tab refresh will happen from the websocket and not here
                                 status={self.current_status}
                                 repeat_once_callback = {ctx.link().callback(|_| AppMessage::RepeatOnce)}
                                 refresh_play_callback = {ctx.link().callback(|_| AppMessage::RefreshPlayStatus)}
-                                clean_callback = {ctx.link().callback(|_| AppMessage::RefreshList)}
                                 sidebar_callback = {ctx.link().callback(|_| AppMessage::ToggleSidebar)}
                                 delete_range_callback = {ctx.link().callback(|_| AppMessage::ToggleDeleteRange)}
                                 />
 
                             <TabsComponent
+                            // the tab refresh and similar thing will come from the websocket as otherwise we would refresh the old status
                                 tabs = {self.playlist_tabs.clone()}
-                                reload_tabs_callback = {ctx.link().callback(|_| AppMessage::ReloadTabs)}
                                 />
 
                             <div class="row" style="height: 75vh; width: 95vw; overflow-x: auto">

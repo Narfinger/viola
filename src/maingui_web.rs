@@ -117,7 +117,6 @@ async fn library_load(
     state.write().await.playlist_tabs.add(pl);
     tokio::spawn(async move {
         my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
-        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadPlaylist).await;
     });
     Ok(warp::reply())
 }
@@ -142,7 +141,6 @@ async fn smartplaylist_load(
         state.write().await.playlist_tabs.add(rp);
         tokio::spawn(async move {
             my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
-            my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadPlaylist).await;
         });
     }
 
@@ -233,7 +231,7 @@ async fn change_playlist_tab(
 ) -> Result<impl warp::Reply, Infallible> {
     state.read().await.playlist_tabs.set_tab(index);
     tokio::spawn(async move {
-        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadPlaylist).await;
+        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
     });
     Ok(warp::reply())
 }
@@ -248,7 +246,6 @@ async fn delete_playlist_tab(
     let state = state.clone();
     tokio::spawn(async move {
         my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
-        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadPlaylist).await;
     });
     Ok(warp::reply())
 }
