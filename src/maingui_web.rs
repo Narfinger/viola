@@ -117,6 +117,7 @@ async fn library_load(
     state.write().await.playlist_tabs.add(pl);
     tokio::spawn(async move {
         my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
+        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadPlaylist).await;
     });
     Ok(warp::reply())
 }
@@ -141,6 +142,7 @@ async fn smartplaylist_load(
         state.write().await.playlist_tabs.add(rp);
         tokio::spawn(async move {
             my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
+            my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadPlaylist).await;
         });
     }
 
@@ -199,21 +201,28 @@ async fn current_image(
 }
 
 async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
-    let tabs = state
+    let mut tabs = state
         .read()
         .await
         .playlist_tabs
         .read()
         .pls
         .iter()
-        .map(|pl| PlaylistTabJSON {
-            name: pl.read().name.clone(),
-            current_position: pl.read().current_position,
+        .map(|pl| {
+            (
+                pl.read().id,
+                PlaylistTabJSON {
+                    name: pl.read().name.clone(),
+                    current_position: pl.read().current_position,
+                },
+            )
         })
-        .collect::<Vec<PlaylistTabJSON>>();
+        .collect::<Vec<(i32, PlaylistTabJSON)>>();
+    tabs.sort_by_key(|a| a.0);
+
     let resp = PlaylistTabsJSON {
         current: state.read().await.playlist_tabs.current_tab(),
-        tabs,
+        tabs: tabs.into_iter().map(|a| a.1).collect(),
     };
     Ok(warp::reply::json(&resp))
 }
