@@ -386,32 +386,32 @@ pub async fn run(pool: DBPool) {
         let pl = warp::path!("playlist")
             .and(data.clone())
             .and_then(playlist)
-            .with(warp::compression::deflate());
+            .with(warp::compression::brotli());
         let pl_for = warp::path!("playlist" / usize)
             .and(data.clone())
             .and_then(playlist_for)
-            .with(warp::compression::deflate());
+            .with(warp::compression::brotli());
         let tr = warp::path!("transport")
             .and(data.clone())
             .and_then(get_transport)
-            .with(warp::compression::deflate());
+            .with(warp::compression::brotli());
         let curid = warp::path!("currentid")
             .and(data.clone())
             .and_then(current_id)
-            .with(warp::compression::deflate());
+            .with(warp::compression::brotli());
         let pltab = warp::path!("playlisttab")
             .and(data.clone())
             .and_then(playlist_tab)
-            .with(warp::compression::deflate());
+            .with(warp::compression::brotli());
         let cover = warp::path("currentimage")
             .and(data.clone())
             .and(warp::query::<ImageQuery>())
             .and_then(current_image)
-            .with(warp::compression::deflate());
+            .with(warp::compression::brotli());
         let smartpl = warp::path!("smartplaylist")
             .and(data.clone())
             .and_then(smartplaylist)
-            .with(warp::compression::deflate());
+            .with(warp::compression::brotli());
         warp::get().and(
             pl.or(pl_for)
                 .or(tr)
