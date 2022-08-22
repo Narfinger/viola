@@ -61,7 +61,7 @@ pub(crate) fn delete_range_dialog(props: &DeleteRangeDialogProps) -> Html {
         let refresh_callback = props.refresh_callback.clone();
         let max = props.max;
         let submit_callback = Callback::from(move |_| {
-            send_delete_range(max, input.clone(), refresh_callback.clone())
+            send_delete_range(max - 1, input.clone(), refresh_callback.clone())
         });
 
         html! {

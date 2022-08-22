@@ -71,8 +71,7 @@ impl App {
                 true
             }
             WsMessage::ReloadTabs => {
-                ctx.link()
-                    .send_message_batch(vec![AppMessage::LoadTabs, AppMessage::RefreshList]);
+                ctx.link().send_message(AppMessage::LoadTabs);
                 false
             }
             WsMessage::ReloadPlaylist => {
