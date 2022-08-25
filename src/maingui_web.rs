@@ -383,14 +383,10 @@ pub async fn run(pool: DBPool) {
     let data = warp::any().map(move || Arc::clone(&state));
 
     let gets = {
-        let pl = warp::path!("playlist")
-            .and(data.clone())
-            .and_then(playlist)
-            .with(warp::compression::brotli());
+        let pl = warp::path!("playlist").and(data.clone()).and_then(playlist);
         let pl_for = warp::path!("playlist" / usize)
             .and(data.clone())
-            .and_then(playlist_for)
-            .with(warp::compression::brotli());
+            .and_then(playlist_for);
         let tr = warp::path!("transport")
             .and(data.clone())
             .and_then(get_transport)
