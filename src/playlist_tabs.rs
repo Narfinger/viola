@@ -37,8 +37,8 @@ pub trait PlaylistTabsExt {
     fn add(&self, _: LoadedPlaylist);
     fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T;
     fn delete(&self, _: &DBPool, _: usize);
-    fn items_json(&self) -> String;
-    fn items_for_json(&self, index: usize) -> String;
+    fn items_json(&self, size: Option<usize>) -> String;
+    fn items_for_json(&self, index: usize, size: Option<usize>) -> String;
     fn current_tab(&self) -> usize;
     fn current_playing_in(&self) -> usize;
     fn update_current_playing_in(&self);
@@ -81,17 +81,21 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
         }
     }
 
-    fn items_json(&self) -> String {
+    fn items_json(&self, size: Option<usize>) -> String {
         let i = self.read().current_pl;
-        self.items_for_json(i)
+        self.items_for_json(i, size)
     }
 
-    fn items_for_json(&self, index: usize) -> String {
+    fn items_for_json(&self, index: usize, size: Option<usize>) -> String {
         let cur = self.read();
         let pl = cur.pls.get(index).unwrap();
-        let items = crate::loaded_playlist::items(pl);
-        serde_json::to_string::<Vec<viola_common::Track>>(items.as_ref())
-            .expect("Error in serializing")
+        let it = crate::loaded_playlist::items(pl);
+        let mut items: &[viola_common::Track] = it.as_ref();
+        if let Some(size) = size {
+            items = items.split_at(size).0;
+        }
+
+        serde_json::to_string::<[viola_common::Track]>(items).expect("Error in serializing")
     }
 
     fn current_tab(&self) -> usize {

@@ -28,6 +28,7 @@ use tracks::TracksComponent;
 
 const TRACK_MAX_NUMBER: usize = 500;
 const RIDICULOUS_LARGE_TRACK_NUMBER: usize = 10000;
+const PLAYLIST_SIZE: usize = 500;
 
 struct App {
     current_playing: usize,
@@ -147,8 +148,14 @@ impl Component for App {
         match msg {
             AppMessage::WsMessage(msg) => self.handle_wsmessage(ctx, msg),
             AppMessage::RefreshList => {
+                let show_full = self.show_full_playlist;
                 ctx.link().send_future(async move {
-                    let new_tracks: Vec<viola_common::Track> = Request::get("/playlist/")
+                    let q_string = if show_full {
+                        "/playlist/".to_string()
+                    } else {
+                        format!("/playlist/size={}", PLAYLIST_SIZE)
+                    };
+                    let new_tracks: Vec<viola_common::Track> = Request::get(&q_string)
                         .send()
                         .await
                         .unwrap()
@@ -224,6 +231,7 @@ impl Component for App {
             }
             AppMessage::ShowFullPlaylist => {
                 self.show_full_playlist = true;
+                ctx.link().send_message(AppMessage::RefreshList);
                 false
             }
         }

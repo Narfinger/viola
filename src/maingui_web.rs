@@ -17,15 +17,19 @@ use crate::playlist_tabs::PlaylistTabsExt;
 use crate::smartplaylist_parser;
 use crate::types::*;
 
-async fn playlist(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
+async fn playlist(q: PlaylistQuery, state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     let state = state.read().await;
-    let items_json = state.playlist_tabs.items_json();
+    let items_json = state.playlist_tabs.items_json(q.size);
     Ok(items_json)
 }
 
-async fn playlist_for(index: usize, state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
+async fn playlist_for(
+    index: usize,
+    state: WebGuiData,
+    q: PlaylistQuery,
+) -> Result<impl warp::Reply, Infallible> {
     let state = state.read().await;
-    let items_json = state.playlist_tabs.items_for_json(index);
+    let items_json = state.playlist_tabs.items_for_json(index, q.size);
     Ok(items_json)
 }
 
@@ -384,11 +388,13 @@ pub async fn run(pool: DBPool) {
 
     let gets = {
         let pl = warp::path!("playlist")
+            .and(warp::query::<viola_common::PlaylistQuery>())
             .and(data.clone())
             .and_then(playlist)
             .with(warp::compression::brotli());
         let pl_for = warp::path!("playlist" / usize)
             .and(data.clone())
+            .and(warp::query::<viola_common::PlaylistQuery>())
             .and_then(playlist_for)
             .with(warp::compression::brotli());
         let tr = warp::path!("transport")

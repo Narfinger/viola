@@ -164,3 +164,8 @@ pub struct PlaylistTabsJSON {
 pub struct ImageQuery {
     pub nonce: String,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PlaylistQuery {
+    pub size: Option<usize>,
+}
