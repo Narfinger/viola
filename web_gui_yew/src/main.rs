@@ -3,7 +3,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 use std::{cell::RefCell, rc::Rc};
 
-use futures::StreamExt;
+use futures::{join, StreamExt};
 use reqwasm::http::Request;
 use reqwasm::websocket;
 use reqwasm::websocket::futures::WebSocket;
@@ -166,18 +166,13 @@ impl Component for App {
             }
             AppMessage::RefreshPlayStatus => {
                 ctx.link().send_future(async move {
-                    let status = Request::get("/transport/")
-                        .send()
-                        .await
-                        .unwrap()
-                        .json()
-                        .await;
-                    let id = Request::get("/currentid/")
-                        .send()
-                        .await
-                        .unwrap()
-                        .json()
-                        .await;
+                    let (s1, s2) = join!(
+                        Request::get("/transport/").send(),
+                        Request::get("/currentid/").send()
+                    );
+
+                    let (status, id) =
+                        join!(s1.as_ref().unwrap().json(), s2.as_ref().unwrap().json());
                     AppMessage::RefreshPlayStatusDone((id.unwrap(), status.unwrap()))
                 });
                 false
