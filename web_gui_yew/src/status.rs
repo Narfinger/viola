@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use viola_common::{GStreamerMessage, Track};
 use yew::prelude::*;
 
@@ -8,7 +10,7 @@ pub(crate) enum StatusMsg {}
 pub(crate) struct StatusMsgProperties {
     pub(crate) number_of_tracks: usize,
     pub(crate) current_status: GStreamerMessage,
-    pub(crate) current_track: Option<Track>,
+    pub(crate) current_track: Option<Rc<Track>>,
     pub(crate) current_track_time: u64,
     pub(crate) total_track_time: u64,
     pub(crate) remaining_time_playing: u64,

@@ -13,10 +13,9 @@ pub(crate) enum TracksComponentMsg {
 
 #[derive(Properties, PartialEq)]
 pub(crate) struct TracksComponentProps {
-    pub(crate) tracks: Rc<RefCell<Vec<viola_common::Track>>>,
+    pub(crate) tracks: Vec<Rc<viola_common::Track>>,
     pub(crate) current_playing: usize,
     pub(crate) status: GStreamerMessage,
-    pub(crate) max_track_number: usize,
 }
 
 pub(crate) struct TracksComponent {}
@@ -59,9 +58,7 @@ impl Component for TracksComponent {
         let table_rows = ctx
             .props()
             .tracks
-            .borrow()
             .iter()
-            .take(ctx.props().max_track_number)
             .enumerate()
             .map(|(index, track)| {
                 let (color, image) = if index == ctx.props().current_playing

@@ -32,7 +32,7 @@ const RIDICULOUS_LARGE_TRACK_NUMBER: usize = 10000;
 struct App {
     current_playing: usize,
     current_status: GStreamerMessage,
-    current_tracks: Rc<RefCell<Vec<viola_common::Track>>>,
+    current_tracks: Vec<Rc<viola_common::Track>>,
     current_track_time: u64,
     repeat_once: bool,
     sidebar_visible: bool,
@@ -88,8 +88,10 @@ impl App {
                     true
                 }
                 GStreamerMessage::IncreasePlayCount(i) => {
-                    if let Some(ref mut t) = self.current_tracks.borrow_mut().get_mut(i) {
-                        t.playcount = Some(t.playcount.unwrap_or(0) + 1);
+                    if self.current_tracks.get(i).is_some() {
+                        let mut cloned_track = (*self.current_tracks[i]).clone();
+                        cloned_track.playcount = Some(cloned_track.playcount.unwrap_or(0) + 1);
+                        self.current_tracks[i] = Rc::new(cloned_track);
                     }
                     true
                 }
@@ -127,7 +129,7 @@ impl Component for App {
         let a = App {
             current_playing: 0,
             current_status: GStreamerMessage::Stopped,
-            current_tracks: Rc::new(RefCell::new(vec![])),
+            current_tracks: vec![],
             current_track_time: 0,
             repeat_once: false,
             sidebar_visible: false,
@@ -161,7 +163,7 @@ impl Component for App {
                 false
             }
             AppMessage::RefreshListDone(tracks) => {
-                self.current_tracks.replace(tracks);
+                self.current_tracks = tracks.into_iter().map(|s| Rc::new(s)).collect();
                 true
             }
             AppMessage::RefreshPlayStatus => {
@@ -212,7 +214,7 @@ impl Component for App {
                 true
             }
             AppMessage::ReloadTabs => {
-                self.current_tracks.replace(vec![]);
+                self.current_tracks = vec![];
                 ctx.link()
                     .send_message_batch(vec![AppMessage::LoadTabs, AppMessage::RefreshList]);
                 true
@@ -225,20 +227,24 @@ impl Component for App {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let full_time_playing: u64 = self
-            .current_tracks
-            .borrow()
-            .iter()
-            .map(|t| t.length as u64)
-            .sum();
+        let full_time_playing: u64 = self.current_tracks.iter().map(|t| t.length as u64).sum();
         let remaining_time_playing: u64 = self
             .current_tracks
-            .borrow()
             .iter()
             .skip(self.current_playing)
             .map(|t| t.length as u64)
             .sum::<u64>()
             .wrapping_sub(self.current_track_time);
+        let trimmed_tracks = self
+            .current_tracks
+            .iter()
+            .take(if self.show_full_playlist {
+                RIDICULOUS_LARGE_TRACK_NUMBER
+            } else {
+                TRACK_MAX_NUMBER
+            })
+            .cloned()
+            .collect::<Vec<Rc<Track>>>();
         html! {
             <div class="container-fluid" style="padding-left: 5vw; padding-bottom: 1vh; height: 75vh">
                     <Sidebar
@@ -251,7 +257,7 @@ impl Component for App {
                         visible = {self.delete_range_visible}
                         refresh_callback = {ctx.link().callback(|_| AppMessage::RefreshList)}
                         toggle_visible_callback = {ctx.link().callback(|_| AppMessage::ToggleDeleteRange)}
-                        max = {self.current_tracks.borrow().len()}
+                        max = {self.current_tracks.len()}
                     />
                     <div class="row">
                         <div class="col" style="height: 80vh">
@@ -271,20 +277,15 @@ impl Component for App {
 
                             <div class="row" style="height: 75vh; width: 95vw; overflow-x: auto">
                                 <TracksComponent
-                                    tracks={&self.current_tracks}
+                                    tracks={trimmed_tracks}
                                     current_playing={self.current_playing}
-                                    max_track_number = {if self.show_full_playlist {
-                                        RIDICULOUS_LARGE_TRACK_NUMBER
-                                    } else {
-                                        TRACK_MAX_NUMBER
-                                    }}
                                     status = {self.current_status}
                                     />
                             </div>
 
                         <Status
                             current_status = {self.current_status}
-                            current_track = {self.current_tracks.borrow().get(self.current_playing).cloned()} total_track_time = {full_time_playing} remaining_time_playing = {remaining_time_playing} current_track_time={self.current_track_time} repeat_once = {self.repeat_once} number_of_tracks={self.current_tracks.borrow().len()}
+                            current_track = {self.current_tracks.get(self.current_playing).cloned()} total_track_time = {full_time_playing} remaining_time_playing = {remaining_time_playing} current_track_time={self.current_track_time} repeat_once = {self.repeat_once} number_of_tracks={self.current_tracks.len()}
                             window = {TRACK_MAX_NUMBER}
                             />
                         </div>
