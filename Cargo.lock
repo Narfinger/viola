@@ -111,10 +111,11 @@ dependencies = [
 
 [[package]]
 name = "async-io"
-version = "1.7.0"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5e18f61464ae81cde0a23e713ae8fd299580c54d697a35820cfd0625b8b0e07"
+checksum = "0ab006897723d9352f63e2b13047177c3982d8d79709d713ce7747a8f19fd1b0"
 dependencies = [
+ "autocfg",
  "concurrent-queue",
  "futures-lite",
  "libc",
@@ -356,9 +357,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "clap"
-version = "3.2.17"
+version = "3.2.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29e724a68d9319343bb3328c9cc2dfde263f4b3142ee1059a9980580171c954b"
+checksum = "b15f2ea93df33549dbe2e8eecd1ca55269d63ae0b3ba1f55db030817d1c2867f"
 dependencies = [
  "atty",
  "bitflags",
@@ -373,9 +374,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "3.2.17"
+version = "3.2.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13547f7012c01ab4a0e8f8967730ada8f9fdf419e8b6c792788f39cf4e46eefa"
+checksum = "ea0c8bce528c4be4da13ea6fead8965e95b6073585a2f05204bd8f4119f82a65"
 dependencies = [
  "heck 0.4.0",
  "proc-macro-error",
@@ -418,9 +419,9 @@ dependencies = [
 
 [[package]]
 name = "cpufeatures"
-version = "0.2.2"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59a6001667ab124aebae2a495118e11d30984c3a653e99d86d58971708cf5e4b"
+checksum = "dc948ebb96241bb40ab73effeb80d9f93afaad49359d159a5e61be51619fe813"
 dependencies = [
  "libc",
 ]
@@ -507,9 +508,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b28135ecf6b7d446b43e27e225622a038cc4e2930a1022f51cdb97ada19b8e4d"
 dependencies = [
  "byteorder",
- "diesel_derives",
- "libsqlite3-sys",
+ "diesel_derives 1.4.1",
+ "libsqlite3-sys 0.9.1",
  "r2d2",
+]
+
+[[package]]
+name = "diesel"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "01e2adfd0a7a81070ed7beec0c62636458926326c16fedb77796d41e447b282d"
+dependencies = [
+ "diesel_derives 2.0.0",
+ "libsqlite3-sys 0.25.1",
 ]
 
 [[package]]
@@ -518,6 +529,18 @@ version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "45f5098f628d02a7a0f68ddba586fb61e80edec3bdc1be3b921f4ceec60858d3"
 dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "diesel_derives"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22a7ab9d7967e6a1a247ea38aedf88ab808b4ac0c159576bc71866ab8f9f9250"
+dependencies = [
+ "proc-macro-error",
  "proc-macro2",
  "quote",
  "syn",
@@ -589,9 +612,9 @@ checksum = "56899898ce76aaf4a0f24d914c97ea6ed976d42fec6ad33fcbb0a1103e07b2b0"
 
 [[package]]
 name = "either"
-version = "1.7.0"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f107b87b6afc2a64fd13cac55fe06d6c8859f12d4b14cbcdd2c67d0976781be"
+checksum = "90e5c1c8368803113bf0c9584fc495a58b86dc8a29edbf8fe877d21d9507e797"
 
 [[package]]
 name = "encode_unicode"
@@ -1305,9 +1328,19 @@ checksum = "8371e4e5341c3a96db127eb2465ac681ced4c433e01dd0e938adbef26ba93ba5"
 
 [[package]]
 name = "libsqlite3-sys"
-version = "0.22.2"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "290b64917f8b0cb885d9de0f9959fe1f775d7fa12f1da2db9001c1c8ab60f89d"
+checksum = "0e9eb7b8e152b6a01be6a4a2917248381875758250dc3df5d46caf9250341dda"
+dependencies = [
+ "pkg-config",
+ "vcpkg",
+]
+
+[[package]]
+name = "libsqlite3-sys"
+version = "0.25.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f0455f2c1bc9a7caa792907026e469c1d91761fb0ea37cbb16427c77280cf35"
 dependencies = [
  "pkg-config",
  "vcpkg",
@@ -1315,9 +1348,9 @@ dependencies = [
 
 [[package]]
 name = "lock_api"
-version = "0.4.7"
+version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "327fa5b6a6940e4699ec49a9beae1ea4845c6bab9314e4f84ac68742139d8c53"
+checksum = "9f80bf5aacaf25cbfc8210d1cfb718f2bf3b11c4c54e5afe36c236853a8ec390"
 dependencies = [
  "autocfg",
  "scopeguard",
@@ -1360,7 +1393,7 @@ version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b4fc84e4af020b837029e017966f86a1c2d5e83e64b589963d5047525995860"
 dependencies = [
- "diesel",
+ "diesel 1.4.8",
 ]
 
 [[package]]
@@ -1646,9 +1679,9 @@ checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 
 [[package]]
 name = "pest"
-version = "2.2.1"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69486e2b8c2d2aeb9762db7b4e00b0331156393555cff467f4163ff06821eef8"
+checksum = "4b0560d531d1febc25a3c9398a62a71256c0178f2e3443baedd9ad4bb8c9deb4"
 dependencies = [
  "thiserror",
  "ucd-trie",
@@ -1704,10 +1737,11 @@ checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
 
 [[package]]
 name = "polling"
-version = "2.2.0"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "685404d509889fade3e86fe3a5803bca2ec09b0c0778d5ada6ec8bf7a8de5259"
+checksum = "899b00b9c8ab553c743b3e11e87c5c7d423b2a2de229ba95b24a756344748011"
 dependencies = [
+ "autocfg",
  "cfg-if",
  "libc",
  "log",
@@ -2130,9 +2164,9 @@ checksum = "2fd0db749597d91ff862fd1d55ea87f7855a744a8425a64695b6fca237d1dad1"
 
 [[package]]
 name = "socket2"
-version = "0.4.4"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66d72b759436ae32898a2af0a14218dbf55efde3feeb170eb623637db85ee1e0"
+checksum = "10c98bba371b9b22a71a9414e420f92ddeb2369239af08200816169d5e2dd7aa"
 dependencies = [
  "libc",
  "winapi 0.3.9",
@@ -2598,7 +2632,7 @@ dependencies = [
  "anyhow",
  "base64",
  "clap",
- "diesel",
+ "diesel 1.4.8",
  "diesel_migrations",
  "directories",
  "env_logger",
@@ -2635,7 +2669,7 @@ dependencies = [
 name = "viola_common"
 version = "0.4.0"
 dependencies = [
- "diesel",
+ "diesel 2.0.0",
  "serde 1.0.144",
  "serde_json 1.0.85",
 ]
