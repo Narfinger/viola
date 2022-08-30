@@ -76,7 +76,7 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
             let db = pool.lock();
 
             diesel::delete(playlists.filter(id.eq(lp.read().id)))
-                .execute(&*db)
+                .execute(&mut *db)
                 .expect("Error deleting");
         }
     }
@@ -222,7 +222,7 @@ impl PlaylistControls for PlaylistTabsPtr {
 }
 
 impl SavePlaylistExt for PlaylistTabsPtr {
-    fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error> {
+    fn save(&self, db: &mut diesel::SqliteConnection) -> Result<(), diesel::result::Error> {
         for i in &self.read().pls {
             i.save(db)?;
         }

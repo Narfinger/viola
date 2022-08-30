@@ -52,19 +52,19 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
             let new_tracks = match val {
                 TreeType::Artist => tracks
                     .filter(artist.like(String::from("%") + search_string + "%"))
-                    .load::<viola_common::Track>(&*db.lock())
+                    .load::<viola_common::Track>(&mut *db.lock())
                     .unwrap(),
                 TreeType::Album => tracks
                     .filter(album.like(String::from("%") + search_string + "%"))
-                    .load::<viola_common::Track>(&*db.lock())
+                    .load::<viola_common::Track>(&mut *db.lock())
                     .unwrap(),
                 TreeType::Track => tracks
                     .filter(title.like(String::from("%") + search_string + "%"))
-                    .load::<viola_common::Track>(&*db.lock())
+                    .load::<viola_common::Track>(&mut *db.lock())
                     .unwrap(),
                 TreeType::Genre => tracks
                     .filter(genre.like(String::from("%") + search_string + "%"))
-                    .load::<viola_common::Track>(&*db.lock())
+                    .load::<viola_common::Track>(&mut *db.lock())
                     .unwrap(),
             }
             .into_iter();

@@ -68,14 +68,14 @@ pub fn restore_playlists(db: &DBPool) -> Vec<LoadedPlaylist> {
 
     let pls = playlists
         .order(viola_common::schema::playlists::dsl::id.asc())
-        .load::<Playlist>(&*db.lock())
+        .load::<Playlist>(&mut *db.lock())
         .expect("Error restoring playlists");
     pls.iter()
         .map(|pl| {
             let t: Vec<(Track, PlaylistTrack)> = tracks
                 .inner_join(playlisttracks)
                 .filter(playlist_id.eq(pl.id))
-                .load(&*db.lock())
+                .load(&mut *db.lock())
                 .expect("Error restoring a playlist");
 
             create_loaded_from_playlist(pl, &t)

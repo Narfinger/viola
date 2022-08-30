@@ -64,8 +64,11 @@ async fn delete_from_playlist(
 async fn save(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     println!("Saving");
     let read_lock = state.read().await;
-    let db = read_lock.pool.lock();
-    read_lock.playlist_tabs.save(&db).expect("Error in saving");
+    let mut db = read_lock.pool.lock();
+    read_lock
+        .playlist_tabs
+        .save(&mut db)
+        .expect("Error in saving");
     Ok(warp::reply())
 }
 
@@ -261,7 +264,7 @@ impl WebGui {
     fn save(&self) {
         let db = self.pool.lock();
         db.transaction::<_, diesel::result::Error, _>(|| {
-            self.playlist_tabs.save(&*db)?;
+            self.playlist_tabs.save(&mut *db)?;
             Ok(())
         })
         .expect("Error in saving");

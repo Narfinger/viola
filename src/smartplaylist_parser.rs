@@ -118,7 +118,7 @@ impl SmartPlaylist {
 
         let basic: Vec<Track> = if self.include_query.is_empty() {
             tracks
-                .load(&*db.lock())
+                .load(&mut *db.lock())
                 .expect("Error in loading smart playlist")
         } else {
             self.include_query
