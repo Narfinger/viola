@@ -1,4 +1,5 @@
 use parking_lot::RwLock;
+use std::ops::DerefMut;
 use std::sync::Arc;
 use std::{cmp::min, path::PathBuf};
 
@@ -73,10 +74,10 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
             if current_pl >= index {
                 self.write().current_pl = 0;
             }
-            let db = pool.lock();
+            let mut db = pool.lock();
 
             diesel::delete(playlists.filter(id.eq(lp.read().id)))
-                .execute(&mut *db)
+                .execute(db.deref_mut())
                 .expect("Error deleting");
         }
     }

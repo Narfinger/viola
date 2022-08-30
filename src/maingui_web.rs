@@ -262,12 +262,12 @@ struct WebGui {
 
 impl WebGui {
     fn save(&self) {
-        let db = self.pool.lock();
-        db.transaction::<_, diesel::result::Error, _>(|| {
-            self.playlist_tabs.save(&mut *db)?;
-            Ok(())
-        })
-        .expect("Error in saving");
+        let mut db = self.pool.lock();
+        //db.transaction::<_, diesel::result::Error, _>(|_| {
+        self.playlist_tabs.save(&mut *db).expect("Error in saving");
+        //Ok(())
+        //})
+        //.expect("Error in saving");
     }
 }
 

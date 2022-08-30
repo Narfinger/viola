@@ -77,7 +77,7 @@ fn basic_get_tracks(db: &DBPool, query: &TreeViewQuery) -> Vec<viola_common::Tra
     } else {
         tracks
             .filter(artist.ne(""))
-            .load::<viola_common::Track>(&*db.lock())
+            .load::<viola_common::Track>(&mut *db.lock())
             .unwrap()
     };
 
@@ -256,13 +256,14 @@ pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
 mod test {
     use std::{fs, sync::Arc};
 
+    use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
     use parking_lot::Mutex;
 
     use super::*;
     use crate::db::NewTrack;
 
-    embed_migrations!("migrations/");
-    fn fill_db(db: &diesel::SqliteConnection) {
+    pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
+    fn fill_db(db: &mut diesel::SqliteConnection) {
         #[derive(Deserialize)]
         struct Obj {
             newtracks: Vec<NewTrack>,
@@ -278,11 +279,11 @@ mod test {
     }
 
     fn setup_db_connection() -> diesel::SqliteConnection {
-        let conn = <diesel::SqliteConnection as diesel::Connection>::establish(":memory:")
+        let mut conn = <diesel::SqliteConnection as diesel::Connection>::establish(":memory:")
             .map_err(|_| String::from("DB Connection error"))
             .unwrap();
-        embedded_migrations::run(&conn).expect("Could not run migration");
-        fill_db(&conn);
+        conn.run_pending_migrations(MIGRATIONS).unwrap();
+        fill_db(&mut conn);
         conn
     }
 
