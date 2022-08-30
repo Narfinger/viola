@@ -503,35 +503,13 @@ dependencies = [
 
 [[package]]
 name = "diesel"
-version = "1.4.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b28135ecf6b7d446b43e27e225622a038cc4e2930a1022f51cdb97ada19b8e4d"
-dependencies = [
- "byteorder",
- "diesel_derives 1.4.1",
- "libsqlite3-sys 0.9.1",
- "r2d2",
-]
-
-[[package]]
-name = "diesel"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "01e2adfd0a7a81070ed7beec0c62636458926326c16fedb77796d41e447b282d"
 dependencies = [
- "diesel_derives 2.0.0",
- "libsqlite3-sys 0.25.1",
-]
-
-[[package]]
-name = "diesel_derives"
-version = "1.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45f5098f628d02a7a0f68ddba586fb61e80edec3bdc1be3b921f4ceec60858d3"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
+ "diesel_derives",
+ "libsqlite3-sys",
+ "r2d2",
 ]
 
 [[package]]
@@ -548,10 +526,11 @@ dependencies = [
 
 [[package]]
 name = "diesel_migrations"
-version = "1.4.0"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf3cde8413353dc7f5d72fa8ce0b99a560a359d2c5ef1e5817ca731cd9008f4c"
+checksum = "e9ae22beef5e9d6fab9225ddb073c1c6c1a7a6ded5019d5da11d1e5c5adc34e2"
 dependencies = [
+ "diesel",
  "migrations_internals",
  "migrations_macros",
 ]
@@ -1328,16 +1307,6 @@ checksum = "8371e4e5341c3a96db127eb2465ac681ced4c433e01dd0e938adbef26ba93ba5"
 
 [[package]]
 name = "libsqlite3-sys"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e9eb7b8e152b6a01be6a4a2917248381875758250dc3df5d46caf9250341dda"
-dependencies = [
- "pkg-config",
- "vcpkg",
-]
-
-[[package]]
-name = "libsqlite3-sys"
 version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f0455f2c1bc9a7caa792907026e469c1d91761fb0ea37cbb16427c77280cf35"
@@ -1389,23 +1358,23 @@ dependencies = [
 
 [[package]]
 name = "migrations_internals"
-version = "1.4.1"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b4fc84e4af020b837029e017966f86a1c2d5e83e64b589963d5047525995860"
+checksum = "c493c09323068c01e54c685f7da41a9ccf9219735c3766fbfd6099806ea08fbc"
 dependencies = [
- "diesel 1.4.8",
+ "serde 1.0.144",
+ "toml",
 ]
 
 [[package]]
 name = "migrations_macros"
-version = "1.4.2"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9753f12909fd8d923f75ae5c3258cae1ed3c8ec052e1b38c93c21a6d157f789c"
+checksum = "8a8ff27a350511de30cdabb77147501c36ef02e0451d957abea2f30caffb2b58"
 dependencies = [
  "migrations_internals",
  "proc-macro2",
  "quote",
- "syn",
 ]
 
 [[package]]
@@ -2632,7 +2601,7 @@ dependencies = [
  "anyhow",
  "base64",
  "clap",
- "diesel 1.4.8",
+ "diesel",
  "diesel_migrations",
  "directories",
  "env_logger",
@@ -2669,7 +2638,7 @@ dependencies = [
 name = "viola_common"
 version = "0.4.0"
 dependencies = [
- "diesel 2.0.0",
+ "diesel",
  "serde 1.0.144",
  "serde_json 1.0.85",
 ]

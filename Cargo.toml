@@ -7,9 +7,9 @@ edition = "2018"
 
 [dependencies]
 base64 = "0.13.0"
-clap = { version = "3.2.17", features = ["cargo", "derive"] }
-diesel = { version = "1.4.8", features = ["sqlite", "r2d2"] }
-diesel_migrations = { version = "1.4.0", features = ["sqlite"] }
+clap = { version = "3.2.18", features = ["cargo", "derive"] }
+diesel = { version = "2.0.0", features = ["sqlite", "r2d2"] }
+diesel_migrations = { version = "2.0.0", features = ["sqlite"] }
 error-chain = "0.12.4"
 futures = "0.3.24"
 log = { version = "0.4.17", features = ["max_level_debug", "release_max_level_warn"] }
@@ -22,7 +22,7 @@ glib = "0.15.12"
 percent-encoding = "2.1.0"
 preferences = "1.1.0"
 rayon = "1.5.3"
-serde_derive = "1.0.143"
+serde_derive = "1.0.144"
 serde_json = "1.0.85"
 serde = "1.0.144"
 open = "3.0.2"

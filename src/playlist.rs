@@ -4,7 +4,7 @@ use crate::loaded_playlist::LoadedPlaylist;
 use crate::types::DBPool;
 use viola_common::Track;
 
-#[derive(Identifiable, Queryable, Associations)]
+#[derive(Identifiable, Queryable)]
 pub struct Playlist {
     pub id: i32,
     pub name: String,
@@ -32,6 +32,8 @@ pub struct PlaylistTrack {
 
 #[derive(Debug, Insertable, Associations)]
 #[table_name = "playlisttracks"]
+#[belongs_to(Track, foreign_key = "playlist_id")]
+#[belongs_to(Playlist, foreign_key = "track_id")]
 pub struct NewPlaylistTrack {
     pub playlist_id: i32,
     pub track_id: i32,
@@ -68,14 +70,14 @@ pub fn restore_playlists(db: &DBPool) -> Vec<LoadedPlaylist> {
 
     let pls = playlists
         .order(viola_common::schema::playlists::dsl::id.asc())
-        .load::<Playlist>(&*db.lock())
+        .load::<Playlist>(&mut *db.lock())
         .expect("Error restoring playlists");
     pls.iter()
         .map(|pl| {
             let t: Vec<(Track, PlaylistTrack)> = tracks
                 .inner_join(playlisttracks)
                 .filter(playlist_id.eq(pl.id))
-                .load(&*db.lock())
+                .load(&mut *db.lock())
                 .expect("Error restoring a playlist");
 
             create_loaded_from_playlist(pl, &t)

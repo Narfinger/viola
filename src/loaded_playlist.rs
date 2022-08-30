@@ -43,7 +43,7 @@ pub trait LoadedPlaylistExt {
 }
 
 pub trait SavePlaylistExt {
-    fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error>;
+    fn save(&self, db: &mut diesel::SqliteConnection) -> Result<(), diesel::result::Error>;
 }
 
 pub fn items(
@@ -96,7 +96,7 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
 }
 
 impl SavePlaylistExt for LoadedPlaylistPtr {
-    fn save(&self, db: &diesel::SqliteConnection) -> Result<(), diesel::result::Error> {
+    fn save(&self, db: &mut diesel::SqliteConnection) -> Result<(), diesel::result::Error> {
         use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
         use viola_common::schema::playlists::dsl::*;
         use viola_common::schema::playlisttracks::dsl::*;

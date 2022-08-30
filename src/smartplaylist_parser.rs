@@ -118,7 +118,7 @@ impl SmartPlaylist {
 
         let basic: Vec<Track> = if self.include_query.is_empty() {
             tracks
-                .load(&*db.lock())
+                .load(&mut *db.lock())
                 .expect("Error in loading smart playlist")
         } else {
             self.include_query
@@ -129,7 +129,7 @@ impl SmartPlaylist {
                         for value in v {
                             s = s.or_filter(album.eq(value));
                         }
-                        s.load(&*db.lock())
+                        s.load(&mut *db.lock())
                             .expect("Error in loading smart playlist")
                     }
                     IncludeTag::Artist(v) => {
@@ -138,7 +138,7 @@ impl SmartPlaylist {
                             s = s.or_filter(artist.eq(value));
                         }
                         //println!("Query ArtistInclude: {:?}", debug_query(&s));
-                        s.load(&*db.lock())
+                        s.load(&mut *db.lock())
                             .expect("Error in loading smart playlist")
                     }
                     IncludeTag::Dir(v) => {
@@ -147,7 +147,7 @@ impl SmartPlaylist {
                             s = s.or_filter(path.like(String::from("%") + value + "%"));
                         }
                         //println!("Query DirInclude: {:?}", debug_query(&s));
-                        s.load(&*db.lock())
+                        s.load(&mut *db.lock())
                             .expect("Error in loading smart playlist")
                     }
                     IncludeTag::Genre(v) => {
@@ -156,21 +156,21 @@ impl SmartPlaylist {
                             s = s.or_filter(genre.eq(value));
                         }
                         //println!("Query GenreInclude: {:?}", debug_query(&s));
-                        s.load(&*db.lock())
+                        s.load(&mut *db.lock())
                             .expect("Error in loading smart playlist")
                     }
                     IncludeTag::PlayCountLeast(v) => {
                         let mut s = tracks.into_boxed::<Sqlite>();
                         s = s.or_filter(playcount.ge(v));
 
-                        s.load(&*db.lock())
+                        s.load(&mut *db.lock())
                             .expect("Error in loading smart playlist")
                     }
                     IncludeTag::PlayCountExact(v) => {
                         let mut s = tracks.into_boxed::<Sqlite>();
                         s = s.or_filter(playcount.eq(v));
 
-                        s.load(&*db.lock())
+                        s.load(&mut *db.lock())
                             .expect("Error in loading smart playlist")
                     }
                 })
@@ -234,10 +234,11 @@ mod test {
     use crate::db::NewTrack;
     use std::{fs, sync::Arc};
 
+    use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
     use parking_lot::Mutex;
 
-    embed_migrations!("migrations/");
-    fn fill_db(db: &diesel::SqliteConnection) {
+    pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
+    fn fill_db(db: &mut diesel::SqliteConnection) {
         #[derive(Deserialize)]
         struct Obj {
             newtracks: Vec<NewTrack>,
@@ -253,11 +254,11 @@ mod test {
     }
 
     fn setup_db_connection() -> diesel::SqliteConnection {
-        let conn = <diesel::SqliteConnection as diesel::Connection>::establish(":memory:")
+        let mut conn = <diesel::SqliteConnection as diesel::Connection>::establish(":memory:")
             .map_err(|_| String::from("DB Connection error"))
             .unwrap();
-        embedded_migrations::run(&conn).expect("Could not run migration");
-        fill_db(&conn);
+        conn.run_pending_migrations(MIGRATIONS).unwrap();
+        fill_db(&mut conn);
         conn
     }
 

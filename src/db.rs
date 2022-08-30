@@ -1,9 +1,12 @@
 use crate::types::DBPool;
 use diesel::{Connection, SqliteConnection};
+use diesel_migrations::EmbeddedMigrations;
+use diesel_migrations::MigrationHarness;
 use indicatif::ParallelProgressIterator;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::iter::FromIterator;
+use std::ops::DerefMut;
 use std::path::Path;
 use std::{collections::HashSet, path::PathBuf};
 use std::{thread, time};
@@ -30,12 +33,13 @@ impl UpdatePlayCount for Track {
         //wait a random time
         let mut rng = rand::thread_rng();
         std::thread::sleep(std::time::Duration::new(0, rng.next_u32()));
-        let db = pool.lock();
+        let mut db = pool.lock();
 
-        let db_track: Result<Track, diesel::result::Error> = tracks.find(self.id).first(&*db);
+        let db_track: Result<Track, diesel::result::Error> =
+            tracks.find(self.id).first(db.deref_mut());
         if let Ok(mut track) = db_track {
             track.playcount = Some(1 + track.playcount.unwrap_or(0));
-            if track.save_changes::<Track>(&*db).is_err() {
+            if track.save_changes::<Track>(db.deref_mut()).is_err() {
                 error!("Some problem with updating play status (cannot update)");
             }
         } else {
@@ -58,7 +62,7 @@ pub struct NewTrack {
     pub albumpath: Option<String>,
 }
 
-embed_migrations!("migrations/");
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 pub fn setup_db_connection() -> Result<diesel::SqliteConnection, String> {
     let mut db_file =
         crate::utils::get_config_dir().map_err(|_| String::from("Could not get app root"))?;
@@ -79,9 +83,9 @@ pub fn create_db() {
     }
     let mut db_file = crate::utils::get_config_dir().unwrap();
     db_file.push("music.db");
-    let connection =
+    let mut connection =
         SqliteConnection::establish(db_file.to_str().unwrap()).expect("Something wrong");
-    embedded_migrations::run(&connection).expect("Could not run migration");
+    connection.run_pending_migrations(MIGRATIONS).unwrap();
 }
 
 fn is_valid_file(s: &Result<DirEntry, walkdir::Error>) -> bool {
@@ -184,7 +188,7 @@ fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
     let new_track = construct_track_from_path(s);
     let old_track_perhaps = tracks
         .filter(path.eq(&new_track.path))
-        .get_result::<Track>(&*db.lock());
+        .get_result::<Track>(&mut *db.lock());
 
     if let Ok(mut old_track) = old_track_perhaps {
         if tags_equal(&new_track, &old_track) {
@@ -200,14 +204,14 @@ fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
             old_track.albumpath = new_track.albumpath;
 
             old_track
-                .save_changes::<Track>(&*db.lock())
+                .save_changes::<Track>(&mut *db.lock())
                 .map(|_| ())
                 .map_err(|err| format!("Error in updateing for track {}, See full: {:?}", s, err))
         }
     } else {
         diesel::insert_into(tracks)
             .values(&new_track)
-            .execute(&*db.lock())
+            .execute(&mut *db.lock())
             .map(|_| ())
             .map_err(|err| format!("Insertion Error for track {}, See full: {:?}", s, err))
     }
@@ -237,14 +241,14 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
         let old_files: HashSet<String> = HashSet::from_iter(if fast_delete {
             tracks
                 .select(path)
-                .load(&*db.lock())
+                .load(&mut *db.lock())
                 .expect("Error in loading old files")
         } else {
             tracks
                 .select(path)
                 //ignore files that are not in the path
                 .filter(path.like(String::from("%") + p + "%"))
-                .load(&*db.lock())
+                .load(&mut *db.lock())
                 .expect("Error in loading old files")
         });
 
@@ -285,7 +289,7 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
                 //println!("to delete: {}", i);
                 diesel::delete(tracks)
                     .filter(path.eq(i))
-                    .execute(&*db.lock())
+                    .execute(&mut *db.lock())
                     .unwrap_or_else(|_| {
                         panic!("Error in deleting outdated database entries: {}", &i)
                     });
@@ -305,7 +309,7 @@ pub fn get_new_playlist_id(db: &DBPool) -> i32 {
     playlists
         .select(viola_common::schema::playlists::id)
         .order(viola_common::schema::playlists::id.desc())
-        .load(&*db.lock())
+        .load(&mut *db.lock())
         .ok()
         .and_then(|v: Vec<i32>| v.first().copied())
         .map_or(0, |i| i + 1)
