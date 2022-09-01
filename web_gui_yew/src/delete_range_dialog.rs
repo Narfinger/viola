@@ -14,7 +14,12 @@ pub(crate) struct DeleteRangeDialogProps {
     pub(crate) max: usize,
 }
 
-fn send_delete_range(max: usize, input: UseStateHandle<String>, refresh_callback: Callback<()>) {
+fn send_delete_range(
+    max: usize,
+    input: UseStateHandle<String>,
+    refresh_callback: Callback<()>,
+    toggle_visible_callback: Callback<()>,
+) {
     let split = input.split('-').collect::<Vec<_>>();
     let start: usize = split.first().unwrap().parse().unwrap();
     let end: usize = split.get(1).and_then(|s| s.parse().ok()).unwrap_or(max);
@@ -28,6 +33,7 @@ fn send_delete_range(max: usize, input: UseStateHandle<String>, refresh_callback
             .unwrap();
         refresh_callback.emit(());
     });
+    toggle_visible_callback.emit(())
 
     /*use_callback(async move {
      */
@@ -61,7 +67,12 @@ pub(crate) fn delete_range_dialog(props: &DeleteRangeDialogProps) -> Html {
         let refresh_callback = props.refresh_callback.clone();
         let max = props.max;
         let submit_callback = Callback::from(move |_| {
-            send_delete_range(max - 1, input.clone(), refresh_callback.clone())
+            send_delete_range(
+                max - 1,
+                input.clone(),
+                refresh_callback.clone(),
+                toggle_visible_callback.clone(),
+            )
         });
 
         html! {
@@ -81,7 +92,7 @@ pub(crate) fn delete_range_dialog(props: &DeleteRangeDialogProps) -> Html {
                         text="Close"
                         icon="/x-square.svg"
                         btype={ButtonType::Danger}
-                        callback={toggle_visible_callback}
+                        callback={props.toggle_visible_callback.clone()}
                     />
                     <CallbackButton
                         text="Delete"
