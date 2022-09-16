@@ -1,7 +1,7 @@
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-use std::{cell::RefCell, rc::Rc};
+use std::rc::Rc;
 
 use futures::{join, StreamExt};
 use reqwasm::http::Request;
@@ -163,7 +163,7 @@ impl Component for App {
                 false
             }
             AppMessage::RefreshListDone(tracks) => {
-                self.current_tracks = tracks.into_iter().map(|s| Rc::new(s)).collect();
+                self.current_tracks = tracks.into_iter().map(Rc::new).collect();
                 true
             }
             AppMessage::RefreshPlayStatus => {

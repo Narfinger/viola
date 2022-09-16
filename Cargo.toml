@@ -7,36 +7,36 @@ edition = "2018"
 
 [dependencies]
 base64 = "0.13.0"
-clap = { version = "3.2.18", features = ["cargo", "derive"] }
+clap = { version = "3.2.21", features = ["cargo", "derive"] }
 diesel = { version = "2.0.0", features = ["sqlite", "r2d2"] }
 diesel_migrations = { version = "2.0.0", features = ["sqlite"] }
 error-chain = "0.12.4"
 futures = "0.3.24"
 log = { version = "0.4.17", features = ["max_level_debug", "release_max_level_warn"] }
 env_logger = "0.9.0"
-indicatif = { version = "0.17.0", features = ["rayon"] }
+indicatif = { version = "0.17.1", features = ["rayon"] }
 humantime = "2.1.0"
 taglib = "1.0.0"
 gstreamer = "0.18.8"
 glib = "0.15.12"
-percent-encoding = "2.1.0"
+percent-encoding = "2.2.0"
 preferences = "1.1.0"
 rayon = "1.5.3"
 serde_derive = "1.0.144"
 serde_json = "1.0.85"
 serde = "1.0.144"
-open = "3.0.2"
+open = "3.0.3"
 rand = "0.8.5"
 toml = "0.5.9"
 walkdir = "2.3.2"
 viola_common = {path ="viola_common", features =["backend"]}
-itertools = "0.10.3"
-zbus = "3.0.0"
+itertools = "0.10.4"
+zbus = "3.1.0"
 parking_lot = { version = "0.12.1", features = ["serde", "deadlock_detection"] }
 warp = { version = "0.3.2", features = ["compression"] }
-tokio = { version = "1.20.1", features = ["full"] }
+tokio = { version = "1.21.1", features = ["full"] }
 directories = "4.0.1"
-anyhow = "1.0.62"
+anyhow = "1.0.65"
 zvariant = "3.6.0"
 webkit2gtk = "0.18.0"
 gtk = "0.15.5"

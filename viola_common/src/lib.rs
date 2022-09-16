@@ -148,13 +148,13 @@ pub struct LoadSmartPlaylistJson {
     pub index: usize,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PlaylistTabJSON {
     pub name: String,
     pub current_position: usize,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PlaylistTabsJSON {
     pub current: usize,
     pub tabs: Vec<PlaylistTabJSON>,

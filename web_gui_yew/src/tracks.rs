@@ -1,5 +1,5 @@
 use reqwasm::http::Request;
-use std::{cell::RefCell, rc::Rc};
+use std::{rc::Rc};
 use viola_common::{GStreamerAction, GStreamerMessage};
 
 use yew::prelude::*;
