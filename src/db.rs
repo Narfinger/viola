@@ -49,7 +49,7 @@ impl UpdatePlayCount for Track {
 }
 
 #[derive(Debug, Insertable, Deserialize)]
-#[table_name = "tracks"]
+#[diesel(table_name = tracks)]
 pub struct NewTrack {
     pub title: String,
     pub artist: String,

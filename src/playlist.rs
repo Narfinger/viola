@@ -12,7 +12,7 @@ pub struct Playlist {
 }
 
 #[derive(Insertable)]
-#[table_name = "playlists"]
+#[diesel(table_name = playlists)]
 pub struct NewPlaylist {
     pub id: i32,
     pub name: String,
@@ -20,9 +20,7 @@ pub struct NewPlaylist {
 }
 
 #[derive(Identifiable, Queryable, Associations)]
-#[table_name = "playlisttracks"]
-#[belongs_to(Track, foreign_key = "playlist_id")]
-#[belongs_to(Playlist, foreign_key = "track_id")]
+#[diesel(table_name = playlisttracks, belongs_to(Track, foreign_key = playlist_id), belongs_to(Playlist, foreign_key = track_id))]
 pub struct PlaylistTrack {
     id: i32,
     playlist_id: i32,
@@ -31,9 +29,7 @@ pub struct PlaylistTrack {
 }
 
 #[derive(Debug, Insertable, Associations)]
-#[table_name = "playlisttracks"]
-#[belongs_to(Track, foreign_key = "playlist_id")]
-#[belongs_to(Playlist, foreign_key = "track_id")]
+#[diesel(table_name = playlisttracks, belongs_to(Track, foreign_key = playlist_id), belongs_to(Playlist, foreign_key = track_id))]
 pub struct NewPlaylistTrack {
     pub playlist_id: i32,
     pub track_id: i32,
