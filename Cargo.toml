@@ -30,7 +30,7 @@ rand = "0.8.5"
 toml = "0.5.9"
 walkdir = "2.3.2"
 viola_common = {path ="viola_common", features =["backend"]}
-itertools = "0.10.4"
+itertools = "0.10.5"
 zbus = "3.1.0"
 parking_lot = { version = "0.12.1", features = ["serde", "deadlock_detection"] }
 warp = { version = "0.3.2", features = ["compression"] }
