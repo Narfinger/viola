@@ -117,7 +117,7 @@ pub fn new(
                 MessageView::Tag(_) => {
                     warn!("Found tag msg")
                 }
-                m => (warn!("Found message {:?}", m)),
+                m => warn!("Found message {:?}", m),
             }
         }
     });
