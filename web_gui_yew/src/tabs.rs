@@ -1,12 +1,20 @@
 use reqwasm::http::Request;
 use viola_common::*;
+use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
-pub(crate) struct TabsComponent {}
+pub(crate) struct TabsComponent {
+    edit: Option<usize>,
+    current_edit_text: Option<String>,
+}
 
 pub(crate) enum TabsMessage {
     Delete(usize),
     Change(usize),
+    ShowEdit(usize),
+    EditChange(Event),
+    FinishedEdit(i32),
+    ChangeName(usize, String),
     ReloadEmit,
 }
 
@@ -15,12 +23,29 @@ pub(crate) struct TabsProperties {
     pub(crate) tabs: PlaylistTabsJSON,
 }
 
+impl TabsComponent {
+    fn view_edit_button(&self, pos: usize, ctx: &Context<Self>) -> Html {
+        let tab_name = ctx.props().tabs.tabs.get(pos).unwrap().name.clone();
+        html! {
+            <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <button onclick={ctx.link().callback(move |_| TabsMessage::FinishedEdit(pos as i32))} class="btn btn-outline-secondary" type="button">{"Change"}</button>
+            </div>
+            <input type="text" onchange={ctx.link().callback(move |e: Event| TabsMessage::EditChange(e))} class="form-control" placeholder={tab_name}/>
+          </div>
+        }
+    }
+}
+
 impl Component for TabsComponent {
     type Message = TabsMessage;
     type Properties = TabsProperties;
 
     fn create(_ctx: &Context<Self>) -> Self {
-        TabsComponent {}
+        TabsComponent {
+            edit: None,
+            current_edit_text: None,
+        }
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -47,6 +72,44 @@ impl Component for TabsComponent {
                 });
                 false
             }
+            TabsMessage::ChangeName(pos, name) => {
+                let current_position = ctx.props().tabs.tabs.get(pos).unwrap().current_position;
+                // Notice that the position and ids are different
+                let id = ctx.props().tabs.tabs.get(pos).unwrap().id;
+                self.edit = None;
+                self.current_edit_text = None;
+                ctx.link().send_future(async move {
+                    let val = PlaylistTabJSON {
+                        id,
+                        current_position,
+                        name,
+                    };
+                    Request::put("/playlisttab/")
+                        .header("Content-Type", "application/json")
+                        .body(serde_json::to_string(&val).unwrap())
+                        .send()
+                        .await
+                        .unwrap();
+                    TabsMessage::ReloadEmit
+                });
+                true
+            }
+            TabsMessage::EditChange(e) => {
+                let input: HtmlInputElement = e.target_unchecked_into();
+                self.current_edit_text = Some(input.value());
+                false
+            }
+            TabsMessage::ShowEdit(pos) => {
+                self.edit = Some(pos);
+                self.current_edit_text = None;
+                true
+            }
+            TabsMessage::FinishedEdit(pos) => {
+                let s = self.current_edit_text.as_ref().unwrap().clone();
+                ctx.link()
+                    .send_message(TabsMessage::ChangeName(pos as usize, s));
+                false
+            }
             TabsMessage::ReloadEmit => false,
         }
     }
@@ -65,7 +128,15 @@ impl Component for TabsComponent {
                         class={if pos == ctx.props().tabs.current {
                             "nav-link active"
                         } else {"nav-link"}}>
-                        {&tab.name}
+                        {
+                            if self.edit == Some(pos) {
+                                self.view_edit_button(pos, &ctx)
+                            } else {html! {
+                                <span ondblclick = {ctx.link().callback(move |_| TabsMessage::ShowEdit(pos))}>
+                                    {&tab.name}
+                                </span>}
+                            }
+                        }
                         <span style="padding-left: 5px;">
                             <img src="/x-square.svg" height="16px" width="16px" onclick={ ctx.link().callback(move |_| TabsMessage::Delete(pos))} />
                         </span>

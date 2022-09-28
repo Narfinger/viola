@@ -152,6 +152,7 @@ pub struct LoadSmartPlaylistJson {
 pub struct PlaylistTabJSON {
     pub name: String,
     pub current_position: usize,
+    pub id: i32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]

@@ -209,21 +209,17 @@ async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible>
         .read()
         .pls
         .iter()
-        .map(|pl| {
-            (
-                pl.read().id,
-                PlaylistTabJSON {
-                    name: pl.read().name.clone(),
-                    current_position: pl.read().current_position,
-                },
-            )
+        .map(|pl| PlaylistTabJSON {
+            id: pl.read().id,
+            name: pl.read().name.clone(),
+            current_position: pl.read().current_position,
         })
-        .collect::<Vec<(i32, PlaylistTabJSON)>>();
-    tabs.sort_by_key(|a| a.0);
+        .collect::<Vec<PlaylistTabJSON>>();
+    tabs.sort_by_key(|a| a.id);
 
     let resp = PlaylistTabsJSON {
         current: state.read().await.playlist_tabs.current_tab(),
-        tabs: tabs.into_iter().map(|a| a.1).collect(),
+        tabs: tabs,
     };
     Ok(warp::reply::json(&resp))
 }
@@ -233,6 +229,27 @@ async fn change_playlist_tab(
     state: WebGuiData,
 ) -> Result<impl warp::Reply, Infallible> {
     state.read().await.playlist_tabs.set_tab(index);
+    tokio::spawn(async move {
+        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
+    });
+    Ok(warp::reply())
+}
+
+async fn modify_playlist_tab(
+    tab: PlaylistTabJSON,
+    state: WebGuiData,
+) -> Result<impl warp::Reply, Infallible> {
+    {
+        let tabs = &state.read().await.playlist_tabs;
+        let id = tab.id;
+        tabs.read()
+            .pls
+            .iter()
+            .find(|t| t.read().id == id)
+            .unwrap()
+            .write()
+            .name = tab.name;
+    }
     tokio::spawn(async move {
         my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
     });
@@ -468,6 +485,14 @@ pub async fn run(pool: DBPool) {
         warp::delete().and(deletepl.or(deletetab))
     };
 
+    let puts = {
+        let mod_playlist = warp::path!("playlisttab")
+            .and(warp::body::json())
+            .and(data.clone())
+            .and_then(modify_playlist_tab);
+        warp::put().and(mod_playlist)
+    };
+
     let websocket = warp::path("ws")
         .and(warp::ws())
         .map(move |ws: warp::ws::Ws| {
@@ -489,6 +514,7 @@ pub async fn run(pool: DBPool) {
     let all = gets
         .or(posts)
         .or(deletes)
+        .or(puts)
         //.or(static_files)
         .or(websocket)
         .or(index);
