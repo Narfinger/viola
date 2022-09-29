@@ -29,7 +29,7 @@ impl TabsComponent {
         html! {
             <div class="input-group mb-3">
             <div class="input-group-prepend">
-              <button onclick={ctx.link().callback(move |_| TabsMessage::FinishedEdit(pos as i32))} class="btn btn-outline-secondary" type="button">{"Change"}</button>
+              <button onclick={ctx.link().callback(move |_| TabsMessage::FinishedEdit(pos as i32))} class="btn btn-primary" type="button">{"Change"}</button>
             </div>
             <input type="text" onchange={ctx.link().callback(move |e: Event| TabsMessage::EditChange(e))} class="form-control" placeholder={tab_name}/>
           </div>
