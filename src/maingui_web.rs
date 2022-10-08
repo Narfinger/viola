@@ -1,4 +1,3 @@
-use diesel::Connection;
 use futures::StreamExt;
 use std::convert::Infallible;
 use std::net::SocketAddr;
@@ -219,7 +218,7 @@ async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible>
     let resp = PlaylistTabsJSON {
         current: state.read().await.playlist_tabs.current_tab(),
         current_playing_in: state.read().await.playlist_tabs.current_playing_in(),
-        tabs: tabs,
+        tabs,
     };
     Ok(warp::reply::json(&resp))
 }

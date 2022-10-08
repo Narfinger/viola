@@ -1,5 +1,4 @@
 use directories::ProjectDirs;
-use std::fmt::Write;
 use std::fs::File;
 
 pub(crate) fn get_config_dir() -> Result<std::path::PathBuf, String> {
@@ -26,26 +25,4 @@ pub(crate) fn get_config_file(mode: &ConfigWriteMode) -> Result<File, String> {
             }
             .map_err(|_| String::from("Could not open file"))
         })
-}
-
-#[must_use]
-pub(crate) fn format_into_full_duration(i: i64) -> String {
-    let mut s = String::new();
-    let seconds = i % 60;
-    let minutes = (i / 60) % 60;
-    let hours = (i / (60 * 60)) % 24;
-    let days = i / (60 * 60 * 24);
-
-    if days > 0 {
-        write!(s, "{}:", days).expect("Error in conversion");
-    }
-    if (hours > 0) | (days > 0) {
-        write!(s, "{:02}:", hours).expect("Error in conversion");
-    }
-    if (minutes > 0) | (days > 0) | (hours > 0) {
-        write!(s, "{:02}:", minutes).expect("Error in conversion");
-    }
-    write!(s, "{:02}", seconds).expect("Error in conversion");
-
-    s
 }
