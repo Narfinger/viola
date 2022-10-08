@@ -5,7 +5,7 @@ use crate::types::DBPool;
 use viola_common::Track;
 
 #[derive(Identifiable, Queryable)]
-pub struct Playlist {
+pub(crate) struct Playlist {
     pub id: i32,
     pub name: String,
     pub current_position: i32,
@@ -13,7 +13,7 @@ pub struct Playlist {
 
 #[derive(Insertable)]
 #[diesel(table_name = playlists)]
-pub struct NewPlaylist {
+pub(crate) struct NewPlaylist {
     pub id: i32,
     pub name: String,
     pub current_position: i32,
@@ -21,7 +21,7 @@ pub struct NewPlaylist {
 
 #[derive(Identifiable, Queryable, Associations)]
 #[diesel(table_name = playlisttracks, belongs_to(Track, foreign_key = playlist_id), belongs_to(Playlist, foreign_key = track_id))]
-pub struct PlaylistTrack {
+pub(crate) struct PlaylistTrack {
     id: i32,
     playlist_id: i32,
     track_id: i32,
@@ -30,7 +30,7 @@ pub struct PlaylistTrack {
 
 #[derive(Debug, Insertable, Associations)]
 #[diesel(table_name = playlisttracks, belongs_to(Track, foreign_key = playlist_id), belongs_to(Playlist, foreign_key = track_id))]
-pub struct NewPlaylistTrack {
+pub(crate) struct NewPlaylistTrack {
     pub playlist_id: i32,
     pub track_id: i32,
     pub playlist_order: i32,
@@ -58,7 +58,7 @@ fn create_loaded_from_playlist(pl: &Playlist, r: &[(Track, PlaylistTrack)]) -> L
 }
 
 #[must_use]
-pub fn restore_playlists(db: &DBPool) -> Vec<LoadedPlaylist> {
+pub(crate) fn restore_playlists(db: &DBPool) -> Vec<LoadedPlaylist> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     use viola_common::schema::playlists::dsl::*;
     use viola_common::schema::playlisttracks::dsl::*;

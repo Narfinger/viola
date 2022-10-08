@@ -20,7 +20,7 @@ static PROGRESSBAR_STYLE: &str =
 static PROGRESSBAR_UNKNOWN_STYLE: &str =
     "{msg} {spinner:.green} | Elapsed: {elapsed} | Files/sec: {per_sec}";
 
-pub trait UpdatePlayCount {
+pub(crate) trait UpdatePlayCount {
     fn update_playcount(&mut self, _: DBPool);
 }
 
@@ -50,7 +50,7 @@ impl UpdatePlayCount for Track {
 
 #[derive(Debug, Insertable, Deserialize)]
 #[diesel(table_name = tracks)]
-pub struct NewTrack {
+pub(crate) struct NewTrack {
     pub title: String,
     pub artist: String,
     pub album: String,
@@ -62,8 +62,8 @@ pub struct NewTrack {
     pub albumpath: Option<String>,
 }
 
-pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
-pub fn setup_db_connection() -> Result<diesel::SqliteConnection, String> {
+pub(crate) const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
+pub(crate) fn setup_db_connection() -> Result<diesel::SqliteConnection, String> {
     let mut db_file =
         crate::utils::get_config_dir().map_err(|_| String::from("Could not get app root"))?;
     if !db_file.exists() {
@@ -74,7 +74,7 @@ pub fn setup_db_connection() -> Result<diesel::SqliteConnection, String> {
         .map_err(|_| String::from("DB Connection error"))
 }
 
-pub fn create_db() {
+pub(crate) fn create_db() {
     let db_dir = crate::utils::get_config_dir()
         .map_err(|_| String::from("Could not get app root"))
         .expect("Error getting app dir");
@@ -218,7 +218,7 @@ fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
 }
 
 /// Tested on 01-06-2019 with jwalk and walkdir. walkdir was faster on my machine
-pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
+pub(crate) fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
     info!("Building database, getting walkdir iterator");
     let pb = ProgressBar::new_spinner();
     let style = ProgressStyle::default_spinner()
@@ -303,7 +303,7 @@ pub fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), String> {
 
 // returns an id for a newly created playlist. Returns 0 if no playlists yet in db
 #[must_use]
-pub fn get_new_playlist_id(db: &DBPool) -> i32 {
+pub(crate) fn get_new_playlist_id(db: &DBPool) -> i32 {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
     use viola_common::schema::playlists::dsl::*;
     playlists

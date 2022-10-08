@@ -8,7 +8,7 @@ use viola_common::Track;
 const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ').add(b'#');
 
 #[derive(Debug, Serialize)]
-pub struct LoadedPlaylist {
+pub(crate) struct LoadedPlaylist {
     /// The id we have in the database for it. If none, means this was not yet saved
     pub id: i32,
 
@@ -22,7 +22,7 @@ pub struct LoadedPlaylist {
     pub current_position: usize,
 }
 
-pub trait LoadedPlaylistExt {
+pub(crate) trait LoadedPlaylistExt {
     /// Returns the current track
     fn get_current_track(&self) -> Track;
 
@@ -46,7 +46,7 @@ pub trait SavePlaylistExt {
     fn save(&self, db: &mut diesel::SqliteConnection) -> Result<(), diesel::result::Error>;
 }
 
-pub fn items(
+pub(crate) fn items(
     pl: &LoadedPlaylistPtr,
 ) -> parking_lot::lock_api::MappedRwLockReadGuard<parking_lot::RawRwLock, Vec<Track>> {
     parking_lot::lock_api::RwLockReadGuard::<'_, parking_lot::RawRwLock, LoadedPlaylist>::map(
@@ -159,7 +159,7 @@ impl SavePlaylistExt for LoadedPlaylistPtr {
     }
 }
 
-pub trait PlaylistControls {
+pub(crate) trait PlaylistControls {
     /// Get current track path
     fn get_current_path(&self) -> Option<PathBuf>;
     /// Get current track uri

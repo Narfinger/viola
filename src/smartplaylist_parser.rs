@@ -11,7 +11,7 @@ use crate::types::*;
 use viola_common::Track;
 
 #[derive(Debug)]
-pub struct SmartPlaylist {
+pub(crate) struct SmartPlaylist {
     pub name: String,
     random: bool,
     include_query: Vec<IncludeTag>,
@@ -37,7 +37,7 @@ struct SmartPlaylistParsed {
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub enum IncludeTag {
+pub(crate) enum IncludeTag {
     Dir(Vec<String>),
     Album(Vec<String>),
     Artist(Vec<String>),
@@ -47,7 +47,7 @@ pub enum IncludeTag {
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub enum ExcludeTag {
+pub(crate) enum ExcludeTag {
     Dir(Vec<String>),
 }
 
@@ -216,7 +216,7 @@ fn read_file(file: &str) -> Vec<SmartPlaylist> {
 }
 
 #[must_use]
-pub fn construct_smartplaylists_from_config() -> Vec<SmartPlaylist> {
+pub(crate) fn construct_smartplaylists_from_config() -> Vec<SmartPlaylist> {
     let mut p = prefs_base_dir().expect("Could not find base dir");
     p.push("viola");
     p.push("smartplaylists.toml");
@@ -237,7 +237,7 @@ mod test {
     use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
     use parking_lot::Mutex;
 
-    pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
+    pub(crate) const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
     fn fill_db(db: &mut diesel::SqliteConnection) {
         #[derive(Deserialize)]
         struct Obj {

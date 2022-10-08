@@ -12,7 +12,7 @@ use crate::types::*;
 use preferences::PreferencesMap;
 
 #[derive(Debug, Serialize)]
-pub struct PlaylistTabs {
+pub(crate) struct PlaylistTabs {
     current_pl: usize,
     current_playing_in: usize,
     pub(crate) pls: Vec<LoadedPlaylistPtr>,

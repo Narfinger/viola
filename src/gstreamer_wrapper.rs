@@ -28,7 +28,7 @@ impl Drop for GStreamer {
     }
 }
 
-pub fn new(
+pub(crate) fn new(
     current_playlist: PlaylistTabsPtr,
     pool: DBPool,
     msg_bus: tokio::sync::broadcast::Sender<GStreamerMessage>,
