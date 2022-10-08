@@ -2586,7 +2586,7 @@ dependencies = [
 
 [[package]]
 name = "viola_common"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "diesel",
  "serde 1.0.145",

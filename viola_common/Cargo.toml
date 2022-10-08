@@ -1,6 +1,6 @@
 [package]
 name = "viola_common"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Narfinger <narfinger@noreply.github.com>"]
 edition = "2018"
 

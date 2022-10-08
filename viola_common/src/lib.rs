@@ -158,6 +158,7 @@ pub struct PlaylistTabJSON {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PlaylistTabsJSON {
     pub current: usize,
+    pub current_playing_in: usize,
     pub tabs: Vec<PlaylistTabJSON>,
 }
 

@@ -9,7 +9,6 @@ use viola_common::*;
 use warp::Filter;
 
 use crate::gstreamer_wrapper;
-use crate::gstreamer_wrapper::GStreamerExt;
 use crate::libraryviewstore;
 use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls, SavePlaylistExt};
 use crate::my_websocket;
@@ -219,6 +218,7 @@ async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible>
 
     let resp = PlaylistTabsJSON {
         current: state.read().await.playlist_tabs.current_tab(),
+        current_playing_in: state.read().await.playlist_tabs.current_playing_in(),
         tabs: tabs,
     };
     Ok(warp::reply::json(&resp))

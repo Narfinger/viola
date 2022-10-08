@@ -1,5 +1,5 @@
 use reqwasm::http::Request;
-use std::{rc::Rc};
+use std::rc::Rc;
 use viola_common::{GStreamerAction, GStreamerMessage};
 
 use yew::prelude::*;
@@ -16,6 +16,7 @@ pub(crate) struct TracksComponentProps {
     pub(crate) tracks: Vec<Rc<viola_common::Track>>,
     pub(crate) current_playing: usize,
     pub(crate) status: GStreamerMessage,
+    pub(crate) not_current_tab: bool,
 }
 
 pub(crate) struct TracksComponent {}
@@ -25,6 +26,35 @@ fn unwrap_or_empty(i: &Option<i32>) -> String {
         i.to_string()
     } else {
         "".to_string()
+    }
+}
+
+fn color_match(index: usize, ctx: &Context<TracksComponent>) -> (String, Html) {
+    let props = ctx.props();
+    if index == props.current_playing
+        && props.status == GStreamerMessage::Playing
+        && props.not_current_tab
+    {
+        (
+            String::from("table-primary"),
+            html! {
+                <img src="/play.svg" />
+            },
+        )
+    } else if index == props.current_playing && props.status == GStreamerMessage::Playing {
+        (
+            String::from("table-success"),
+            html! {
+            <img src="/play.svg" /> },
+        )
+    } else if index == props.current_playing && props.status == GStreamerMessage::Pausing {
+        (
+            String::from(""),
+            html! {
+            <img src="/pause.svg" /> },
+        )
+    } else {
+        (String::from(""), html! {})
     }
 }
 
@@ -61,25 +91,7 @@ impl Component for TracksComponent {
             .iter()
             .enumerate()
             .map(|(index, track)| {
-                let (color, image) = if index == ctx.props().current_playing
-                    && ctx.props().status == GStreamerMessage::Playing
-                {
-                    (
-                        "table-success",
-                        html! {
-                        <img src="/play.svg" /> },
-                    )
-                } else if index == ctx.props().current_playing
-                    && ctx.props().status == GStreamerMessage::Pausing
-                {
-                    (
-                        "",
-                        html! {
-                        <img src="/pause.svg" /> },
-                    )
-                } else {
-                    ("", html! {})
-                };
+                let (color, image) = color_match(index, ctx);
                 let onclick = ctx
                     .link()
                     .callback(move |ev: MouseEvent| TracksComponentMsg::Play(ev, index));

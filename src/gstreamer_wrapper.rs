@@ -1,4 +1,5 @@
 use crate::gstreamer::prelude::ObjectExt;
+use crate::playlist_tabs::PlaylistTabsExt;
 use gstreamer::prelude::{ElementExt, ElementExtManual, GstBinExtManual};
 use gstreamer::traits::PadExt;
 use parking_lot::RwLock;
@@ -127,16 +128,8 @@ pub fn new(
     Ok(res)
 }
 
-pub trait GStreamerExt {
-    fn do_gstreamer_action(&mut self, _: GStreamerAction);
-    fn gstreamer_update_gui(&self) -> glib::Continue;
-    fn gstreamer_handle_eos(&mut self);
-    fn get_state(&self) -> GStreamerMessage;
-    fn get_elapsed(&self) -> Option<u64>;
-}
-
-impl GStreamerExt for GStreamer {
-    fn do_gstreamer_action(&mut self, action: GStreamerAction) {
+impl GStreamer {
+    pub(crate) fn do_gstreamer_action(&mut self, action: GStreamerAction) {
         info!("Gstreamer action {:?}", action);
 
         //everytime we call return, we do not want to send the message we got to the gui, as it will be done in a subcall we have done
@@ -247,16 +240,11 @@ impl GStreamerExt for GStreamer {
         }
     }
 
-    /// poll the message bus and on eos start new
-    fn gstreamer_update_gui(&self) -> glib::Continue {
-        glib::Continue(true)
-    }
-
-    fn gstreamer_handle_eos(&mut self) {
+    pub(crate) fn gstreamer_handle_eos(&mut self) {
         use crate::db::UpdatePlayCount;
         info!("Handling EOS");
 
-        self.current_playlist.update_current_playcount();
+        PlaylistTabsExt::update_current_playcount(&self.current_playlist);
 
         //we want to separately update the playcount in the database because we never want to miss if something was played
         let mut old_track = self.current_playlist.get_current_track();
@@ -264,27 +252,32 @@ impl GStreamerExt for GStreamer {
         tokio::spawn(async move {
             old_track.update_playcount(pc);
         });
-        self.sender
-            .send(GStreamerMessage::IncreasePlayCount(
-                self.current_playlist.current_position(),
-            ))
-            .expect("Error in sending gstreamer message");
-
-        let res = if self.repeat_once.load(Ordering::Acquire) {
-            info!("we are repeat playing");
-            self.repeat_once.store(false, Ordering::SeqCst);
-            Some(self.current_playlist.current_position())
-        } else {
-            self.current_playlist.next_or_eol()
-        };
-        if let Some(i) = res {
-            self.do_gstreamer_action(GStreamerAction::Play(i));
-        } else {
+        //if we changed tabs we should stop to let the user decide
+        if self.current_playlist.current_position() != self.current_playlist.current_playing_in() {
             self.do_gstreamer_action(GStreamerAction::Stop);
+        } else {
+            self.sender
+                .send(GStreamerMessage::IncreasePlayCount(
+                    self.current_playlist.current_position(),
+                ))
+                .expect("Error in sending gstreamer message");
+
+            let res = if self.repeat_once.load(Ordering::Acquire) {
+                info!("we are repeat playing");
+                self.repeat_once.store(false, Ordering::SeqCst);
+                Some(self.current_playlist.current_position())
+            } else {
+                self.current_playlist.next_or_eol()
+            };
+            if let Some(i) = res {
+                self.do_gstreamer_action(GStreamerAction::Play(i));
+            } else {
+                self.do_gstreamer_action(GStreamerAction::Stop);
+            }
         }
     }
 
-    fn get_state(&self) -> viola_common::GStreamerMessage {
+    pub(crate) fn get_state(&self) -> viola_common::GStreamerMessage {
         match self.element.state(gstreamer::ClockTime::SECOND).1 {
             gstreamer::State::VoidPending | gstreamer::State::Null | gstreamer::State::Ready => {
                 GStreamerMessage::Stopped
@@ -295,7 +288,7 @@ impl GStreamerExt for GStreamer {
         }
     }
 
-    fn get_elapsed(&self) -> Option<u64> {
+    pub(crate) fn get_elapsed(&self) -> Option<u64> {
         let cltime_opt: Option<gstreamer::ClockTime> = self.element.query_position();
         cltime_opt.map(gstreamer::ClockTime::seconds)
     }

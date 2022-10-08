@@ -14,11 +14,11 @@ use preferences::PreferencesMap;
 #[derive(Debug, Serialize)]
 pub struct PlaylistTabs {
     current_pl: usize,
-    pub current_playing_in: usize,
-    pub pls: Vec<LoadedPlaylistPtr>,
+    current_playing_in: usize,
+    pub(crate) pls: Vec<LoadedPlaylistPtr>,
 }
 
-pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
+pub(crate) fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
     let pls = restore_playlists(pool);
     if pls.is_empty() {
         //use crate::smartplaylist_parser::LoadSmartPlaylist;
@@ -34,7 +34,7 @@ pub fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
     Ok(pls_struct)
 }
 
-pub trait PlaylistTabsExt {
+pub(crate) trait PlaylistTabsExt {
     fn add(&self, _: LoadedPlaylist);
     fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T;
     fn delete(&self, _: &DBPool, _: usize);

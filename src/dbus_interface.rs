@@ -1,11 +1,7 @@
 use parking_lot::RwLock;
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{
-    gstreamer_wrapper::{GStreamer, GStreamerExt},
-    loaded_playlist::LoadedPlaylistExt,
-    types::*,
-};
+use crate::{gstreamer_wrapper::GStreamer, loaded_playlist::LoadedPlaylistExt, types::*};
 use viola_common::{GStreamerAction, GStreamerMessage};
 use zbus::{dbus_interface, ConnectionBuilder};
 

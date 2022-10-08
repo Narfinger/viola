@@ -133,6 +133,7 @@ impl Component for App {
             delete_range_visible: false,
             playlist_tabs: PlaylistTabsJSON {
                 current: 0,
+                current_playing_in: 0,
                 tabs: vec![],
             },
             show_full_playlist: false,
@@ -277,6 +278,7 @@ impl Component for App {
                                     tracks={trimmed_tracks}
                                     current_playing={self.current_playing}
                                     status = {self.current_status}
+                                    not_current_tab = {self.playlist_tabs.current != self.playlist_tabs.current_playing_in }
                                     />
                             </div>
 
