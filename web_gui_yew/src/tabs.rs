@@ -138,7 +138,7 @@ impl Component for TabsComponent {
                         } else {"nav-link"}}>
                         {
                             if self.edit == Some(pos) {
-                                self.view_edit_button(pos, &ctx)
+                                self.view_edit_button(pos, ctx)
                             } else {html! {
                                 <span ondblclick = {ctx.link().callback(move |_| TabsMessage::TabEdit(TabEditMsg::ShowEdit(pos)))}>
                                     {&tab.name}
