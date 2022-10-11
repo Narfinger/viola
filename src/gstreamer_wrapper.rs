@@ -253,7 +253,9 @@ impl GStreamer {
             old_track.update_playcount(pc);
         });
         //if we changed tabs we should stop to let the user decide
-        if self.current_playlist.current_position() != self.current_playlist.current_playing_in() {
+
+        if self.current_playlist.current_tab() != self.current_playlist.current_playing_in() {
+            info!("Stopping because different playlist");
             self.do_gstreamer_action(GStreamerAction::Stop);
         } else {
             self.sender

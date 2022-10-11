@@ -35,16 +35,26 @@ pub(crate) fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Err
 }
 
 pub(crate) trait PlaylistTabsExt {
+    /// Add a loaded playlists to the tab structure
     fn add(&self, _: LoadedPlaylist);
+    /// execute f on the current playlist
     fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T;
+    /// delete the playlist given by item
     fn delete(&self, _: &DBPool, _: usize);
+    /// produces the json string corresponding to the items
     fn items_json(&self) -> String;
     fn items_for_json(&self, index: usize) -> String;
+    /// gives the current selected tab
     fn current_tab(&self) -> usize;
+    /// gives the tab we are currently playing a track in
     fn current_playing_in(&self) -> usize;
+    /// update the current playing track in
     fn update_current_playing_in(&self);
+    /// set the current tab to index
     fn set_tab(&self, index: usize);
+    /// restore the current selected tab (the index) from the database
     fn restore_tab_position(&self);
+    /// save the current selected tab (the index) to the database
     fn save_tab_position(&self);
     fn update_current_playcount(&self);
 }
