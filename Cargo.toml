@@ -6,7 +6,7 @@ authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-base64 = "0.13.0"
+base64 = "0.13.1"
 clap = { version = "4.0.18", features = ["cargo", "derive"] }
 diesel = { version = "2.0.2", features = ["sqlite", "r2d2"] }
 diesel_migrations = { version = "2.0.0", features = ["sqlite"] }
