@@ -1,3 +1,4 @@
+use log::{info, log};
 use reqwasm::http::Request;
 use viola_common::*;
 use web_sys::HtmlInputElement;
@@ -8,6 +9,7 @@ pub(crate) struct TabsComponent {
     current_edit_text: Option<String>,
 }
 
+#[derive(Debug)]
 pub(crate) enum TabEditMsg {
     ShowEdit(usize),
     EditChange(Event),
@@ -15,6 +17,7 @@ pub(crate) enum TabEditMsg {
     ChangeName(usize, String),
 }
 
+#[derive(Debug)]
 pub(crate) enum TabsMessage {
     Delete(usize),
     Change(usize),
@@ -65,17 +68,21 @@ impl Component for TabsComponent {
                 false
             }
             TabsMessage::Change(i) => {
-                self.edit = None;
-                ctx.link().send_future(async move {
-                    Request::post("/playlisttab/")
-                        .header("Content-Type", "application/json")
-                        .body(serde_json::to_string(&i).unwrap())
-                        .send()
-                        .await
-                        .unwrap();
-                    TabsMessage::ReloadEmit
-                });
-                true
+                if Some(i) != self.edit {
+                    self.edit = None;
+                    ctx.link().send_future(async move {
+                        Request::post("/playlisttab/")
+                            .header("Content-Type", "application/json")
+                            .body(serde_json::to_string(&i).unwrap())
+                            .send()
+                            .await
+                            .unwrap();
+                        TabsMessage::ReloadEmit
+                    });
+                    true
+                } else {
+                    false
+                }
             }
             TabsMessage::TabEdit(TabEditMsg::ChangeName(pos, name)) => {
                 let current_position = ctx.props().tabs.tabs.get(pos).unwrap().current_position;
@@ -135,14 +142,17 @@ impl Component for TabsComponent {
                             onclick={ ctx.link().callback(move |_| TabsMessage::Change(pos))}
                         class={if pos == ctx.props().tabs.current {
                             "nav-link active"
-                        } else {"nav-link"}}>
+                        } else {"nav-link"}}
+                        >
                         {
                             if self.edit == Some(pos) {
                                 self.view_edit_button(pos, ctx)
-                            } else {html! {
+                            } else {
+                                html! {
                                 <span ondblclick = {ctx.link().callback(move |_| TabsMessage::TabEdit(TabEditMsg::ShowEdit(pos)))}>
                                     {&tab.name}
-                                </span>}
+                                </span>
+                            }
                             }
                         }
                         if self.edit == None {
