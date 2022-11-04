@@ -127,7 +127,7 @@ fn get_album_file(s: &str) -> Option<String> {
 }
 
 fn construct_track_from_path(s: &str) -> NewTrack {
-    let taglibfile = taglib::File::new(&s);
+    let taglibfile = taglib::File::new(s);
     if let Ok(ataglib) = taglibfile {
         let tags = ataglib
             .tag()
@@ -227,7 +227,7 @@ pub(crate) fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), St
     pb.set_style(style);
     pb.set_message("Collecting files");
     let files = pb
-        .wrap_iter(walkdir::WalkDir::new(&p).into_iter())
+        .wrap_iter(walkdir::WalkDir::new(p).into_iter())
         .filter(is_valid_file)
         .map(|i| String::from(i.unwrap().path().to_str().unwrap()))
         .collect::<HashSet<String>>();

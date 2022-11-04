@@ -280,7 +280,7 @@ impl WebGui {
     fn save(&self) {
         let mut db = self.pool.lock();
         //db.transaction::<_, diesel::result::Error, _>(|_| {
-        self.playlist_tabs.save(&mut *db).expect("Error in saving");
+        self.playlist_tabs.save(&mut db).expect("Error in saving");
         //Ok(())
         //})
         //.expect("Error in saving");
