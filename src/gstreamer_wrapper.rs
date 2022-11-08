@@ -35,7 +35,8 @@ pub(crate) fn new(
 ) -> Result<Arc<RwLock<GStreamer>>, String> {
     gstreamer::init().unwrap();
     let element = {
-        let playbin = gstreamer::ElementFactory::make("playbin", None)
+        let playbin = gstreamer::ElementFactory::make("playbin")
+            .build()
             .map_err(|e| format!("Cannot do gstreamer: {}", e))?;
         playbin.set_property("volume", 0.5_f64);
         /* based on
@@ -56,15 +57,20 @@ pub(crate) fn new(
         /* Set playbin's audio sink to be our sink bin */
         g_object_set (GST_OBJECT (pipeline), "audio-sink", bin, NULL);
         */
-        let audioconvert1 = gstreamer::ElementFactory::make("audioconvert", Some("audioconvert1"))
+        let audioconvert1 = gstreamer::ElementFactory::make("audioconvert")
+            .build()
             .expect("Error in convert");
-        let rgvolume = gstreamer::ElementFactory::make("rgvolume", Some("rgvolume"))
+        let rgvolume = gstreamer::ElementFactory::make("rgvolume")
+            .build()
             .expect("Error in rgvolume");
-        let audioconvert2 = gstreamer::ElementFactory::make("audioconvert", Some("audioconvert2"))
+        let audioconvert2 = gstreamer::ElementFactory::make("audioconvert")
+            .build()
             .expect("Error in convert2");
-        let audioresample = gstreamer::ElementFactory::make("audioresample", Some("audioresample"))
+        let audioresample = gstreamer::ElementFactory::make("audioresample")
+            .build()
             .expect("Errror in resample");
-        let sink = gstreamer::ElementFactory::make("autoaudiosink", Some("autosink"))
+        let sink = gstreamer::ElementFactory::make("autoaudiosink")
+            .build()
             .expect("Errror in sink");
         let bin = gstreamer::Bin::new(Some("mybin"));
         bin.add_many(&[
