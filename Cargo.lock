@@ -1030,16 +1030,16 @@ dependencies = [
 
 [[package]]
 name = "gstreamer"
-version = "0.18.8"
+version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d66363bacf5e4f6eb281564adc2902e44c52ae5c45082423e7439e9012b75456"
+checksum = "7e428081934c617115320750b7827f8f13131d9c3ae90b647c14a5d6019f47b4"
 dependencies = [
  "bitflags",
  "cfg-if",
  "futures-channel",
  "futures-core",
  "futures-util",
- "glib 0.15.12",
+ "glib 0.16.2",
  "gstreamer-sys",
  "libc",
  "muldiv",
@@ -1054,12 +1054,12 @@ dependencies = [
 
 [[package]]
 name = "gstreamer-sys"
-version = "0.18.0"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3517a65d3c2e6f8905b456eba5d53bda158d664863aef960b44f651cb7d33e2"
+checksum = "fbaafc66df32b334d4aa28025fd5d83cadc971e1910205e140ea070f4ac4834f"
 dependencies = [
- "glib-sys 0.15.10",
- "gobject-sys 0.15.10",
+ "glib-sys 0.16.0",
+ "gobject-sys 0.16.0",
  "libc",
  "system-deps 6.0.2",
 ]
@@ -1585,9 +1585,9 @@ dependencies = [
 
 [[package]]
 name = "option-operations"
-version = "0.4.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42b01597916c91a493b1e8a2fde64fec1764be3259abc1f06efc99c274f150a2"
+checksum = "7c26d27bb1aeab65138e4bf7666045169d1717febcc9ff870166be8348b223d0"
 dependencies = [
  "paste",
 ]
