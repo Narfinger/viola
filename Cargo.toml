@@ -14,7 +14,7 @@ error-chain = "0.12.4"
 futures = "0.3.25"
 log = { version = "0.4.17", features = ["max_level_debug", "release_max_level_warn"] }
 env_logger = "0.9.3"
-indicatif = { version = "0.17.1", features = ["rayon"] }
+indicatif = { version = "0.17.2", features = ["rayon"] }
 humantime = "2.1.0"
 taglib = "1.0.0"
 gstreamer = "0.19.1"
