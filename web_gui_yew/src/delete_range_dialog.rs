@@ -49,10 +49,10 @@ fn send_delete_range(
 
 #[function_component(DeleteRangeDialog)]
 pub(crate) fn delete_range_dialog(props: &DeleteRangeDialogProps) -> Html {
+    let input = use_state(String::default);
     if !props.visible {
         html! { <></> }
     } else {
-        let input = use_state(String::default);
         let onchange = {
             let input = input.clone();
             Callback::from(move |e: Event| {
