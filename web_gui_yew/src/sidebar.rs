@@ -1,5 +1,6 @@
-use crate::button::*;
+use crate::play_dialog::PlayDialog;
 use crate::treeview::TreeViewLvl1;
+use crate::{button::*, play_dialog};
 use reqwasm::http::Request;
 use viola_common::*;
 use yew::prelude::*;
@@ -12,6 +13,7 @@ pub(crate) enum SidebarMsg {
     LoadSmartPlaylistNamesDone(Vec<String>),
     LoadSmartPlaylist(usize),
     TreeViewToggle(usize),
+    PlayDialogToggle,
     ShowFullPlaylistWindow,
     Save,
 }
@@ -24,6 +26,7 @@ struct TreeView {
 
 pub(crate) struct Sidebar {
     smartplaylist_visible: bool,
+    playdialog_visible: bool,
     smartplaylists: Smartplaylists,
     treeviews: Vec<TreeView>,
 }
@@ -65,6 +68,7 @@ impl Component for Sidebar {
         ];
         Self {
             smartplaylist_visible: false,
+            playdialog_visible: false,
             smartplaylists: vec![],
             treeviews,
         }
@@ -133,6 +137,10 @@ impl Component for Sidebar {
                     SidebarMsg::Close
                 });
                 false
+            }
+            SidebarMsg::PlayDialogToggle => {
+                self.playdialog_visible = !self.playdialog_visible;
+                true
             }
         }
     }
@@ -229,6 +237,7 @@ impl Component for Sidebar {
             <>
                 {sm_modal}
                 {treeviews}
+                <PlayDialog visible ={self.playdialog_visible} toggle_visible_callback={ctx.link().callback(|_| SidebarMsg::PlayDialogToggle)} />
                 <div class={class_string} style="width: 20%; padding: 20px">
                     <ul class="navbar-nav">
                         <li class="nav-item" style="padding: 5px">
@@ -240,6 +249,14 @@ impl Component for Sidebar {
                                 />
                         </li>
                         {treeviews_buttons}
+                        <li class="nav-item" style="padding: 5px">
+                            <CallbackButton
+                                text={"Play"}
+                                icon={"/play.svg"}
+                                btype={ButtonType::Primary}
+                                callback = {ctx.link().callback(|_| SidebarMsg::PlayDialogToggle)}
+                                />
+                        </li>
                         <li class="nav-item" style="padding: 5px">
                             <CallbackButton
                                 text={"Show Full Playlist Window"}

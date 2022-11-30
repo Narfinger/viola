@@ -94,6 +94,33 @@ async fn transport(
     Ok(warp::reply())
 }
 
+async fn play(artist: String, state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
+    let item_number = {
+        let cur = state.read().await.playlist_tabs.current_tab();
+        state
+            .read()
+            .await
+            .playlist_tabs
+            .read()
+            .pls
+            .get(cur)
+            .unwrap()
+            .read()
+            .items
+            .iter()
+            .position(|t| t.artist == artist)
+    };
+    if let Some(item_number) = item_number {
+        state
+            .read()
+            .await
+            .gstreamer
+            .write()
+            .do_gstreamer_action(GStreamerAction::Play(item_number));
+    }
+    Ok(warp::reply())
+}
+
 async fn library_partial_tree(
     level: viola_common::TreeViewQuery,
     state: WebGuiData,
@@ -445,6 +472,10 @@ pub async fn run(pool: DBPool) {
             .and(warp::body::json())
             .and(data.clone())
             .and_then(transport);
+        let play = warp::path!("play")
+            .and(warp::body::json())
+            .and(data.clone())
+            .and_then(play);
         let playlist_tab = warp::path!("playlisttab")
             .and(warp::body::json())
             .and(data.clone())
@@ -466,6 +497,7 @@ pub async fn run(pool: DBPool) {
             rep.or(clean)
                 .or(save)
                 .or(transp)
+                .or(play)
                 .or(playlist_tab)
                 .or(sm_load)
                 .or(lib_load)

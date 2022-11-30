@@ -10,6 +10,7 @@ use yew::prelude::*;
 
 mod button;
 mod delete_range_dialog;
+mod play_dialog;
 mod sidebar;
 mod status;
 mod tabs;
