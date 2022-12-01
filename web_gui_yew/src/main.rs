@@ -82,6 +82,11 @@ impl App {
                 GStreamerMessage::Pausing
                 | GStreamerMessage::Stopped
                 | GStreamerMessage::Playing => {
+                    if vec![GStreamerMessage::Nop, GStreamerMessage::Stopped]
+                        .contains(&self.current_status)
+                    {
+                        ctx.link().send_message(AppMessage::LoadTabs);
+                    }
                     self.current_status = msg;
                     true
                 }
@@ -134,7 +139,7 @@ impl Component for App {
             delete_range_visible: false,
             playlist_tabs: PlaylistTabsJSON {
                 current: 0,
-                current_playing_in: 0,
+                current_playing_in: None,
                 tabs: vec![],
             },
             show_full_playlist: false,
@@ -279,7 +284,7 @@ impl Component for App {
                                     tracks={trimmed_tracks}
                                     current_playing={self.current_playing}
                                     status = {self.current_status}
-                                    not_current_tab = {self.playlist_tabs.current != self.playlist_tabs.current_playing_in }
+                                    not_current_tab = {self.playlist_tabs.current_playing_in.map_or(true, |s| s!= self.playlist_tabs.current) }
                                     />
                             </div>
 

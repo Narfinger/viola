@@ -242,9 +242,17 @@ async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible>
         .collect::<Vec<PlaylistTabJSON>>();
     tabs.sort_by_key(|a| a.id);
 
+    let current_playing_in = if vec![GStreamerMessage::Nop, GStreamerMessage::Stopped]
+        .contains(&state.read().await.gstreamer.read().get_state())
+    {
+        None
+    } else {
+        Some(state.read().await.playlist_tabs.current_playing_in())
+    };
+
     let resp = PlaylistTabsJSON {
         current: state.read().await.playlist_tabs.current_tab(),
-        current_playing_in: state.read().await.playlist_tabs.current_playing_in(),
+        current_playing_in,
         tabs,
     };
     Ok(warp::reply::json(&resp))
