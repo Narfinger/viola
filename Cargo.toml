@@ -18,7 +18,7 @@ indicatif = { version = "0.17.2", features = ["rayon"] }
 humantime = "2.1.0"
 taglib = "1.0.0"
 gstreamer = "0.19.3"
-glib = "0.16.3"
+glib = "0.16.5"
 percent-encoding = "2.2.0"
 preferences = "1.1.0"
 rayon = "1.6.0"
