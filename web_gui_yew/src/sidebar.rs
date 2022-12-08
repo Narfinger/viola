@@ -1,6 +1,6 @@
+use crate::button::*;
 use crate::play_dialog::PlayDialog;
 use crate::treeview::TreeViewLvl1;
-use crate::{button::*, play_dialog};
 use reqwasm::http::Request;
 use viola_common::*;
 use yew::prelude::*;

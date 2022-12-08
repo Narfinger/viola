@@ -133,7 +133,8 @@ impl Component for TreeViewLvl1 {
         match msg {
             TreeViewLvl1Msg::SearchChange(a) => {
                 self.search = a.target_dyn_into::<HtmlInputElement>().map(|e| e.value());
-                //ctx.link().send_message(TreeViewLvl1Msg::FillTreeView { indices: vec![]});
+                ctx.link()
+                    .send_message(TreeViewLvl1Msg::FillTreeView { indices: vec![] });
                 false
             }
             TreeViewLvl1Msg::FillAll => {

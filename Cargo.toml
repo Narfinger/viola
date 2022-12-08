@@ -7,7 +7,7 @@ edition = "2018"
 
 [dependencies]
 base64 = "0.13.1"
-clap = { version = "4.0.27", features = ["cargo", "derive"] }
+clap = { version = "4.0.29", features = ["cargo", "derive"] }
 diesel = { version = "2.0.2", features = ["sqlite", "r2d2"] }
 diesel_migrations = { version = "2.0.0", features = ["sqlite"] }
 error-chain = "0.12.4"
@@ -22,7 +22,7 @@ glib = "0.16.5"
 percent-encoding = "2.2.0"
 preferences = "1.1.0"
 rayon = "1.6.0"
-serde_derive = "1.0.147"
+serde_derive = "1.0.149"
 serde_json = "1.0.89"
 serde = "1.0.149"
 open = "3.2.0"
@@ -31,10 +31,10 @@ toml = "0.5.9"
 walkdir = "2.3.2"
 viola_common = {path ="viola_common", features =["backend"]}
 itertools = "0.10.5"
-zbus = "3.5.0"
+zbus = "3.6.1"
 parking_lot = { version = "0.12.1", features = ["serde", "deadlock_detection"] }
 warp = { version = "0.3.3", features = ["compression"] }
-tokio = { version = "1.22.0", features = ["full"] }
+tokio = { version = "1.23.0", features = ["full"] }
 directories = "4.0.1"
 anyhow = "1.0.66"
 zvariant = "3.9.0"
