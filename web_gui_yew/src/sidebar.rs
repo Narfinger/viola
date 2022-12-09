@@ -251,7 +251,7 @@ impl Component for Sidebar {
                         {treeviews_buttons}
                         <li class="nav-item" style="padding: 5px">
                             <CallbackButton
-                                text={"Play"}
+                                text={"Play Artist Search"}
                                 icon={"/play.svg"}
                                 btype={ButtonType::Primary}
                                 callback = {ctx.link().callback(|_| SidebarMsg::PlayDialogToggle)}

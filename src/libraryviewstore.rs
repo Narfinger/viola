@@ -222,9 +222,9 @@ fn get_playlist_name(query: &TreeViewQuery, t: &[viola_common::Track]) -> String
         let first_track = t.get(0);
         match last {
             Some(TreeType::Artist) => first_track.map(|t| t.artist.clone()),
-            Some(TreeType::Album) => first_track.map(|t| t.album.clone()),
+            Some(TreeType::Album) => first_track.map(|t| t.artist.clone()),
             Some(TreeType::Genre) => first_track.map(|t| t.genre.clone()),
-            Some(TreeType::Track) => first_track.map(|t| t.title.clone()),
+            Some(TreeType::Track) => first_track.map(|t| t.album.clone()),
             None => None,
         }
         .unwrap_or_else(|| String::from("Foo"))

@@ -15,18 +15,21 @@ use crate::playlist_tabs::PlaylistTabsExt;
 use crate::smartplaylist_parser;
 use crate::types::*;
 
+/// Handler: returns the current playlist tab items in json
 async fn playlist(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     let state = state.read().await;
     let items_json = state.playlist_tabs.items_json();
     Ok(items_json)
 }
 
+/// Handler: return the items in a playlist by `index` in json
 async fn playlist_for(index: usize, state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     let state = state.read().await;
     let items_json = state.playlist_tabs.items_for_json(index);
     Ok(items_json)
 }
 
+/// Handler: set that we want to repeat
 async fn repeat(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     state
         .read()
@@ -37,7 +40,7 @@ async fn repeat(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     Ok(warp::reply())
 }
 
-/// removes all already played data
+/// Handler: removes all already played data
 async fn clean(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     println!("doing cleaning");
     state.write().await.playlist_tabs.clean();
@@ -47,6 +50,7 @@ async fn clean(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     Ok(warp::reply())
 }
 
+/// Handler: deletes a range from current playlist
 async fn delete_from_playlist(
     deleterange: std::ops::Range<usize>,
     state: WebGuiData,
@@ -59,6 +63,7 @@ async fn delete_from_playlist(
     Ok(warp::reply())
 }
 
+/// Handler: save into database
 async fn save(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     println!("Saving");
     let read_lock = state.read().await;
@@ -70,12 +75,14 @@ async fn save(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     Ok(warp::reply())
 }
 
+/// Handler: returns current transport state
 async fn get_transport(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     Ok(warp::reply::json(
         &state.read().await.gstreamer.read().get_state(),
     ))
 }
 
+/// Handler: sets current transport state
 async fn transport(
     msg: viola_common::GStreamerAction,
     state: WebGuiData,
@@ -94,6 +101,7 @@ async fn transport(
     Ok(warp::reply())
 }
 
+/// Handler: play an artist string (fuzzy matched)
 async fn play(artist: String, state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     let item_number = {
         let cur = state.read().await.playlist_tabs.current_tab();
@@ -108,7 +116,7 @@ async fn play(artist: String, state: WebGuiData) -> Result<impl warp::Reply, Inf
             .read()
             .items
             .iter()
-            .position(|t| t.artist == artist)
+            .position(|t| t.artist.contains(&artist))
     };
     if let Some(item_number) = item_number {
         state
@@ -121,11 +129,12 @@ async fn play(artist: String, state: WebGuiData) -> Result<impl warp::Reply, Inf
     Ok(warp::reply())
 }
 
+/// Handler: Returns the partial tree for the query
 async fn library_partial_tree(
-    level: viola_common::TreeViewQuery,
+    query: viola_common::TreeViewQuery,
     state: WebGuiData,
 ) -> Result<impl warp::Reply, Infallible> {
-    let mut q = level;
+    let mut q = query;
     if q.search.is_some() && q.search.as_ref().unwrap().is_empty() {
         q.search = None;
     }
@@ -134,11 +143,12 @@ async fn library_partial_tree(
     Ok(warp::reply::json(&items))
 }
 
+/// Handler: loads the `query` into a new playlist
 async fn library_load(
-    level: viola_common::TreeViewQuery,
+    query: viola_common::TreeViewQuery,
     state: WebGuiData,
 ) -> Result<impl warp::Reply, Infallible> {
-    let mut q = level;
+    let mut q = query;
     q.search = q.search.filter(|t| !t.is_empty());
     let pl = libraryviewstore::load_query(&state.read().await.pool, &q);
     println!("Loading new playlist {}", pl.name);
@@ -149,6 +159,7 @@ async fn library_load(
     Ok(warp::reply())
 }
 
+/// Handler: returns all smartplaylist names
 async fn smartplaylist(_: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     let spl = smartplaylist_parser::construct_smartplaylists_from_config()
         .into_iter()
@@ -157,6 +168,7 @@ async fn smartplaylist(_: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     Ok(warp::reply::json(&spl))
 }
 
+/// Handler: Loada a smartplaylist into a new tab
 async fn smartplaylist_load(
     index: viola_common::LoadSmartPlaylistJson,
     state: WebGuiData,
@@ -175,6 +187,7 @@ async fn smartplaylist_load(
     Ok(warp::reply())
 }
 
+/// Handler: returns the current playlist position, meaning the track that is playing or would play next
 async fn current_id(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     Ok(warp::reply::json(
         &state.read().await.playlist_tabs.current_position(),
@@ -191,6 +204,7 @@ async fn pltime(state: WebGuiData, _: HttpRequest) -> HttpResponse {
 }
 */
 
+/// Handler: returns the current cover album (ignores query because of caching)
 async fn current_image(
     state: WebGuiData,
     _query: ImageQuery,
@@ -217,6 +231,10 @@ async fn current_image(
         let resp = warp::hyper::Response::builder()
             .status(warp::hyper::StatusCode::OK)
             .header(warp::hyper::header::CONTENT_TYPE, content_type)
+            .header(
+                warp::hyper::header::CACHE_CONTROL,
+                warp::hyper::header::HeaderValue::from_static("no-cache"),
+            )
             .body(v)
             .unwrap();
         Ok(resp)
@@ -226,6 +244,7 @@ async fn current_image(
     }
 }
 
+/// Handler: returns all playlist tabs
 async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     let mut tabs = state
         .read()
@@ -258,6 +277,7 @@ async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible>
     Ok(warp::reply::json(&resp))
 }
 
+/// Handler: sets the current playlist tab to a certain index
 async fn change_playlist_tab(
     index: usize,
     state: WebGuiData,
@@ -269,6 +289,7 @@ async fn change_playlist_tab(
     Ok(warp::reply())
 }
 
+/// Handler: modifies the current playlist tab, i.e., change name
 async fn modify_playlist_tab(
     tab: PlaylistTabJSON,
     state: WebGuiData,
@@ -290,6 +311,7 @@ async fn modify_playlist_tab(
     Ok(warp::reply())
 }
 
+/// Handler: deletes the playlist tab at the index
 async fn delete_playlist_tab(
     index: usize,
     state: WebGuiData,
@@ -363,6 +385,7 @@ async fn handle_gstreamer_messages(
     }
 }
 
+/// Timer for auto saving
 async fn auto_save(state: WebGuiData) {
     loop {
         tokio::time::sleep(Duration::new(10 * 60, 0)).await;
