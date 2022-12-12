@@ -205,10 +205,7 @@ async fn pltime(state: WebGuiData, _: HttpRequest) -> HttpResponse {
 */
 
 /// Handler: returns the current cover album (ignores query because of caching)
-async fn current_image(
-    state: WebGuiData,
-    _query: ImageQuery,
-) -> Result<impl warp::Reply, warp::Rejection> {
+async fn current_image(state: WebGuiData) -> Result<impl warp::Reply, warp::Rejection> {
     info!("into stuff");
     if let Ok(p) = state
         .read()
@@ -478,7 +475,6 @@ pub async fn run(pool: DBPool) {
             .with(warp::compression::brotli());
         let cover = warp::path("currentimage")
             .and(data.clone())
-            .and(warp::query::<ImageQuery>())
             .and_then(current_image)
             .with(warp::compression::brotli());
         let smartpl = warp::path!("smartplaylist")

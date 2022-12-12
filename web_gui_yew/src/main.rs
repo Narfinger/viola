@@ -284,7 +284,7 @@ impl Component for App {
                                     tracks={trimmed_tracks}
                                     current_playing={self.current_playing}
                                     status = {self.current_status}
-                                    not_current_tab = {self.playlist_tabs.current_playing_in.map_or(true, |s| s!= self.playlist_tabs.current) }
+                                    not_current_tab = {self.playlist_tabs.current_playing_in.map_or(false, |s| s!= self.playlist_tabs.current) }
                                     />
                             </div>
 
