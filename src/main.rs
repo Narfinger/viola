@@ -49,7 +49,7 @@ use gtk::{prelude::*, Inhibit, Window, WindowType};
 use parking_lot::Mutex;
 use preferences::{prefs_base_dir, Preferences, PreferencesMap};
 use std::sync::Arc;
-use webkit2gtk::{WebView, WebViewExt};
+use webkit2gtk::{WebView, WebViewBuilder, WebViewExt};
 
 ///A Music player that does exactly what I want with a webinterface.
 #[derive(Parser, Debug)]
@@ -155,7 +155,10 @@ fn main() -> Result<()> {
             std::thread::sleep(std::time::Duration::from_secs(1));
             gtk::init().unwrap();
             let window = Window::new(WindowType::Toplevel);
-            let webview = WebView::new();
+            let webview = WebViewBuilder::new()
+                .zoom_level(1.1f64)
+                .name("Viola")
+                .build();
             webview.load_uri("http://localhost:8080");
             window.add(&webview);
             window.connect_delete_event(move |_, _| {
