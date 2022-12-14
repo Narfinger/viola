@@ -943,9 +943,9 @@ dependencies = [
 
 [[package]]
 name = "glib"
-version = "0.16.5"
+version = "0.16.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cd04d150a2c63e6779f43aec7e04f5374252479b7bed5f45146d9c0e821f161"
+checksum = "89359c8c338310b46300502814fc5a0350bb731ddfea03d0ec725d32163244b7"
 dependencies = [
  "bitflags",
  "futures-channel",
@@ -1046,7 +1046,7 @@ dependencies = [
  "futures-channel",
  "futures-core",
  "futures-util",
- "glib 0.16.5",
+ "glib 0.16.6",
  "gstreamer-sys",
  "libc",
  "muldiv",
@@ -2677,7 +2677,7 @@ dependencies = [
  "directories",
  "env_logger",
  "futures",
- "glib 0.16.5",
+ "glib 0.16.6",
  "gstreamer",
  "gtk",
  "humantime",
