@@ -226,6 +226,7 @@ async fn current_image(
         let content_type = match path.extension().and_then(|s| s.to_str()) {
             Some("jpg") => "image/jpeg",
             Some("png") => "image/png",
+            Some("webp") => "image/webp",
             _ => "application/octet-stream",
         };
         let resp = warp::hyper::Response::builder()

@@ -43,9 +43,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.66"
+version = "1.0.68"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "216261ddc8289130e551ddcd5ce8a064710c0d064a4d2895c67151c92b5443f6"
+checksum = "2cb2f989d18dd141ab8ae82f64d1a8cdd37e0840f73a406896cf5e99502fab61"
 
 [[package]]
 name = "app_dirs"
@@ -584,7 +584,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e75d4cd21b95383444831539909fbb14b9dc3fdceb2a6f5d36577329a1f55ccb"
 dependencies = [
  "enumflags2_derive",
- "serde 1.0.150",
+ "serde 1.0.151",
 ]
 
 [[package]]
@@ -943,9 +943,9 @@ dependencies = [
 
 [[package]]
 name = "glib"
-version = "0.16.6"
+version = "0.16.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89359c8c338310b46300502814fc5a0350bb731ddfea03d0ec725d32163244b7"
+checksum = "ddd4df61a866ed7259d6189b8bcb1464989a77f1d85d25d002279bbe9dd38b2f"
 dependencies = [
  "bitflags",
  "futures-channel",
@@ -1037,16 +1037,16 @@ dependencies = [
 
 [[package]]
 name = "gstreamer"
-version = "0.19.3"
+version = "0.19.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e52247a9e1c5a2edb082fac77a59f8b40ec4c4eb719ccafe37072daabf4b56a9"
+checksum = "87a7570ad1d3c1cbf64561ada514fe0c03cf834f2076b85ffc616756c840b665"
 dependencies = [
  "bitflags",
  "cfg-if",
  "futures-channel",
  "futures-core",
  "futures-util",
- "glib 0.16.6",
+ "glib 0.16.7",
  "gstreamer-sys",
  "libc",
  "muldiv",
@@ -1223,7 +1223,7 @@ checksum = "75f43d41e26995c17e71ee126451dd3941010b0514a81a9d11f3b341debc2399"
 dependencies = [
  "bytes",
  "fnv",
- "itoa 1.0.3",
+ "itoa 1.0.4",
 ]
 
 [[package]]
@@ -1270,7 +1270,7 @@ dependencies = [
  "http-body",
  "httparse",
  "httpdate",
- "itoa 1.0.3",
+ "itoa 1.0.4",
  "pin-project-lite",
  "socket2",
  "tokio",
@@ -1360,9 +1360,9 @@ checksum = "8324a32baf01e2ae060e9de58ed0bc2320c9a2833491ee36cd3b4c414de4db8c"
 
 [[package]]
 name = "itoa"
-version = "1.0.3"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c8af84674fe1f223a982c933a0ee1086ac4d4052aa0fb8060c12c6ad838e754"
+checksum = "4217ad341ebadf8d8e724e264f13e593e0648f5b3e94b3896a5df283be015ecc"
 
 [[package]]
 name = "javascriptcore-rs"
@@ -1417,7 +1417,7 @@ checksum = "435011366fe56583b16cf956f9df0095b405b82d76425bc8981c0e22e60ec4df"
 dependencies = [
  "autocfg",
  "scopeguard",
- "serde 1.0.150",
+ "serde 1.0.151",
 ]
 
 [[package]]
@@ -1450,7 +1450,7 @@ version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c493c09323068c01e54c685f7da41a9ccf9219735c3766fbfd6099806ea08fbc"
 dependencies = [
- "serde 1.0.150",
+ "serde 1.0.151",
  "toml",
 ]
 
@@ -1784,9 +1784,9 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "pkg-config"
-version = "0.3.25"
+version = "0.3.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
+checksum = "6ac9a59f73473f1b8d852421e59e64809f025994837ef743615c6d0c5b305160"
 
 [[package]]
 name = "polling"
@@ -2105,18 +2105,18 @@ checksum = "34b623917345a631dc9608d5194cc206b3fe6c3554cd1c75b937e55e285254af"
 
 [[package]]
 name = "serde"
-version = "1.0.150"
+version = "1.0.151"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e326c9ec8042f1b5da33252c8a37e9ffbd2c9bef0155215b6e6c80c790e05f91"
+checksum = "97fed41fc1a24994d044e6db6935e69511a1153b52c15eb42493b26fa87feba0"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.150"
+version = "1.0.151"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42a3df25b0713732468deadad63ab9da1f1fd75a48a15024b50363f128db627e"
+checksum = "255abe9a125a985c05190d687b320c12f9b1f0b99445e608c21ba0782c719ad8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2137,13 +2137,13 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.89"
+version = "1.0.91"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "020ff22c755c2ed3f8cf162dbb41a7268d934702f3ed3631656ea597e08fc3db"
+checksum = "877c235533714907a8c2464236f5c4b2a17262ef1bd71f38f35ea592c8da6883"
 dependencies = [
- "itoa 1.0.3",
+ "itoa 1.0.4",
  "ryu",
- "serde 1.0.150",
+ "serde 1.0.151",
 ]
 
 [[package]]
@@ -2164,9 +2164,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3491c14715ca2294c4d6a88f15e84739788c1d030eed8c110436aafdaa2f3fd"
 dependencies = [
  "form_urlencoded",
- "itoa 1.0.3",
+ "itoa 1.0.4",
  "ryu",
- "serde 1.0.150",
+ "serde 1.0.151",
 ]
 
 [[package]]
@@ -2480,11 +2480,11 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.5.9"
+version = "0.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d82e1a7758622a465f8cee077614c73484dac5b836c02ff6a40d5d1010324d7"
+checksum = "1333c76748e868a4d9d1017b5ab53171dfd095f70c712fdb4653a406547f598f"
 dependencies = [
- "serde 1.0.150",
+ "serde 1.0.151",
 ]
 
 [[package]]
@@ -2677,7 +2677,7 @@ dependencies = [
  "directories",
  "env_logger",
  "futures",
- "glib 0.16.6",
+ "glib 0.16.7",
  "gstreamer",
  "gtk",
  "humantime",
@@ -2690,9 +2690,9 @@ dependencies = [
  "preferences",
  "rand",
  "rayon",
- "serde 1.0.150",
+ "serde 1.0.151",
  "serde_derive",
- "serde_json 1.0.89",
+ "serde_json 1.0.91",
  "taglib",
  "tokio",
  "toml",
@@ -2709,8 +2709,8 @@ name = "viola_common"
 version = "0.5.0"
 dependencies = [
  "diesel",
- "serde 1.0.150",
- "serde_json 1.0.89",
+ "serde 1.0.151",
+ "serde_json 1.0.91",
 ]
 
 [[package]]
@@ -2761,8 +2761,8 @@ dependencies = [
  "pin-project",
  "rustls-pemfile",
  "scoped-tls",
- "serde 1.0.150",
- "serde_json 1.0.89",
+ "serde 1.0.151",
+ "serde_json 1.0.91",
  "serde_urlencoded",
  "tokio",
  "tokio-stream",
@@ -2970,7 +2970,7 @@ dependencies = [
  "once_cell",
  "ordered-stream",
  "rand",
- "serde 1.0.150",
+ "serde 1.0.151",
  "serde_repr",
  "sha1",
  "static_assertions",
@@ -3001,7 +3001,7 @@ version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c737644108627748a660d038974160e0cbb62605536091bdfa28fd7f64d43c8"
 dependencies = [
- "serde 1.0.150",
+ "serde 1.0.151",
  "static_assertions",
  "zvariant",
 ]
@@ -3015,7 +3015,7 @@ dependencies = [
  "byteorder",
  "enumflags2",
  "libc",
- "serde 1.0.150",
+ "serde 1.0.151",
  "static_assertions",
  "zvariant_derive",
 ]
