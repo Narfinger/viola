@@ -53,23 +53,10 @@ pub(crate) enum ExcludeTag {
 
 impl From<SmartPlaylistParsed> for SmartPlaylist {
     fn from(smp: SmartPlaylistParsed) -> Self {
-        /// returns None if the option is none or the vector in it empty
-        fn insert_vec_value(v: Option<Vec<String>>) -> Option<Vec<String>> {
-            if let Some(value) = v {
-                if value.is_empty() {
-                    None
-                } else {
-                    Some(value)
-                }
-            } else {
-                None
-            }
-        }
-
         /// Inserts `vec` into `pushto` with the tag `value`
         macro_rules! vec_option_insert {
             ($value: expr, $vec: expr, $pushto: expr) => {
-                if let Some(v) = insert_vec_value($vec) {
+                if let Some(v) = $vec.filter(|value| !value.is_empty()) {
                     $pushto.push($value(v));
                 }
             };

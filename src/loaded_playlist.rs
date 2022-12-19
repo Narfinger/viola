@@ -208,8 +208,8 @@ impl PlaylistControls for LoadedPlaylistPtr {
 
     fn set(&self, i: usize) -> usize {
         let mut s = self.write();
-        s.current_position = i as usize;
-        s.current_position as usize
+        s.current_position = i;
+        s.current_position
     }
 
     fn delete_range(&self, range: std::ops::Range<usize>) {
