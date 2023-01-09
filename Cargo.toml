@@ -36,6 +36,6 @@ warp = { version = "0.3.3", features = ["compression"] }
 tokio = { version = "1.23.0", features = ["full"] }
 directories = "4.0.1"
 anyhow = "1.0.68"
-zvariant = "3.9.0"
+zvariant = "3.10.0"
 webkit2gtk = "0.18.2"
 gtk = "0.15.5"
