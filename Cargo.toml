@@ -13,7 +13,7 @@ diesel_migrations = { version = "2.0.0", features = ["sqlite"] }
 futures = "0.3.25"
 log = { version = "0.4.17", features = ["max_level_debug", "release_max_level_warn"] }
 env_logger = "0.10.0"
-indicatif = { version = "0.17.2", features = ["rayon"] }
+indicatif = { version = "0.17.3", features = ["rayon"] }
 humantime = "2.1.0"
 taglib = "1.0.0"
 gstreamer = "0.19.5"
