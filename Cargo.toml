@@ -33,7 +33,7 @@ itertools = "0.10.5"
 zbus = "3.7.0"
 parking_lot = { version = "0.12.1", features = ["serde", "deadlock_detection"] }
 warp = { version = "0.3.3", features = ["compression"] }
-tokio = { version = "1.24.1", features = ["full"] }
+tokio = { version = "1.24.2", features = ["full"] }
 directories = "4.0.1"
 anyhow = "1.0.68"
 zvariant = "3.10.0"
