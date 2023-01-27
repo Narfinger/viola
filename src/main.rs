@@ -49,7 +49,7 @@ use gtk::{prelude::*, Inhibit, Window, WindowType};
 use parking_lot::Mutex;
 use preferences::{prefs_base_dir, Preferences, PreferencesMap};
 use std::sync::Arc;
-use webkit2gtk::{WebView, WebViewBuilder, WebViewExt};
+use webkit2gtk::{WebViewBuilder, WebViewExt};
 
 ///A Music player that does exactly what I want with a webinterface.
 #[derive(Parser, Debug)]

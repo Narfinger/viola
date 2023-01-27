@@ -36,7 +36,7 @@ pub(crate) struct NewPlaylistTrack {
     pub playlist_order: i32,
 }
 
-fn get_ordering(&(ref t, ref pt): &(Track, PlaylistTrack)) -> (i32, &Track) {
+fn get_ordering((t, pt): &(Track, PlaylistTrack)) -> (i32, &Track) {
     (pt.playlist_order, t)
 }
 
