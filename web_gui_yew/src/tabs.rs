@@ -155,7 +155,7 @@ impl Component for TabsComponent {
                             }
                             }
                         }
-                        if self.edit == None {
+                        if self.edit.is_none() {
                                 <span style="padding-left: 5px;">
                                     <img src="/x-square.svg" height="16px" width="16px" onclick={ ctx.link().callback(move |_| TabsMessage::Delete(pos))} />
                                 </span>

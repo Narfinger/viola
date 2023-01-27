@@ -39,7 +39,6 @@ pub(crate) fn delete_range_dialog(props: &PlayDialogProps) -> Html {
         html! { <></> }
     } else {
         let toggle_callback = props.toggle_visible_callback.clone();
-        let input = input.clone();
         let submit_callback = Callback::from(move |_| {
             submit(toggle_callback.clone(), input.clone());
         });
