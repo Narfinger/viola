@@ -5,3 +5,4 @@ music.db
 /web_gui/dist/
 **/*.rs.bk
 ui/*.glade~
+viola-code/node_modules/
