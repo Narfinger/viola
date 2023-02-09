@@ -183,7 +183,7 @@ impl Component for TreeViewLvl1 {
                 let data = viola_common::TreeViewQuery {
                     indices,
                     types: ctx.props().type_vec.clone(),
-                    search: None,
+                    search: self.search.clone(),
                 };
                 ctx.link().send_future(async move {
                     Request::post("/libraryview/full/")
