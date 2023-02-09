@@ -152,7 +152,9 @@ async fn library_load(
     q.search = q.search.filter(|t| !t.is_empty());
     let pl = libraryviewstore::load_query(&state.read().await.pool, &q);
     println!("Loading new playlist {}", pl.name);
-    state.write().await.playlist_tabs.add(pl);
+    state.read().await.playlist_tabs.add(pl);
+    let size = state.read().await.playlist_tabs.read().pls.len();
+    state.read().await.playlist_tabs.set_tab(size - 1);
     tokio::spawn(async move {
         my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
     });
@@ -260,7 +262,8 @@ async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible>
             current_position: pl.read().current_position,
         })
         .collect::<Vec<PlaylistTabJSON>>();
-    tabs.sort_by_key(|a| a.id);
+    // we should not sort this as the ids are different and the vector position should be good
+    //tabs.sort_by_key(|a| a.id);
 
     let current_playing_in = if vec![GStreamerMessage::Nop, GStreamerMessage::Stopped]
         .contains(&state.read().await.gstreamer.read().get_state())
