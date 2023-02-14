@@ -893,19 +893,6 @@ dependencies = [
 
 [[package]]
 name = "gio-sys"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6da1bba9d3f2ab13a6e9932c40f240dc99ebc9f0bdc35cfb130d1a3df36f374c"
-dependencies = [
- "glib-sys 0.16.0",
- "gobject-sys 0.16.0",
- "libc",
- "system-deps 6.0.2",
- "winapi 0.3.9",
-]
-
-[[package]]
-name = "gio-sys"
 version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5d3076ecb86c8c3a672c9843d6232b3a344fb81d304d0ba1ac64b23343efa46"
@@ -931,28 +918,6 @@ dependencies = [
  "glib-macros 0.15.11",
  "glib-sys 0.15.10",
  "gobject-sys 0.15.10",
- "libc",
- "once_cell",
- "smallvec",
- "thiserror",
-]
-
-[[package]]
-name = "glib"
-version = "0.16.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ddd4df61a866ed7259d6189b8bcb1464989a77f1d85d25d002279bbe9dd38b2f"
-dependencies = [
- "bitflags",
- "futures-channel",
- "futures-core",
- "futures-executor",
- "futures-task",
- "futures-util",
- "gio-sys 0.16.0",
- "glib-macros 0.16.0",
- "glib-sys 0.16.0",
- "gobject-sys 0.16.0",
  "libc",
  "once_cell",
  "smallvec",
@@ -999,21 +964,6 @@ dependencies = [
 
 [[package]]
 name = "glib-macros"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e195c1311fa6b04d7b896ea39385f6bd60ef5d25bf74a7c11c8c3f94f6c1a572"
-dependencies = [
- "anyhow",
- "heck 0.4.0",
- "proc-macro-crate",
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "glib-macros"
 version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9bc80ac951300ca288dd9ab3863743c37a608fb0e5ca12863495640ec6b781ab"
@@ -1039,16 +989,6 @@ dependencies = [
 
 [[package]]
 name = "glib-sys"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b33357bb421a77bd849f6a0bfcaf3b4b256a2577802971bb5dd522d530f27021"
-dependencies = [
- "libc",
- "system-deps 6.0.2",
-]
-
-[[package]]
-name = "glib-sys"
 version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ddcb73fa8236277bedadaaadb76aef49c85d66340f83bece244f46c2d4f0e01"
@@ -1064,17 +1004,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d57ce44246becd17153bd035ab4d32cfee096a657fc01f2231c9278378d1e0a"
 dependencies = [
  "glib-sys 0.15.10",
- "libc",
- "system-deps 6.0.2",
-]
-
-[[package]]
-name = "gobject-sys"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63ca11a57400f3d4fda594e002844be47900c9fb8b29e2155c6e37a1f24e51b3"
-dependencies = [
- "glib-sys 0.16.0",
  "libc",
  "system-deps 6.0.2",
 ]
@@ -2785,7 +2714,7 @@ dependencies = [
  "directories",
  "env_logger",
  "futures",
- "glib 0.16.7",
+ "glib 0.17.1",
  "gstreamer",
  "gtk",
  "humantime",
