@@ -1,4 +1,5 @@
 use directories::ProjectDirs;
+use log::info;
 use std::fs::File;
 
 pub(crate) fn get_config_dir() -> Result<std::path::PathBuf, String> {

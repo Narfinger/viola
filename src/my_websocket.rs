@@ -1,4 +1,5 @@
 use futures::{stream::SplitSink, SinkExt};
+use log::info;
 use std::{ops::DerefMut, sync::Arc};
 use tokio::sync::RwLock;
 use viola_common::WsMessage;

@@ -1,6 +1,7 @@
 use crate::loaded_playlist::LoadedPlaylist;
 use crate::playlist_tabs::PlaylistTabs;
 use parking_lot::{Mutex, RwLock};
+use serde::Deserialize;
 use std::sync::Arc;
 
 pub(crate) const URL: &str = "http://127.0.0.1:8080";

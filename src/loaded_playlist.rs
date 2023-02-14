@@ -1,3 +1,4 @@
+use log::info;
 use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
 use serde::Serialize;
 use std::path::PathBuf;

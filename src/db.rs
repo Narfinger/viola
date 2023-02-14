@@ -1,10 +1,13 @@
 use crate::types::DBPool;
+use diesel::Insertable;
 use diesel::{Connection, SqliteConnection};
-use diesel_migrations::EmbeddedMigrations;
 use diesel_migrations::MigrationHarness;
+use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use indicatif::ParallelProgressIterator;
 use indicatif::{ProgressBar, ProgressStyle};
+use log::{error, info};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use serde::Deserialize;
 use std::iter::FromIterator;
 use std::ops::DerefMut;
 use std::path::Path;
@@ -26,8 +29,8 @@ pub(crate) trait UpdatePlayCount {
 
 impl UpdatePlayCount for Track {
     fn update_playcount(&mut self, pool: DBPool) {
-        use crate::rand::RngCore;
         use diesel::{QueryDsl, RunQueryDsl, SaveChangesDsl};
+        use rand::RngCore;
         use viola_common::schema::tracks::dsl::*;
 
         //wait a random time

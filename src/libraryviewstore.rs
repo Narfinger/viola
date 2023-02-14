@@ -1,10 +1,8 @@
+use crate::loaded_playlist::LoadedPlaylist;
 use crate::types::*;
-use crate::{
-    diesel::{ExpressionMethods, QueryDsl, RunQueryDsl},
-    loaded_playlist::LoadedPlaylist,
-};
-use diesel::TextExpressionMethods;
+use diesel::prelude::*;
 use itertools::{izip, Itertools};
+use log::info;
 use std::collections::HashSet;
 use viola_common::TreeViewQuery;
 use viola_common::{schema::tracks::dsl::*, TreeType};
@@ -256,8 +254,10 @@ pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
 mod test {
     use std::{fs, sync::Arc};
 
-    use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
+    use diesel::RunQueryDsl;
+    use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
     use parking_lot::Mutex;
+    use serde::Deserialize;
 
     use super::*;
     use crate::db::NewTrack;

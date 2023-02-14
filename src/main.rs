@@ -1,35 +1,4 @@
 #![recursion_limit = "4096"]
-#[macro_use]
-extern crate anyhow;
-extern crate base64;
-extern crate clap;
-extern crate tokio;
-extern crate warp;
-extern crate zbus;
-#[macro_use]
-extern crate diesel;
-#[macro_use]
-extern crate diesel_migrations;
-extern crate env_logger;
-#[macro_use]
-extern crate log;
-extern crate glib;
-extern crate gstreamer;
-extern crate humantime;
-extern crate indicatif;
-extern crate open;
-extern crate preferences;
-extern crate rand;
-extern crate rayon;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-extern crate parking_lot;
-extern crate serde_json;
-extern crate toml;
-extern crate walkdir;
-//extern crate jwalk;
-
 pub mod db;
 pub mod dbus_interface;
 pub mod gstreamer_wrapper;
@@ -43,9 +12,10 @@ pub mod smartplaylist_parser;
 pub mod types;
 pub mod utils;
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use clap::Parser;
 use gtk::{prelude::*, Inhibit, Window, WindowType};
+use log::info;
 use parking_lot::Mutex;
 use preferences::{prefs_base_dir, Preferences, PreferencesMap};
 use std::sync::Arc;

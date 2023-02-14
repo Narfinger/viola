@@ -1,4 +1,6 @@
+use log::info;
 use parking_lot::RwLock;
+use serde::Serialize;
 use std::ops::DerefMut;
 use std::sync::Arc;
 use std::{cmp::min, path::PathBuf};
@@ -7,8 +9,8 @@ use crate::loaded_playlist::{
     LoadedPlaylist, LoadedPlaylistExt, PlaylistControls, SavePlaylistExt,
 };
 use crate::playlist::restore_playlists;
-use crate::preferences::Preferences;
 use crate::types::*;
+use preferences::Preferences;
 use preferences::PreferencesMap;
 
 #[derive(Debug, Serialize)]

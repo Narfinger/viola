@@ -2,6 +2,7 @@ use diesel::sqlite::Sqlite;
 use diesel::{QueryDsl, RunQueryDsl};
 use preferences::prefs_base_dir;
 use rand::prelude::*;
+use serde::Deserialize;
 use std::fs;
 use viola_common::schema::tracks::dsl::*;
 
@@ -221,7 +222,7 @@ mod test {
     use crate::db::NewTrack;
     use std::{fs, sync::Arc};
 
-    use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
+    use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
     use parking_lot::Mutex;
 
     pub(crate) const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
