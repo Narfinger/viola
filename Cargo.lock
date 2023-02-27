@@ -926,9 +926,9 @@ dependencies = [
 
 [[package]]
 name = "glib"
-version = "0.17.1"
+version = "0.17.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91b429154ec5943185aeeaf79e646297567b6a056965f1e89da2657a0e23255b"
+checksum = "a78b6a0901e258cb03c761ca94c84d519427ede489cae12cd5ba0d7d584e69e9"
 dependencies = [
  "bitflags",
  "futures-channel",
@@ -1030,7 +1030,7 @@ dependencies = [
  "futures-channel",
  "futures-core",
  "futures-util",
- "glib 0.17.1",
+ "glib 0.17.2",
  "gstreamer-sys",
  "libc",
  "muldiv",
@@ -2131,9 +2131,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.92"
+version = "1.0.93"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7434af0dc1cbd59268aa98b4c22c131c0584d2232f6fb166efb993e2832e896a"
+checksum = "cad406b69c91885b5107daf2c29572f6c8cdb3c66826821e286c533490c0bc76"
 dependencies = [
  "itoa 1.0.4",
  "ryu",
@@ -2714,7 +2714,7 @@ dependencies = [
  "directories",
  "env_logger",
  "futures",
- "glib 0.17.1",
+ "glib 0.17.2",
  "gstreamer",
  "gtk",
  "humantime",
@@ -2729,7 +2729,7 @@ dependencies = [
  "rayon",
  "serde 1.0.152",
  "serde_derive",
- "serde_json 1.0.92",
+ "serde_json 1.0.93",
  "taglib",
  "tokio",
  "toml 0.7.2",
@@ -2747,7 +2747,7 @@ version = "0.5.0"
 dependencies = [
  "diesel",
  "serde 1.0.152",
- "serde_json 1.0.92",
+ "serde_json 1.0.93",
 ]
 
 [[package]]
@@ -2799,7 +2799,7 @@ dependencies = [
  "rustls-pemfile",
  "scoped-tls",
  "serde 1.0.152",
- "serde_json 1.0.92",
+ "serde_json 1.0.93",
  "serde_urlencoded",
  "tokio",
  "tokio-stream",
