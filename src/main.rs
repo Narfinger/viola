@@ -14,12 +14,10 @@ pub mod utils;
 
 use anyhow::{bail, Context, Result};
 use clap::Parser;
-use gtk::{prelude::*, Inhibit, Window, WindowType};
 use log::info;
 use parking_lot::Mutex;
 use preferences::{prefs_base_dir, Preferences, PreferencesMap};
 use std::sync::Arc;
-use webkit2gtk::{WebViewBuilder, WebViewExt};
 
 ///A Music player that does exactly what I want with a webinterface.
 #[derive(Parser, Debug)]
@@ -119,6 +117,8 @@ fn main() -> Result<()> {
             .block_on(maingui_web::run(pool));
     //});
     } else {
+        println!("Unsupported for now");
+        /*
         println!("Starting webview");
 
         std::thread::spawn(move || {
@@ -158,7 +158,7 @@ fn main() -> Result<()> {
             //shutdown_send.send(()).expect("error in shutdown");
         });
         //std::thread::spawn(|| {
-        tokio::runtime::Builder::new_multi_thread()
+            tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()
             .unwrap()
@@ -169,7 +169,8 @@ fn main() -> Result<()> {
                     _ =  maingui_web::run(pool) => {},
                 }
             });
-        //});
+            //});
+            */
     };
     Ok(())
 }
