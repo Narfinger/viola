@@ -9,7 +9,7 @@ edition = "2018"
 clap = { version = "4.1.8", features = ["cargo", "derive"] }
 diesel = { version = "2.0.3", features = ["sqlite", "r2d2"] }
 diesel_migrations = { version = "2.0.0", features = ["sqlite"] }
-futures = "0.3.26"
+futures = "0.3.27"
 log = { version = "0.4.17", features = ["max_level_debug", "release_max_level_warn"] }
 env_logger = "0.10.0"
 indicatif = { version = "0.17.3", features = ["rayon"] }
