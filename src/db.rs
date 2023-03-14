@@ -117,11 +117,13 @@ fn get_album_file(s: &str) -> Option<String> {
         .iter()
         .map(|v| cur_path.with_file_name(v))
         .filter(|p| p.exists());
+
     let mut covers_parent = ALBUM_NAMES
         .iter()
         .map(|v| cur_path.parent().map(|p| p.with_file_name(v)))
         .into_iter()
         .flatten()
+        .filter_map(|v| cur_path.parent().map(|p| p.with_file_name(v)))
         .filter(|p| p.exists());
 
     covers
