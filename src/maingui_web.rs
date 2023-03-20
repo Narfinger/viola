@@ -250,7 +250,7 @@ async fn current_image(
 
 /// Handler: returns all playlist tabs
 async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
-    let mut tabs = state
+    let tabs = state
         .read()
         .await
         .playlist_tabs
