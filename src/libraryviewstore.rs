@@ -184,8 +184,9 @@ fn track_to_partial_string(query: &TreeViewQuery, t: viola_common::Track) -> Str
     if query.indices.is_empty() {
         match query.types.get(0) {
             Some(TreeType::Artist) => t.artist,
-            Some(TreeType::Album) => t.album,
-            Some(TreeType::Track) => t.title,
+            Some(TreeType::Album) => format!("{}-{}", t.artist, t.album),
+            // we want to show the artist because otherwise it is hard to see which track this is
+            Some(TreeType::Track) => format!("{}-{}", t.artist, t.title),
             Some(TreeType::Genre) => t.genre,
             None => "None".to_string(),
         }
