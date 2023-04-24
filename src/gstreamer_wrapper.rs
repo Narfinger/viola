@@ -216,7 +216,7 @@ impl GStreamer {
                         .set_state(gstreamer::State::Ready)
                         .expect("Errorr in setting gstreamer state");
 
-                    self.element.set_property("uri", &uri);
+                    self.element.set_property("uri", uri);
                     self.element
                         .set_state(gstreamer::State::Playing)
                         .expect("Error setting gstreamer state");
