@@ -27,7 +27,7 @@ toml = "0.7.3"
 walkdir = "2.3.3"
 viola_common = {path ="viola_common", features =["backend"]}
 itertools = "0.10.5"
-zbus = "3.12.0"
+zbus = "3.13.1"
 parking_lot = { version = "0.12.1", features = ["serde", "deadlock_detection"] }
 warp = { version = "0.3.4", features = ["compression"] }
 tokio = { version = "1.28.0", features = ["full"] }
