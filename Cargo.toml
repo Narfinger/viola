@@ -6,13 +6,13 @@ authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-clap = { version = "4.2.5", features = ["cargo", "derive"] }
-diesel = { version = "2.0.4", features = ["sqlite", "r2d2"] }
-diesel_migrations = { version = "2.0.0", features = ["sqlite"] }
+clap = { version = "4.3.1", features = ["cargo", "derive"] }
+diesel = { version = "2.1.0", features = ["sqlite", "r2d2"] }
+diesel_migrations = { version = "2.1.0", features = ["sqlite"] }
 futures = "0.3.28"
-log = { version = "0.4.17", features = ["max_level_debug", "release_max_level_warn"] }
+log = { version = "0.4.18", features = ["max_level_debug", "release_max_level_warn"] }
 env_logger = "0.10.0"
-indicatif = { version = "0.17.3", features = ["rayon"] }
+indicatif = { version = "0.17.5", features = ["rayon"] }
 humantime = "2.1.0"
 taglib = "1.0.0"
 gstreamer = "0.20.5"
@@ -20,17 +20,16 @@ percent-encoding = "2.2.0"
 preferences = "1.1.0"
 rayon = "1.7.0"
 serde_json = "1.0.96"
-serde = { version = "1.0.160", features = ["derive"] }
+serde = { version = "1.0.163", features = ["derive"] }
 open = "4.1.0"
 rand = "0.8.5"
-toml = "0.7.3"
+toml = "0.7.4"
 walkdir = "2.3.3"
 viola_common = {path ="viola_common", features =["backend"]}
 itertools = "0.10.5"
 zbus = "3.12.0"
 parking_lot = { version = "0.12.1", features = ["serde", "deadlock_detection"] }
-warp = { version = "0.3.4", features = ["compression"] }
-tokio = { version = "1.28.0", features = ["full"] }
+warp = { version = "0.3.5", features = ["compression"] }
+tokio = { version = "1.28.2", features = ["full"] }
 directories = "5.0.1"
 anyhow = "1.0.71"
-zvariant = "3.12.0"

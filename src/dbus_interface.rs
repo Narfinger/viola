@@ -82,7 +82,7 @@ impl PlayerInterface {
     }
 
     #[dbus_interface(property)]
-    fn metadata(&self) -> HashMap<&str, zvariant::Value> {
+    fn metadata(&self) -> HashMap<&str, zbus::zvariant::Value> {
         let mut map = HashMap::new();
         let track = self.playlisttabs.get_current_track();
         let length = 1_000_000 * track.length;
