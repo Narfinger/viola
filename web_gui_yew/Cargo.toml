@@ -14,7 +14,7 @@ console_error_panic_hook = "0.1.7"
 futures = "0.3.28"
 humantime = "2.1.0"
 indextree = "4.6.0"
-log = "0.4.18"
+log = "0.4.19"
 reqwasm = "0.5.0"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
