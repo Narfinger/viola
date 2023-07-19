@@ -32,4 +32,4 @@ parking_lot = { version = "0.12.1", features = ["serde", "deadlock_detection"] }
 warp = { version = "0.3.5", features = ["compression"] }
 tokio = { version = "1.29.1", features = ["full"] }
 directories = "5.0.1"
-anyhow = "1.0.71"
+anyhow = "1.0.72"
