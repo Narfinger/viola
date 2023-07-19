@@ -91,7 +91,7 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
     fn update_current_playcount(&self) {
         let index = self.current_position();
         let mut s = self.write();
-        let mut item = s.items.get_mut(index).unwrap();
+        let item = s.items.get_mut(index).unwrap();
         item.playcount = Some(item.playcount.unwrap_or(0) + 1);
     }
 }

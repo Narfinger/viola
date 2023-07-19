@@ -78,7 +78,7 @@ impl Component for Sidebar {
         match msg {
             SidebarMsg::Close => {
                 self.smartplaylist_visible = false;
-                for mut i in self.treeviews.iter_mut() {
+                for i in self.treeviews.iter_mut() {
                     i.visible = false;
                 }
                 ctx.props().close_callback.emit(());

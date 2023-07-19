@@ -1,4 +1,5 @@
 use parking_lot::RwLock;
+use std::future::pending;
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{gstreamer_wrapper::GStreamer, loaded_playlist::LoadedPlaylistExt, types::*};
@@ -222,7 +223,7 @@ pub(crate) async fn main(
         gstreamer,
         playlisttabs,
     };
-    let conn = ConnectionBuilder::session()
+    let _conn = ConnectionBuilder::session()
         .expect("Could not connect to session bus")
         .name("org.mpris.MediaPlayer2.Viola")
         .expect("Could not use name")
@@ -234,18 +235,10 @@ pub(crate) async fn main(
         .build()
         .await
         .expect("Error in creating connection");
-    {
-        let conn = conn.clone();
-        tokio::task::spawn(async move {
-            loop {
-                conn.executor().tick().await;
-            }
-        });
-    }
 
+    pending::<()>().await;
+    /*
     {
-        //let conn = conn.clone();
-        //let mut bus = bus.clone();
         tokio::task::spawn(async move {
             println!("doing signal");
             let iface_ref = conn
@@ -280,6 +273,7 @@ pub(crate) async fn main(
             }
         });
     }
+    */
 
     Ok(())
 }
