@@ -25,7 +25,7 @@ preferences = "1.1.0"
 rand = "0.8.5"
 rayon = "1.7.0"
 taglib = "1.0.0"
-serde = { version = "1.0.171", features = ["derive"] }
+serde = { version = "1.0.175", features = ["derive"] }
 serde_json = "1.0.103"
 toml = "0.7.6"
 tokio = { version = "1.29.1", features = ["full"] }
