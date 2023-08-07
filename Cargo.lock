@@ -1930,9 +1930,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.103"
+version = "1.0.104"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d03b412469450d4404fe8499a268edd7f8b79fecb074b0d812ad64ca21f4031b"
+checksum = "076066c5f1078eac5b722a31827a8832fe108bed65dfa75e233c89f8206e976c"
 dependencies = [
  "itoa 1.0.9",
  "ryu",
@@ -2493,7 +2493,7 @@ dependencies = [
  "rand",
  "rayon",
  "serde 1.0.171",
- "serde_json 1.0.103",
+ "serde_json 1.0.104",
  "taglib",
  "tokio",
  "toml",
@@ -2509,7 +2509,7 @@ version = "0.5.0"
 dependencies = [
  "diesel",
  "serde 1.0.171",
- "serde_json 1.0.103",
+ "serde_json 1.0.104",
 ]
 
 [[package]]
@@ -2559,7 +2559,7 @@ dependencies = [
  "rustls-pemfile",
  "scoped-tls",
  "serde 1.0.171",
- "serde_json 1.0.103",
+ "serde_json 1.0.104",
  "serde_urlencoded",
  "tokio",
  "tokio-stream",
