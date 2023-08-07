@@ -609,7 +609,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c041f5090df68b32bcd905365fd51769c8b9d553fe87fde0b683534f10c01bd2"
 dependencies = [
  "enumflags2_derive",
- "serde 1.0.171",
+ "serde 1.0.179",
 ]
 
 [[package]]
@@ -1253,7 +1253,7 @@ checksum = "c1cc9717a20b1bb222f333e6a92fd32f7d8a18ddc5a3191a11af45dcbf4dcd16"
 dependencies = [
  "autocfg",
  "scopeguard",
- "serde 1.0.171",
+ "serde 1.0.179",
 ]
 
 [[package]]
@@ -1292,7 +1292,7 @@ version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0f23f71580015254b020e856feac3df5878c2c7a8812297edd6c0a485ac9dada"
 dependencies = [
- "serde 1.0.171",
+ "serde 1.0.179",
  "toml",
 ]
 
@@ -1898,18 +1898,18 @@ checksum = "34b623917345a631dc9608d5194cc206b3fe6c3554cd1c75b937e55e285254af"
 
 [[package]]
 name = "serde"
-version = "1.0.171"
+version = "1.0.179"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30e27d1e4fd7659406c492fd6cfaf2066ba8773de45ca75e855590f856dc34a9"
+checksum = "0a5bf42b8d227d4abf38a1ddb08602e229108a517cd4e5bb28f9c7eaafdce5c0"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.171"
+version = "1.0.179"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "389894603bd18c46fa56231694f8d827779c0951a667087194cf9de94ed24682"
+checksum = "741e124f5485c7e60c03b043f79f320bff3527f4bbf12cf3831750dc46a0ec2c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1936,7 +1936,7 @@ checksum = "076066c5f1078eac5b722a31827a8832fe108bed65dfa75e233c89f8206e976c"
 dependencies = [
  "itoa 1.0.9",
  "ryu",
- "serde 1.0.171",
+ "serde 1.0.179",
 ]
 
 [[package]]
@@ -1956,7 +1956,7 @@ version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96426c9936fd7a0124915f9185ea1d20aa9445cc9821142f0a73bc9207a2e186"
 dependencies = [
- "serde 1.0.171",
+ "serde 1.0.179",
 ]
 
 [[package]]
@@ -1968,7 +1968,7 @@ dependencies = [
  "form_urlencoded",
  "itoa 1.0.9",
  "ryu",
- "serde 1.0.171",
+ "serde 1.0.179",
 ]
 
 [[package]]
@@ -2175,7 +2175,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59e399c068f43a5d116fedaf73b203fa4f9c519f17e2b34f63221d3792f81446"
 dependencies = [
  "itoa 1.0.9",
- "serde 1.0.171",
+ "serde 1.0.179",
  "time-core",
  "time-macros",
 ]
@@ -2285,7 +2285,7 @@ version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c17e963a819c331dcacd7ab957d80bc2b9a9c1e71c804826d2f283dd65306542"
 dependencies = [
- "serde 1.0.171",
+ "serde 1.0.179",
  "serde_spanned",
  "toml_datetime",
  "toml_edit",
@@ -2297,7 +2297,7 @@ version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7cda73e2f1397b1262d6dfdcef8aafae14d1de7748d66822d3bfeeb6d03e5e4b"
 dependencies = [
- "serde 1.0.171",
+ "serde 1.0.179",
 ]
 
 [[package]]
@@ -2307,7 +2307,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8123f27e969974a3dfba720fdb560be359f57b44302d280ba72e76a74480e8a"
 dependencies = [
  "indexmap 2.0.0",
- "serde 1.0.171",
+ "serde 1.0.179",
  "serde_spanned",
  "toml_datetime",
  "winnow",
@@ -2492,7 +2492,7 @@ dependencies = [
  "preferences",
  "rand",
  "rayon",
- "serde 1.0.171",
+ "serde 1.0.179",
  "serde_json 1.0.104",
  "taglib",
  "tokio",
@@ -2508,7 +2508,7 @@ name = "viola_common"
 version = "0.5.0"
 dependencies = [
  "diesel",
- "serde 1.0.171",
+ "serde 1.0.179",
  "serde_json 1.0.104",
 ]
 
@@ -2558,7 +2558,7 @@ dependencies = [
  "pin-project",
  "rustls-pemfile",
  "scoped-tls",
- "serde 1.0.171",
+ "serde 1.0.179",
  "serde_json 1.0.104",
  "serde_urlencoded",
  "tokio",
@@ -2800,7 +2800,7 @@ dependencies = [
  "once_cell",
  "ordered-stream",
  "rand",
- "serde 1.0.171",
+ "serde 1.0.179",
  "serde_repr",
  "sha1",
  "static_assertions",
@@ -2834,7 +2834,7 @@ version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fb80bb776dbda6e23d705cf0123c3b95df99c4ebeaec6c2599d4a5419902b4a9"
 dependencies = [
- "serde 1.0.171",
+ "serde 1.0.179",
  "static_assertions",
  "zvariant",
 ]
@@ -2848,7 +2848,7 @@ dependencies = [
  "byteorder",
  "enumflags2",
  "libc",
- "serde 1.0.171",
+ "serde 1.0.179",
  "static_assertions",
  "zvariant_derive",
 ]
