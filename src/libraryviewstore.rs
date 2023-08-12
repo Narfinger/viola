@@ -3,6 +3,8 @@ use crate::types::*;
 use diesel::prelude::*;
 use itertools::{izip, Itertools};
 use log::info;
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 use std::collections::HashSet;
 use viola_common::TreeViewQuery;
 use viola_common::{schema::tracks::dsl::*, TreeType};
@@ -22,6 +24,7 @@ fn get_filter_string(
         types: type_vec,
         indices: new_indices,
         search: None,
+        randomize: false,
     };
     sort_tracks(&query, &mut new);
 
@@ -242,7 +245,10 @@ pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
 
 /// produces a `LoadedPlaylist` frrom a treeviewquery
 pub(crate) fn load_query(db: &DBPool, query: &TreeViewQuery) -> LoadedPlaylist {
-    let t = basic_get_tracks(db, query);
+    let mut t = basic_get_tracks(db, query);
+    if query.randomize {
+        t.shuffle(&mut thread_rng());
+    }
     LoadedPlaylist {
         id: -1,
         name: get_playlist_name(query, &t),
@@ -295,6 +301,7 @@ mod test {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
             indices: vec![],
             search: None,
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         assert_eq!(res[0], "2Cellos");
@@ -307,6 +314,7 @@ mod test {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
             indices: vec![],
             search: None,
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         //println!("res {:?}", res);
@@ -320,6 +328,7 @@ mod test {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
             indices: vec![],
             search: Some("Ap".to_string()),
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         assert_eq!(res[0], "Apocalyptica");
@@ -332,6 +341,7 @@ mod test {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
             indices: vec![1],
             search: None,
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         let exp_res: Vec<String> = vec![
@@ -351,6 +361,7 @@ mod test {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
             indices: vec![1, 0],
             search: None,
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         let exp_res: Vec<String> = vec![
@@ -376,6 +387,7 @@ mod test {
             types: vec![TreeType::Album, TreeType::Track],
             indices: vec![],
             search: None,
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         assert_eq!(res[5], "Plays Metallica by Four Cellos");
@@ -388,6 +400,7 @@ mod test {
             types: vec![TreeType::Album, TreeType::Track],
             indices: vec![],
             search: None,
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         assert_eq!(res[3], "Metallica");
@@ -400,6 +413,7 @@ mod test {
             types: vec![TreeType::Album, TreeType::Track],
             indices: vec![5],
             search: None,
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         let exp_res: Vec<String> = vec![
@@ -425,6 +439,7 @@ mod test {
             types: vec![TreeType::Track],
             indices: vec![],
             search: None,
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         assert_eq!(res[8], "Nothing Else Matters");
@@ -438,6 +453,7 @@ mod test {
             types: vec![TreeType::Track],
             indices: vec![],
             search: None,
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         println!("{:?}", res);
@@ -458,6 +474,7 @@ mod test {
             ],
             indices: vec![],
             search: None,
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         assert_eq!(res[0], "Cello Rock");
@@ -475,6 +492,7 @@ mod test {
             ],
             indices: vec![0],
             search: None,
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         let exp_res: Vec<String> = vec!["2Cellos", "Apocalyptica"]
@@ -492,6 +510,7 @@ mod test {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
             indices: vec![],
             search: Some("2Cel".to_string()),
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         assert_eq!(res[0], "2Cellos");
@@ -506,6 +525,7 @@ mod test {
             types: vec![TreeType::Album, TreeType::Track],
             indices: vec![],
             search: Some("Met".to_string()),
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         assert_eq!(res[0], "Metallica");
@@ -531,6 +551,7 @@ mod test {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
             indices: vec![],
             search: None,
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         assert_eq!(res[4], "Within Temptation & The Metropole Orchestra");
@@ -551,6 +572,7 @@ mod test {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
             indices: vec![],
             search: Some(String::from("Within")),
+            randomize: false,
         };
         let res = partial_query(&db, &query);
         assert_eq!(res[0], "Within Temptation");
@@ -581,6 +603,7 @@ mod test {
             types: vec![TreeType::Album, TreeType::Track],
             indices: vec![5],
             search: None,
+            randomize: false,
         };
         let vec = vec![
             "Enter Sandman",
@@ -601,6 +624,7 @@ mod test {
             types: vec![TreeType::Artist, TreeType::Album, TreeType::Track],
             indices: vec![],
             search: None,
+            randomize: false,
         };
         {
             let db = Arc::new(Mutex::new(setup_db_connection()));
@@ -619,6 +643,7 @@ mod test {
             types: vec![TreeType::Track],
             indices: vec![0],
             search: None,
+            randomize: false,
         };
         let vec = vec!["Creeping Death"];
         compare_load(&query, &vec);

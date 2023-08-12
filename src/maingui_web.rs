@@ -197,6 +197,12 @@ async fn current_id(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     ))
 }
 
+/// Nice Json for current playing
+async fn current_fancy(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
+    let track = state.read().await.playlist_tabs.get_current_track();
+    Ok(warp::reply::json(&track))
+}
+
 /*
 #[get("/pltime/")]
 async fn pltime(state: WebGuiData, _: HttpRequest) -> HttpResponse {
@@ -477,6 +483,10 @@ pub async fn run(pool: DBPool) {
             .and(data.clone())
             .and_then(current_id)
             .with(warp::compression::brotli());
+        let curfancy = warp::path!("currentfancy")
+            .and(data.clone())
+            .and_then(current_fancy)
+            .with(warp::compression::brotli());
         let pltab = warp::path!("playlisttab")
             .and(data.clone())
             .and_then(playlist_tab)
@@ -494,6 +504,7 @@ pub async fn run(pool: DBPool) {
             pl.or(pl_for)
                 .or(tr)
                 .or(curid)
+                .or(curfancy)
                 .or(pltab)
                 .or(cover)
                 .or(smartpl),

@@ -122,6 +122,8 @@ pub struct TreeViewQuery {
     pub indices: Vec<usize>,
     /// Optional search string to restrict
     pub search: Option<String>,
+    /// should we randomize the playlist
+    pub randomize: bool,
 }
 
 impl TreeViewQuery {

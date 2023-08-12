@@ -20,7 +20,11 @@ pub(crate) enum TreeViewLvl1Msg {
         result: Vec<String>,
         query: TreeViewQuery,
     },
-    LoadFromTreeView(Vec<usize>),
+    /// Load a playlist from the TreeView
+    LoadFromTreeView {
+        indices: Vec<usize>,
+        randomize: bool,
+    },
     Done,
 }
 
@@ -63,9 +67,16 @@ impl TreeViewLvl1 {
                                     </span>
                                     <button
                                     class="btn btn-outline-primary btn-sm" style="margin-left: 25px"
-                                    onclick={ctx.link().callback(move |_| TreeViewLvl1Msg::LoadFromTreeView(vec![index,index2,index3]))}>
-                                {"Load"}
-                                </button>
+                                    onclick={ctx.link().callback(move |_| TreeViewLvl1Msg::LoadFromTreeView{
+                                        indices: vec![index,index2,index3], randomize: false})}>
+                                    {"Load"}
+                                    </button>
+                                    <button
+                                    class="btn btn-outline-primary btn-sm" style="margin-left: 25px"
+                                    onclick={ctx.link().callback(move |_| TreeViewLvl1Msg::LoadFromTreeView{
+                                        indices: vec![index,index2,index3], randomize: true})}>
+                                    {"Randomize"}
+                                    </button>
                                 </span>
                                 </li>
                             }
@@ -95,8 +106,14 @@ impl TreeViewLvl1 {
                                 </span>
                                 <button
                                     class="btn btn-outline-primary btn-sm" style="margin-left: 25px"
-                                    onclick={ctx.link().callback(move |_| TreeViewLvl1Msg::LoadFromTreeView(vec![index,index2]))}>
+                                    onclick={ctx.link().callback(move |_| TreeViewLvl1Msg::LoadFromTreeView{ indices: vec![index,index2], randomize: false})}>
                                 {"Load"}
+                                </button>
+                                <button
+                                class="btn btn-outline-primary btn-sm" style="margin-left: 25px"
+                                onclick={ctx.link().callback(move |_| TreeViewLvl1Msg::LoadFromTreeView{
+                                    indices: vec![index,index2], randomize: true})}>
+                                {"Randomize"}
                                 </button>
                             </span>
                             {lvl3}
@@ -150,6 +167,7 @@ impl Component for TreeViewLvl1 {
                         indices,
                         types: type_vec,
                         search,
+                        randomize: false,
                     };
                     let result: Vec<String> = Request::post("/libraryview/partial/")
                         .header("Content-Type", "application/json")
@@ -179,11 +197,12 @@ impl Component for TreeViewLvl1 {
                     true
                 }
             }
-            TreeViewLvl1Msg::LoadFromTreeView(indices) => {
+            TreeViewLvl1Msg::LoadFromTreeView { indices, randomize } => {
                 let data = viola_common::TreeViewQuery {
                     indices,
                     types: ctx.props().type_vec.clone(),
                     search: self.search.clone(),
+                    randomize,
                 };
                 ctx.link().send_future(async move {
                     Request::post("/libraryview/full/")
@@ -221,8 +240,14 @@ impl Component for TreeViewLvl1 {
                             </span>
                             <button
                                 class="btn btn-outline-primary btn-sm" style="margin-left: 25px"
-                                onclick={ctx.link().callback(move |_| TreeViewLvl1Msg::LoadFromTreeView(vec![index]))}>
+                                onclick={ctx.link().callback(move |_| TreeViewLvl1Msg::LoadFromTreeView{ indices: vec![index], randomize: false})}>
                                 {"Load"}
+                            </button>
+                            <button
+                            class="btn btn-outline-primary btn-sm" style="margin-left: 25px"
+                            onclick={ctx.link().callback(move |_| TreeViewLvl1Msg::LoadFromTreeView{
+                                indices: vec![index], randomize: true})}>
+                            {"Randomize"}
                             </button>
                         </span>
                         {self.view_lvl2(ctx, index, nodeid)}
