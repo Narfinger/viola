@@ -272,7 +272,7 @@ async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible>
     // we should not sort this as the ids are different and the vector position should be good
     //tabs.sort_by_key(|a| a.id);
 
-    let current_playing_in = if vec![GStreamerMessage::Nop, GStreamerMessage::Stopped]
+    let current_playing_in = if [GStreamerMessage::Nop, GStreamerMessage::Stopped]
         .contains(&state.read().await.gstreamer.read().get_state())
     {
         None

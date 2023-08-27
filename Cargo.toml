@@ -6,18 +6,18 @@ authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.72"
-clap = { version = "4.3.19", features = ["cargo", "derive"] }
+anyhow = "1.0.75"
+clap = { version = "4.4.0", features = ["cargo", "derive"] }
 directories = "5.0.1"
-diesel = { version = "2.1.0", features = ["sqlite", "r2d2"] }
+diesel = { version = "2.1.1", features = ["sqlite", "r2d2"] }
 diesel_migrations = { version = "2.1.0", features = ["sqlite"] }
 env_logger = "0.10.0"
 futures = "0.3.28"
 gstreamer = "0.20.7"
 humantime = "2.1.0"
-indicatif = { version = "0.17.5", features = ["rayon"] }
+indicatif = { version = "0.17.6", features = ["rayon"] }
 itertools = "0.11.0"
-log = { version = "0.4.19", features = ["max_level_debug", "release_max_level_warn"] }
+log = { version = "0.4.20", features = ["max_level_debug", "release_max_level_warn"] }
 open = "5.0.0"
 parking_lot = { version = "0.12.1", features = ["serde", "deadlock_detection"] }
 percent-encoding = "2.3.0"
@@ -25,10 +25,10 @@ preferences = "1.1.0"
 rand = "0.8.5"
 rayon = "1.7.0"
 taglib = "1.0.0"
-serde = { version = "1.0.179", features = ["derive"] }
-serde_json = "1.0.104"
+serde = { version = "1.0.188", features = ["derive"] }
+serde_json = "1.0.105"
 toml = "0.7.6"
-tokio = { version = "1.29.1", features = ["full"] }
+tokio = { version = "1.32.0", features = ["full"] }
 viola_common = {path ="viola_common", features =["backend"]}
 walkdir = "2.3.3"
 warp = { version = "0.3.5", features = ["compression"] }

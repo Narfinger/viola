@@ -82,7 +82,7 @@ impl App {
                 GStreamerMessage::Pausing
                 | GStreamerMessage::Stopped
                 | GStreamerMessage::Playing => {
-                    if vec![GStreamerMessage::Nop, GStreamerMessage::Stopped]
+                    if [GStreamerMessage::Nop, GStreamerMessage::Stopped]
                         .contains(&self.current_status)
                     {
                         ctx.link().send_message(AppMessage::LoadTabs);
