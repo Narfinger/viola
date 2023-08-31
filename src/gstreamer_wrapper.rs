@@ -12,11 +12,12 @@ use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls};
 use crate::types::*;
 use viola_common::{GStreamerAction, GStreamerMessage};
 
-pub struct GStreamer {
+pub(crate) struct GStreamer {
     element: gstreamer::Element,
     current_playlist: PlaylistTabsPtr,
     /// Handles gstreamer changes to the gui
-    sender: tokio::sync::broadcast::Sender<GStreamerMessage>,
+    /// This needs to be accessible by the dbus controller to send messages to the gui while otherwise the gui takes care of refreshing it states on interactions
+    pub(crate) sender: tokio::sync::broadcast::Sender<GStreamerMessage>,
     pool: DBPool,
     repeat_once: AtomicBool,
 }

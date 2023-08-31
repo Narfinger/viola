@@ -164,6 +164,11 @@ impl PlayerInterface {
         self.gstreamer
             .write()
             .do_gstreamer_action(GStreamerAction::Pausing);
+        self.gstreamer
+            .read()
+            .sender
+            .send(GStreamerMessage::Pausing)
+            .expect("Error in sending msg to gui channel");
         Ok(())
     }
 
@@ -172,6 +177,11 @@ impl PlayerInterface {
         self.gstreamer
             .write()
             .do_gstreamer_action(GStreamerAction::Playing);
+        self.gstreamer
+            .read()
+            .sender
+            .send(GStreamerMessage::Playing)
+            .expect("Error in sending msg to gui channel");
         Ok(())
     }
 
@@ -181,10 +191,20 @@ impl PlayerInterface {
             self.gstreamer
                 .write()
                 .do_gstreamer_action(GStreamerAction::Playing);
+            self.gstreamer
+                .read()
+                .sender
+                .send(GStreamerMessage::Playing)
+                .expect("Error in sending msg to gui channel");
         } else {
             self.gstreamer
                 .write()
                 .do_gstreamer_action(GStreamerAction::Pausing);
+            self.gstreamer
+                .read()
+                .sender
+                .send(GStreamerMessage::Pausing)
+                .expect("Error in sending msg to gui channel");
         }
         Ok(())
     }
@@ -194,20 +214,28 @@ impl PlayerInterface {
         self.gstreamer
             .write()
             .do_gstreamer_action(GStreamerAction::Pausing);
+        self.gstreamer
+            .read()
+            .sender
+            .send(GStreamerMessage::Pausing)
+            .expect("Error in sending msg to gui channel");
         Ok(())
     }
 
     fn seek(&self, _position: i32) -> zbus::fdo::Result<()> {
+        todo!("NYI");
         //Not Implemented
         Ok(())
     }
 
     fn set_position(&self, _track_id: String, _position: i32) -> zbus::fdo::Result<()> {
         //Not Implemented
+        todo!("NYI");
         Ok(())
     }
 
     fn open_uri(&self, _s: String) -> zbus::fdo::Result<()> {
+        todo!("NYI");
         Ok(())
     }
 }
