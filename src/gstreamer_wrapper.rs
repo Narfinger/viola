@@ -74,7 +74,7 @@ pub(crate) fn new(
         let sink = gstreamer::ElementFactory::make("autoaudiosink")
             .build()
             .expect("Errror in sink");
-        let bin = gstreamer::Bin::new(Some("mybin"));
+        let bin = gstreamer::Bin::new();
         bin.add_many(&[
             &audioconvert1,
             &rgvolume,
@@ -92,8 +92,7 @@ pub(crate) fn new(
         ])
         .expect("Could not link");
         let pad = audioconvert1.static_pad("sink").expect("Could not get pad");
-        let ghost =
-            gstreamer::GhostPad::with_target(Some("sink"), &pad).expect("Could not create ghost");
+        let ghost = gstreamer::GhostPad::with_target(&pad).expect("Could not create ghost");
         ghost.set_active(true).expect("Could not set active");
         bin.add_pad(&ghost).expect("Could not add pad");
         playbin.set_property("audio-sink", bin);
