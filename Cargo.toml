@@ -15,7 +15,7 @@ env_logger = "0.10.0"
 futures = "0.3.28"
 gstreamer = "0.21.0"
 humantime = "2.1.0"
-indicatif = { version = "0.17.6", features = ["rayon"] }
+indicatif = { version = "0.17.7", features = ["rayon"] }
 itertools = "0.11.0"
 log = { version = "0.4.20", features = ["max_level_debug", "release_max_level_warn"] }
 open = "5.0.0"
