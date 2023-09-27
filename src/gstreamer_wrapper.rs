@@ -75,7 +75,7 @@ pub(crate) fn new(
             .build()
             .expect("Errror in sink");
         let bin = gstreamer::Bin::new();
-        bin.add_many(&[
+        bin.add_many([
             &audioconvert1,
             &rgvolume,
             &audioconvert2,
@@ -83,7 +83,7 @@ pub(crate) fn new(
             &sink,
         ])
         .expect("Could not add");
-        gstreamer::Element::link_many(&[
+        gstreamer::Element::link_many([
             &audioconvert1,
             &rgvolume,
             &audioconvert2,
@@ -198,7 +198,11 @@ impl GStreamer {
                         .expect("URI Error")
                         .exists()
                     {
-                        panic!("The file we want to play does not exist");
+                        // if the file does not exist inform the gui and stop playing instead of crashing
+                        self.sender
+                            .send(GStreamerMessage::FileNotFound)
+                            .expect("Error in sending");
+                        return self.do_gstreamer_action(GStreamerAction::Stop);
                     }
                     info!(
                         "Playing uri: {:?}",

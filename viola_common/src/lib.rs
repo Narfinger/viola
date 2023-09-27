@@ -61,6 +61,7 @@ pub enum GStreamerMessage {
     IncreasePlayCount(usize),
     Nop,
     ChangedDuration((u64, u64)), //in seconds
+    FileNotFound,
 }
 
 impl std::fmt::Display for GStreamerMessage {
@@ -72,6 +73,7 @@ impl std::fmt::Display for GStreamerMessage {
             GStreamerMessage::Playing => write!(f, "Playing"),
             GStreamerMessage::Nop => write!(f, "NOP"),
             GStreamerMessage::ChangedDuration((_, _)) => write!(f, "NOP"),
+            GStreamerMessage::FileNotFound => write!(f, "FileNotFound"),
         }
     }
 }

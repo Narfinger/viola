@@ -8,7 +8,7 @@ use tokio::sync::RwLock;
 use viola_common::*;
 use warp::Filter;
 
-use crate::gstreamer_wrapper;
+use crate::gstreamer_wrapper::{self, GStreamer};
 use crate::libraryviewstore;
 use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls, SavePlaylistExt};
 use crate::my_websocket;
@@ -381,7 +381,8 @@ async fn handle_gstreamer_messages(
             }
             GStreamerMessage::Pausing
             | GStreamerMessage::Stopped
-            | GStreamerMessage::IncreasePlayCount(_) => {
+            | GStreamerMessage::IncreasePlayCount(_)
+            | GStreamerMessage::FileNotFound => {
                 tokio::spawn(async move {
                     //let state = state.clone();
                     my_websocket::send_my_message(

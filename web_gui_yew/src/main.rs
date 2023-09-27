@@ -100,6 +100,13 @@ impl App {
                 }
                 GStreamerMessage::Nop => false,
                 GStreamerMessage::ChangedDuration(_) => false,
+                GStreamerMessage::FileNotFound => {
+                    web_sys::window()
+                        .unwrap()
+                        .alert_with_message("Next File Not Found")
+                        .expect("Coud not send alert");
+                    false
+                }
             },
         }
     }

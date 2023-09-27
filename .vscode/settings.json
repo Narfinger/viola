@@ -1,3 +1,7 @@
 {
     "cSpell.enabled": false,
+    "rust-analyzer.linkedProjects": [
+        "./web_gui_yew/Cargo.toml",
+        "./web_gui_yew/Cargo.toml"
+    ],
 }
