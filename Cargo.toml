@@ -27,7 +27,7 @@ rayon = "1.8.0"
 taglib = "1.0.0"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
-toml = "0.7.8"
+toml = "0.8.1"
 tokio = { version = "1.32.0", features = ["full"] }
 viola_common = {path ="viola_common", features =["backend"]}
 walkdir = "2.4.0"
