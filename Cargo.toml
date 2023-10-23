@@ -7,13 +7,13 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1.0.75"
-clap = { version = "4.4.5", features = ["cargo", "derive"] }
+clap = { version = "4.4.6", features = ["cargo", "derive"] }
 directories = "5.0.1"
 diesel = { version = "2.1.3", features = ["sqlite", "r2d2"] }
 diesel_migrations = { version = "2.1.0", features = ["sqlite"] }
 env_logger = "0.10.0"
 futures = "0.3.28"
-gstreamer = "0.21.0"
+gstreamer = "0.21.1"
 humantime = "2.1.0"
 indicatif = { version = "0.17.7", features = ["rayon"] }
 itertools = "0.11.0"
@@ -25,11 +25,11 @@ preferences = "1.1.0"
 rand = "0.8.5"
 rayon = "1.8.0"
 taglib = "1.0.0"
-serde = { version = "1.0.188", features = ["derive"] }
+serde = { version = "1.0.189", features = ["derive"] }
 serde_json = "1.0.107"
 toml = "0.8.2"
 tokio = { version = "1.33.0", features = ["full"] }
 viola_common = {path ="viola_common", features =["backend"]}
 walkdir = "2.4.0"
-warp = { version = "0.3.5", features = ["compression"] }
+warp = { version = "0.3.6", features = ["compression"] }
 zbus = { version = "3.14.1", default-features = false, features = ["tokio"]}
