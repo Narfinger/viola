@@ -251,7 +251,7 @@ pub(crate) async fn main(
         gstreamer,
         playlisttabs,
     };
-    let _conn = ConnectionBuilder::session()
+    let conn = ConnectionBuilder::session()
         .expect("Could not connect to session bus")
         .name("org.mpris.MediaPlayer2.Viola")
         .expect("Could not use name")
@@ -259,13 +259,11 @@ pub(crate) async fn main(
         .expect("Could not serve dbus")
         .serve_at("/org/mpris/MediaPlayer2", player_interface)
         .expect("Could not serve player dbus")
-        .internal_executor(false)
+        .internal_executor(true)
         .build()
         .await
         .expect("Error in creating connection");
 
-    pending::<()>().await;
-    /*
     {
         tokio::task::spawn(async move {
             println!("doing signal");
@@ -280,7 +278,8 @@ pub(crate) async fn main(
                 match val {
                     GStreamerMessage::Playing
                     | GStreamerMessage::Pausing
-                    | GStreamerMessage::Stopped => {
+                    | GStreamerMessage::Stopped
+                    | GStreamerMessage::FileNotFound => {
                         iface
                             .metadata_changed(iface_ref.signal_context())
                             .await
@@ -291,17 +290,19 @@ pub(crate) async fn main(
                             .unwrap();
                     }
                     GStreamerMessage::ChangedDuration(_) => {
-                        iface
+                        /*
+                            iface
                             .position_changed(iface_ref.signal_context())
                             .await
                             .unwrap();
+                        */
                     }
                     GStreamerMessage::Nop | GStreamerMessage::IncreasePlayCount(_) => {}
                 }
             }
         });
     }
-    */
+    pending::<()>().await;
 
     Ok(())
 }
