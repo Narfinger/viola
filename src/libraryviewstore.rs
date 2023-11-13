@@ -182,7 +182,8 @@ fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
     //t.sort_by_cached_key(|x| sort_key_from_treetype(&ttype, &x));
 }
 
-/// custom strings that appear in the partial query view
+/// Custom strings that appear in the partial query view
+/// Notice that this is really custom strings, for example for album we always show the artist too
 fn track_to_partial_string(query: &TreeViewQuery, t: viola_common::Track) -> String {
     if query.indices.is_empty() {
         match query.types.get(0) {
@@ -390,7 +391,7 @@ mod test {
             randomize: false,
         };
         let res = partial_query(&db, &query);
-        assert_eq!(res[5], "Plays Metallica by Four Cellos");
+        assert_eq!(res[6], "Apocalyptica-Plays Metallica by Four Cellos");
     }
 
     #[test]
@@ -403,7 +404,7 @@ mod test {
             randomize: false,
         };
         let res = partial_query(&db, &query);
-        assert_eq!(res[3], "Metallica");
+        assert_eq!(res[3], "Apocalyptica-Inquisition Symphony");
     }
 
     #[test]
@@ -442,7 +443,7 @@ mod test {
             randomize: false,
         };
         let res = partial_query(&db, &query);
-        assert_eq!(res[8], "Nothing Else Matters");
+        assert_eq!(res[8], "Apocalyptica-Nothing Else Matters");
     }
 
     #[test]
@@ -457,9 +458,10 @@ mod test {
         };
         let res = partial_query(&db, &query);
         println!("{:?}", res);
-        assert_ne!(res[7], "Nothing Else Matters");
-        assert_eq!(res[8], "Nothing Else Matters");
-        assert_ne!(res[9], "Nothing Else Matters");
+        assert_ne!(res[7], "Apocalyptica-Nothing Else Matters");
+        assert_eq!(res[8], "Apocalyptica-Nothing Else Matters");
+        assert_ne!(res[9], "Apocalyptica-Nothing Else Matters");
+        assert_eq!(res[9], "Metallica-Nothing Else Matters");
     }
 
     #[test]
@@ -528,7 +530,7 @@ mod test {
             randomize: false,
         };
         let res = partial_query(&db, &query);
-        assert_eq!(res[0], "Metallica");
+        assert_eq!(res[0], "Metallica-Metallica");
 
         let exp_res: Vec<String> = vec![
             "Nothing Else Matters",

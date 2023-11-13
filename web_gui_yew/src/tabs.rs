@@ -1,4 +1,3 @@
-use log::{info, log};
 use reqwasm::http::Request;
 use viola_common::*;
 use web_sys::HtmlInputElement;

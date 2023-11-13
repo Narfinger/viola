@@ -76,6 +76,8 @@ fn main() -> Result<()> {
             .get("music_dir")
             .context("Could not get musicdir")?;
         db::build_db(music_dir, &pool, true).unwrap();
+        println!("creating m3u playlists");
+        smartplaylist_parser::m3u_from_smartplaylist(music_dir, &pool)?;
     } else if let Some(path) = args.fast_update {
         info!("Updating database with path {}", path);
         if !std::path::Path::new(&path).exists() {
@@ -105,72 +107,13 @@ fn main() -> Result<()> {
         path.extend(["viola", "smartplaylists.toml"]);
         open::that(&path).unwrap_or_else(|_| panic!("Could not open file {:?}", &path));
     } else if args.webview {
-        //tokio::runtime::Builder::new_current_thread()
-        //.enable_all()
-        //    .build()
-        //    .unwrap()
-        //    .block_on(maingui_web::run(pool));
         tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()
             .unwrap()
             .block_on(maingui_web::run(pool));
-    //});
     } else {
         println!("Unsupported for now");
-        /*
-        println!("Starting webview");
-
-        std::thread::spawn(move || {
-            std::thread::sleep(std::time::Duration::from_secs(1));
-            gtk::init().unwrap();
-            let window = Window::new(WindowType::Toplevel);
-            let webview = WebViewBuilder::new()
-                .zoom_level(1.1f64)
-                .name("Viola")
-                .build();
-            webview.load_uri("http://localhost:8080");
-            window.add(&webview);
-            window.connect_delete_event(move |_, _| {
-                gtk::main_quit();
-                shutdown_send.send(()).expect("Error in shutdown");
-                println!("we send shutdown");
-                Inhibit(false)
-            });
-            window.show_all();
-            println!("build, starting main");
-
-            gtk::main();
-            println!("Main quit");
-            //WebViewBuilder::new()
-            //    .title("Viola")
-            //    .content(Content::Url(crate::types::URL))
-            //    .size(1920, 1080)
-            //    .resizable(true)
-            //    //.debug(true)
-            //    .user_data(())
-            //    .invoke_handler(|_webview, _arg| Ok(()))
-            //    .build()
-            //    .unwrap()
-            //    .run()
-            //    .unwrap();
-            //info!("Webview exited");
-            //shutdown_send.send(()).expect("error in shutdown");
-        });
-        //std::thread::spawn(|| {
-            tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build()
-            .unwrap()
-            .block_on(async {
-                tokio::select! {
-                    //_ = signal::ctrl_c() => {},
-                    _ = shutdown_recv.recv() => {},
-                    _ =  maingui_web::run(pool) => {},
-                }
-            });
-            //});
-            */
     };
     Ok(())
 }

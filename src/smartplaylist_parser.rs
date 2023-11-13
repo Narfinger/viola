@@ -4,6 +4,7 @@ use preferences::prefs_base_dir;
 use rand::prelude::*;
 use serde::Deserialize;
 use std::fs;
+use std::path::Path;
 use viola_common::schema::tracks::dsl::*;
 
 use crate::db;
@@ -17,6 +18,7 @@ pub(crate) struct SmartPlaylist {
     random: bool,
     include_query: Vec<IncludeTag>,
     exclude_query: Vec<ExcludeTag>,
+    create_m3u: bool,
 }
 
 #[derive(Deserialize, Debug)]
@@ -28,6 +30,7 @@ struct SmartPlaylistConfig {
 struct SmartPlaylistParsed {
     name: String,
     random: Option<bool>,
+    create_m3u: Option<bool>,
     dir_exclude: Option<Vec<String>>,
     dir_include: Option<Vec<String>>,
     album_include: Option<Vec<String>>,
@@ -63,7 +66,6 @@ impl From<SmartPlaylistParsed> for SmartPlaylist {
             };
         }
 
-        let random = smp.random.unwrap_or(false);
         let mut include_query = Vec::new();
 
         vec_option_insert!(IncludeTag::Dir, smp.dir_include, include_query);
@@ -84,7 +86,8 @@ impl From<SmartPlaylistParsed> for SmartPlaylist {
 
         SmartPlaylist {
             name: smp.name,
-            random,
+            create_m3u: smp.create_m3u.unwrap_or(false),
+            random: smp.random.unwrap_or(false),
             include_query,
             exclude_query,
         }
@@ -203,6 +206,7 @@ fn read_file(file: &str) -> Vec<SmartPlaylist> {
         .collect()
 }
 
+/// reads the smartplaylists from the config file.
 #[must_use]
 pub(crate) fn construct_smartplaylists_from_config() -> Vec<SmartPlaylist> {
     let mut p = prefs_base_dir().expect("Could not find base dir");
@@ -214,6 +218,28 @@ pub(crate) fn construct_smartplaylists_from_config() -> Vec<SmartPlaylist> {
     } else {
         vec![]
     }
+}
+
+/// We construct a m3u from the smartplaylist for each smartplaylist where it is enabled
+pub(crate) fn m3u_from_smartplaylist(music_dir: &str, db: &DBPool) -> anyhow::Result<()> {
+    for i in construct_smartplaylists_from_config()
+        .iter()
+        .filter(|s| s.create_m3u)
+    {
+        let lp = i.load(db);
+        println!("Building playlist for {}", &i.name);
+        let data = lp
+            .items
+            .iter()
+            .filter_map(|i| Path::new(&i.path).strip_prefix(music_dir).ok())
+            .filter_map(|p| p.to_str())
+            .map(|s| s.to_string())
+            .reduce(|cur, next| cur + "\n" + &next)
+            .unwrap();
+        let p = Path::new(music_dir).join(&i.name).with_extension("m3u");
+        fs::write(p, data)?;
+    }
+    Ok(())
 }
 
 #[cfg(test)]
