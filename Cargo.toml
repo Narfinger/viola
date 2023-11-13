@@ -33,6 +33,7 @@ viola_common = {path ="viola_common", features =["backend"]}
 walkdir = "2.4.0"
 warp = { version = "0.3.6", features = ["compression"] }
 zbus = { version = "3.14.1", default-features = false, features = ["tokio"]}
+wry = "0.34.2"
 
 [workspace]
 members = ["web_gui_yew", "viola_common"]

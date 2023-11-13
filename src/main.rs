@@ -113,6 +113,40 @@ fn main() -> Result<()> {
             .unwrap()
             .block_on(maingui_web::run(pool));
     } else {
+        let rt = tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        rt.spawn(maingui_web::run(pool));
+        use wry::{
+            application::{
+                event::{Event, StartCause, WindowEvent},
+                event_loop::{ControlFlow, EventLoop},
+                window::WindowBuilder,
+            },
+            webview::WebViewBuilder,
+        };
+
+        let event_loop = EventLoop::new();
+        let window = WindowBuilder::new()
+            .with_title("viola")
+            .build(&event_loop)?;
+        let _webview = WebViewBuilder::new(window)?
+            .with_url("http://localhost:8080")?
+            .build()?;
+
+        event_loop.run(move |event, _, control_flow| {
+            *control_flow = ControlFlow::Wait;
+
+            match event {
+                Event::NewEvents(StartCause::Init) => println!("Wry has started!"),
+                Event::WindowEvent {
+                    event: WindowEvent::CloseRequested,
+                    ..
+                } => *control_flow = ControlFlow::Exit,
+                _ => (),
+            }
+        });
         println!("Unsupported for now");
     };
     Ok(())
