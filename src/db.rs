@@ -65,7 +65,10 @@ pub(crate) struct NewTrack {
     pub albumpath: Option<String>,
 }
 
+/// the migrations we run
 pub(crate) const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
+
+/// Opens the db connection and returns it
 pub(crate) fn setup_db_connection() -> Result<diesel::SqliteConnection, String> {
     let mut db_file =
         crate::utils::get_config_dir().map_err(|_| String::from("Could not get app root"))?;
@@ -77,6 +80,7 @@ pub(crate) fn setup_db_connection() -> Result<diesel::SqliteConnection, String> 
         .map_err(|_| String::from("DB Connection error"))
 }
 
+/// create the db file
 pub(crate) fn create_db() {
     let db_dir = crate::utils::get_config_dir()
         .map_err(|_| String::from("Could not get app root"))
@@ -91,6 +95,7 @@ pub(crate) fn create_db() {
     connection.run_pending_migrations(MIGRATIONS).unwrap();
 }
 
+/// is this a valid file, i.e., has the correct extension
 fn is_valid_file(s: &Result<DirEntry, walkdir::Error>) -> bool {
     if let Ok(ref sp) = *s {
         if sp.metadata().unwrap().file_type().is_file() {
@@ -129,6 +134,7 @@ fn get_album_file(s: &str) -> Option<String> {
         .and_then(|p: PathBuf| p.to_str().map(String::from))
 }
 
+/// construct a `NewTrack` from a path pointing to a file
 fn construct_track_from_path(s: &str) -> NewTrack {
     let taglibfile = taglib::File::new(s);
     if let Ok(ataglib) = taglibfile {
@@ -156,6 +162,7 @@ fn construct_track_from_path(s: &str) -> NewTrack {
     }
 }
 
+/// are the tags, not tracks equal?
 fn tags_equal(nt: &NewTrack, ot: &Track) -> bool {
     nt.title == ot.title
         && nt.artist == ot.artist
@@ -167,12 +174,10 @@ fn tags_equal(nt: &NewTrack, ot: &Track) -> bool {
         && nt.albumpath == ot.albumpath
 }
 
+/// insert tracks but retry
 fn insert_track_with_error_retries(s: &str, db: &DBPool) -> Result<(), String> {
-    let mut i = 3;
-    let mut res = Err("retry".into());
-    while res.is_err() {
-        res = insert_track(s, db);
-        i -= 1;
+    for i in 1..3 {
+        let res = insert_track(s, db);
         if res.is_ok() {
             return res;
         } else if i > 0 {
@@ -181,9 +186,10 @@ fn insert_track_with_error_retries(s: &str, db: &DBPool) -> Result<(), String> {
             return res;
         }
     }
-    res
+    Err(String::from("Could not insert"))
 }
 
+/// insert a track into a db given by the filepath `s``
 fn insert_track(s: &str, db: &DBPool) -> Result<(), String> {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SaveChangesDsl};
     use viola_common::schema::tracks::dsl::*;
@@ -304,7 +310,7 @@ pub(crate) fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), St
     Ok(())
 }
 
-// returns an id for a newly created playlist. Returns 0 if no playlists yet in db
+/// returns an id for a newly created playlist. Returns 0 if no playlists yet in db
 #[must_use]
 pub(crate) fn get_new_playlist_id(db: &DBPool) -> i32 {
     use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};

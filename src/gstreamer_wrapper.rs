@@ -12,13 +12,18 @@ use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls};
 use crate::types::*;
 use viola_common::{GStreamerAction, GStreamerMessage};
 
+/// Main struct to keep gstreamer
 pub(crate) struct GStreamer {
+    /// main gstreamer elements
     element: gstreamer::Element,
+    /// current playlist tabs pointer
     current_playlist: PlaylistTabsPtr,
     /// Handles gstreamer changes to the gui
     /// This needs to be accessible by the dbus controller to send messages to the gui while otherwise the gui takes care of refreshing it states on interactions
     pub(crate) sender: tokio::sync::broadcast::Sender<GStreamerMessage>,
+    /// database connection
     pool: DBPool,
+    /// should we repeat once?
     repeat_once: AtomicBool,
 }
 
@@ -30,6 +35,7 @@ impl Drop for GStreamer {
     }
 }
 
+/// create new gstreamer object and return it
 pub(crate) fn new(
     current_playlist: PlaylistTabsPtr,
     pool: DBPool,
@@ -136,6 +142,7 @@ pub(crate) fn new(
 }
 
 impl GStreamer {
+    /// perform a GStreamerAction on the underlying element
     pub(crate) fn do_gstreamer_action(&mut self, action: GStreamerAction) {
         info!("Gstreamer action {:?}", action);
 
@@ -251,6 +258,7 @@ impl GStreamer {
         }
     }
 
+    /// Handle if gstreamer sends us EndOfStream
     pub(crate) fn gstreamer_handle_eos(&mut self) {
         use crate::db::UpdatePlayCount;
         info!("Handling EOS");
@@ -290,6 +298,7 @@ impl GStreamer {
         }
     }
 
+    /// return the gstreamer state in a custom type
     pub(crate) fn get_state(&self) -> viola_common::GStreamerMessage {
         match self.element.state(gstreamer::ClockTime::SECOND).1 {
             gstreamer::State::VoidPending | gstreamer::State::Null | gstreamer::State::Ready => {
@@ -301,6 +310,7 @@ impl GStreamer {
         }
     }
 
+    /// how many seconds are elapsed
     pub(crate) fn get_elapsed(&self) -> Option<u64> {
         let cltime_opt: Option<gstreamer::ClockTime> = self.element.query_position();
         cltime_opt.map(gstreamer::ClockTime::seconds)

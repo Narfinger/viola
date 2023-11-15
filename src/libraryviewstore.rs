@@ -237,6 +237,7 @@ fn get_playlist_name(query: &TreeViewQuery, t: &[viola_common::Track]) -> String
     res
 }
 
+/// Returns the answer of a query that is only used for the menu
 pub(crate) fn partial_query(db: &DBPool, query: &TreeViewQuery) -> Vec<String> {
     let t = basic_get_tracks(db, query);
     t.into_iter()

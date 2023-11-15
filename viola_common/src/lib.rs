@@ -120,7 +120,7 @@ pub enum TreeType {
 pub struct TreeViewQuery {
     /// Which types we want in order
     pub types: Vec<TreeType>,
-    /// which indices we want in order, having [1] means, we want the children of the second types[0]
+    /// which indices we want in order, having \[1\] means, we want the children of the second types\[0\]
     pub indices: Vec<usize>,
     /// Optional search string to restrict
     pub search: Option<String>,
@@ -130,7 +130,7 @@ pub struct TreeViewQuery {
 
 impl TreeViewQuery {
     /// Returns the treetype that is in the types vector after the last index.
-    /// If treetype is [Artist, Album] and index is [0] we return Album
+    /// If treetype is \[Artist, Album\] and index is \[0\] we return Album
     pub fn get_after_last_ttype(&self) -> Option<&TreeType> {
         self.types.get(self.indices.len())
     }

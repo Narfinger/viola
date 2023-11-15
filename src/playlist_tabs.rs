@@ -13,6 +13,7 @@ use crate::types::*;
 use preferences::Preferences;
 use preferences::PreferencesMap;
 
+/// Holding all playlisttabs
 #[derive(Debug, Serialize)]
 pub(crate) struct PlaylistTabs {
     current_pl: usize,
@@ -20,6 +21,7 @@ pub(crate) struct PlaylistTabs {
     pub(crate) pls: Vec<LoadedPlaylistPtr>,
 }
 
+/// load the playlisttabs from the database
 pub(crate) fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Error> {
     let pls = restore_playlists(pool);
     if pls.is_empty() {
@@ -58,6 +60,7 @@ pub(crate) trait PlaylistTabsExt {
     fn restore_tab_position(&self);
     /// save the current selected tab (the index) to the database
     fn save_tab_position(&self);
+    ///
     fn update_current_playcount(&self);
 }
 

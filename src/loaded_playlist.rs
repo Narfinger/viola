@@ -9,6 +9,7 @@ use viola_common::Track;
 const FRAGMENT: &AsciiSet = &CONTROLS.add(b' ').add(b'#');
 
 #[derive(Debug, Serialize)]
+/// A loaded playlist
 pub(crate) struct LoadedPlaylist {
     /// The id we have in the database for it. If none, means this was not yet saved
     pub id: i32,
@@ -160,6 +161,7 @@ impl SavePlaylistExt for LoadedPlaylistPtr {
     }
 }
 
+/// ways to control the playlist (does not control the gstreamer)
 pub(crate) trait PlaylistControls {
     /// Get current track path
     fn get_current_path(&self) -> Option<PathBuf>;
