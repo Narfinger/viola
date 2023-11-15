@@ -6,10 +6,10 @@ extern crate diesel;
 pub mod schema;
 #[cfg(feature = "backend")]
 use crate::schema::tracks;
-
+use serde::{Deserialize, Serialize};
 use std::hash::Hash;
 
-use serde::{Deserialize, Serialize};
+/// A track with all its information
 #[derive(Debug, Clone, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "backend", derive(AsChangeset, Identifiable, Queryable))]
 pub struct Track {
@@ -92,6 +92,7 @@ impl From<GStreamerAction> for GStreamerMessage {
     }
 }
 
+/// Messages we send over the websocket
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum WsMessage {
     PlayChanged(usize),
@@ -108,6 +109,7 @@ impl From<WsMessage> for String {
     }
 }
 
+/// a treetype used for TreeViewQuery
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TreeType {
     Artist,
@@ -145,13 +147,16 @@ impl TreeViewQuery {
     }
 }
 
+/// Smartplaylists (just a vector of strings)
 pub type Smartplaylists = Vec<String>;
 
+/// query to load a smart playlist by given an index
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LoadSmartPlaylistJson {
     pub index: usize,
 }
 
+/// the JSON of a PlaylistTab
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PlaylistTabJSON {
     pub name: String,
@@ -159,6 +164,7 @@ pub struct PlaylistTabJSON {
     pub id: i32,
 }
 
+/// The JSON  of PlaylistsTabs
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PlaylistTabsJSON {
     pub current: usize,
@@ -166,6 +172,7 @@ pub struct PlaylistTabsJSON {
     pub tabs: Vec<PlaylistTabJSON>,
 }
 
+/// The query of the album cover (with a nonce so we do not get cache interferrence)
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ImageQuery {
     pub nonce: String,
