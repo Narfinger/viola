@@ -184,6 +184,7 @@ fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
 
 /// Custom strings that appear in the partial query view
 /// Notice that this is really custom strings, for example for album we always show the artist too
+/// Because we want to make things unique later we should transform the tracks to nice strings
 fn track_to_partial_string(query: &TreeViewQuery, t: viola_common::Track) -> String {
     if query.indices.is_empty() {
         match query.types.get(0) {
