@@ -238,7 +238,7 @@ pub(crate) fn m3u_from_smartplaylist(music_dir: &str, db: &DBPool) -> anyhow::Re
             .reduce(|cur, next| cur + "\n" + &next)
             .unwrap();
         let p = Path::new(music_dir).join(&i.name).with_extension("m3u");
-        let file = File::open(p)?;
+        let file = File::create(p)?;
         let mut f = BufWriter::new(file);
         f.write_all(data.as_bytes()).expect("Unable to write data");
     }
