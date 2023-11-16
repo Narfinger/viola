@@ -18,6 +18,7 @@ use log::info;
 use parking_lot::Mutex;
 use preferences::{prefs_base_dir, Preferences, PreferencesMap};
 use std::sync::Arc;
+use types::DBPool;
 
 ///A Music player that does exactly what I want with a webinterface.
 #[derive(Parser, Debug)]
@@ -48,6 +49,41 @@ struct Args {
     webview: bool,
 }
 
+fn update_db(pool: &DBPool) -> Result<(), anyhow::Error> {
+    info!("Updating Database");
+    let mut pref_reader =
+        crate::utils::get_config_file(&utils::ConfigWriteMode::Read).expect("No settings file");
+    let preferences = PreferencesMap::<String>::load_from(&mut pref_reader)
+        .context("Could not read settings file")?;
+    let music_dir = preferences
+        .get("music_dir")
+        .context("Could not get musicdir")?;
+    db::build_db(music_dir, pool, true).unwrap();
+    println!("creating m3u playlists");
+    smartplaylist_parser::m3u_from_smartplaylist(music_dir, pool)?;
+    Ok(())
+}
+
+fn update_db_fast(path: String, pool: &DBPool) {
+    info!("Updating database with path {}", path);
+    if !std::path::Path::new(&path).exists() {
+        println!("Path does not seem to exist");
+    }
+    db::build_db(&path, pool, false).unwrap();
+}
+
+fn set_music_directory(new_music_dir: String) -> Result<(), anyhow::Error> {
+    let mut prefs = PreferencesMap::<String>::new();
+    prefs.insert(String::from("music_dir"), new_music_dir);
+    let mut prefs_file =
+        crate::utils::get_config_file(&utils::ConfigWriteMode::Write).expect("Cannot find config");
+    prefs
+        .save_to(&mut prefs_file)
+        .context("Error in saving preferences")?;
+    info!("saved music directory");
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let args = Args::parse();
 
@@ -66,33 +102,11 @@ fn main() -> Result<()> {
     }
     let pool = Arc::new(Mutex::new(tmp_pool.unwrap()));
     if args.update {
-        info!("Updating Database");
-        let mut pref_reader =
-            crate::utils::get_config_file(&utils::ConfigWriteMode::Read).expect("No settings file");
-
-        let preferences = PreferencesMap::<String>::load_from(&mut pref_reader)
-            .context("Could not read settings file")?;
-        let music_dir = preferences
-            .get("music_dir")
-            .context("Could not get musicdir")?;
-        db::build_db(music_dir, &pool, true).unwrap();
-        println!("creating m3u playlists");
-        smartplaylist_parser::m3u_from_smartplaylist(music_dir, &pool)?;
+        update_db(&pool)?;
     } else if let Some(path) = args.fast_update {
-        info!("Updating database with path {}", path);
-        if !std::path::Path::new(&path).exists() {
-            println!("Path does not seem to exist");
-        }
-        db::build_db(&path, &pool, false).unwrap();
+        update_db_fast(path, &pool);
     } else if let Some(new_music_dir) = args.music_dir {
-        let mut prefs = PreferencesMap::<String>::new();
-        prefs.insert(String::from("music_dir"), new_music_dir);
-        let mut prefs_file = crate::utils::get_config_file(&utils::ConfigWriteMode::Write)
-            .expect("Cannot find config");
-        prefs
-            .save_to(&mut prefs_file)
-            .context("Error in saving preferences")?;
-        info!("saved music directory");
+        set_music_directory(new_music_dir)?;
     } else if args.config_path {
         let mut p = prefs_base_dir().context("Base dir cannot be founds")?;
         p.push("viola");
