@@ -70,6 +70,7 @@ struct PlayerInterface {
 impl PlayerInterface {
     #[dbus_interface(property)]
     fn playback_status(&self) -> String {
+        info!("dbus playback status");
         self.gstreamer.read().get_state().to_string()
     }
 
@@ -85,6 +86,7 @@ impl PlayerInterface {
 
     #[dbus_interface(property)]
     fn metadata(&self) -> HashMap<&str, zbus::zvariant::Value> {
+        info!("dbus metadata");
         let mut map = HashMap::new();
         let track = self.playlisttabs.get_current_track();
         let length = 1_000_000 * track.length;
@@ -161,7 +163,7 @@ impl PlayerInterface {
     }
 
     fn pause(&self) -> zbus::fdo::Result<()> {
-        println!("dbus send pause");
+        info!("dbus send pause");
         self.gstreamer
             .write()
             .do_gstreamer_action(GStreamerAction::Pausing);
@@ -174,7 +176,7 @@ impl PlayerInterface {
     }
 
     fn play(&self) -> zbus::fdo::Result<()> {
-        println!("dbus send play");
+        info!("dbus send play");
         self.gstreamer
             .write()
             .do_gstreamer_action(GStreamerAction::Playing);
@@ -187,7 +189,7 @@ impl PlayerInterface {
     }
 
     fn play_pause(&self) -> zbus::fdo::Result<()> {
-        println!("dbus send playpause");
+        info!("dbus send playpause");
         if self.gstreamer.read().get_state() == GStreamerMessage::Pausing {
             self.gstreamer
                 .write()
@@ -276,37 +278,36 @@ pub(crate) async fn main(
     let iface = iface_ref.get_mut().await;
     let mut bus = bus;
     info!("we did all the setup and wait for the bus");
-    while let Ok(val) = bus.recv().await {
-        info!("Found msg val {:?}", val);
-        match val {
-            GStreamerMessage::Playing
-            | GStreamerMessage::Pausing
-            | GStreamerMessage::Stopped
-            | GStreamerMessage::FileNotFound => {
-                iface
-                    .metadata_changed(iface_ref.signal_context())
-                    .await
-                    .unwrap();
-                iface
-                    .playback_status_changed(iface_ref.signal_context())
-                    .await
-                    .unwrap();
-            }
-            GStreamerMessage::ChangedDuration(_) => {
-                /*
-                    iface
-                    .position_changed(iface_ref.signal_context())
-                    .await
-                    .unwrap();
-                */
-            }
-            GStreamerMessage::Nop | GStreamerMessage::IncreasePlayCount(_) => {}
-        }
+    loop {
+        tokio::select! {
+            Ok(val) = bus.recv() => {
+                info!("Found msg val {:?}", val);
+                match val {
+                    GStreamerMessage::Playing
+                    | GStreamerMessage::Pausing
+                    | GStreamerMessage::Stopped
+                    | GStreamerMessage::FileNotFound => {
+                        iface
+                            .metadata_changed(iface_ref.signal_context())
+                            .await
+                            .unwrap();
+                        iface
+                            .playback_status_changed(iface_ref.signal_context())
+                            .await
+                            .unwrap();
+                    }
+                    GStreamerMessage::ChangedDuration(_) => {
+                        /*
+                            iface
+                            .position_changed(iface_ref.signal_context())
+                            .await
+                            .unwrap();
+                        */
+                    }
+                    GStreamerMessage::Nop | GStreamerMessage::IncreasePlayCount(_) => {}
+                }
+        },
+        };
     }
-    //     });
-    //}
-    info!("dbus pending for other");
-    pending::<()>().await;
-
     Ok(())
 }
