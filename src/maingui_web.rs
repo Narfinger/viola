@@ -43,7 +43,7 @@ async fn repeat(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
 
 /// Handler: removes all already played data
 async fn clean(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
-    println!("doing cleaning");
+    info!("doing cleaning");
     state.write().await.playlist_tabs.clean();
     tokio::spawn(async move {
         my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadPlaylist).await;
@@ -56,7 +56,7 @@ async fn delete_from_playlist(
     deleterange: std::ops::Range<usize>,
     state: WebGuiData,
 ) -> Result<impl warp::Reply, Infallible> {
-    println!("Doing delete");
+    info!("Doing delete");
     state.read().await.playlist_tabs.delete_range(deleterange);
     tokio::spawn(async move {
         my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadPlaylist).await;
@@ -152,7 +152,7 @@ async fn library_load(
     let mut q = query;
     q.search = q.search.filter(|t| !t.is_empty());
     let pl = libraryviewstore::load_query(&state.read().await.pool, &q);
-    println!("Loading new playlist {}", pl.name);
+    info!("Loading new playlist {}", pl.name);
     state.read().await.playlist_tabs.add(pl);
     let size = state.read().await.playlist_tabs.read().pls.len();
     state.read().await.playlist_tabs.set_tab(size - 1);
@@ -327,7 +327,7 @@ async fn delete_playlist_tab(
     index: usize,
     state: WebGuiData,
 ) -> Result<impl warp::Reply, Infallible> {
-    println!("deleting {}", &index);
+    info!("deleting {}", &index);
     let statelock = state.read().await;
     statelock.playlist_tabs.delete(&statelock.pool, index);
     let state = state.clone();
@@ -406,23 +406,23 @@ async fn auto_save(state: WebGuiData) {
 }
 
 pub async fn run(pool: DBPool) {
-    println!("Loading playlist");
+    info!("Loading playlist");
     let plt = crate::playlist_tabs::load(&pool).expect("Failure to load old playlists");
 
-    println!("Starting gstreamer");
+    info!("Starting gstreamer");
     let (tx, rx) = tokio::sync::broadcast::channel(10);
     let mut websocket_recv = tx.subscribe();
 
     let gst = gstreamer_wrapper::new(plt.clone(), pool.clone(), tx)
         .expect("Error Initializing gstreamer");
     {
-        println!("Starting dbus");
+        info!("Starting dbus");
         let plt = plt.clone();
         let gst = gst.clone();
         tokio::spawn(async move { crate::dbus_interface::main(gst, plt, rx).await });
     }
 
-    println!("Setting up gui");
+    info!("Setting up gui");
     let state = WebGui {
         pool: pool.clone(),
         gstreamer: gst,
@@ -430,7 +430,7 @@ pub async fn run(pool: DBPool) {
         ws: Arc::new(RwLock::new(None)),
     };
 
-    println!("Doing data");
+    info!("Doing data");
     let state = Arc::new(RwLock::new(state));
 
     {
@@ -577,7 +577,7 @@ pub async fn run(pool: DBPool) {
         .map(move |ws: warp::ws::Ws| {
             let statec = statec.clone();
             ws.on_upgrade(|websocket| async move {
-                println!("doing new websocket connection");
+                info!("doing new websocket connection");
                 let (tx, _) = websocket.split();
                 *statec.read().await.ws.write().await = Some(tx);
             })

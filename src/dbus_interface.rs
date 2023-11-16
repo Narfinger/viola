@@ -1,3 +1,4 @@
+use log::info;
 use parking_lot::RwLock;
 use std::future::pending;
 use std::{collections::HashMap, sync::Arc};
@@ -245,7 +246,7 @@ pub(crate) async fn main(
     playlisttabs: PlaylistTabsPtr,
     bus: tokio::sync::broadcast::Receiver<GStreamerMessage>,
 ) -> Result<(), String> {
-    println!("Starting dbus");
+    info!("Starting dbus");
     let handler = BaseInterface {};
     let player_interface = PlayerInterface {
         gstreamer,
@@ -264,44 +265,47 @@ pub(crate) async fn main(
         .await
         .expect("Error in creating connection");
 
-    {
-        tokio::task::spawn(async move {
-            println!("doing signal");
-            let iface_ref = conn
-                .object_server()
-                .interface::<_, PlayerInterface>("/org/mpris/MediaPlayer2")
-                .await
-                .unwrap();
-            let iface = iface_ref.get_mut().await;
-            let mut bus = bus;
-            while let Ok(val) = bus.recv().await {
-                match val {
-                    GStreamerMessage::Playing
-                    | GStreamerMessage::Pausing
-                    | GStreamerMessage::Stopped
-                    | GStreamerMessage::FileNotFound => {
-                        iface
-                            .metadata_changed(iface_ref.signal_context())
-                            .await
-                            .unwrap();
-                        iface
-                            .playback_status_changed(iface_ref.signal_context())
-                            .await
-                            .unwrap();
-                    }
-                    GStreamerMessage::ChangedDuration(_) => {
-                        /*
-                            iface
-                            .position_changed(iface_ref.signal_context())
-                            .await
-                            .unwrap();
-                        */
-                    }
-                    GStreamerMessage::Nop | GStreamerMessage::IncreasePlayCount(_) => {}
-                }
+    //{
+    //tokio::task::spawn(async move {
+    info!("doing signal");
+    let iface_ref = conn
+        .object_server()
+        .interface::<_, PlayerInterface>("/org/mpris/MediaPlayer2")
+        .await
+        .unwrap();
+    let iface = iface_ref.get_mut().await;
+    let mut bus = bus;
+    info!("we did all the setup and wait for the bus");
+    while let Ok(val) = bus.recv().await {
+        info!("Found msg val {:?}", val);
+        match val {
+            GStreamerMessage::Playing
+            | GStreamerMessage::Pausing
+            | GStreamerMessage::Stopped
+            | GStreamerMessage::FileNotFound => {
+                iface
+                    .metadata_changed(iface_ref.signal_context())
+                    .await
+                    .unwrap();
+                iface
+                    .playback_status_changed(iface_ref.signal_context())
+                    .await
+                    .unwrap();
             }
-        });
+            GStreamerMessage::ChangedDuration(_) => {
+                /*
+                    iface
+                    .position_changed(iface_ref.signal_context())
+                    .await
+                    .unwrap();
+                */
+            }
+            GStreamerMessage::Nop | GStreamerMessage::IncreasePlayCount(_) => {}
+        }
     }
+    //     });
+    //}
+    info!("dbus pending for other");
     pending::<()>().await;
 
     Ok(())

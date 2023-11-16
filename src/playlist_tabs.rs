@@ -77,7 +77,7 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
     fn delete(&self, pool: &DBPool, index: usize) {
         let length = self.read().pls.len();
         let current_pl = self.read().current_pl;
-        println!(
+        info!(
             "index {} | current {} | length {}",
             index, current_pl, length
         );
@@ -141,7 +141,7 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
                 .unwrap_or(0),
             self.read().pls.len() - 1,
         );
-        println!("restored position {}", val);
+        info!("restored position {}", val);
         self.write().current_pl = val;
     }
 
