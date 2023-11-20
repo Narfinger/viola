@@ -90,8 +90,6 @@ fn main() -> Result<()> {
     //env::set_var("RUST_LOG", "actix_web=debug,actix_server=info");
     env_logger::init();
 
-    let (shutdown_send, mut shutdown_recv) = tokio::sync::mpsc::unbounded_channel::<()>();
-
     let tmp_pool = db::setup_db_connection();
     if tmp_pool.is_err() {
         println!("Something is wrong with db, creating it.");

@@ -1,6 +1,5 @@
 use log::info;
 use parking_lot::RwLock;
-use std::future::pending;
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{gstreamer_wrapper::GStreamer, loaded_playlist::LoadedPlaylistExt, types::*};
@@ -12,51 +11,51 @@ struct BaseInterface {}
 #[dbus_interface(name = "org.mpris.MediaPlayer2")]
 impl BaseInterface {
     #[dbus_interface(property)]
-    fn can_quit(&self) -> bool {
+    async fn can_quit(&self) -> bool {
         false
     }
 
     #[dbus_interface(property)]
-    fn fullscreen(&self) -> bool {
+    async fn fullscreen(&self) -> bool {
         false
     }
 
     #[dbus_interface(property)]
-    fn can_set_fullscreen(&self) -> bool {
+    async fn can_set_fullscreen(&self) -> bool {
         false
     }
 
     #[dbus_interface(property)]
-    fn can_raise(&self) -> bool {
+    async fn can_raise(&self) -> bool {
         false
     }
 
     #[dbus_interface(property)]
-    fn has_track_list(&self) -> bool {
+    async fn has_track_list(&self) -> bool {
         false
     }
 
     #[dbus_interface(property)]
-    fn identity(&self) -> String {
+    async fn identity(&self) -> String {
         String::from("Viola")
     }
 
     #[dbus_interface(property)]
-    fn supported_uri_schemes(&self) -> Vec<String> {
+    async fn supported_uri_schemes(&self) -> Vec<String> {
         vec![]
     }
 
     #[dbus_interface(property)]
-    fn supported_mime_types(&self) -> Vec<String> {
+    async fn supported_mime_types(&self) -> Vec<String> {
         vec![]
     }
 
     //methods
-    fn raise(&self) -> zbus::fdo::Result<()> {
+    async fn raise(&self) -> zbus::fdo::Result<()> {
         Ok(())
     }
 
-    fn quit(&self) -> zbus::fdo::Result<()> {
+    async fn quit(&self) -> zbus::fdo::Result<()> {
         Ok(())
     }
 }
@@ -69,23 +68,23 @@ struct PlayerInterface {
 #[dbus_interface(name = "org.mpris.MediaPlayer2.Player")]
 impl PlayerInterface {
     #[dbus_interface(property)]
-    fn playback_status(&self) -> String {
+    async fn playback_status(&self) -> String {
         info!("dbus playback status");
         self.gstreamer.read().get_state().to_string()
     }
 
     #[dbus_interface(property)]
-    fn loop_status(&self) -> String {
+    async fn loop_status(&self) -> String {
         "None".to_string()
     }
 
     #[dbus_interface(property)]
-    fn rate(&self) -> f64 {
+    async fn rate(&self) -> f64 {
         1.0
     }
 
     #[dbus_interface(property)]
-    fn metadata(&self) -> HashMap<&str, zbus::zvariant::Value> {
+    async fn metadata(&self) -> HashMap<&str, zbus::zvariant::Value> {
         info!("dbus metadata");
         let mut map = HashMap::new();
         let track = self.playlisttabs.get_current_track();
@@ -98,71 +97,71 @@ impl PlayerInterface {
     }
 
     #[dbus_interface(property)]
-    fn volume(&self) -> f64 {
+    async fn volume(&self) -> f64 {
         1.0
     }
 
     #[dbus_interface(property)]
-    fn position(&self) -> i64 {
+    async fn position(&self) -> i64 {
         1_000_000 * self.gstreamer.read().get_elapsed().unwrap_or(0) as i64
     }
 
     #[dbus_interface(property)]
-    fn minimum_rate(&self) -> f64 {
+    async fn minimum_rate(&self) -> f64 {
         1.0
     }
 
     #[dbus_interface(property)]
-    fn maximum_rate(&self) -> f64 {
+    async fn maximum_rate(&self) -> f64 {
         1.0
     }
 
     #[dbus_interface(property)]
-    fn can_go_next(&self) -> bool {
+    async fn can_go_next(&self) -> bool {
         true
     }
 
     #[dbus_interface(property)]
-    fn can_go_previous(&self) -> bool {
+    async fn can_go_previous(&self) -> bool {
         true
     }
 
     #[dbus_interface(property)]
-    fn can_play(&self) -> bool {
+    async fn can_play(&self) -> bool {
         true
     }
 
     #[dbus_interface(property)]
-    fn can_pause(&self) -> bool {
+    async fn can_pause(&self) -> bool {
         true
     }
 
     #[dbus_interface(property)]
-    fn can_seek(&self) -> bool {
+    async fn can_seek(&self) -> bool {
         false
     }
 
     #[dbus_interface(property)]
-    fn can_control(&self) -> bool {
+    async fn can_control(&self) -> bool {
         true
     }
 
     //methods
-    fn next(&self) -> zbus::fdo::Result<()> {
+    async fn next(&self) -> zbus::fdo::Result<()> {
         self.gstreamer
             .write()
             .do_gstreamer_action(GStreamerAction::Next);
         Ok(())
     }
 
-    fn previous(&self) -> zbus::fdo::Result<()> {
+    async fn previous(&self) -> zbus::fdo::Result<()> {
         self.gstreamer
             .write()
             .do_gstreamer_action(GStreamerAction::Previous);
         Ok(())
     }
 
-    fn pause(&self) -> zbus::fdo::Result<()> {
+    async fn pause(&self) -> zbus::fdo::Result<()> {
         info!("dbus send pause");
         self.gstreamer
             .write()
@@ -175,7 +174,7 @@ impl PlayerInterface {
         Ok(())
     }
 
-    fn play(&self) -> zbus::fdo::Result<()> {
+    async fn play(&self) -> zbus::fdo::Result<()> {
         info!("dbus send play");
         self.gstreamer
             .write()
@@ -188,7 +187,7 @@ impl PlayerInterface {
         Ok(())
     }
 
-    fn play_pause(&self) -> zbus::fdo::Result<()> {
+    async fn play_pause(&self) -> zbus::fdo::Result<()> {
         info!("dbus send playpause");
         if self.gstreamer.read().get_state() == GStreamerMessage::Pausing {
             self.gstreamer
@@ -212,7 +211,7 @@ impl PlayerInterface {
         Ok(())
     }
 
-    fn stop(&self) -> zbus::fdo::Result<()> {
+    async fn stop(&self) -> zbus::fdo::Result<()> {
         println!("dbus send pause");
         self.gstreamer
             .write()
@@ -225,19 +224,19 @@ impl PlayerInterface {
         Ok(())
     }
 
-    fn seek(&self, _position: i32) -> zbus::fdo::Result<()> {
+    async fn seek(&self, _position: i32) -> zbus::fdo::Result<()> {
         todo!("NYI");
         //Not Implemented
         Ok(())
     }
 
-    fn set_position(&self, _track_id: String, _position: i32) -> zbus::fdo::Result<()> {
+    async fn set_position(&self, _track_id: String, _position: i32) -> zbus::fdo::Result<()> {
         //Not Implemented
         todo!("NYI");
         Ok(())
     }
 
-    fn open_uri(&self, _s: String) -> zbus::fdo::Result<()> {
+    async fn open_uri(&self, _s: String) -> zbus::fdo::Result<()> {
         todo!("NYI");
         Ok(())
     }
@@ -262,13 +261,15 @@ pub(crate) async fn main(
         .expect("Could not serve dbus")
         .serve_at("/org/mpris/MediaPlayer2", player_interface)
         .expect("Could not serve player dbus")
-        .internal_executor(true)
+        //.internal_executor(true)
         .build()
         .await
         .expect("Error in creating connection");
 
     //{
     //tokio::task::spawn(async move {
+    std::future::pending::<()>().await;
+    /*
     info!("doing signal");
     let iface_ref = conn
         .object_server()
@@ -309,5 +310,6 @@ pub(crate) async fn main(
         },
         };
     }
+    */
     Ok(())
 }
