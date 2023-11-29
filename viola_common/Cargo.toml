@@ -10,4 +10,4 @@ backend = ["diesel"]
 [dependencies]
 diesel = { version = "2.1.4", features = ["sqlite"], optional = true }
 serde_json = "1.0.108"
-serde = { version = "1.0.192", features = ["derive"] }
+serde = { version = "1.0.193", features = ["derive"] }
