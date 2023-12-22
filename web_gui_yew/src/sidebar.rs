@@ -1,7 +1,7 @@
 use crate::button::*;
 use crate::play_dialog::PlayDialog;
 use crate::treeview::TreeViewLvl1;
-use reqwasm::http::Request;
+use gloo_net::http::Request;
 use viola_common::*;
 use yew::prelude::*;
 
@@ -118,6 +118,7 @@ impl Component for Sidebar {
                     Request::post("/smartplaylist/load/")
                         .header("Content-Type", "application/json")
                         .body(serde_json::to_string(&s).unwrap())
+                        .unwrap()
                         .send()
                         .await
                         .unwrap();

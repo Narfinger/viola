@@ -1,9 +1,10 @@
 use std::rc::Rc;
 
 use futures::{join, StreamExt};
-use reqwasm::http::Request;
-use reqwasm::websocket;
-use reqwasm::websocket::futures::WebSocket;
+use gloo_net::{
+    http::Request,
+    websocket::{self, futures::WebSocket},
+};
 use viola_common::*;
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;

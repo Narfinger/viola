@@ -1,5 +1,5 @@
 use crate::button::*;
-use reqwasm::http::Request;
+use gloo_net::http::Request;
 use wasm_bindgen::JsCast;
 use web_sys::{EventTarget, HtmlInputElement};
 use yew::prelude::*;
@@ -15,6 +15,7 @@ fn submit(toggle: Callback<()>, input: UseStateHandle<String>) {
         Request::post("/play/")
             .header("Content-Type", "application/json")
             .body(serde_json::to_string(&*input).unwrap())
+            .unwrap()
             .send()
             .await
             .unwrap();

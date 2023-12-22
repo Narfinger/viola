@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 use crate::button::*;
-use reqwasm::http::Request;
+use gloo_net::http::Request;
 use wasm_bindgen::JsCast;
 use web_sys::{EventTarget, HtmlInputElement};
 use yew::prelude::*;
@@ -28,6 +28,7 @@ fn send_delete_range(
         Request::delete("/deletefromplaylist/")
             .header("Content-Type", "application/json")
             .body(serde_json::to_string(&range).unwrap())
+            .unwrap()
             .send()
             .await
             .unwrap();

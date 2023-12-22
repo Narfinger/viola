@@ -1,4 +1,4 @@
-use reqwasm::http::Request;
+use gloo_net::http::Request;
 use std::rc::Rc;
 use viola_common::{GStreamerAction, GStreamerMessage};
 
@@ -73,6 +73,7 @@ impl Component for TracksComponent {
                     Request::post("/transport/")
                         .header("Content-Type", "application/json")
                         .body(serde_json::to_string(&GStreamerAction::Play(index)).unwrap())
+                        .unwrap()
                         .send()
                         .await
                         .unwrap();

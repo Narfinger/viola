@@ -1,4 +1,4 @@
-use reqwasm::http::Request;
+use gloo_net::http::Request;
 use viola_common::*;
 use yew::prelude::*;
 
@@ -122,6 +122,7 @@ impl Component for TransportButton {
                         Request::post("/transport/")
                             .header("Content-Type", "application/json")
                             .body(serde_json::to_string(&on_click).unwrap())
+                            .unwrap()
                             .send()
                             .await
                             .unwrap();

@@ -1,4 +1,4 @@
-use reqwasm::http::Request;
+use gloo_net::http::Request;
 use viola_common::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
@@ -73,6 +73,7 @@ impl Component for TabsComponent {
                         Request::post("/playlisttab/")
                             .header("Content-Type", "application/json")
                             .body(serde_json::to_string(&i).unwrap())
+                            .unwrap()
                             .send()
                             .await
                             .unwrap();
@@ -98,6 +99,7 @@ impl Component for TabsComponent {
                     Request::put("/playlisttab/")
                         .header("Content-Type", "application/json")
                         .body(serde_json::to_string(&val).unwrap())
+                        .unwrap()
                         .send()
                         .await
                         .unwrap();

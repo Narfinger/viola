@@ -1,5 +1,5 @@
+use gloo_net::http::Request;
 use indextree::{Arena, NodeId};
-use reqwasm::http::Request;
 use viola_common::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
@@ -172,6 +172,7 @@ impl Component for TreeViewLvl1 {
                     let result: Vec<String> = Request::post("/libraryview/partial/")
                         .header("Content-Type", "application/json")
                         .body(serde_json::to_string(&data).unwrap())
+                        .unwrap()
                         .send()
                         .await
                         .unwrap()
@@ -208,6 +209,7 @@ impl Component for TreeViewLvl1 {
                     Request::post("/libraryview/full/")
                         .header("Content-Type", "application/json")
                         .body(serde_json::to_string(&data).unwrap())
+                        .unwrap()
                         .send()
                         .await
                         .unwrap();
