@@ -1228,7 +1228,7 @@ dependencies = [
  "js-sys",
  "pin-project",
  "serde 1.0.195",
- "serde_json 1.0.109",
+ "serde_json 1.0.111",
  "thiserror",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -1249,7 +1249,7 @@ dependencies = [
  "js-sys",
  "pin-project",
  "serde 1.0.195",
- "serde_json 1.0.109",
+ "serde_json 1.0.111",
  "thiserror",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -1270,7 +1270,7 @@ dependencies = [
  "js-sys",
  "pin-project",
  "serde 1.0.195",
- "serde_json 1.0.109",
+ "serde_json 1.0.111",
  "thiserror",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -1306,7 +1306,7 @@ dependencies = [
  "gloo-utils 0.1.7",
  "js-sys",
  "serde 1.0.195",
- "serde_json 1.0.109",
+ "serde_json 1.0.111",
  "thiserror",
  "wasm-bindgen",
  "web-sys",
@@ -1321,7 +1321,7 @@ dependencies = [
  "gloo-utils 0.2.0",
  "js-sys",
  "serde 1.0.195",
- "serde_json 1.0.109",
+ "serde_json 1.0.111",
  "thiserror",
  "wasm-bindgen",
  "web-sys",
@@ -1355,7 +1355,7 @@ checksum = "037fcb07216cb3a30f7292bd0176b050b7b9a052ba830ef7d5d65f6dc64ba58e"
 dependencies = [
  "js-sys",
  "serde 1.0.195",
- "serde_json 1.0.109",
+ "serde_json 1.0.111",
  "wasm-bindgen",
  "web-sys",
 ]
@@ -1368,7 +1368,7 @@ checksum = "0b5555354113b18c547c1d3a98fbf7fb32a9ff4f6fa112ce823a21641a0ba3aa"
 dependencies = [
  "js-sys",
  "serde 1.0.195",
- "serde_json 1.0.109",
+ "serde_json 1.0.111",
  "wasm-bindgen",
  "web-sys",
 ]
@@ -2564,9 +2564,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.109"
+version = "1.0.111"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb0652c533506ad7a2e353cce269330d6afd8bdfb6d75e0ace5b35aacbd7b9e9"
+checksum = "176e46fa42316f18edd598015a5166857fc835ec732f5215eac6b7bdbf0a84f4"
 dependencies = [
  "itoa 1.0.10",
  "ryu",
@@ -3161,7 +3161,7 @@ dependencies = [
  "rand",
  "rayon",
  "serde 1.0.195",
- "serde_json 1.0.109",
+ "serde_json 1.0.111",
  "taglib",
  "tokio",
  "toml 0.8.8",
@@ -3177,7 +3177,7 @@ version = "1.1.0"
 dependencies = [
  "diesel",
  "serde 1.0.195",
- "serde_json 1.0.109",
+ "serde_json 1.0.111",
 ]
 
 [[package]]
@@ -3227,7 +3227,7 @@ dependencies = [
  "rustls-pemfile",
  "scoped-tls",
  "serde 1.0.195",
- "serde_json 1.0.109",
+ "serde_json 1.0.111",
  "serde_urlencoded",
  "tokio",
  "tokio-stream",
@@ -3341,7 +3341,7 @@ dependencies = [
  "indextree",
  "log",
  "serde 1.0.195",
- "serde_json 1.0.109",
+ "serde_json 1.0.111",
  "viola_common",
  "wasm-bindgen",
  "wasm-bindgen-futures",
