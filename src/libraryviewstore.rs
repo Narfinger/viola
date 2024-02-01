@@ -196,12 +196,12 @@ fn track_to_partial_string(query: &TreeViewQuery, t: viola_common::Track) -> Str
             None => "None".to_string(),
         }
     } else if query.indices.len() == 1
-        && query.types.get(0) == Some(&viola_common::TreeType::Artist)
+        && query.types.first() == Some(&viola_common::TreeType::Artist)
         && query.types.get(1) == Some(&viola_common::TreeType::Album)
     {
         format!("{}-{}", t.year.unwrap_or(0), t.album)
     } else if query.indices.len() == 2
-        && query.types.get(0) == Some(&viola_common::TreeType::Artist)
+        && query.types.first() == Some(&viola_common::TreeType::Artist)
         && query.types.get(1) == Some(&viola_common::TreeType::Album)
         && query.types.get(2) == Some(&viola_common::TreeType::Track)
     {
