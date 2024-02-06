@@ -3340,7 +3340,6 @@ dependencies = [
  "humantime",
  "indextree",
  "log",
- "serde 1.0.196",
  "serde_json 1.0.113",
  "viola_common",
  "wasm-bindgen",
