@@ -7,7 +7,7 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1.0.79"
-clap = { version = "4.4.18", features = ["cargo", "derive"] }
+clap = { version = "4.5.0", features = ["cargo", "derive"] }
 directories = "5.0.1"
 diesel = { version = "2.1.4", features = ["sqlite", "r2d2"] }
 diesel_migrations = { version = "2.1.0", features = ["sqlite"] }
@@ -27,7 +27,7 @@ rayon = "1.8.1"
 taglib = "1.0.0"
 serde = { version = "1.0.196", features = ["derive"] }
 serde_json = "1.0.113"
-toml = "0.8.9"
+toml = "0.8.10"
 tokio = { version = "1.36.0", features = ["full"] }
 viola_common = {path ="viola_common", features =["backend"]}
 walkdir = "2.4.0"
