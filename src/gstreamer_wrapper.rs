@@ -71,6 +71,9 @@ pub(crate) fn new(
         let rgvolume = gstreamer::ElementFactory::make("rgvolume")
             .build()
             .expect("Error in rgvolume");
+        let rglimit = gstreamer::ElementFactory::make("rglimiter")
+            .build()
+            .expect("Errror in rglimit");
         let audioconvert2 = gstreamer::ElementFactory::make("audioconvert")
             .build()
             .expect("Error in convert2");
@@ -84,6 +87,7 @@ pub(crate) fn new(
         bin.add_many([
             &audioconvert1,
             &rgvolume,
+            &rglimit,
             &audioconvert2,
             &audioresample,
             &sink,
@@ -92,6 +96,7 @@ pub(crate) fn new(
         gstreamer::Element::link_many([
             &audioconvert1,
             &rgvolume,
+            &rglimit,
             &audioconvert2,
             &audioresample,
             &sink,
