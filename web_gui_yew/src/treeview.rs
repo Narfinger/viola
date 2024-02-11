@@ -11,11 +11,14 @@ pub(crate) struct TreeViewLvl1Props {
 }
 
 pub(crate) enum TreeViewLvl1Msg {
+    /// Search field changes
     SearchChange(Event),
+    /// Load all results
     FillAll,
     FillTreeView {
         indices: Vec<usize>,
     },
+    /// Fill the treeview results with the current query
     FillTreeViewRecv {
         result: Vec<String>,
         query: TreeViewQuery,
@@ -269,7 +272,17 @@ impl Component for TreeViewLvl1 {
                     <div class="col">
                         <button class="btn btn-outline-primary btn-sm"
                             onclick={ctx.link().callback(|_| TreeViewLvl1Msg::FillAll)}
-                        >{"Load All"}</button>
+                        >{"Load All Entries"}</button>
+                    </div>
+                    <div class="col">
+                        <button class="btn btn-outline-primary btn-sm"
+                            onclick={ctx.link().callback(|_| TreeViewLvl1Msg::LoadFromTreeView{ indices: vec![], randomize: false})}
+                        >{"Load All Results"}</button>
+                    </div>
+                    <div class="col">
+                        <button class="btn btn-outline-primary btn-sm"
+                            onclick={ctx.link().callback(|_| TreeViewLvl1Msg::LoadFromTreeView { indices: vec![], randomize: true })}
+                        >{"Load All Random"}</button>
                     </div>
                 </div>
                 <ul>
