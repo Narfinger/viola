@@ -13,7 +13,7 @@ diesel = { version = "2.1.4", features = ["sqlite", "r2d2"] }
 diesel_migrations = { version = "2.1.0", features = ["sqlite"] }
 env_logger = "0.10.2"
 futures = "0.3.30"
-gstreamer = "0.21.3"
+gstreamer = "0.22.0"
 humantime = "2.1.0"
 indicatif = { version = "0.17.8", features = ["rayon"] }
 itertools = "0.12.1"
