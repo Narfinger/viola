@@ -1,7 +1,5 @@
 use crate::playlist_tabs::PlaylistTabsExt;
-use gstreamer::prelude::ObjectExt;
-use gstreamer::prelude::{ElementExt, ElementExtManual, GstBinExtManual};
-use gstreamer::traits::PadExt;
+use gstreamer::prelude::*;
 use log::{info, warn};
 use parking_lot::RwLock;
 use std::sync::atomic::{AtomicBool, Ordering};
