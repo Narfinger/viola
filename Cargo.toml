@@ -32,7 +32,7 @@ tokio = { version = "1.36.0", features = ["full"] }
 viola_common = {path ="viola_common", features =["backend"]}
 walkdir = "2.4.0"
 warp = { version = "0.3.6", features = ["compression"] }
-zbus = { version = "4.0.0"}
+zbus = { version = "4.0.1"}
 
 [workspace]
 members = ["web_gui_yew", "viola_common"]
