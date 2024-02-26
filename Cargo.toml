@@ -26,7 +26,7 @@ rand = "0.8.5"
 rayon = "1.8.1"
 taglib = "1.0.0"
 serde = { version = "1.0.196", features = ["derive"] }
-serde_json = "1.0.113"
+serde_json = "1.0.114"
 toml = "0.8.10"
 tokio = { version = "1.36.0", features = ["full"] }
 viola_common = {path ="viola_common", features =["backend"]}
