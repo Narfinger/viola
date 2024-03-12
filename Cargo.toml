@@ -18,7 +18,7 @@ humantime = "2.1.0"
 indicatif = { version = "0.17.8", features = ["rayon"] }
 itertools = "0.12.1"
 log = { version = "0.4.21", features = ["max_level_debug", "release_max_level_warn"] }
-open = "5.1.1"
+open = "5.1.2"
 parking_lot = { version = "0.12.1", features = ["serde", "deadlock_detection"] }
 percent-encoding = "2.3.1"
 preferences = "1.1.0"
