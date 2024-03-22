@@ -309,7 +309,6 @@ impl GStreamer {
             }
             gstreamer::State::Paused => GStreamerMessage::Pausing,
             gstreamer::State::Playing => GStreamerMessage::Playing,
-            _ => GStreamerMessage::Stopped,
         }
     }
 

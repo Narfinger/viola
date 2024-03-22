@@ -187,7 +187,7 @@ fn sort_tracks(query: &TreeViewQuery, t: &mut [viola_common::Track]) {
 /// Because we want to make things unique later we should transform the tracks to nice strings
 fn track_to_partial_string(query: &TreeViewQuery, t: viola_common::Track) -> String {
     if query.indices.is_empty() {
-        match query.types.get(0) {
+        match query.types.first() {
             Some(TreeType::Artist) => t.artist,
             Some(TreeType::Album) => format!("{}-{}", t.artist, t.album),
             // we want to show the artist because otherwise it is hard to see which track this is
@@ -223,7 +223,7 @@ fn get_playlist_name(query: &TreeViewQuery, t: &[viola_common::Track]) -> String
         search.clone()
     } else {
         let last = query.get_after_last_ttype();
-        let first_track = t.get(0);
+        let first_track = t.first();
         match last {
             Some(TreeType::Artist) => first_track.map(|t| t.artist.clone()),
             Some(TreeType::Album) => first_track.map(|t| t.artist.clone()),

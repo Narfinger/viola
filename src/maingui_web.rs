@@ -8,7 +8,7 @@ use tokio::sync::RwLock;
 use viola_common::*;
 use warp::Filter;
 
-use crate::gstreamer_wrapper::{self, GStreamer};
+use crate::gstreamer_wrapper::{self};
 use crate::libraryviewstore;
 use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls, SavePlaylistExt};
 use crate::my_websocket;

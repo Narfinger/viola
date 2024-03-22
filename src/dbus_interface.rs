@@ -4,48 +4,48 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::{gstreamer_wrapper::GStreamer, loaded_playlist::LoadedPlaylistExt, types::*};
 use viola_common::{GStreamerAction, GStreamerMessage};
-use zbus::{dbus_interface, ConnectionBuilder};
+use zbus::{dbus_interface, interface, ConnectionBuilder};
 
 struct BaseInterface {}
 
-#[dbus_interface(name = "org.mpris.MediaPlayer2")]
+#[interface(name = "org.mpris.MediaPlayer2")]
 impl BaseInterface {
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn can_quit(&self) -> bool {
         false
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn fullscreen(&self) -> bool {
         false
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn can_set_fullscreen(&self) -> bool {
         false
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn can_raise(&self) -> bool {
         false
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn has_track_list(&self) -> bool {
         false
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn identity(&self) -> String {
         String::from("Viola")
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn supported_uri_schemes(&self) -> Vec<String> {
         vec![]
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn supported_mime_types(&self) -> Vec<String> {
         vec![]
     }
@@ -65,25 +65,25 @@ struct PlayerInterface {
     playlisttabs: PlaylistTabsPtr,
 }
 
-#[dbus_interface(name = "org.mpris.MediaPlayer2.Player")]
+#[interface(name = "org.mpris.MediaPlayer2.Player")]
 impl PlayerInterface {
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn playback_status(&self) -> String {
         info!("dbus playback status");
         self.gstreamer.read().get_state().to_string()
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn loop_status(&self) -> String {
         "None".to_string()
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn rate(&self) -> f64 {
         1.0
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn metadata(&self) -> HashMap<&str, zbus::zvariant::Value> {
         info!("dbus metadata");
         let mut map = HashMap::new();
@@ -96,52 +96,52 @@ impl PlayerInterface {
         map
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn volume(&self) -> f64 {
         1.0
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn position(&self) -> i64 {
         1_000_000 * self.gstreamer.read().get_elapsed().unwrap_or(0) as i64
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn minimum_rate(&self) -> f64 {
         1.0
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn maximum_rate(&self) -> f64 {
         1.0
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn can_go_next(&self) -> bool {
         true
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn can_go_previous(&self) -> bool {
         true
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn can_play(&self) -> bool {
         true
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn can_pause(&self) -> bool {
         true
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn can_seek(&self) -> bool {
         false
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn can_control(&self) -> bool {
         true
     }
