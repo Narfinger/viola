@@ -6,33 +6,69 @@ authors = ["Narfinger <Narfinger@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true, features = ["cargo", "derive"] }
+directories = { workspace = true }
+diesel = { workspace = true, features = ["sqlite", "r2d2"] }
+diesel_migrations = { workspace = true, features = ["sqlite"] }
+env_logger = { workspace = true }
+futures = { workspace = true }
+gstreamer = { workspace = true }
+humantime = { workspace = true }
+indicatif = { workspace = true, features = ["rayon"] }
+itertools = { workspace = true }
+log = { workspace = true, features = ["max_level_debug", "release_max_level_warn"] }
+open = { workspace = true }
+parking_lot = { workspace = true, features = ["serde", "deadlock_detection"] }
+percent-encoding = { workspace = true }
+preferences = { workspace = true }
+rand = { workspace = true }
+rayon = { workspace = true }
+taglib = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+toml = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+viola_common = {path ="viola_common", features =["backend"]}
+walkdir = { workspace = true }
+warp = { workspace = true, features = ["compression"] }
+zbus = { workspace = true }
+
+[workspace]
+members = ["web_gui_yew", "viola_common"]
+
+[workspace.dependencies]
 anyhow = "1.0.81"
-clap = { version = "4.5.3", features = ["cargo", "derive"] }
+clap = "4.5.3"
+console_error_panic_hook = "0.1.7"
+diesel = "2.1.5"
+diesel_migrations = "2.1.0"
 directories = "5.0.1"
-diesel = { version = "2.1.5", features = ["sqlite", "r2d2"] }
-diesel_migrations = { version = "2.1.0", features = ["sqlite"] }
 env_logger = "0.11.3"
 futures = "0.3.30"
+gloo-net = "0.5.0"
 gstreamer = "0.22.3"
 humantime = "2.1.0"
-indicatif = { version = "0.17.8", features = ["rayon"] }
+indextree = "4.6.0"
+indicatif = "0.17.8"
 itertools = "0.12.1"
-log = { version = "0.4.21", features = ["max_level_debug", "release_max_level_warn"] }
+log = "0.4.21"
 open = "5.1.2"
-parking_lot = { version = "0.12.1", features = ["serde", "deadlock_detection"] }
+parking_lot = "0.12.1"
 percent-encoding = "2.3.1"
 preferences = "1.1.0"
 rand = "0.8.5"
 rayon = "1.10.0"
-taglib = "1.0.0"
-serde = { version = "1.0.197", features = ["derive"] }
+serde = "1.0.197"
 serde_json = "1.0.114"
+taglib = "1.0.0"
+tokio = "1.36.0"
 toml = "0.8.12"
-tokio = { version = "1.36.0", features = ["full"] }
-viola_common = {path ="viola_common", features =["backend"]}
 walkdir = "2.5.0"
-warp = { version = "0.3.6", features = ["compression"] }
-zbus = { version = "4.1.2"}
-
-[workspace]
-members = ["web_gui_yew", "viola_common"]
+warp = "0.3.6"
+wasm-bindgen = "0.2.92"
+wasm-bindgen-futures = "0.4.42"
+wasm-logger = "0.2.0"
+web-sys = "0.3.69"
+yew = "0.21.0"
+zbus = "4.1.2"
