@@ -38,7 +38,7 @@ zbus = { workspace = true }
 members = ["web_gui_yew", "viola_common"]
 
 [workspace.dependencies]
-anyhow = "1.0.81"
+anyhow = "1.0.82"
 clap = "4.5.4"
 console_error_panic_hook = "0.1.7"
 diesel = "2.1.5"
