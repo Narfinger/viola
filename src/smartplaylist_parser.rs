@@ -1,5 +1,6 @@
 use diesel::sqlite::Sqlite;
 use diesel::{QueryDsl, RunQueryDsl};
+use log::info;
 use preferences::prefs_base_dir;
 use rand::prelude::*;
 use serde::Deserialize;
@@ -171,12 +172,12 @@ impl SmartPlaylist {
         };
 
         let mut filtered = basic
-            .iter()
+            .into_iter()
             .filter(|t| {
                 // remember this keeps elements with true and removes other elements
                 self.exclude_query.is_empty() | !matched_with_exclude(t, &self.exclude_query)
             })
-            .cloned()
+            //.cloned()
             .collect::<Vec<Track>>();
 
         filtered.dedup();
@@ -185,7 +186,8 @@ impl SmartPlaylist {
             let mut rng = thread_rng();
             filtered.shuffle(&mut rng);
         } else {
-            filtered.sort_unstable_by(|u, v| u.path.cmp(&v.path));
+            info!("Sorting by path");
+            filtered.sort_unstable_by(|u, v| u.path.as_str().cmp(&v.path.as_str()));
         }
 
         LoadedPlaylist {

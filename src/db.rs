@@ -112,6 +112,15 @@ fn is_valid_file(s: &Result<DirEntry, walkdir::Error>) -> bool {
     }
 }
 
+/// tests if the dir is hidden
+fn is_hidden(entry: &DirEntry) -> bool {
+    entry
+        .file_name()
+        .to_str()
+        .map(|s| s.starts_with("."))
+        .unwrap_or(false)
+}
+
 /// constants that tell me which names are ok
 const ALBUM_NAMES: [&str; 3] = ["cover.jpg", "cover.png", "cover.webp"];
 /// for a given path, tries to find cover.jpg, cover.png and also check the parent directory for it.
@@ -236,7 +245,11 @@ pub(crate) fn build_db(p: &str, db: &DBPool, fast_delete: bool) -> Result<(), St
     pb.set_style(style);
     pb.set_message("Collecting files");
     let files = pb
-        .wrap_iter(walkdir::WalkDir::new(p).into_iter())
+        .wrap_iter(
+            walkdir::WalkDir::new(p)
+                .into_iter()
+                .filter_entry(|e| !is_hidden(e)),
+        )
         .filter(is_valid_file)
         .map(|i| String::from(i.unwrap().path().to_str().unwrap()))
         .collect::<HashSet<String>>();
