@@ -187,7 +187,7 @@ impl SmartPlaylist {
             filtered.shuffle(&mut rng);
         } else {
             info!("Sorting by path");
-            filtered.sort_unstable_by(|u, v| u.path.as_str().cmp(&v.path.as_str()));
+            filtered.sort_unstable_by(|u, v| u.path.as_str().cmp(v.path.as_str()));
         }
 
         LoadedPlaylist {
