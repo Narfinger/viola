@@ -93,8 +93,8 @@ impl PlayerInterface {
             ("xesam:trackid", "/track".into()),
             ("xesam:artist", track.artist.into()),
             ("xesam:album", track.album.into()),
-            ("xesam.title", track.title.into()),
-            ("mpris.length", length.into()),
+            ("xesam:title", track.title.into()),
+            ("mpris:length", length.into()),
             ("xesam:artUrl", albumpath.into()),
         ])
     }
