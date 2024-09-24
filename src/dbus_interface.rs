@@ -86,14 +86,17 @@ impl PlayerInterface {
     #[zbus(property)]
     async fn metadata(&self) -> HashMap<&str, zbus::zvariant::Value> {
         info!("dbus metadata");
-        let mut map = HashMap::new();
         let track = self.playlisttabs.get_current_track();
         let length = 1_000_000 * track.length;
-        map.insert("xesam:artist", track.artist.into());
-        map.insert("xesam:album", track.album.into());
-        map.insert("xesam:title", track.title.into());
-        map.insert("mpris:length", length.into());
-        map
+        let albumpath = track.albumpath.unwrap_or(String::new());
+        HashMap::from([
+            ("xesam:trackid", "/track".into()),
+            ("xesam:artist", track.artist.into()),
+            ("xesam:album", track.album.into()),
+            ("xesam.title", track.title.into()),
+            ("mpris.length", length.into()),
+            ("xesam:artUrl", albumpath.into()),
+        ])
     }
 
     #[zbus(property)]
