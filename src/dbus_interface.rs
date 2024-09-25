@@ -86,17 +86,22 @@ impl PlayerInterface {
     #[zbus(property)]
     async fn metadata(&self) -> HashMap<&str, zbus::zvariant::Value> {
         info!("dbus metadata");
-        let track = self.playlisttabs.get_current_track();
-        let length = 1_000_000 * track.length;
-        let albumpath = track.albumpath.unwrap_or(String::new());
-        HashMap::from([
-            ("xesam:trackid", "/track".into()),
-            ("xesam:artist", track.artist.into()),
-            ("xesam:album", track.album.into()),
-            ("xesam:title", track.title.into()),
-            ("mpris:length", length.into()),
-            ("xesam:artUrl", albumpath.into()),
-        ])
+        if self.gstreamer.read().get_state() == GStreamerMessage::Playing {
+            let track = self.playlisttabs.get_current_track();
+            let length = 1_000_000 * track.length;
+            let albumpath = track.albumpath.unwrap_or(String::new());
+            HashMap::from([
+                ("xesam:trackid", "/track".into()),
+                ("xesam:artist", track.artist.into()),
+                ("xesam:album", track.album.into()),
+                ("xesam:title", track.title.into()),
+                ("mpris:length", length.into()),
+                ("xesam:artUrl", albumpath.into()),
+                ])
+            }
+            else {
+                HashMap::new()
+            }
     }
 
     #[zbus(property)]
