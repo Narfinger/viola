@@ -258,21 +258,20 @@ impl Component for App {
             .cloned()
             .collect::<Vec<Rc<Track>>>();
         html! {
-            <div class="container-fluid" style="padding-left: 5vw; padding-bottom: 1vh; height: 75vh">
-                    <Sidebar
-                        visible = {self.sidebar_visible}
-                        close_callback = {ctx.link().callback(|_| AppMessage::ToggleSidebar)}
-                        reload_callback = {ctx.link().batch_callback(|_| vec![AppMessage::LoadTabs, AppMessage::RefreshList])}
-                        show_all_tracks_callback = {ctx.link().callback(|_| AppMessage::ShowFullPlaylist)}
-                        />
-                    <DeleteRangeDialog
-                        visible = {self.delete_range_visible}
-                        refresh_callback = {ctx.link().callback(|_| AppMessage::RefreshList)}
-                        toggle_visible_callback = {ctx.link().callback(|_| AppMessage::ToggleDeleteRange)}
-                        max = {self.current_tracks.len()}
-                    />
-                    <div class="row">
-                        <div class="col" style="height: 80vh">
+                <div class="w-full flex flex-col">
+                    /*<Sidebar
+                         visible = {self.sidebar_visible}
+                         close_callback = {ctx.link().callback(|_| AppMessage::ToggleSidebar)}
+                         reload_callback = {ctx.link().batch_callback(|_| vec![AppMessage::LoadTabs, AppMessage::RefreshList])}
+                         show_all_tracks_callback = {ctx.link().callback(|_| AppMessage::ShowFullPlaylist)}
+                         />
+                     <DeleteRangeDialog
+                         visible = {self.delete_range_visible}
+                         refresh_callback = {ctx.link().callback(|_| AppMessage::RefreshList)}
+                         toggle_visible_callback = {ctx.link().callback(|_| AppMessage::ToggleDeleteRange)}
+                         max = {self.current_tracks.len()}
+                     */
+                    <div class="w-full h-24">
                             <Buttons
                                 // the clean tab refresh will happen from the websocket and not here
                                 status={self.current_status}
@@ -281,13 +280,15 @@ impl Component for App {
                                 sidebar_callback = {ctx.link().callback(|_| AppMessage::ToggleSidebar)}
                                 delete_range_callback = {ctx.link().callback(|_| AppMessage::ToggleDeleteRange)}
                                 />
-
-                            <TabsComponent
-                            // the tab refresh and similar thing will come from the websocket as otherwise we would refresh the old status
-                                tabs = {self.playlist_tabs.clone()}
-                                />
-
-                            <div class="row" style="height: 75vh; width: 95vw; overflow-x: auto">
+                    </div>
+                    <div class="w-full flex-shrink">
+                    <TabsComponent
+                    // the tab refresh and similar thing will come from the websocket as otherwise we would refresh the old status
+                    tabs = {self.playlist_tabs.clone()}
+                    />
+                    </div>
+                    /*
+                            <div style="height: 75vh; width: 95vw; overflow-x: auto">
                                 <TracksComponent
                                     tracks={trimmed_tracks}
                                     current_playing={self.current_playing}
@@ -295,15 +296,14 @@ impl Component for App {
                                     not_current_tab = {self.playlist_tabs.current_playing_in.map_or(false, |s| s!= self.playlist_tabs.current) }
                                     />
                             </div>
-
-                        <Status
+                            <Status
                             current_status = {self.current_status}
                             current_track = {self.current_tracks.get(self.current_playing).cloned()} total_track_time = {full_time_playing} remaining_time_playing = {remaining_time_playing} current_track_time={self.current_track_time} repeat_once = {self.repeat_once} number_of_tracks={self.current_tracks.len()}
                             window = {TRACK_MAX_NUMBER}
                             />
-                        </div>
-                    </div>
-            </div>
+                            */
+                            </div>
+
         }
     }
 }

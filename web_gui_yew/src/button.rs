@@ -25,29 +25,15 @@ pub(crate) fn buttons(props: &ButtonRowProps) -> Html {
     };
 
     html! {
-    <div class="row">
-        <div class="col">
+        <div class="flex gap-4 px-8 py-8">
+            <div class="contents">
             <CallbackButton text="Menu" icon="/menu-button.svg" btype={ButtonType::Info} callback={props.sidebar_callback.clone()} />
-        </div>
-        <div class="col">
             <TransportButton text="Prev" icon="/skip-backward.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Previous)} callback={props.refresh_play_callback.clone()} />
-        </div>
-        <div class="col">
             {playpause_button}
-        </div>
-        <div class="col">
             <TransportButton text="Pause" icon="/pause.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Pausing)} callback={props.refresh_play_callback.clone()} />
-        </div>
-        <div class="col">
             <TransportButton text="Next" icon="/skip-forward.svg" btype={ButtonType::Primary} on_click={Some(GStreamerAction::Next)} callback={props.refresh_play_callback.clone()} />
-        </div>
-        <div class="col">
             <TransportButton text="Again" icon="/arrow-repeat.svg" btype={ButtonType::Secondary} on_click={Some(GStreamerAction::RepeatOnce)} callback = {props.repeat_once_callback.clone()} />
-        </div>
-        <div class="col">
             <UrlCallButton text="Clean" icon="/trash.svg" btype={ButtonType::Danger} url_call = {"/clean/"} />
-        </div>
-        <div class="col-2">
             <CallbackButton text="Delete Range" icon="/trash.svg" btype={ButtonType::Danger} callback={props.delete_range_callback.clone()} />
         </div>
     </div>}
@@ -79,9 +65,7 @@ pub(crate) enum ButtonMsg {
 fn icon(path: String, size: Option<usize>) -> Html {
     let size = (size.unwrap_or(24)).to_string() + "px";
     html! {
-        <span style="padding-right: 5px">
             <img src ={path} height={size.clone()} width={size} />
-        </span>
     }
 }
 
@@ -97,20 +81,21 @@ impl Component for TransportButton {
     fn view(&self, ctx: &Context<Self>) -> Html {
         let class = String::from("btn ")
             + match ctx.props().btype {
-                ButtonType::Info => "btn-info",
-                ButtonType::Primary => "btn-primary",
+                ButtonType::Info => "bg-cyan-500 text",
+                ButtonType::Primary => "bg-cyan-500 text",
                 ButtonType::Secondary => "btn-secondary",
                 ButtonType::Danger => "btn-danger",
                 ButtonType::Success => "btn-success",
             };
+        let class = "flex-1 bg-cyan-500 text px-4 py-4 font-semibold text-sm text-white rounded-full";
         let onclick = ctx.link().callback(|_| ButtonMsg::Clicked);
         let icon_path: String = ctx.props().icon.clone();
         html! {
-                <div class="col">
+                <>
                     <button class={class} onclick={onclick}>
                     {icon(icon_path,None)}
                     { &ctx.props().text}</button>
-                </div>
+                </>
         }
     }
 
@@ -178,14 +163,15 @@ impl Component for UrlCallButton {
                 ButtonType::Danger => "btn-danger",
                 ButtonType::Success => "btn-success",
             };
+            let class = "flex-1 bg-cyan-500 text px-4 py-4 font-semibold text-sm text-white rounded-full";
         let onclick = ctx.link().callback(|_| ButtonMsg::Clicked);
         let icon_path: String = ctx.props().icon.clone();
         html! {
-                <div class="col">
+                <>
                     <button class={class} onclick={onclick}>
                     {icon(icon_path,None)}
                     { &ctx.props().text}</button>
-                </div>
+                </>
         }
     }
 }
@@ -217,14 +203,15 @@ impl Component for CallbackButton {
                 ButtonType::Danger => "btn-danger",
                 ButtonType::Success => "btn-success",
             };
+            let class = "bg-cyan-500 text px-4 py-4 font-semibold text-sm text-white rounded-full";
         let onclick = ctx.link().callback(|_| ButtonMsg::Clicked);
         let icon_path: String = ctx.props().icon.clone();
         html! {
-                <div class="col">
+                <>
                     <button class={class} onclick={onclick}>
                     {icon(icon_path,None)}
                     { &ctx.props().text}</button>
-                </div>
+                </>
         }
     }
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
