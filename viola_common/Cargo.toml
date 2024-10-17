@@ -2,7 +2,7 @@
 name = "viola_common"
 version = "1.1.0"
 authors = ["Narfinger <narfinger@noreply.github.com>"]
-edition = "2018"
+edition = "2021"
 
 [features]
 backend = ["diesel"]

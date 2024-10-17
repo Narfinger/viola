@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use crate::button::*;
 use gloo_net::http::Request;
-use wasm_bindgen::JsCast;
+use web_sys::wasm_bindgen::JsCast;
 use web_sys::{EventTarget, HtmlInputElement};
 use yew::prelude::*;
 
