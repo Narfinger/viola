@@ -89,7 +89,7 @@ impl PlayerInterface {
         if self.gstreamer.read().get_state() == GStreamerMessage::Playing {
             let track = self.playlisttabs.get_current_track();
             let length = 1_000_000 * track.length;
-            let albumpath = track.albumpath.unwrap_or(String::new());
+            let albumpath = track.albumpath.unwrap_or_default();
             HashMap::from([
                 ("xesam:trackid", "/track".into()),
                 ("xesam:artist", track.artist.into()),
