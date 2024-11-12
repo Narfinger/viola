@@ -10,9 +10,9 @@ use warp::Filter;
 
 use crate::gstreamer_wrapper::{self};
 use crate::libraryviewstore;
-use crate::loaded_playlist::{LoadedPlaylistExt, PlaylistControls, SavePlaylistExt};
+use crate::loaded_playlist::SavePlaylistExt;
 use crate::my_websocket;
-use crate::playlist_tabs::PlaylistTabsExt;
+use crate::playlist_tabs::{LoadedPlaylistExtImut, PlaylistControlsImut, PlaylistTabsExt};
 use crate::smartplaylist_parser;
 use crate::types::*;
 
@@ -103,7 +103,6 @@ async fn play(artist: String, state: WebGuiData) -> Result<impl warp::Reply, Inf
             .pls
             .get(cur)
             .unwrap()
-            .read()
             .items
             .iter()
             .position(|t| t.artist.contains(&artist))
@@ -246,9 +245,9 @@ async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible>
         .pls
         .iter()
         .map(|pl| PlaylistTabJSON {
-            id: pl.read().id,
-            name: pl.read().name.clone(),
-            current_position: pl.read().current_position,
+            id: pl.id,
+            name: pl.name.clone(),
+            current_position: pl.current_position,
         })
         .collect::<Vec<PlaylistTabJSON>>();
     // we should not sort this as the ids are different and the vector position should be good
@@ -290,12 +289,11 @@ async fn modify_playlist_tab(
     {
         let tabs = &state.playlist_tabs;
         let id = tab.id;
-        tabs.read()
+        tabs.write()
             .pls
-            .iter()
-            .find(|t| t.read().id == id)
+            .iter_mut()
+            .find(|t| t.id == id)
             .unwrap()
-            .write()
             .name = tab.name;
     }
     tokio::spawn(async move {

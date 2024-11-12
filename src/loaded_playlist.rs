@@ -38,43 +38,32 @@ pub(crate) trait LoadedPlaylistExt {
     fn get_remaining_length(&self) -> u64;
 
     /// removes all tracks that are smaller than the current position
-    fn clean(&self);
+    fn clean(&mut self);
 
     /// update the current playcount only in the datastructure, not in the current database
-    fn update_current_playcount(&self);
+    fn update_current_playcount(&mut self);
 }
 
 pub trait SavePlaylistExt {
     fn save(&self, db: &mut diesel::SqliteConnection) -> Result<(), diesel::result::Error>;
 }
 
-pub(crate) fn items(
-    pl: &LoadedPlaylistPtr,
-) -> parking_lot::lock_api::MappedRwLockReadGuard<parking_lot::RawRwLock, Vec<Track>> {
-    parking_lot::lock_api::RwLockReadGuard::<'_, parking_lot::RawRwLock, LoadedPlaylist>::map(
-        pl.read(),
-        |s| &s.items,
-    )
-}
-
 impl LoadedPlaylistExt for LoadedPlaylistPtr {
     fn get_current_track(&self) -> Track {
-        let s = self.read();
-        s.items[s.current_position].clone()
+        self.items[self.current_position].clone()
     }
 
     fn get_playlist_full_time(&self) -> i64 {
-        let s = self.read();
-        s.items.iter().map(|t| i64::from(t.length)).sum()
+        self.items.iter().map(|t| i64::from(t.length)).sum()
     }
 
     fn current_position(&self) -> usize {
-        self.read().current_position
+        self.current_position
     }
 
     fn get_remaining_length(&self) -> u64 {
         let current_position = self.current_position();
-        self.read()
+        self
             .items
             .iter()
             .skip(current_position)
@@ -82,17 +71,15 @@ impl LoadedPlaylistExt for LoadedPlaylistPtr {
             .sum::<i32>() as u64
     }
 
-    fn clean(&self) {
+    fn clean(&mut self) {
         let index = self.current_position();
-        let mut s = self.write();
-        s.items.drain(0..index);
-        s.current_position = 0;
+        self.items.drain(0..index);
+        self.current_position = 0;
     }
 
-    fn update_current_playcount(&self) {
+    fn update_current_playcount(&mut self) {
         let index = self.current_position();
-        let mut s = self.write();
-        let item = s.items.get_mut(index).unwrap();
+        let item = self.items.get_mut(index).unwrap();
         item.playcount = Some(item.playcount.unwrap_or(0) + 1);
     }
 }
@@ -103,33 +90,31 @@ impl SavePlaylistExt for LoadedPlaylistPtr {
         use viola_common::schema::playlists::dsl::*;
         use viola_common::schema::playlisttracks::dsl::*;
 
-        let pl = self.read();
-
-        info!("playlist id {:?}", pl.id);
+        info!("playlist id {:?}", self.id);
 
         let exists = diesel::select(diesel::dsl::exists(
-            playlists.filter(viola_common::schema::playlists::id.eq(pl.id)),
+            playlists.filter(viola_common::schema::playlists::id.eq(self.id)),
         ))
         .get_result(db)
         .expect("Error in db");
 
         if exists {
             // the playlist is already in the database
-            diesel::update(playlists.find(pl.id))
-                .set(current_position.eq(pl.current_position as i32))
+            diesel::update(playlists.find(self.id))
+                .set(current_position.eq(self.current_position as i32))
                 .execute(db)?;
         }
 
         let playlist: Playlist = if exists {
-            playlists.find(pl.id).first::<Playlist>(db)?
+            playlists.find(self.id).first::<Playlist>(db)?
         } else {
             let t = vec![NewPlaylist {
-                id: pl.id,
-                name: pl.name.clone(),
-                current_position: pl.current_position as i32,
+                id: self.id,
+                name: self.name.clone(),
+                current_position: self.current_position as i32,
             }];
             diesel::insert_into(playlists).values(&t).execute(db)?;
-            playlists.filter(name.eq(&pl.name)).first(db)?
+            playlists.filter(name.eq(&self.name)).first(db)?
         };
 
         //deleting old tracks
@@ -139,7 +124,7 @@ impl SavePlaylistExt for LoadedPlaylistPtr {
 
         //inserting new tracks
         info!("starting to gather");
-        let vals = pl
+        let vals = self
             .items
             .iter()
             .enumerate()
@@ -168,20 +153,19 @@ pub(crate) trait PlaylistControls {
     /// Get current track uri
     fn get_current_uri(&self) -> Option<String>;
     /// Get previous position, wraps to zero
-    fn previous(&self) -> Option<usize>;
+    fn previous(&mut self) -> Option<usize>;
     /// set the current position and return it
-    fn set(&self, _: usize) -> usize;
+    fn set(&mut self, _: usize) -> usize;
     /// delete the tracks in range where the range is inclusive
-    fn delete_range(&self, _: std::ops::Range<usize>);
+    fn delete_range(&mut self, _: std::ops::Range<usize>);
     /// sets the position to the next one or zero if we are eol. Returns None if we are eol otherwise the position.
-    fn next_or_eol(&self) -> Option<usize>;
+    fn next_or_eol(&mut self) -> Option<usize>;
 }
 
 impl PlaylistControls for LoadedPlaylistPtr {
     fn get_current_path(&self) -> Option<PathBuf> {
         let mut pb = PathBuf::new();
-        let s = self.read();
-        if let Some(t) = s.items.get(s.current_position) {
+        if let Some(t) = self.items.get(self.current_position) {
             pb.push(t.path.clone());
             Some(pb)
         } else {
@@ -190,52 +174,47 @@ impl PlaylistControls for LoadedPlaylistPtr {
     }
 
     fn get_current_uri(&self) -> Option<String> {
-        let s = self.read();
-        info!("loading from playlist with name: {}", s.name);
-        s.items
-            .get(s.current_position)
+        info!("loading from playlist with name: {}", self.name);
+        self.items
+            .get(self.current_position)
             .as_ref()
             .map(|p| format!("file:////{}", utf8_percent_encode(&p.path, FRAGMENT)))
     }
 
-    fn previous(&self) -> Option<usize> {
-        let mut s = self.write();
-        let checked_res = s.current_position.checked_sub(1);
+    fn previous(&mut self) -> Option<usize> {
+        let checked_res = self.current_position.checked_sub(1);
         if let Some(i) = checked_res {
-            s.current_position = i;
+            self.current_position = i;
         } else {
-            s.current_position = 0;
+            self.current_position = 0;
         }
         checked_res
     }
 
-    fn set(&self, i: usize) -> usize {
-        let mut s = self.write();
-        s.current_position = i;
-        s.current_position
+    fn set(&mut self, i: usize) -> usize {
+        self.current_position = i;
+        self.current_position
     }
 
-    fn delete_range(&self, range: std::ops::Range<usize>) {
-        let mut s = self.write();
+    fn delete_range(&mut self, range: std::ops::Range<usize>) {
         println!("removing with range: {:?}", &range);
 
-        s.items.drain(range.start..=range.end);
+        self.items.drain(range.start..=range.end);
 
-        if s.current_position >= range.start && s.current_position <= range.end {
-            s.current_position = 0;
-        } else if s.current_position > range.end {
-            s.current_position -= range.end - range.start;
+        if self.current_position >= range.start && self.current_position <= range.end {
+            self.current_position = 0;
+        } else if self.current_position > range.end {
+            self.current_position -= range.end - range.start;
         }
     }
 
-    fn next_or_eol(&self) -> Option<usize> {
-        if self.read().items.len() == 1 {
+    fn next_or_eol(&mut self) -> Option<usize> {
+        if self.items.len() == 1 {
             None
         } else {
             let next_pos = {
-                let mut s = self.write();
-                s.current_position += 1 % (s.items.len() - 1);
-                s.current_position
+                self.current_position += 1 % (self.items.len() - 1);
+                self.current_position
             };
 
             if next_pos == 0 {

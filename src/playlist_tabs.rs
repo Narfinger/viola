@@ -1,6 +1,7 @@
 use log::info;
 use parking_lot::RwLock;
 use serde::Serialize;
+use viola_common::Track;
 use std::ops::DerefMut;
 use std::sync::Arc;
 use std::{cmp::min, path::PathBuf};
@@ -28,7 +29,7 @@ pub(crate) fn load(pool: &DBPool) -> Result<PlaylistTabsPtr, diesel::result::Err
         //use crate::smartplaylist_parser::LoadSmartPlaylist;
         //pls.push(crate::smartplaylist_parser::construct_smartplaylists_from_config()[0].load(pool));
     }
-    let converted_pls: Vec<LoadedPlaylistPtr> = pls.into_iter().map(RwLock::new).collect();
+    let converted_pls: Vec<LoadedPlaylistPtr> = pls.into_iter().collect();
     let pls_struct = Arc::new(parking_lot::RwLock::new(PlaylistTabs {
         current_pl: 0,
         current_playing_in: 0,
@@ -43,6 +44,8 @@ pub(crate) trait PlaylistTabsExt {
     fn add(&self, _: LoadedPlaylist);
     /// execute f on the current playlist
     fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T;
+    /// same but for mut
+    fn current_mut<T>(&self, f: fn(&mut LoadedPlaylist) -> T) -> T;
     /// delete the playlist given by item
     fn delete(&self, _: &DBPool, _: usize);
     /// produces the json string corresponding to the items
@@ -66,12 +69,17 @@ pub(crate) trait PlaylistTabsExt {
 
 impl PlaylistTabsExt for PlaylistTabsPtr {
     fn add(&self, lp: LoadedPlaylist) {
-        self.write().pls.push(RwLock::new(lp));
+        self.write().pls.push(lp);
     }
 
-    fn current<T>(&self, f: fn(&LoadedPlaylistPtr) -> T) -> T {
+    fn current<T>(&self, f: fn(&LoadedPlaylist) -> T) -> T {
         let i = self.read().current_pl;
         f(self.as_ref().read().pls.get(i).as_ref().unwrap())
+    }
+
+    fn current_mut<T>(&self, f: fn(&mut LoadedPlaylist) -> T) -> T {
+        let i = self.read().current_pl;
+        f(self.as_ref().write().pls.get_mut(i).unwrap())
     }
 
     fn delete(&self, pool: &DBPool, index: usize) {
@@ -91,7 +99,7 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
             }
             let mut db = pool.lock();
 
-            diesel::delete(playlists.filter(id.eq(lp.read().id)))
+            diesel::delete(playlists.filter(id.eq(lp.id)))
                 .execute(db.deref_mut())
                 .expect("Error deleting");
         }
@@ -105,8 +113,8 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
     fn items_for_json(&self, index: usize) -> String {
         let cur = self.read();
         let pl = cur.pls.get(index).unwrap();
-        let items = crate::loaded_playlist::items(pl);
-        serde_json::to_string::<Vec<viola_common::Track>>(items.as_ref())
+        let items = &pl.items;
+        serde_json::to_string::<Vec<viola_common::Track>>(items)
             .expect("Error in serializing")
     }
 
@@ -162,15 +170,35 @@ impl PlaylistTabsExt for PlaylistTabsPtr {
 
     fn update_current_playcount(&self) {
         let index = self.read().current_pl;
-        self.read()
+        self.write()
             .pls
-            .get(index)
+            .get_mut(index)
             .unwrap()
             .update_current_playcount();
     }
 }
 
-impl LoadedPlaylistExt for PlaylistTabsPtr {
+pub(crate) trait LoadedPlaylistExtImut {
+    /// Returns the current track
+    fn get_current_track(&self) -> Track;
+
+    /// get the added time of the whole playlist
+    fn get_playlist_full_time(&self) -> i64;
+
+    /// returns the raw current_position
+    fn current_position(&self) -> usize;
+
+    /// get the remaining length, ignoring already played tracks and the current playling track
+    fn get_remaining_length(&self) -> u64;
+
+    /// removes all tracks that are smaller than the current position
+    fn clean(&self);
+
+    /// update the current playcount only in the datastructure, not in the current database
+    fn update_current_playcount(&self);
+}
+
+impl LoadedPlaylistExtImut for PlaylistTabsPtr {
     fn get_current_track(&self) -> viola_common::Track {
         self.current(LoadedPlaylistExt::get_current_track)
         //value.get_current_track()
@@ -193,15 +221,31 @@ impl LoadedPlaylistExt for PlaylistTabsPtr {
     }
 
     fn clean(&self) {
-        self.current(LoadedPlaylistExt::clean);
+        self.current_mut(LoadedPlaylistExt::clean);
     }
 
     fn update_current_playcount(&self) {
-        self.current(LoadedPlaylistExt::update_current_playcount);
+        self.current_mut(LoadedPlaylistExt::update_current_playcount);
     }
 }
 
-impl PlaylistControls for PlaylistTabsPtr {
+/// ways to control the playlist (does not control the gstreamer)
+pub(crate) trait PlaylistControlsImut {
+    /// Get current track path
+    fn get_current_path(&self) -> Option<PathBuf>;
+    /// Get current track uri
+    fn get_current_uri(&self) -> Option<String>;
+    /// Get previous position, wraps to zero
+    fn previous(&self) -> Option<usize>;
+    /// set the current position and return it
+    fn set(&self, _: usize) -> usize;
+    /// delete the tracks in range where the range is inclusive
+    fn delete_range(&self, _: std::ops::Range<usize>);
+    /// sets the position to the next one or zero if we are eol. Returns None if we are eol otherwise the position.
+    fn next_or_eol(&self) -> Option<usize>;
+}
+
+impl PlaylistControlsImut for PlaylistTabsPtr {
     fn get_current_path(&self) -> Option<PathBuf> {
         self.current(PlaylistControls::get_current_path)
     }
@@ -212,28 +256,23 @@ impl PlaylistControls for PlaylistTabsPtr {
 
     fn previous(&self) -> Option<usize> {
         self.update_current_playing_in();
-        self.current(PlaylistControls::previous)
+        self.current_mut(PlaylistControls::previous)
     }
 
     fn set(&self, index: usize) -> usize {
         self.update_current_playing_in();
-
         let i = self.read().current_pl;
-        let cur = self.read();
-        let value = cur.pls.get(i).unwrap();
-        value.set(index)
+        self.write().pls.get_mut(i).unwrap().set(index)
     }
 
     fn delete_range(&self, range: std::ops::Range<usize>) {
         let i = self.read().current_pl;
-        let cur = self.read();
-        let value = cur.pls.get(i).unwrap();
-        value.delete_range(range);
+        self.write().pls.get_mut(i).unwrap().delete_range(range);
     }
 
     fn next_or_eol(&self) -> Option<usize> {
         self.update_current_playing_in();
-        self.current(PlaylistControls::next_or_eol)
+        self.current_mut(PlaylistControls::next_or_eol)
     }
 }
 

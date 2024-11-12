@@ -1,4 +1,4 @@
-use crate::playlist_tabs::PlaylistTabsExt;
+use crate::playlist_tabs::{LoadedPlaylistExtImut, PlaylistControlsImut, PlaylistTabsExt};
 use gstreamer::prelude::*;
 use log::{info, warn};
 use parking_lot::RwLock;

@@ -9,7 +9,7 @@ pub(crate) const SOCKETADDR: &str = "127.0.0.1:8080";
 
 pub(crate) type DBPool = Arc<Mutex<diesel::SqliteConnection>>;
 pub(crate) type PlaylistTabsPtr = Arc<RwLock<PlaylistTabs>>;
-pub(crate) type LoadedPlaylistPtr = RwLock<LoadedPlaylist>;
+pub(crate) type LoadedPlaylistPtr = LoadedPlaylist;
 
 #[derive(Debug, Deserialize)]
 pub struct ChangePlaylistTabJson {
