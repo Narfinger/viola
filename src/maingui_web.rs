@@ -18,14 +18,12 @@ use crate::types::*;
 
 /// Handler: returns the current playlist tab items in json
 async fn playlist(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
-    let state = state.read().await;
     let items_json = state.playlist_tabs.items_json();
     Ok(items_json)
 }
 
 /// Handler: return the items in a playlist by `index` in json
 async fn playlist_for(index: usize, state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
-    let state = state.read().await;
     let items_json = state.playlist_tabs.items_for_json(index);
     Ok(items_json)
 }
@@ -33,8 +31,6 @@ async fn playlist_for(index: usize, state: WebGuiData) -> Result<impl warp::Repl
 /// Handler: set that we want to repeat
 async fn repeat(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     state
-        .write()
-        .await
         .gstreamer
         .do_gstreamer_action(viola_common::GStreamerAction::RepeatOnce);
     Ok(warp::reply())
@@ -43,9 +39,9 @@ async fn repeat(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
 /// Handler: removes all already played data
 async fn clean(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     info!("doing cleaning");
-    state.write().await.playlist_tabs.clean();
+    state.playlist_tabs.clean();
     tokio::spawn(async move {
-        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadPlaylist).await;
+        my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist).await;
     });
     Ok(warp::reply())
 }
@@ -56,9 +52,9 @@ async fn delete_from_playlist(
     state: WebGuiData,
 ) -> Result<impl warp::Reply, Infallible> {
     info!("Doing delete");
-    state.read().await.playlist_tabs.delete_range(deleterange);
+    state.playlist_tabs.delete_range(deleterange);
     tokio::spawn(async move {
-        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadPlaylist).await;
+        my_websocket::send_my_message(&state.ws, WsMessage::ReloadPlaylist).await;
     });
     Ok(warp::reply())
 }
@@ -66,9 +62,8 @@ async fn delete_from_playlist(
 /// Handler: save into database
 async fn save(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     println!("Saving");
-    let read_lock = state.read().await;
-    let mut db = read_lock.pool.lock();
-    read_lock
+    let mut db = state.pool.lock();
+    state
         .playlist_tabs
         .save(&mut db)
         .expect("Error in saving");
@@ -78,7 +73,7 @@ async fn save(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
 /// Handler: returns current transport state
 async fn get_transport(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     Ok(warp::reply::json(
-        &state.read().await.gstreamer.get_state(),
+        &state.gstreamer.get_state(),
     ))
 }
 
@@ -89,8 +84,6 @@ async fn transport(
 ) -> Result<impl warp::Reply, Infallible> {
     info!("state json data: {:?}", &msg);
     state
-        .write()
-        .await
         .gstreamer
         .do_gstreamer_action(msg);
     //tokio::spawn(async move {
@@ -103,10 +96,8 @@ async fn transport(
 /// Handler: play an artist string (fuzzy matched)
 async fn play(artist: String, state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     let item_number = {
-        let cur = state.read().await.playlist_tabs.current_tab();
+        let cur = state.playlist_tabs.current_tab();
         state
-            .read()
-            .await
             .playlist_tabs
             .read()
             .pls
@@ -119,8 +110,6 @@ async fn play(artist: String, state: WebGuiData) -> Result<impl warp::Reply, Inf
     };
     if let Some(item_number) = item_number {
         state
-            .write()
-            .await
             .gstreamer
             .do_gstreamer_action(GStreamerAction::Play(item_number));
     }
@@ -136,7 +125,7 @@ async fn library_partial_tree(
     if q.search.is_some() && q.search.as_ref().unwrap().is_empty() {
         q.search = None;
     }
-    let items = libraryviewstore::partial_query(&state.read().await.pool, &q);
+    let items = libraryviewstore::partial_query(&state.pool, &q);
 
     Ok(warp::reply::json(&items))
 }
@@ -148,13 +137,13 @@ async fn library_load(
 ) -> Result<impl warp::Reply, Infallible> {
     let mut q = query;
     q.search = q.search.filter(|t| !t.is_empty());
-    let pl = libraryviewstore::load_query(&state.read().await.pool, &q);
+    let pl = libraryviewstore::load_query(&state.pool, &q);
     info!("Loading new playlist {}", pl.name);
-    state.read().await.playlist_tabs.add(pl);
-    let size = state.read().await.playlist_tabs.read().pls.len();
-    state.read().await.playlist_tabs.set_tab(size - 1);
+    state.playlist_tabs.add(pl);
+    let size = state.playlist_tabs.read().pls.len();
+    state.playlist_tabs.set_tab(size - 1);
     tokio::spawn(async move {
-        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
+        my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs).await;
     });
     Ok(warp::reply())
 }
@@ -177,10 +166,10 @@ async fn smartplaylist_load(
     let pl = spl.get(index.index);
 
     if let Some(p) = pl {
-        let rp = { p.load(&state.read().await.pool) };
-        state.write().await.playlist_tabs.add(rp);
+        let rp = { p.load(&state.pool) };
+        state.playlist_tabs.add(rp);
         tokio::spawn(async move {
-            my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
+            my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs).await;
         });
     }
 
@@ -190,13 +179,13 @@ async fn smartplaylist_load(
 /// Handler: returns the current playlist position, meaning the track that is playing or would play next
 async fn current_id(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     Ok(warp::reply::json(
-        &state.read().await.playlist_tabs.current_position(),
+        &state.playlist_tabs.current_position(),
     ))
 }
 
 /// Nice Json for current playing
 async fn current_fancy(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
-    let track = state.read().await.playlist_tabs.get_current_track();
+    let track = state.playlist_tabs.get_current_track();
     Ok(warp::reply::json(&track))
 }
 
@@ -217,8 +206,6 @@ async fn current_image(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     info!("into stuff");
     if let Ok(p) = state
-        .read()
-        .await
         .playlist_tabs
         .get_current_track()
         .albumpath
@@ -254,8 +241,6 @@ async fn current_image(
 /// Handler: returns all playlist tabs
 async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     let tabs = state
-        .read()
-        .await
         .playlist_tabs
         .read()
         .pls
@@ -270,15 +255,15 @@ async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible>
     //tabs.sort_by_key(|a| a.id);
 
     let current_playing_in = if [GStreamerMessage::Nop, GStreamerMessage::Stopped]
-        .contains(&state.read().await.gstreamer.get_state())
+        .contains(&state.gstreamer.get_state())
     {
         None
     } else {
-        Some(state.read().await.playlist_tabs.current_playing_in())
+        Some(state.playlist_tabs.current_playing_in())
     };
 
     let resp = PlaylistTabsJSON {
-        current: state.read().await.playlist_tabs.current_tab(),
+        current: state.playlist_tabs.current_tab(),
         current_playing_in,
         tabs,
     };
@@ -290,9 +275,9 @@ async fn change_playlist_tab(
     index: usize,
     state: WebGuiData,
 ) -> Result<impl warp::Reply, Infallible> {
-    state.read().await.playlist_tabs.set_tab(index);
+    state.playlist_tabs.set_tab(index);
     tokio::spawn(async move {
-        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
+        my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs).await;
     });
     Ok(warp::reply())
 }
@@ -303,7 +288,7 @@ async fn modify_playlist_tab(
     state: WebGuiData,
 ) -> Result<impl warp::Reply, Infallible> {
     {
-        let tabs = &state.read().await.playlist_tabs;
+        let tabs = &state.playlist_tabs;
         let id = tab.id;
         tabs.read()
             .pls
@@ -314,7 +299,7 @@ async fn modify_playlist_tab(
             .name = tab.name;
     }
     tokio::spawn(async move {
-        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
+        my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs).await;
     });
     Ok(warp::reply())
 }
@@ -325,11 +310,10 @@ async fn delete_playlist_tab(
     state: WebGuiData,
 ) -> Result<impl warp::Reply, Infallible> {
     info!("deleting {}", &index);
-    let statelock = state.read().await;
-    statelock.playlist_tabs.delete(&statelock.pool, index);
+    state.playlist_tabs.delete(&state.pool, index);
     let state = state.clone();
     tokio::spawn(async move {
-        my_websocket::send_my_message(&state.read().await.ws, WsMessage::ReloadTabs).await;
+        my_websocket::send_my_message(&state.ws, WsMessage::ReloadTabs).await;
     });
     Ok(warp::reply())
 }
@@ -352,7 +336,7 @@ impl WebGui {
     }
 }
 
-type WebGuiData = Arc<RwLock<WebGui>>;
+type WebGuiData = Arc<WebGui>;
 
 /// blocking function that handles messages on the GStreamer Bus
 async fn handle_gstreamer_messages(
@@ -366,11 +350,11 @@ async fn handle_gstreamer_messages(
         match val {
             viola_common::GStreamerMessage::Playing => {
                 let state = state.clone();
-                let pos = state.read().await.playlist_tabs.current_position();
+                let pos = state.playlist_tabs.current_position();
                 tokio::spawn(async move {
                     //let state = state.clone();
                     my_websocket::send_my_message(
-                        &state.read().await.ws,
+                        &state.ws,
                         WsMessage::PlayChanged(pos),
                     )
                     .await;
@@ -383,7 +367,7 @@ async fn handle_gstreamer_messages(
                 tokio::spawn(async move {
                     //let state = state.clone();
                     my_websocket::send_my_message(
-                        &state.read().await.ws,
+                        &state.ws,
                         WsMessage::GStreamerMessage(val),
                     )
                     .await;
@@ -398,7 +382,7 @@ async fn handle_gstreamer_messages(
 async fn auto_save(state: WebGuiData) {
     loop {
         tokio::time::sleep(Duration::new(10 * 60, 0)).await;
-        state.read().await.save();
+        state.save();
     }
 }
 
@@ -428,7 +412,7 @@ pub async fn run(pool: DBPool) {
     };
 
     info!("Doing data");
-    let state = Arc::new(RwLock::new(state));
+    let state = Arc::new(state);
 
     {
         let datac = state.clone();
@@ -443,17 +427,15 @@ pub async fn run(pool: DBPool) {
         tokio::spawn(async move {
             loop {
                 tokio::time::sleep(Duration::new(1, 0)).await;
-                if datac.read().await.gstreamer.get_state()
+                if datac.gstreamer.get_state()
                     == viola_common::GStreamerMessage::Playing
                 {
                     let data = datac
-                        .read()
-                        .await
                         .gstreamer
                         .get_elapsed()
                         .unwrap_or(0);
                     my_websocket::send_my_message(
-                        &datac.read().await.ws,
+                        &datac.ws,
                         WsMessage::CurrentTimeChanged(data),
                     )
                     .await;
@@ -575,7 +557,7 @@ pub async fn run(pool: DBPool) {
             ws.on_upgrade(|websocket| async move {
                 info!("doing new websocket connection");
                 let (tx, _) = websocket.split();
-                *statec.read().await.ws.write().await = Some(tx);
+                *statec.ws.write().await = Some(tx);
             })
         });
     //let web_gui_path = concat!(env!("CARGO_MANIFEST_DIR"), "/web_gui_seed/dist/index.html");
