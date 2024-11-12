@@ -61,7 +61,7 @@ impl BaseInterface {
 }
 
 struct PlayerInterface {
-    gstreamer: Arc<RwLock<GStreamer>>,
+    gstreamer: Arc<GStreamer>,
     playlisttabs: PlaylistTabsPtr,
 }
 
@@ -70,7 +70,7 @@ impl PlayerInterface {
     #[zbus(property)]
     async fn playback_status(&self) -> String {
         info!("dbus playback status");
-        self.gstreamer.read().get_state().to_string()
+        self.gstreamer.get_state().to_string()
     }
 
     #[zbus(property)]
@@ -86,7 +86,7 @@ impl PlayerInterface {
     #[zbus(property)]
     async fn metadata(&self) -> HashMap<&str, zbus::zvariant::Value> {
         info!("dbus metadata");
-        if self.gstreamer.read().get_state() == GStreamerMessage::Playing {
+        if self.gstreamer.get_state() == GStreamerMessage::Playing {
             let track = self.playlisttabs.get_current_track();
             let length = 1_000_000 * track.length;
             let albumpath = track.albumpath.unwrap_or_default();
@@ -111,7 +111,7 @@ impl PlayerInterface {
 
     #[zbus(property)]
     async fn position(&self) -> i64 {
-        1_000_000 * self.gstreamer.read().get_elapsed().unwrap_or(0) as i64
+        1_000_000 * self.gstreamer.get_elapsed().unwrap_or(0) as i64
     }
 
     #[zbus(property)]
@@ -157,14 +157,12 @@ impl PlayerInterface {
     //methods
     async fn next(&self) -> zbus::fdo::Result<()> {
         self.gstreamer
-            .write()
             .do_gstreamer_action(GStreamerAction::Next);
         Ok(())
     }
 
     async fn previous(&self) -> zbus::fdo::Result<()> {
         self.gstreamer
-            .write()
             .do_gstreamer_action(GStreamerAction::Previous);
         Ok(())
     }
@@ -172,10 +170,8 @@ impl PlayerInterface {
     async fn pause(&self) -> zbus::fdo::Result<()> {
         info!("dbus send pause");
         self.gstreamer
-            .write()
             .do_gstreamer_action(GStreamerAction::Pausing);
         self.gstreamer
-            .read()
             .sender
             .send(GStreamerMessage::Pausing)
             .expect("Error in sending msg to gui channel");
@@ -185,10 +181,8 @@ impl PlayerInterface {
     async fn play(&self) -> zbus::fdo::Result<()> {
         info!("dbus send play");
         self.gstreamer
-            .write()
             .do_gstreamer_action(GStreamerAction::Playing);
         self.gstreamer
-            .read()
             .sender
             .send(GStreamerMessage::Playing)
             .expect("Error in sending msg to gui channel");
@@ -197,21 +191,17 @@ impl PlayerInterface {
 
     async fn play_pause(&self) -> zbus::fdo::Result<()> {
         info!("dbus send playpause");
-        if self.gstreamer.read().get_state() == GStreamerMessage::Pausing {
+        if self.gstreamer.get_state() == GStreamerMessage::Pausing {
             self.gstreamer
-                .write()
                 .do_gstreamer_action(GStreamerAction::Playing);
             self.gstreamer
-                .read()
                 .sender
                 .send(GStreamerMessage::Playing)
                 .expect("Error in sending msg to gui channel");
         } else {
             self.gstreamer
-                .write()
                 .do_gstreamer_action(GStreamerAction::Pausing);
             self.gstreamer
-                .read()
                 .sender
                 .send(GStreamerMessage::Pausing)
                 .expect("Error in sending msg to gui channel");
@@ -222,10 +212,8 @@ impl PlayerInterface {
     async fn stop(&self) -> zbus::fdo::Result<()> {
         println!("dbus send pause");
         self.gstreamer
-            .write()
             .do_gstreamer_action(GStreamerAction::Pausing);
         self.gstreamer
-            .read()
             .sender
             .send(GStreamerMessage::Pausing)
             .expect("Error in sending msg to gui channel");
@@ -251,7 +239,7 @@ impl PlayerInterface {
 }
 
 pub(crate) async fn main(
-    gstreamer: Arc<RwLock<GStreamer>>,
+    gstreamer: Arc<GStreamer>,
     playlisttabs: PlaylistTabsPtr,
     bus: tokio::sync::broadcast::Receiver<GStreamerMessage>,
 ) -> Result<(), String> {

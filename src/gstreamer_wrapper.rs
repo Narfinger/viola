@@ -38,7 +38,7 @@ pub(crate) fn new(
     current_playlist: PlaylistTabsPtr,
     pool: DBPool,
     msg_bus: tokio::sync::broadcast::Sender<GStreamerMessage>,
-) -> Result<Arc<RwLock<GStreamer>>, String> {
+) -> Result<Arc<GStreamer>, String> {
     gstreamer::init().unwrap();
     let element = {
         let playbin = gstreamer::ElementFactory::make("playbin")
@@ -108,13 +108,13 @@ pub(crate) fn new(
         playbin
     };
     let bus = element.bus().unwrap();
-    let res = Arc::new(RwLock::new(GStreamer {
+    let res = Arc::new(GStreamer {
         element,
         current_playlist,
         sender: msg_bus,
         pool,
         repeat_once: AtomicBool::new(false),
-    }));
+    });
 
     let resc = res.clone();
     // this has to be a real thread as otherwise the send in gstreamer_handle_eos does not work correctly.
@@ -124,7 +124,7 @@ pub(crate) fn new(
             match msg.view() {
                 MessageView::Eos(..) => {
                     info!("We found an eos on the bus!");
-                    resc.write().gstreamer_handle_eos();
+                    resc.gstreamer_handle_eos();
                     info!("returned from eos handling");
                 }
                 MessageView::Error(err) => println!("Error {:?}", err),
@@ -146,7 +146,7 @@ pub(crate) fn new(
 
 impl GStreamer {
     /// perform a GStreamerAction on the underlying element
-    pub(crate) fn do_gstreamer_action(&mut self, action: GStreamerAction) {
+    pub(crate) fn do_gstreamer_action(&self, action: GStreamerAction) {
         info!("Gstreamer action {:?}", action);
 
         //everytime we call return, we do not want to send the message we got to the gui, as it will be done in a subcall we have done
@@ -262,7 +262,7 @@ impl GStreamer {
     }
 
     /// Handle if gstreamer sends us EndOfStream
-    pub(crate) fn gstreamer_handle_eos(&mut self) {
+    pub(crate) fn gstreamer_handle_eos(&self) {
         use crate::db::UpdatePlayCount;
         info!("Handling EOS");
 

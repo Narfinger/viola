@@ -33,10 +33,9 @@ async fn playlist_for(index: usize, state: WebGuiData) -> Result<impl warp::Repl
 /// Handler: set that we want to repeat
 async fn repeat(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     state
-        .read()
+        .write()
         .await
         .gstreamer
-        .write()
         .do_gstreamer_action(viola_common::GStreamerAction::RepeatOnce);
     Ok(warp::reply())
 }
@@ -79,7 +78,7 @@ async fn save(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
 /// Handler: returns current transport state
 async fn get_transport(state: WebGuiData) -> Result<impl warp::Reply, Infallible> {
     Ok(warp::reply::json(
-        &state.read().await.gstreamer.read().get_state(),
+        &state.read().await.gstreamer.get_state(),
     ))
 }
 
@@ -90,10 +89,9 @@ async fn transport(
 ) -> Result<impl warp::Reply, Infallible> {
     info!("state json data: {:?}", &msg);
     state
-        .read()
+        .write()
         .await
         .gstreamer
-        .write()
         .do_gstreamer_action(msg);
     //tokio::spawn(async move {
     //    my_websocket::send_my_message(&state.read().await.ws, WsMessage::GStreamerAction(msg))
@@ -121,10 +119,9 @@ async fn play(artist: String, state: WebGuiData) -> Result<impl warp::Reply, Inf
     };
     if let Some(item_number) = item_number {
         state
-            .read()
+            .write()
             .await
             .gstreamer
-            .write()
             .do_gstreamer_action(GStreamerAction::Play(item_number));
     }
     Ok(warp::reply())
@@ -273,7 +270,7 @@ async fn playlist_tab(state: WebGuiData) -> Result<impl warp::Reply, Infallible>
     //tabs.sort_by_key(|a| a.id);
 
     let current_playing_in = if [GStreamerMessage::Nop, GStreamerMessage::Stopped]
-        .contains(&state.read().await.gstreamer.read().get_state())
+        .contains(&state.read().await.gstreamer.get_state())
     {
         None
     } else {
@@ -339,7 +336,7 @@ async fn delete_playlist_tab(
 
 struct WebGui {
     pool: DBPool,
-    gstreamer: Arc<parking_lot::RwLock<gstreamer_wrapper::GStreamer>>,
+    gstreamer: Arc<gstreamer_wrapper::GStreamer>,
     playlist_tabs: PlaylistTabsPtr,
     ws: my_websocket::MyWs,
 }
@@ -446,14 +443,13 @@ pub async fn run(pool: DBPool) {
         tokio::spawn(async move {
             loop {
                 tokio::time::sleep(Duration::new(1, 0)).await;
-                if datac.read().await.gstreamer.read().get_state()
+                if datac.read().await.gstreamer.get_state()
                     == viola_common::GStreamerMessage::Playing
                 {
                     let data = datac
                         .read()
                         .await
                         .gstreamer
-                        .read()
                         .get_elapsed()
                         .unwrap_or(0);
                     my_websocket::send_my_message(
