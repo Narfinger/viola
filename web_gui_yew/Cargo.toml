@@ -14,5 +14,5 @@ viola_common = { path = "../viola_common" }
 wasm-bindgen-futures = "0.4"
 wasm-logger = "0.2.0"
 yew = { version = "0.21.0", features = ["csr"] }
-web-sys = "0.3.72"
+web-sys = "0.3.74"
 
