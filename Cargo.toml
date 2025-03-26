@@ -39,7 +39,7 @@ members = ["web_gui_yew", "viola_common"]
 
 [workspace.dependencies]
 anyhow = "1.0.97"
-clap = "4.5.31"
+clap = "4.5.32"
 console_error_panic_hook = "0.1.7"
 diesel = "2.2.8"
 diesel_migrations = "2.2.0"
