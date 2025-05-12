@@ -8,7 +8,7 @@ log = {workspace = true}
 futures = { workspace = true }
 gloo-net = "0.6.0"
 humantime = { workspace = true }
-indextree = "4.7.3"
+indextree = "4.7.4"
 serde_json = { workspace = true }
 viola_common = { path = "../viola_common" }
 wasm-bindgen-futures = "0.4"
