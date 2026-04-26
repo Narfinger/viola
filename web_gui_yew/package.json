@@ -2,7 +2,7 @@
   "dependencies": {
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
-    "jquery": "^3.7.1",
+    "jquery": "^4.0.0",
     "popper.js": "^1.16.1"
   }
 }
